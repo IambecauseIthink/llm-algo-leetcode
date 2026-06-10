@@ -61,6 +61,7 @@ jupyter lab
 - [使用指南](./docs/guide.md) - 环境与学习方式
 - [贡献指南](./docs/contributing.md) - 如何参与项目开发和测试
 - [维护与发布手册](./docs/maintenance.md) - 章节、链接、测试与发布的维护约定
+- [自动化测试脚本索引](./project_test_scripts.md) - 各类验证脚本入口
 
 ## 👨‍💻 贡献者名单
 

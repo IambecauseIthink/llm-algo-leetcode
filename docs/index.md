@@ -36,6 +36,7 @@ cd llm-algo-leetcode
 - [使用指南](./guide.md) - 环境与学习方式
 - [贡献指南](./contributing.md) - 如何参与项目开发和测试
 - [维护与发布手册](./maintenance.md) - 章节、链接、测试与发布的维护约定
+- [自动化测试脚本索引](../project_test_scripts.md) - 各类验证脚本入口
 - [GitHub 仓库](https://github.com/datawhalechina/llm-algo-leetcode) - 源代码和问题反馈
 
 ## 📄 开源协议
