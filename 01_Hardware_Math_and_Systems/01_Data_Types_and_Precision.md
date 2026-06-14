@@ -2,11 +2,21 @@
 
 **难度：** Easy | **标签：** `基础概念`, `混合精度` | **目标人群：** 通用基础 (算法/Infra)
 
-在计算任何大模型的显存或算力之前，我们必须彻底搞懂“数据”在 GPU 中到底长什么样。这是所有硬件推导和量化算法的最底层基石。本节我们将从最基础的字节换算开始，结合工业界最主流的 A100 与最前沿的 H100 架构，一路深入到混合精度的底层逻辑和最新的 FP8 黑科技。
+在计算任何大模型的显存或算力之前，先把“数据”在 GPU 中的表示方式搞清楚。这是所有硬件推导和量化算法的基础。本节我们将从最基础的字节换算开始，结合工业界常见的 A100 与较前沿的 H100 架构，一路走到混合精度的底层逻辑和 FP8 的设计思路。
+
+## 本节如何和 Notebook 配合
+
+这一节建议和 `[01_Data_Types_and_Precision_Practice.ipynb](./01_Data_Types_and_Precision_Practice.ipynb)` 一起学：
+
+- 先看本文，建立字节换算、FP16 / BF16 / INT8 / INT4 和混合精度的直觉
+- 再做 Notebook，把显存计算、训练显存和量化收益真正算一遍
+- Notebook 里的测试用来确认你不是“看懂了”，而是真的“会算了”
+
+如果你后面要估算模型显存、训练成本或量化收益，这一页负责让你知道**为什么这些格式重要**，Notebook 负责让你验证**具体能省多少**。
 
 > **相关阅读**:  
 > 本章对应的练习资产：  
-> [`01_Data_Types_and_Precision_Practice.ipynb`](./01_Data_Types_and_Precision_Practice.md)  
+> [`01_Data_Types_and_Precision_Practice.ipynb`](./01_Data_Types_and_Precision_Practice.ipynb)  
 > [`01_Data_Types_and_Precision_Practice.md`](../docs/01_Hardware_Math_and_Systems/01_Data_Types_and_Precision_Practice.md)    
 
 ---
@@ -108,8 +118,7 @@ FP16 的动态范围（最大值约 65504）远窄于 FP32（约 $3.4 \times 10^
 <details>
 <summary>点击展开查看解析</summary>
 
-这是一道极其经典的 Infra 进阶面试题。
-在混合精度训练中，模型的前向传播（Forward）和反向传播（Backward）都是用 16-bit 跑的，这样可以节省 50% 的显存并利用 Tensor Core 大幅加速。
+在混合精度训练中，模型的前向传播（Forward）和反向传播（Backward）都是用 16-bit 跑的，这样可以节省 50% 的显存并利用 Tensor Core 加速。
 
 但问题出在**参数更新（Optimizer Step）**这一步：
 $$ W_{new} = W_{old} - \text{Learning\_Rate} \times \text{Gradient} $$
@@ -127,21 +136,21 @@ $$ W_{new} = W_{old} - \text{Learning\_Rate} \times \text{Gradient} $$
 <details>
 <summary>点击展开查看解析</summary>
 
-A100 之所以能成为统治大模型时代的工业界标杆（至今仍被极其广泛地使用），其核心原因之一就是在硬件层面原生支持了两种极其重要的混合精度格式，彻底解放了算力：
+A100 之所以能成为大模型时代的重要工业界标杆（至今仍被广泛使用），其核心原因之一就是在硬件层面原生支持了两种很重要的混合精度格式，进一步释放了算力：
 
 **1. 原生支持 BF16 Tensor Core**
 - 在 A100 之前的 V100（Volta 架构）时期，Tensor Core **只支持 FP16** 乘法。这就是为什么早期研究人员在训练模型时深受溢出之苦。
 - A100 在其第三代 Tensor Core 中直接加入了原生的 BF16 乘加支持。这使得算力直接翻倍（相比 FP32）的同时，一举解决了动态范围溢出的所有痛点，使得千亿参数大模型的稳定训练成为可能。
 
 **2. 引入了神兵利器：TF32 (TensorFloat-32)**
-- NVIDIA 为了让开发者在不改动任何祖传代码（继续写纯 FP32 代码）的情况下白嫖 Tensor Core 的加速，发明了 TF32 格式。
+- NVIDIA 为了让开发者在不改动任何祖传代码（继续写纯 FP32 代码）的情况下也能用上 Tensor Core 的加速，发明了 TF32 格式。
 - TF32 是一种精妙的混合态格式：它拥有 **FP32 的指数位（8位，保证不溢出）** 和 **FP16 的尾数位（10位，保证精度）**，总共占用 19 个 bit 的信息，但在显存中依然按 32位 存储。
-- **底层黑科技**：当你在 PyTorch 中设置 `torch.backends.cuda.matmul.allow_tf32 = True`（在 A100 及更新的架构上这是默认开启的）时，如果你向 GPU 丢了两个 FP32 矩阵相乘，A100 会在内部的 Tensor Core 里将其**截断为 TF32 飞速算完**，然后再转回 FP32 输出。这让“看似是单精度”的矩阵乘法直接白嫖了数倍的性能飞跃！
+- **底层机制**：当你在 PyTorch 中设置 `torch.backends.cuda.matmul.allow_tf32 = True`（在 A100 及更新的架构上这是默认开启的）时，如果你向 GPU 丢了两个 FP32 矩阵相乘，A100 会在内部的 Tensor Core 里将其**截断为 TF32 更快算完**，然后再转回 FP32 输出。这让“看似是单精度”的矩阵乘法获得数倍级的性能提升。
 </details>
 
 ---
 
-## Q6：前沿演进——NVIDIA 在最强算力 H100（Hopper 架构）中引入的原生 FP8 格式，有什么专门针对 AI 的黑科技设计？
+## Q6：前沿演进——NVIDIA 在 H100（Hopper 架构）中引入的原生 FP8 格式，有什么专门针对 AI 的设计？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -157,5 +166,5 @@ A100 之所以能成为统治大模型时代的工业界标杆（至今仍被极
    - **侧重：动态范围**。
    - **用途**：专用于**反向传播 (Backward) 和梯度 (Gradients)**。因为反向传播过程中的梯度数值跨度极大，非常容易出现下溢出，所以必须多分配 1 个位给指数，哪怕牺牲一点尾数精度也在所不惜。
 
-这种将 8 个比特的潜力压榨到极致的软硬件协同设计，使得 H100 的 FP8 算力吞吐量相比 A100 的 FP16 直接又翻了一倍，正式推开了 8-bit 大模型极限训练和推理的大门。
+这种将 8 个比特充分利用起来的软硬件协同设计，使得 H100 的 FP8 算力吞吐量相比 A100 的 FP16 还有明显提升，也为 8-bit 大模型训练和推理提供了基础。
 </details>

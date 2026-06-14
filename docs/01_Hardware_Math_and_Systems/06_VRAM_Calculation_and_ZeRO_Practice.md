@@ -8,6 +8,8 @@
 
 本练习配套理论文档：[06_VRAM_Calculation_and_ZeRO.md](./06_VRAM_Calculation_and_ZeRO.md)
 
+建议先阅读理论文档，再来完成本练习。理论页负责讲清 16Φ、ZeRO 和激活值显存，练习页负责把这些公式真正算出来。
+
 ---
 
 ## 🎯 学习目标

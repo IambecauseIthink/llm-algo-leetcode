@@ -4,10 +4,19 @@
 
 面试常考题：以经典的 LLaMA-7B 模型为例，深度剖析大模型底层参数量的具体分布，并一步步推导前向推理与完整训练所需的真实算力（FLOPs）需求。
 
+## 本节如何和 Notebook 配合
+
+这一节建议和 `[02_LLM_Params_and_FLOPs_Practice.ipynb](./02_LLM_Params_and_FLOPs_Practice.ipynb)` 一起学：
+
+- 先看本文，理解参数量拆解、前向 FLOPs、训练 FLOPs 和 MFU 的基础公式
+- 再做 Notebook，把参数量、训练时间和场景判断真正算一遍
+- Notebook 里的测试用来确认你不是“看懂了”，而是真的“会推导、会估算”
+
+如果你后面要做模型选型、训练成本评估或推理成本评估，这一页负责让你知道**怎么算**，Notebook 负责让你验证**算得对不对**。
+
 > **相关阅读**:  
 > 本章对应的练习资产：  
-> [`02_LLM_Params_and_FLOPs_Practice.ipynb`](./02_LLM_Params_and_FLOPs_Practice.md)  
-> [`02_LLM_Params_and_FLOPs_Practice.md`](../docs/01_Hardware_Math_and_Systems/02_LLM_Params_and_FLOPs_Practice.md)  
+> [`02_LLM_Params_and_FLOPs_Practice.ipynb`](./02_LLM_Params_and_FLOPs_Practice.ipynb)  
 
 ---
 
