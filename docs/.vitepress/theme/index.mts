@@ -12,16 +12,16 @@ export default {
     
     return h(DefaultTheme.Layout, null, {
       'doc-after': () => h(Giscus, {
-        repo: "lynnyulinlin-debug/llm-algo-leetcode",
+        repo: "datawhalechina/llm-algo-leetcode",
         repoId: "R_kgDOR3M84w",
-        category: "Announcements",
-        categoryId: "DIC_kwDOR3M8484C57Zx",
-        mapping: "pathname",
+        category: "Tutorial Comments",
+        categoryId: "DIC_kwDOR3M8484C_J6S",
+        mapping: "title",
         strict: "0",
         reactionsEnabled: "1",
         emitMetadata: "0",
         inputPosition: "top",
-        theme: isDark.value ? 'dark' : 'light',
+        theme: 'preferred_color_scheme',
         lang: "zh-CN",
         loading: "lazy"
       })
