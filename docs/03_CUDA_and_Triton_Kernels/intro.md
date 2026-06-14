@@ -1,6 +1,6 @@
-# Chapter 3: CUDA C++ 与 Triton 算子开发
+# 第三部分：CUDA C++ 与 Triton 算子开发
 
-## 🎯 本章概览
+## 🎯 本部分概览
 
 本章聚焦大模型算子的高性能实现，重点是把 Chapter 2 的算法实现落到 Triton / CUDA / 分布式层。
 
