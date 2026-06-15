@@ -77,6 +77,11 @@ def process_markdown_file(md_path, out_path):
             source_text = f.read()
 
         source_text = re.sub(r'(\]\([^)]+)\.ipynb\)', r'\1.md)', source_text)
+        source_text = re.sub(
+            r'(https://colab\.research\.google\.com/github/datawhalechina/llm-algo-leetcode/blob/main/[^)\s]+)\.md\)',
+            r'\1.ipynb)',
+            source_text,
+        )
         source_text = source_text.replace('../docs/', '../')
 
         with open(out_path, "w", encoding="utf-8") as f:
@@ -90,6 +95,11 @@ def process_markdown_file(md_path, out_path):
         source_text = f.read()
 
     source_text = re.sub(r'(\]\([^)]+)\.ipynb\)', r'\1.md)', source_text)
+    source_text = re.sub(
+        r'(https://colab\.research\.google\.com/github/datawhalechina/llm-algo-leetcode/blob/main/[^)\s]+)\.md\)',
+        r'\1.ipynb)',
+        source_text,
+    )
     source_text = re.sub(r'\[([^\]]+)\.ipynb\]\(([^)]+)\.md\)', r'[\1.md](\2.md)', source_text)
     source_text = source_text.replace('../docs/', '../')
     lines = source_text.split('\n')
