@@ -1,4 +1,4 @@
-# 讨论题 23：Tensor Core 深度剖析 (Tensor Core Deep Dive)
+# 23. TensorCore Deep Dive | Tensor Core 深度剖析 (Tensor Core Deep Dive)
 
 **难度：** Hard | **标签：** `GPU`, `矩阵乘法`, `混合精度` | **目标人群：** 想把“Tensor Core 很快”理解到能做性能判断的学习者
 
@@ -111,9 +111,9 @@ Tensor Core 的高吞吐通常依赖几个条件：
 
 ## 配合练习
 
-这一页建议和后面的 `1B-03` 练习一起做，练习目标可以这样设计：
+这一页建议和后面的 `1B-03` 练习一起做。这页的练习可以围绕下面两个目标展开：
 
 - 用 Triton 测 Tensor Core 利用率，比较不同矩阵形状下的吞吐变化
 - 对比 FP16 和 FP8 的利用率差异，观察吞吐和精度的权衡
 
-如果后面要补 Notebook，建议先围绕“矩阵形状是否触发 Tensor Core”和“不同精度下的吞吐差异”两个方向展开。
+先把“矩阵形状是否触发 Tensor Core”和“不同精度下的吞吐差异”这两个方向做顺，再看更复杂的实现会更容易建立直觉。

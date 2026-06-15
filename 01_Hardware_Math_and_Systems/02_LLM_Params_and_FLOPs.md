@@ -18,7 +18,7 @@
 > 本章对应的练习资产：  
 > [`02_LLM_Params_and_FLOPs_Practice.ipynb`](./02_LLM_Params_and_FLOPs_Practice.ipynb)  
 
----
+
 
 ## Q1：假设隐藏层维度为 $d$，词表大小为 $V$。请推导一个包含 $L$ 层的标准 Transformer Decoder 的总参数量。
 
@@ -56,7 +56,7 @@
 *总计约 6.7B，也就是所谓的 7B 模型！*
 </details>
 
----
+
 
 ## Q2：前向传播 (Inference / Forward Pass) 的 FLOPs 是怎么计算的？
 
@@ -78,7 +78,7 @@ $$ C_{forward} \approx 2 \times P \times T $$
 *(注：这里忽略了少量的 Attention 矩阵乘积算力等，因为在大模型中，线性层的矩阵乘法占了绝对大头，通常占 99% 以上)*
 </details>
 
----
+
 
 ## Q3：训练 (Training) 时包含前向和反向传播，总 FLOPs 是多少？
 
@@ -104,7 +104,7 @@ $$ C_{train} = C_{forward} + C_{backward} \approx 2PT + 4PT = 6 \times P \times 
 $$ \text{Time} = \frac{4.2 \times 10^{22}}{1000 \times 1.5 \times 10^{14}} = 2.8 \times 10^5 \text{ 秒} \approx 3.2 \text{ 天} $$
 </details>
 
----
+
 
 ## Q4：训练大模型时，什么是算力利用率 (MFU, Model FLOPs Utilization)？
 

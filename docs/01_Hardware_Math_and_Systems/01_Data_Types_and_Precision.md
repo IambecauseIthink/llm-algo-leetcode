@@ -6,20 +6,20 @@
 
 ## 本节如何和 Notebook 配合
 
-这一节建议和 [01_Data_Types_and_Precision_Practice.md](./01_Data_Types_and_Precision_Practice.md) 一起学：
+这一节建议和 `[01_Data_Types_and_Precision_Practice.ipynb](./01_Data_Types_and_Precision_Practice.md)` 一起学：
 
 - 先看本文，建立字节换算、FP16 / BF16 / INT8 / INT4 和混合精度的直觉
-- 再做练习页，把显存计算、训练显存和量化收益真正算一遍
-- 练习页里的测试用来确认你不是“看懂了”，而是真的“会算了”
+- 再做 Notebook，把显存计算、训练显存和量化收益真正算一遍
+- Notebook 里的测试用来确认你不是“看懂了”，而是真的“会算了”
 
-如果你后面要估算模型显存、训练成本或量化收益，这一页负责让你知道**为什么这些格式重要**，练习页负责让你验证**具体能省多少**。
+如果你后面要估算模型显存、训练成本或量化收益，这一页负责让你知道**为什么这些格式重要**，Notebook 负责让你验证**具体能省多少**。
 
 > **相关阅读**:  
 > 本章对应的练习资产：  
 > [`01_Data_Types_and_Precision_Practice.ipynb`](./01_Data_Types_and_Precision_Practice.md)  
-> [`01_Data_Types_and_Precision_Practice.md`](./01_Data_Types_and_Precision_Practice.md)    
+> [`01_Data_Types_and_Precision_Practice.md`](../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision_Practice.md)    
 
----
+
 
 ## Q1：基础认知——常见的数据格式分别占用多大内存空间？
 
@@ -38,7 +38,7 @@
 做静态显存估算时，只需要把“模型参数量”乘以对应的“字节数”即可。比如一个 7B（70亿）参数的模型，如果采用 FP16/BF16 加载，纯权重占用的显存就是：$7 \times 10^9 \times 2 \text{ Bytes} \approx 14 \text{ GB}$。
 </details>
 
----
+
 
 ## Q2：底层原理——同样是 16-bit，FP16 和 BF16 的底层位分布有什么本质区别？
 
@@ -57,7 +57,7 @@
    - 因为拥有 8 位指数，BF16 能表示的最大数值范围和 FP32 一模一样（高达 $3.4 \times 10^{38}$），**极难发生数值溢出**。代价是尾数位从 10 降到了 7，牺牲了一点数值的“精确度”。
 </details>
 
----
+
 
 ## Q3：训练实战——为什么现代大模型预训练（如 LLaMA）大多转向了 BF16，而不再首选 FP16？
 
@@ -111,14 +111,13 @@ FP16 的动态范围（最大值约 65504）远窄于 FP32（约 $3.4 \times 10^
 **总结**：BF16 在训练中的主导地位源于其”大范围 + 硬件支持 + 零调参”的综合优势，完美契合了大模型训练对数值稳定性的需求。
 </details>
 
----
+
 
 ## Q4：系统进阶——在 BF16 混合精度训练 (AMP) 时，为什么优化器里依然必须保留一份 FP32 的主权重 (Master Weights)？
 
 <details>
 <summary>点击展开查看解析</summary>
 
-这是一道极其经典的 Infra 进阶面试题。
 在混合精度训练中，模型的前向传播（Forward）和反向传播（Backward）都是用 16-bit 跑的，这样可以节省 50% 的显存并利用 Tensor Core 加速。
 
 但问题出在**参数更新（Optimizer Step）**这一步：
@@ -130,7 +129,7 @@ $$ W_{new} = W_{old} - \text{Learning\_Rate} \times \text{Gradient} $$
 因此，为了保证模型能吃进最微小的梯度更新，优化器中必须始终保留一份 **FP32 的 Master Weights**。每次反向传播算出梯度后，都会在**高精度的 FP32 副本上**进行参数累加更新，然后再将其截断强转回 16-bit 格式，送给下一轮的前向计算。这就是为什么开启全参训练后，显存占用远大于静态权重的原因。
 </details>
 
----
+
 
 ## Q5：硬件标杆——作为开启大语言模型时代的决定性硬件，A100（Ampere 架构）在数据精度支持上做出了哪些革命性升级？
 
@@ -149,7 +148,7 @@ A100 之所以能成为大模型时代的重要工业界标杆（至今仍被广
 - **底层机制**：当你在 PyTorch 中设置 `torch.backends.cuda.matmul.allow_tf32 = True`（在 A100 及更新的架构上这是默认开启的）时，如果你向 GPU 丢了两个 FP32 矩阵相乘，A100 会在内部的 Tensor Core 里将其**截断为 TF32 更快算完**，然后再转回 FP32 输出。这让“看似是单精度”的矩阵乘法获得数倍级的性能提升。
 </details>
 
----
+
 
 ## Q6：前沿演进——NVIDIA 在 H100（Hopper 架构）中引入的原生 FP8 格式，有什么专门针对 AI 的设计？
 

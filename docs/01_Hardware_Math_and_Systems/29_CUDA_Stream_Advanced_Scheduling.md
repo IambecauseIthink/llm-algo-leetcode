@@ -1,4 +1,4 @@
-# 讨论题 29：CUDA Stream 高级调度 (CUDA Stream Advanced Scheduling)
+# 29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度
 
 **难度：** Hard | **标签：** `CUDA`, `Stream`, `异步调度` | **目标人群：** 想把推理和训练流程调得更细的学习者
 
@@ -139,13 +139,12 @@ Stream C: D2H + 后处理
 
 ## 配合练习
 
-这一页后面的练习可以按三步来设计：
+这一页建议和后面的 [29_CUDA_Stream_Advanced_Scheduling_Practice.ipynb](./29_CUDA_Stream_Advanced_Scheduling_Practice.md) 一起看。这页的练习可以围绕下面三步展开：
 
 - 先做一个 Stream 优先级的小实验，看高 / 低优先级任务的调度差异
 - 再做 Event 同步，观察不同 Stream 之间的依赖是怎么被串起来的
 - 最后尝试 CUDA Graph 捕获和回放，比较捕获与回放的耗时差异
 
-如果要补 Notebook，建议先围绕这三个目标展开，会比直接写复杂的推理服务更容易形成直觉.
 对应的 Notebook 练习可以看这里：
 
-- [29_CUDA_Stream_Advanced_Scheduling_Practice.ipynb](../../01_Hardware_Math_and_Systems/29_CUDA_Stream_Advanced_Scheduling_Practice.ipynb)
+- [29_CUDA_Stream_Advanced_Scheduling_Practice.ipynb](./29_CUDA_Stream_Advanced_Scheduling_Practice.md)

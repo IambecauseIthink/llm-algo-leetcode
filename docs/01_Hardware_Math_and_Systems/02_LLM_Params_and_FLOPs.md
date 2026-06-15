@@ -6,19 +6,19 @@
 
 ## 本节如何和 Notebook 配合
 
-这一节建议和 `[02_LLM_Params_and_FLOPs_Practice.md](./02_LLM_Params_and_FLOPs_Practice.md)` 一起学：
+这一节建议和 `[02_LLM_Params_and_FLOPs_Practice.ipynb](./02_LLM_Params_and_FLOPs_Practice.md)` 一起学：
 
 - 先看本文，理解参数量拆解、前向 FLOPs、训练 FLOPs 和 MFU 的基础公式
-- 再做练习页，把参数量、训练时间和场景判断真正算一遍
-- 练习页里的测试用来确认你不是“看懂了”，而是真的“会推导、会估算”
+- 再做 Notebook，把参数量、训练时间和场景判断真正算一遍
+- Notebook 里的测试用来确认你不是“看懂了”，而是真的“会推导、会估算”
 
-如果你后面要做模型选型、训练成本评估或推理成本评估，这一页负责让你知道**怎么算**，练习页负责让你验证**算得对不对**。
+如果你后面要做模型选型、训练成本评估或推理成本评估，这一页负责让你知道**怎么算**，Notebook 负责让你验证**算得对不对**。
 
 > **相关阅读**:  
 > 本章对应的练习资产：  
-> [`02_LLM_Params_and_FLOPs_Practice.md`](./02_LLM_Params_and_FLOPs_Practice.md)  
+> [`02_LLM_Params_and_FLOPs_Practice.ipynb`](./02_LLM_Params_and_FLOPs_Practice.md)  
 
----
+
 
 ## Q1：假设隐藏层维度为 $d$，词表大小为 $V$。请推导一个包含 $L$ 层的标准 Transformer Decoder 的总参数量。
 
@@ -56,7 +56,7 @@
 *总计约 6.7B，也就是所谓的 7B 模型！*
 </details>
 
----
+
 
 ## Q2：前向传播 (Inference / Forward Pass) 的 FLOPs 是怎么计算的？
 
@@ -78,7 +78,7 @@ $$ C_{forward} \approx 2 \times P \times T $$
 *(注：这里忽略了少量的 Attention 矩阵乘积算力等，因为在大模型中，线性层的矩阵乘法占了绝对大头，通常占 99% 以上)*
 </details>
 
----
+
 
 ## Q3：训练 (Training) 时包含前向和反向传播，总 FLOPs 是多少？
 
@@ -104,7 +104,7 @@ $$ C_{train} = C_{forward} + C_{backward} \approx 2PT + 4PT = 6 \times P \times 
 $$ \text{Time} = \frac{4.2 \times 10^{22}}{1000 \times 1.5 \times 10^{14}} = 2.8 \times 10^5 \text{ 秒} \approx 3.2 \text{ 天} $$
 </details>
 
----
+
 
 ## Q4：训练大模型时，什么是算力利用率 (MFU, Model FLOPs Utilization)？
 

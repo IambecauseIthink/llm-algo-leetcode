@@ -143,14 +143,10 @@ MoE 的工程落地和 1C 的分布式通信章节强相关，建议后面接着
 
 ## 配合练习
 
-这一页后面的练习可以按三步来设计：
+这一页建议和后面的 [22_MoE_Parameter_and_Compute_Practice.ipynb](./22_MoE_Parameter_and_Compute_Practice.ipynb) 一起看。先把下面三个问题做出来，最容易建立 MoE 的工程直觉：
 
 - 先用一个简化公式算 Mixtral 8x7B 的总参数和活跃参数
 - 再模拟 router 的负载均衡，看看 token 分配不均会带来什么后果
 - 最后把专家并行的 All-to-All 通信量估出来，建立通信成本直觉
 
-对应的 Notebook 练习可以看这里：
-
-- [22_MoE_Parameter_and_Compute_Practice.ipynb](./22_MoE_Parameter_and_Compute_Practice.ipynb)
-
-如果要补 Notebook，优先做这三件事会比先讲更复杂的 MoE 变体更有价值。
+把这三件事做顺手之后，再看更复杂的 MoE 变体会更容易。
