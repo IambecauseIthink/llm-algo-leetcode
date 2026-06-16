@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 11 | LR Schedulers WSD Cosine</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 11 | 训练 | Medium</p>
+        <h1>LR Schedulers WSD Cosine</h1>
+        <p class="lead">理解 warmup、stable、decay 与 cosine 曲线如何影响训练节奏。</p>
+        <div class="meta">
+          <span class="pill">11_LR_Schedulers_WSD_Cosine.ipynb</span>
+          <span class="pill">Learning Rate</span><span class="pill">Scheduler</span><span class="pill">Warmup</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">lr(t) = lr_min + 0.5 * (lr_max-lr_min) * (1 + cos(pi * t / T))</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 11_LR_Schedulers_WSD_Cosine.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>11. LR Schedulers WSD Cosine | 大模型训练调参难点：学习率调度器 (Warmup, Cosine, WSD)</h2>
+<p><strong>难度：</strong> Medium | <strong>标签：</strong> <code>Training</code>, <code>LR Scheduler</code>, <code>Llama-3</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
+<p>在传统的深度学习中，学习率通常是固定的或是按阶梯下降 (Step Decay)。但在大语言模型 (LLM) 的预训练和微调中，学习率的调度 (LR Schedule) 直接决定了模型会不会<strong>崩溃 (Loss Spike)</strong> 以及能否<strong>收敛到平缓的最优解</strong>。</p>
+<p>目前大模型训练有两套绝对主流的方案：</p>
+<ul>
+<li><strong>Cosine Annealing with Warmup</strong> (带预热的余弦退火)：LLaMA-1/2, GPT-3 等绝大多数模型预训练的标配。</li>
+<li><strong>WSD (Warmup-Stable-Decay)</strong>：LLaMA-3 和现代持续预训练 (Continued Pre-training) 最前沿的标配。</li>
+</ul>
+<p>本节我们将不依赖 HuggingFace 或 PyTorch 的现成实现，<strong>纯手工通过数学分段函数写一个现代大模型标配的 WSD 调度器</strong>，并将其可视化。</p>
+<h4>Step 1: 核心机制剖析</h4>
+<blockquote>
+<p><strong>为什么一定要有 Warmup (预热)？</strong></p>
+<p>1. <strong>模型随机初始化</strong>时，梯度非常大规模且方向混乱。如果直接给最大的学习率（如 3e-4），大规模的梯度更新会瞬间把模型权重冲飞 (Loss 直接 NaN)。</p>
+<p>2. <strong>AdamW 优化器</strong>在刚开始时，其用于分母的“二阶动量 (方差的移动平均)”还没收集够数据，非常小。除以一个极小的数会导致实际更新步长不可控。Warmup 给了优化器几千步的“收集方差”的时间。</p>
+</blockquote>
+<blockquote>
+<p><strong>Cosine Decay 的痛点与 WSD 的崛起 (LLaMA-3 的选择)：</strong></p>
+<p>- <strong>传统的 Cosine Decay</strong> 需要在训练<strong>一开始就定死总步数 (Total Steps)</strong>，慢慢按照余弦曲线下降到 0。这导致一个致命问题：如果你发现数据还没训完，想加数据继续训 (Continued Pre-training)，此时学习率已经降到底了，模型失去了学习新知识的能力。</p>
+<p>- <strong>WSD (Warmup-Stable-Decay) 调度器</strong> 准确解决了这个问题。它把训练分为三段：</p>
+<p>  1. <strong>Warmup (预热)</strong>：线性增长到最大学习率。</p>
+<p>  2. <strong>Stable (稳定期)</strong>：保持最大学习率不变，吃尽海量数据。如果想加数据，无限延长这个阶段即可。</p>
+<p>  3. <strong>Decay (高效退火)</strong>：只在训练的最后 10% 或 5% 阶段，用一个陡峭的函数（如线性或余弦）快速降到 0，让模型迅速收敛收拢。</p>
+</blockquote>
+<h4>Step 2: WSD 调度器的数学曲线</h4>
+<p>Warmup-Stable-Decay (WSD) 是现代预训练（如 LLaMA-3）的标配。它的三个阶段是：</p>
+<ul>
+<li><strong>Warmup</strong>: 学习率从 0 线性增长到最大值 $\eta_{max}$。</li>
+<li><strong>Stable</strong>: 保持最大值 $\eta_{max}$ 训练绝大部分 Token（占整体的 70%~90%）。</li>
+<li><strong>Decay</strong>: 在最后阶段（如退火阶段）使用余弦退火或线性衰减，将学习率迅速降至 $\eta_{min}$。这极大地帮助了模型在最后阶段收敛。</li>
+</ul>
+<h4>Step 3: 代码实现框架</h4>
+<p>继承自 <code>torch.optim.lr_scheduler.LRScheduler</code>，你需要实现核心的 <code>get_lr()</code> 方法。在其中利用 <code>self.last_epoch</code> 判断当前步数处于哪一个阶段，然后根据上述的数学公式计算并返回此时的学习率数组。</p>
+<h4>Step 4: 动手实战</h4>
+<p><strong>要求</strong>：请补全下方 <code>WSD_Scheduler</code> 类。我们需要继承 PyTorch 原生的 <code>torch.optim.lr_scheduler.LRScheduler</code>，实现它的 <code>get_lr()</code> 方法。</p>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p><strong>1. TODO 1: Warmup 阶段（线性增长）</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>lr = self.max_lr * (self.current_step + 1) / self.warmup_steps</code></li>
+<li><strong>核心思想</strong>：学习率从 0 线性增长到 <code>max_lr</code>。</li>
+<li><strong>必要性</strong>：训练初期，模型参数是随机初始化的，梯度方向不稳定。如果直接使用大学习率，容易导致梯度爆炸或发散。</li>
+<li><strong>工程细节</strong>：<code>(self.current_step + 1)</code> 确保第一步的学习率不为 0，而是 <code>max_lr / warmup_steps</code>。</li>
+<li><strong>典型设置</strong>：Warmup 步数通常占总训练步数的 1-5%，例如训练 100k 步，Warmup 1k-5k 步。</li>
+</ul>
+<p><strong>2. TODO 2: Stable 阶段（保持恒定）</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>lr = self.max_lr</code></li>
+<li><strong>核心思想</strong>：学习率保持在最大值，让模型充分学习。</li>
+<li><strong>训练效果</strong>：这是模型学习的主要阶段，Loss 下降最快。</li>
+<li><strong>时长设置</strong>：通常占总训练步数的 60-80%，是三个阶段中最长的。</li>
+<li><strong>与 Cosine 对比</strong>：Cosine 调度器没有 Stable 阶段，学习率在 Warmup 后立即开始衰减。WSD 的 Stable 阶段提供了更稳定的训练过程。</li>
+</ul>
+<p><strong>3. TODO 3: Decay 阶段（线性衰减）</strong></p>
+<ul>
+<li><strong>实现方式</strong>：</li>
+</ul>
+<p>```python</p>
+<p>decay_progress = (self.current_step - self.warmup_steps - self.stable_steps) / self.decay_steps</p>
+<p>lr = self.max_lr - (self.max_lr - self.min_lr) * min(decay_progress, 1.0)</p>
+<p>```</p>
+<ul>
+<li><strong>核心思想</strong>：学习率从 <code>max_lr</code> 线性衰减到 <code>min_lr</code>。</li>
+<li><strong>收敛作用</strong>：较小的学习率帮助模型在损失函数的局部最优附近进行精细调整，避免震荡。</li>
+<li><strong><code>min(decay_progress, 1.0)</code> 的作用</strong>：防止训练步数超过预期时学习率变为负数。</li>
+<li><strong>典型设置</strong>：Decay 步数通常占总训练步数的 10-20%。</li>
+</ul>
+<p><strong>工程要点</strong></p>
+<ul>
+<li><strong>WSD vs Cosine</strong>：WSD 更可控，适合需要精确控制训练阶段的场景；Cosine 更平滑，适合不确定最优训练步数的场景。</li>
+<li><strong>超参数调优</strong>：Stable 阶段的长度是关键，过短会导致训练不充分，过长会浪费计算资源。</li>
+<li><strong>动态调整</strong>：可以根据验证集 Loss 动态调整各阶段的长度，实现自适应调度。</li>
+<li><strong>多阶段训练</strong>：可以在 Decay 后再次进入 Warmup-Stable-Decay 循环，实现周期性学习率调度（Cyclic Learning Rate）。</li>
+</ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>Warmup 用较小学习率启动训练，减少早期不稳定。</li><li>Cosine decay 平滑降低学习率，常用于训练后期收敛。</li><li>WSD 把学习率阶段拆为 warmup、stable、decay，便于控制长训练。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>Warmup 阶段的主要目的是什么？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>让训练早期更稳定</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>增加模型参数量</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>减少 tokenizer 词表</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>画出 warmup + cosine 的学习率曲线。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>实现 step 到 lr 的函数，并打印关键 step 的 lr。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>比较无 warmup 和有 warmup 的前几个 step 学习率。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>LR Schedulers WSD Cosine 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="10_lora_tutorial.html">上一关：L10</a>
+        <a class="primary" href="12_rlhf_ppo_memory.html">下一关：L12</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "11";
+    const answer = 0;
+    const explanation = "训练刚开始梯度和激活分布尚不稳定，直接用大学习率更容易震荡。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 11 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"Learning Rate\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

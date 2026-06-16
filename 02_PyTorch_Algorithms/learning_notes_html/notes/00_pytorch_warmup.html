@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 00 | PyTorch Warmup</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 00 | 零基础导学关卡</p>
+        <h1>PyTorch Warmup</h1>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <div class="meta">
+          <span class="pill">00_PyTorch_Warmup.ipynb</span>
+          <span class="pill">Tensor</span><span class="pill">Embedding</span><span class="pill">Autograd</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
+        </div>
+        <div class="formula">先学会看懂 shape、查表、梯度流，再回 notebook 写 PyTorch 代码</div>
+      </div>
+    </section>
+
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="tensor">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 1.1 / 1.2</span>
+          </div>
+          <h2>Tensor 变形：先学会读 shape，再写 reshape</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>Tensor 的 shape 不是一串数字，而是每个轴的语义。</li><li>图像特征常见布局是 [B, C, H, W]：B 是样本数，C 是通道，H/W 是空间网格。</li><li>Transformer 更喜欢序列布局：[B, S, C]，其中 S 可以是 H * W。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>把一张 H×W 的小棋盘摊平成一条路线：每个格子变成一个 token，格子里带着 C 个通道特征。</p>
+            
+          <div class="shape-lesson">
+            <span class="shape-card">原始小图<br><strong>[1, 2, 2, 3]</strong><small>1 张图，2 个通道，2×3 网格</small></span>
+            <span class="shape-op">换轴</span>
+            <span class="shape-card">通道放后<br><strong>[1, 2, 3, 2]</strong><small>每个格子带 2 个通道值</small></span>
+            <span class="shape-op">摊平网格</span>
+            <span class="shape-card">token 序列<br><strong>[1, 6, 2]</strong><small>6 个位置，每个位置 2 维</small></span>
+          </div>
+          <p>你不需要先背 <code>permute(0, 2, 3, 1)</code>。先问自己：我要把 C 从第 2 个轴挪到最后，再把 H 和 W 合成序列长度。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>如果 x 的 shape 是 [2, 3, 4, 5]，转成图像 token 序列后 shape 应该是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tensor" value="0">
+                <span>[2, 20, 3]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tensor" value="1">
+                <span>[2, 3, 20]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tensor" value="2">
+                <span>[20, 2, 3]</span>
+              </label></div>
+            <div class="feedback" data-feedback="tensor"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-0">
+                <span>回到 notebook，实现原生 PyTorch 写法：先 permute，再 reshape。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-1">
+                <span>再用 einops 写出同一个变换，让字符串表达出 b c h w -&gt; b (h w) c。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-2">
+                <span>跑测试时重点看 shape 和 torch.allclose，两者同时通过才算真的理解。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="embedding">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 2.1 / 2.2</span>
+          </div>
+          <h2>Embedding 查表：token id 是地址，不是连续数值</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>文本会先被 tokenizer 变成 token id，例如 [4, 1, 3]。</li><li>神经网络不能直接理解 id 的大小关系；id 只是查表地址。</li><li>Embedding 权重表的 shape 是 [vocab_size, hidden_dim]，第 i 行就是 token i 的向量。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>像在词典里按页码找词条：id 是页码，Embedding 表是词典，查出来的一整行向量才是模型真正使用的表示。</p>
+            
+          <div class="lookup-board">
+            <div class="ids"><strong>input_ids</strong><span>[2, 0, 3]</span></div>
+            <div class="table">
+              <span>ID 0</span><span>[0.1, 0.4]</span>
+              <span>ID 1</span><span>[0.8, 0.2]</span>
+              <span>ID 2</span><span>[0.5, 0.9]</span>
+              <span>ID 3</span><span>[0.3, 0.7]</span>
+            </div>
+            <div class="ids"><strong>输出</strong><span>[[0.5,0.9], [0.1,0.4], [0.3,0.7]]</span></div>
+          </div>
+          <p><code>nn.Embedding(input_ids)</code> 和 <code>weight[input_ids]</code> 做的是同一个核心动作：按 id 取行。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>给定 weight 有 10 行、hidden_dim=4，input_ids 的 shape 是 [2, 3]，Embedding 输出 shape 是什么？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-embedding" value="0">
+                <span>[2, 3, 4]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-embedding" value="1">
+                <span>[10, 2, 3]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-embedding" value="2">
+                <span>[2, 4]</span>
+              </label></div>
+            <div class="feedback" data-feedback="embedding"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-0">
+                <span>回到 notebook，先实例化 nn.Embedding 并得到官方输出。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-1">
+                <span>再用 emb_layer.weight[input_ids] 手动查表。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-2">
+                <span>用 torch.allclose 验证官方查表和手动查表完全一致。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="backward">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 3.1 / 3.2 / 3.3</span>
+          </div>
+          <h2>Linear + ReLU 反传：梯度像闯关一样倒着走</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>forward 不是只算输出，还要保存 backward 会用到的中间信息。</li><li>ReLU 的导数很简单：z &gt; 0 时梯度通过，z &lt;= 0 时梯度变 0。</li><li>Linear 的三个梯度要和三个输入形状对齐：x、weight、bias。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>把前向看成三扇门：Linear 门、ReLU 门、Loss 门。反向时梯度从 Loss 倒着回来，ReLU 门先决定哪些位置能通行。</p>
+            
+          <div class="grad-lesson">
+            <span>grad_output<br><strong>上一层传回</strong></span>
+            <span class="shape-op">× ReLU mask</span>
+            <span>grad_z<br><strong>只保留 z &gt; 0</strong></span>
+            <span class="shape-op">矩阵乘法反传</span>
+            <span>grad_x / grad_weight / grad_bias</span>
+          </div>
+          <p>如果前向里某个 <code>z</code> 是负数，ReLU 把它压成 0；反向时这条路也会被 mask 关掉。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>已知 grad_output = [5, 5, 5]，z = [-1, 0, 2]，经过 ReLU 反向后 grad_z 是什么？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-backward" value="0">
+                <span>[0, 0, 5]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-backward" value="1">
+                <span>[5, 5, 5]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-backward" value="2">
+                <span>[-5, 0, 5]</span>
+              </label></div>
+            <div class="feedback" data-feedback="backward"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-0">
+                <span>回到 notebook，在 forward 里计算 z、y，并保存 x、weight、mask。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-1">
+                <span>在 backward 里先写 grad_z = grad_output * mask。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-2">
+                <span>再补 Linear 的三个梯度：grad_x、grad_weight、grad_bias，并和官方 autograd 对齐。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="../index.html">返回地图</a>
+        <a class="primary" href="01_rmsnorm_tutorial.html">下一关：L01</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "00";
+    const checkpointData = {"tensor":{"answer":0,"explain":"B 保持 2，H*W = 4*5 = 20，C 保持 3，所以是 [2, 20, 3]。"},"embedding":{"answer":0,"explain":"每个 id 会变成一个 hidden_dim=4 的向量，所以在 [2,3] 后面追加 4。"},"backward":{"answer":0,"explain":"ReLU 只有 z > 0 的位置导数为 1；-1 和 0 都不传梯度。"}};
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
+    const completeKey = "pytorch-levels-complete";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

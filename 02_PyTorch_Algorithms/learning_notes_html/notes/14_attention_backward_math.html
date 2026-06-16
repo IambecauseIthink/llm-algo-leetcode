@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 14 | Attention Backward Math</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 14 | 结构 | Hard</p>
+        <h1>Attention Backward Math</h1>
+        <p class="lead">沿着 O = softmax(QK^T)V 反向拆梯度，理解注意力 backward 的主路径。</p>
+        <div class="meta">
+          <span class="pill">14_Attention_Backward_Math.ipynb</span>
+          <span class="pill">Attention</span><span class="pill">Backward</span><span class="pill">Matrix Grad</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">P = softmax(S); O = P V</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 14_Attention_Backward_Math.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>14. Attention Backward Math | 注意力机制反向传播推导与自定义 Autograd (Attention Backward)</h2>
+<p><strong>难度：</strong> Hard | <strong>标签：</strong> <code>微积分</code>, <code>PyTorch</code>, <code>Autograd</code> | <strong>目标人群：</strong> 底层算子开发、高阶算法面试</p>
+<p>在第 04 节，我们完成了多头注意力机制（MHA）的前向传播搭建。然而，<strong>“大模型训练”与“推理”核心挑战之一在于反向传播 (Backward Pass)。</strong></p>
+<p>为什么各大厂商都在持续优化 FlashAttention？因为在训练时，为了计算反向传播的梯度，框架必须在显存中保存尺寸为 $N \times N$ (序列长度的平方) 的庞大注意力分数矩阵（Attention Probabilities）。当序列长度达到 128K 时，仅这一个中间变量就会极易导致 GPU 显存溢出 (OOM)。</p>
+<p>在下一节正式进入 FlashAttention 之前，我们必须跨过这座高山：<strong>完全搞懂 Attention 反向传播的微积分推导，并抛弃 PyTorch 原生的 <code>.backward()</code>，利用 <code>torch.autograd.Function</code> 写出它的反向梯度计算代码！</strong></p>
+<p>这是底层架构岗位的常见考核点。</p>
+<h4>Step 1: 前向传播回顾与变量定义</h4>
+<p>为了不打断思路，我们先简洁回顾一下 04 节的单头 Attention 前向公式（省略缩放因子 $\sqrt{d}$ 简化推导，后文代码中会加回）：</p>
+<ul>
+<li><strong>打分矩阵</strong>：$S = Q K^T$</li>
+<li><strong>概率矩阵</strong>：$P = \text{Softmax}(S, \text{dim}=-1)$</li>
+<li><strong>最终输出</strong>：$O = P V$</li>
+</ul>
+<blockquote>
+<p><strong>张量形状说明：</strong></p>
+<p>- $Q, K, V \in \mathbb{R}^{N \times d}$ (序列长度 $N$，特征维数 $d$)</p>
+<p>- $S, P \in \mathbb{R}^{N \times N}$</p>
+<p>- $O \in \mathbb{R}^{N \times d}$</p>
+</blockquote>
+<h4>Step 2: 链式法则逆流而上 (微积分时间)</h4>
+<p>假设下游的损失函数已经帮我们算好了输出张量 $O$ 的梯度 $\nabla O$（通常简写为 $dO$）。我们的任务是求出 $dQ, dK, dV$。</p>
+<p><strong>1. 求 $dV$（最简单的）</strong></p>
+<p>因为 $O = P V$，根据矩阵乘法求导法则：</p>
+<p>$$ dV = P^T \cdot dO $$</p>
+<p><strong>2. 求 $dP$（关键衔接）</strong></p>
+<p>同样因为 $O = P V$，对 $P$ 求导可得：</p>
+<p>$$ dP = dO \cdot V^T $$</p>
+<p><strong>3. 跨越 Softmax (核心难点)</strong></p>
+<p>我们需要从 $dP$ 求得 $dS$。Softmax 的雅可比矩阵非常特殊：</p>
+<p>已知 $P_i = \frac{e^{S_i}}{\sum e^{S_j}}$，其对于 $S$ 的导数在应用链式法则后，会化简为一个非常优美的形式：</p>
+<p>$$ dS = P \odot (dP - \text{row\_sum}(P \odot dP)) $$</p>
+<p>(*注：$\odot$ 表示 Element-wise 逐元素乘法。后面的加和项是通过广播机制实现的*)</p>
+<p><strong>4. 求 $dQ$ 和 $dK$</strong></p>
+<p>此时我们已经拿到了 $dS$。因为 $S = Q K^T$（如果带缩放因子则是 $S = \frac{Q K^T}{\sqrt{d}}$）：</p>
+<p>$$ dQ = \frac{dS \cdot K}{\sqrt{d}} $$</p>
+<p>$$ dK = \frac{dS^T \cdot Q}{\sqrt{d}} $$</p>
+<h4>Step 3: 手撕 PyTorch Autograd Function</h4>
+<p>现在，把你刚才看到的微积分公式，转化为能够实际运行的代码。我们将继承 <code>torch.autograd.Function</code>。</p>
+<p><strong>要求</strong>：完成 <code>backward</code> 函数中 TODO 的数学推导代码。你可以使用 <code>ctx.saved_tensors</code> 来获取前向传播时保存的 $Q, K, V, P$ 等变量。</p>
+<h4>Step 4: 工业界的现实与破局（预告）</h4>
+<p>看看你刚才写的 <code>ctx.save_for_backward(q, k, v, p)</code>。这行代码在反向传播被调用前，会<strong>一直把 $P$ 锁在显存里</strong>。</p>
+<p>如果现在的上下文是 $128K$（如 GPT-4），$P$ 的大小就是 $128K \times 128K$。即便在 FP16 精度下，<strong>单单存这一个 $P$ 矩阵，一个 Batch 就需要占用约 32 GB 的显存！</strong> 稍微开大点 Batch Size，连 80G 的 A100 都会触发 OOM。</p>
+<blockquote>
+<p><strong>思考题</strong>：如果你是底层算法工程师，怎么解决这个问题？</p>
+<p><strong>答案预告</strong>：不存 $P$！我们在反向传播需要 $P$ 的时候，<strong>拿 $Q$ 和 $K$ 现场重算一次 $P$（Recomputation）！</strong> 通过巧妙的 SRAM 分块加载机制，虽然计算量变大了，但因为避免了把庞大的 $P$ 写入又读出非常缓慢的 HBM，最终不但不 OOM，<strong>速度反而变快了 3 倍！</strong></p>
+</blockquote>
+<p>这就是下一节业界广泛使用的 <strong>FlashAttention</strong> 所做的事。</p>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p>Attention 梯度的核心在于处理 Softmax 的雅可比矩阵。对于 $dP$，通过矩阵转置操作可以轻松由链式法则获得；随后通过提取 $P \odot dP$ 并对行求和，构造出 Softmax 的反向传播梯度 $dS$。这也是理解重计算（Recomputation）技术以节省大规模训练显存的理论基础。</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>Attention backward 可分为穿过 V、softmax、scale dot-product 三段。</li><li>Softmax backward 不是简单逐元素相乘，它和整行概率分布相关。</li><li>理解矩阵维度是推导 dQ、dK、dV 的关键。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>Attention backward 中，softmax 的梯度为什么需要特别处理？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>softmax 输出同一行元素相互耦合</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>softmax 没有导数</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>softmax 只支持整数</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>从 O = P V 开始推导 dV 和 dP。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>实现一行 softmax backward，并和 autograd 对比。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>继续从 scores = QK^T / sqrt(d) 推导 dQ 和 dK。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>Attention Backward Math 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="13_dpo_loss_tutorial.html">上一关：L13</a>
+        <a class="primary" href="15_flashattention_sim.html">下一关：L15</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "14";
+    const answer = 0;
+    const explanation = "一个 logit 改变会影响同一行所有 softmax 概率。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 14 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"Attention\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 19 | SGLang RadixAttention</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 19 | 推理 | Hard</p>
+        <h1>SGLang RadixAttention</h1>
+        <p class="lead">利用前缀复用，把共享 prompt 的 KV cache 放进 radix tree 中管理。</p>
+        <div class="meta">
+          <span class="pill">19_SGLang_RadixAttention.ipynb</span>
+          <span class="pill">SGLang</span><span class="pill">Prefix Cache</span><span class="pill">Radix Tree</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">shared prefix -&gt; reusable KV cache nodes</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 19_SGLang_RadixAttention.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>19. SGLang RadixAttention | SGLang 与 RadixAttention: 突破 vLLM 多轮对话瓶颈</h2>
+<p><strong>难度：</strong> Medium | <strong>标签：</strong> <code>SGLang</code>, <code>Radix Tree</code>, <code>KV Cache</code> | <strong>目标人群：</strong> 模型部署与推理引擎开发</p>
+<p>上一节我们学习了业界广泛使用的 <strong>vLLM (PagedAttention)</strong>。它准确解决了单次生成长文本时的<strong>内存碎片</strong>问题。</p>
+<p>但在实际的生产环境中，我们经常遇到以下场景：</p>
+<ul>
+<li><strong>庞大且共享的 System Prompt</strong>（如几百字的设定语，每个用户请求都带着）。</li>
+<li><strong>多轮对话（Multi-turn Chat）</strong>（只增加了最后一句用户提问，前面几万字的聊天记录都是相同的）。</li>
+<li><strong>Few-shot Prompting</strong>（给所有请求都塞入相同的 few-shot 示例）。</li>
+</ul>
+<p>vLLM 会对每一个请求<strong>从头开始（重新计算）</strong>这些共享前缀的 KV Cache，这浪费了大量的时间（导致 TTFT 首字响应极慢）和显存。</p>
+<p><strong>SGLang (LMSYS, 2024)</strong> 的提出，它的核心创新 <strong>RadixAttention</strong> 引入了<strong>基数树 (Radix Tree)</strong> 来管理系统的 KV Cache。当系统发现新的请求和旧请求有着相同的前缀（Prefix）时，它会<strong>直接复用</strong>树节点里的 KV Cache，完全跳过了重复的 Prefill 阶段！</p>
+<h4>Step 1: 核心机制对比</h4>
+<blockquote>
+<p><strong>vLLM PagedAttention：线性的分页存储</strong></p>
+<p>vLLM 就像操作系统的虚拟内存。每个请求有一个页表，它能很好地解决碎片，但请求与请求之间的页表是隔离的。就算两个请求的 Prompt 一模一样，它们也会各占一份显存，各算一次。</p>
+</blockquote>
+<blockquote>
+<p><strong>SGLang RadixAttention：基于基数树的共享路由</strong></p>
+<p>系统维护了一棵全局的树。树的每一条边代表一段 Token 序列，节点里存着这段序列对应的 KV Cache 物理块指针。</p>
+<p>当新请求到来时，SGLang 会用它的 Prompt 去这棵树里做<strong>最长前缀匹配 (Longest Prefix Match)</strong>。</p>
+<p>匹配到的部分直接拿来用，没匹配到的部分再去计算并作为新分支挂在树上。</p>
+</blockquote>
+<h4>Step 2: 动手实战 —— 模拟 Radix Tree 前缀匹配</h4>
+<p>为了让你深刻理解 SGLang 的调度思想，我们将用 Python 原生数据结构，亲手模拟一个非常简化的 Radix Tree 路由管理器。</p>
+<p><strong>要求</strong>：完成 <code>match_prefix</code> 函数，在全局 KV 树中寻找当前请求的最长前缀，返回可以省去的重计算长度（Hit Length）。</p>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p><strong>1. TODO: 最长前缀匹配算法</strong></p>
+<ul>
+<li><strong>实现方式</strong>：遍历根节点的所有子节点，逐个 token 比较，找到最长的连续匹配前缀</li>
+<li><strong>关键点</strong>：使用 while 循环逐位比较，遇到不匹配立即停止</li>
+<li><strong>技术细节</strong>：需要同时检查两个边界条件：<code>match_len &lt; len(cached_tokens)</code> 和 <code>match_len &lt; len(prompt_tokens)</code></li>
+</ul>
+<p><strong>核心算法流程</strong></p>
+<ul>
+<li>初始化 <code>best_match_len = 0</code></li>
+<li>遍历树中所有已缓存的节点（<code>self.root.children</code>）</li>
+<li>对每个节点，从第 0 个 token 开始逐个比较</li>
+<li>如果 <code>cached_tokens[i] == prompt_tokens[i]</code>，继续比较下一个</li>
+<li>如果不匹配或到达边界，停止比较</li>
+<li>更新 <code>best_match_len</code> 为所有节点中的最大匹配长度</li>
+</ul>
+<p><strong>工程优化要点</strong></p>
+<ul>
+<li><strong>TTFT 优化</strong>：通过前缀复用，首字响应时间（Time To First Token）可降低 5-10 倍</li>
+<li><strong>显存节省</strong>：共享的 System Prompt 只需存储一次，多个请求共享同一份 KV Cache</li>
+<li><strong>多轮对话加速</strong>：对话历史作为公共前缀，只需计算最新的用户输入</li>
+<li><strong>树结构优化</strong>：真实的 SGLang 使用更复杂的 Radix Tree，支持节点分裂和合并</li>
+<li><strong>LRU 淘汰</strong>：当显存不足时，使用 LRU 策略淘汰最久未使用的树节点</li>
+<li><strong>工业实践</strong>：SGLang 在多轮对话场景下，吞吐量比 vLLM 提升 3-5 倍</li>
+</ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>许多推理请求共享系统提示词或上下文前缀，重复计算这些 KV cache 很浪费。</li><li>Radix tree 适合存储和匹配共享前缀。</li><li>Prefix cache 命中率越高，prefill 阶段节省越明显。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>RadixAttention 主要优化哪类重复？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>共享前缀的 KV cache 重复计算</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>矩阵乘法的乘号数量</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>optimizer state 存储</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>列出三条 prompt，找出它们的公共前缀。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>画一个 radix tree，标注每个节点对应的 token span。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>估算命中公共前缀后可少算多少 prefill token。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>SGLang RadixAttention 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="18_speculative_decoding.html">上一关：L18</a>
+        <a class="primary" href="20_quantization_w8a16.html">下一关：L20</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "19";
+    const answer = 0;
+    const explanation = "它让相同前缀的请求复用已计算的 KV cache。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 19 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"SGLang\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

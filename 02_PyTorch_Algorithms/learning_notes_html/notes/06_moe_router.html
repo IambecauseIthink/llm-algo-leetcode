@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 06 | MoE Router</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 06 | 结构 | Medium</p>
+        <h1>MoE Router</h1>
+        <p class="lead">理解专家模型如何为每个 token 选择少数专家，而不是激活整个 FFN。</p>
+        <div class="meta">
+          <span class="pill">06_MoE_Router.ipynb</span>
+          <span class="pill">MoE</span><span class="pill">Router</span><span class="pill">Top-k</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">expert_ids, weights = topk(softmax(router(x)), k)</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 06_MoE_Router.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>06. MoE Router | 混合专家架构: 稀疏路由与负载均衡 (MoE)</h2>
+<p><strong>难度：</strong> Medium | <strong>标签：</strong> <code>模型架构</code>, <code>MoE</code>, <code>PyTorch</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
+<p>本节我们将解析目前最火爆的模型架构：<strong>MoE (Mixture of Experts)</strong>。这也是 Mixtral、Grok、DeepSeek 等顶级开源模型背后的核心技术。</p>
+<p>面试中最常考的并不是专家的内部结构，而是那个“交通警察”——<strong>路由机制 (Router) 和专家权重计算</strong>。</p>
+<h4>Step 1: 核心思想与痛点</h4>
+<blockquote>
+<p><strong>Dense (稠密) 模型的痛点：</strong></p>
+<p>在标准的 Transformer 中，每一个 Token 都必须经过全网络的所有参数（比如 70B 的 LLaMA）。这导致随着模型变大，推理和训练的计算量呈线性爆炸。</p>
+<p></p>
+<p><strong>MoE 的破局：稀疏激活 (Sparse Activation)</strong></p>
+<p>将原来大规模的 MLP 层，切分成 $N$ 个小型的独立 MLP（称为 Expert，专家）。</p>
+<p>对于每一个输入的 Token，通过一个非常轻量的 Router (门控网络) 决定它该去请教哪 $K$ 个专家（通常 $K=2$）。</p>
+<p>这样，即便总参数量有 8x7B=56B，实际每个 Token 只激活了 2x7B=14B 的参数。<strong>计算量骤降，而知识容量剧增。</strong></p>
+</blockquote>
+<h4>Step 2: 代码实现框架</h4>
+<p>在门控网络中，首先计算输入对所有专家的打分矩阵（logits）。<strong>关键陷阱</strong>：必须先在全维度（num_experts）上进行 Softmax 将打分转为概率分布，然后再通过 <code>torch.topk</code> 获取最大的 K 个概率及其对应的专家索引。最后，为了保证加权和仍为 1，必须对截取出的 K 个概率值进行重归一化（Re-normalize）。</p>
+<h4>Step 3: 核心数学机制：Top-K Routing</h4>
+<p><strong>1. 门控网络 (Gating / Router)：</strong></p>
+<p>给定输入 Token 的特征 $x \in \mathbb{R}^d$，我们用一个线性层将其映射到各个专家的打分：</p>
+<p>$$ h = x W_{gate} \quad (h \in \mathbb{R}^E) $$</p>
+<p>其中 $E$ 是专家总数（如 8）。</p>
+<p><strong>2. 全局归一化与 Top-K 选择 (The Softmax Trap)：</strong></p>
+<p>传统初学者容易犯的错误是先选 Top-K 的 Logits，再做 Softmax。正确的工业级做法（如 Mixtral 8x7B）必须是先做全局 Softmax：</p>
+<p>$$ p = \text{Softmax}(h) \quad (p \in \mathbb{R}^E) $$</p>
+<p>为了保持稀疏性，我们提取其中概率最高的 $K$ 个专家：</p>
+<p>$$ p_{topk}, idx_{topk} = \text{TopK}(p, K) $$</p>
+<p><strong>3. 局部重归一化 (Re-normalize)：</strong></p>
+<p>由于截取了部分概率，剩下的 $K$ 个概率之和不再为 1。为了稳定梯度的尺度，必须按比例将其重新归一化：</p>
+<p>$$ w_i = \frac{p_i}{\sum_{j \in TopK} p_j} $$</p>
+<p><strong>4. 最终输出融合：</strong></p>
+<p>Token 经过这 $K$ 个专家的计算后，按最新权重加权求和：</p>
+<p>$$ y = \sum_{i \in TopK} w_i \cdot \text{Expert}_{idx_i}(x) $$</p>
+<h4>Step 4: 动手实战</h4>
+<p><strong>要求</strong>：请补全下方 <code>TopKRouter</code> 函数。</p>
+<p>这也是面试中非常经典的 <code>torch.topk</code>、<code>scatter</code> 和 <code>gather</code> 等高级张量操作的考察点。</p>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p><strong>1. TODO 1: 全局 Softmax 转换</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>routing_probs = F.softmax(router_logits.float(), dim=-1)</code></li>
+<li><strong>关键点</strong>：必须在全维度（<code>num_experts</code>）上进行 Softmax，将原始打分转换为概率分布。</li>
+<li><strong>精度控制</strong>：强制使用 <code>.float()</code> 转为 FP32 精度，防止 FP16/BF16 下的数值溢出。Softmax 对数值精度极其敏感，低精度会导致概率分布崩塌。</li>
+<li><strong>核心陷阱</strong>：新手容易犯的错误是先截取 Top-K 的 Logits 再做 Softmax（局部归一化），这会失去全局相对置信度。正确做法是先全局 Softmax，再截取 Top-K 概率。</li>
+</ul>
+<p><strong>2. TODO 2: Top-K 截取</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>routing_weights, selected_experts = torch.topk(routing_probs, self.top_k, dim=-1)</code></li>
+<li><strong>关键点</strong>：从全局概率分布中提取最大的 K 个概率值及其对应的专家索引。</li>
+<li><strong>本质区别</strong>：这里截取的是<strong>概率</strong>而非原始 logits，这是与错误做法的核心差异。</li>
+<li><strong>工业实践</strong>：Mixtral 8x7B、DeepSeek 等主流 MoE 模型均采用此方法。</li>
+</ul>
+<p><strong>3. TODO 3: 重归一化</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>routing_weights = routing_weights / routing_weights.sum(dim=-1, keepdim=True)</code></li>
+<li><strong>必要性</strong>：截取后的 K 个概率之和不再为 1，需要按比例放大使其重新归一化，以稳定梯度的尺度。</li>
+<li><strong>技术细节</strong>：<code>keepdim=True</code> 保持维度以支持广播除法。</li>
+<li><strong>数学原理</strong>：根据均值不等式，当所有专家的 $f_i = P_i = 1/E$ 时（完全均匀），损失最小。</li>
+</ul>
+<p><strong>工程优化要点</strong></p>
+<ul>
+<li><strong>稀疏激活的本质</strong>：MoE 的核心价值在于&quot;大容量、低激活&quot;。通过 Top-K 路由，每个 Token 只激活少数专家（通常 K=2），使得 56B 参数的模型实际计算量仅相当于 14B 的稠密模型。</li>
+<li><strong>高效聚合</strong>：代码中的 <code>SparseMoEBlock</code> 使用 For 循环遍历专家是为了便于理解。工业界框架（vLLM、Megatron-LM）会使用 Token Sorting（按专家索引排序）将去往同一专家的 Token 汇聚成批次，一次性计算以提升 GPU 利用率。</li>
+</ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>MoE 的核心是稀疏激活：每个 token 只走 top-k 个专家。</li><li>Router 输出每个 token 对专家的打分，softmax 后得到路由概率。</li><li>实现时要处理 top-k 选择、专家输出加权合并以及容量限制。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>MoE 中 top-k router 的 k 表示什么？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>每个 token 选择的专家数量</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>模型层数</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>每个专家的 hidden dim</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>给一批 token 构造 router logits，并用 torch.topk 取专家 id。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>统计每个专家收到多少 token。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>把专家输出按 router weight 加权求和。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>MoE Router 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="05_llama3_block_tutorial.html">上一关：L05</a>
+        <a class="primary" href="07_moe_load_balancing_loss.html">下一关：L07</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "06";
+    const answer = 0;
+    const explanation = "top-k 决定一个 token 会被派发给几个专家。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 06 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"MoE\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

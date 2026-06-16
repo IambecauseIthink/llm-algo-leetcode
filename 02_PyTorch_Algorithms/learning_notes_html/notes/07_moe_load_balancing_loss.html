@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 07 | MoE Load Balancing Loss</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 07 | 训练 | Medium</p>
+        <h1>MoE Load Balancing Loss</h1>
+        <p class="lead">让专家别扎堆：用辅助损失推动路由概率和实际分配更均衡。</p>
+        <div class="meta">
+          <span class="pill">07_MoE_Load_Balancing_Loss.ipynb</span>
+          <span class="pill">MoE</span><span class="pill">Loss</span><span class="pill">Balance</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">balance_loss ∝ num_experts * sum(tokens_per_expert * prob_per_expert)</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 07_MoE_Load_Balancing_Loss.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>07. MoE Load Balancing Loss | MoE 进阶：负载均衡损失函数 (Load Balancing Loss)</h2>
+<p><strong>难度：</strong> Hard | <strong>标签：</strong> <code>MoE</code>, <code>Loss Function</code>, <code>Mixtral</code> | <strong>目标人群：</strong> 核心 Infra 与算子开发</p>
+<p>在上一节 <code>06_MoE_Router</code> 中，我们实现了 Top-K 路由。但在真实的 MoE 模型（如 Mixtral 8x7B, DeepSeek）训练中，会遇到一个非常严重的问题：<strong>路由崩塌 (Router Collapse)</strong>。</p>
+<p>即门控网络“偷懒”，把所有的 Token 都发给了第 0 号和第 1 号专家，导致其他专家被饿死（闲置），不仅失去了 MoE 的意义，还会导致算力非常不均衡（OOM）。</p>
+<p>因此，面试官非常爱考：<strong>如何用代码实现 MoE 的辅助损失函数 (Auxiliary Loss) 来强制负载均衡？</strong></p>
+<h4>Step 1: 核心数学公式</h4>
+<p>为了让 $N$ 个 Token 均匀地分配给 $E$ 个专家，我们需要设计一个惩罚项，加到总的 CrossEntropy Loss 里。</p>
+<p>Mixtral / Switch Transformer 使用的经典公式：</p>
+<p>$$ L_{aux} = \alpha \cdot E \sum_{i=1}^E f_i \cdot P_i $$</p>
+<ul>
+<li>$E$: 专家总数。</li>
+<li>$f_i$: 专家 $i$ 被路由到的 <strong>Token 比例</strong>（即选了专家 $i$ 的 token 数 / 总 token 数）。</li>
+<li>$P_i$: 专家 $i$ 在所有 Token 上的 <strong>平均路由概率得分</strong>（Softmax 之后的概率的均值）。</li>
+<li>$\alpha$: 辅助损失的权重系数（通常很小，如 0.01）。</li>
+</ul>
+<p><strong>为什么这个公式有效？</strong></p>
+<p>根据均值不等式，给定总和为 1 的 $f$ 和 $P$，当且仅当所有的 $f_i = 1/E$ 且 $P_i = 1/E$ 时（即绝对均匀分配），它们的内积（点积）之和最小。优化器为了降低这个 Loss，会拼命把 Token 往不同的专家那里赶！</p>
+<h4>Step 2: 代码实现框架</h4>
+<p>你需要统计在当前批次中每个专家实际被选中的次数（形成频率分布 $f_i$），同时求出门控概率的均值分布（$P_i$）。将这两个分布点乘并乘以专家总数 $E$ 和超参数 $\alpha$，即可得到最终的 Load Balancing Loss。</p>
+<p><strong>关键点</strong>：本实现支持 Top-K 路由（不仅限于 Top-1），通过 <code>top_k</code> 参数控制每个 Token 选择的专家数量。</p>
+<h4>Step 3: 动手实战</h4>
+<p><strong>要求</strong>：请补全下方 <code>compute_load_balancing_loss</code> 的逻辑。</p>
+<p><strong>注意</strong>：本实现支持 Top-K 路由，即每个 Token 可以选择 K 个专家（通常 K=2）。</p>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p><strong>1. TODO 1: 计算 P_i（平均路由概率）</strong></p>
+<ul>
+<li><strong>实现方式</strong>：</li>
+</ul>
+<p>```python</p>
+<p>P_i = torch.zeros(num_experts, dtype=routing_weights.dtype, device=routing_weights.device)</p>
+<p>P_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())</p>
+<p>P_i = P_i / (total_tokens * top_k)</p>
+<p>```</p>
+<ul>
+<li><strong>核心逻辑</strong>：使用 <code>scatter_add_</code> 将每个 token 对选中专家的权重累加到对应专家的位置。</li>
+<li><strong>归一化</strong>：除以总的选择次数 <code>(total_tokens * top_k)</code> 得到平均权重。</li>
+<li><strong>物理含义</strong>：$P_i$ 表示专家 $i$ 在所有 token 上的平均被选中概率。</li>
+</ul>
+<p><strong>2. TODO 2: 计算 f_i（Token 分配比例）</strong></p>
+<ul>
+<li><strong>实现方式</strong>：</li>
+</ul>
+<p>```python</p>
+<p>expert_mask = F.one_hot(selected_experts, num_classes=num_experts)</p>
+<p>tokens_per_expert = expert_mask.sum(dim=(0, 1)).float()</p>
+<p>f_i = tokens_per_expert / (total_tokens * top_k)</p>
+<p>```</p>
+<ul>
+<li><strong>核心逻辑</strong>：<code>F.one_hot</code> 将专家索引转换为 one-hot 编码，形状为 <code>[batch_size_x_seq_len, top_k, num_experts]</code>。</li>
+<li><strong>统计方法</strong>：沿前两个维度求和，统计每个专家被选中的总次数。</li>
+<li><strong>归一化</strong>：除以总的选择次数得到比例。</li>
+<li><strong>物理含义</strong>：$f_i$ 表示专家 $i$ 实际分到的 token 比例。</li>
+</ul>
+<p><strong>3. TODO 3: 计算辅助损失</strong></p>
+<ul>
+<li><strong>实现方式</strong>：<code>aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></li>
+<li><strong>数学公式</strong>：$L_{aux} = \alpha \cdot E \sum_{i=1}^E f_i \cdot P_i$</li>
+<li><strong>最小值分析</strong>：根据均值不等式，当 $f_i = P_i = 1/E$ 时（完全均匀），损失最小。对于 Top-K 路由，理论最小值为 $\alpha / K$。</li>
+<li><strong>优化目标</strong>：优化器为了降低这个 Loss，会强制将 Token 均匀分配给所有专家，防止路由崩塌。</li>
+</ul>
+<p><strong>工程要点</strong></p>
+<ul>
+<li><strong>Top-K 兼容性</strong>：代码支持任意 K 值，通过 <code>(total_tokens * top_k)</code> 归一化确保比例计算正确。</li>
+<li><strong>数值稳定性</strong>：使用 <code>scatter_add_</code> 而非循环累加，提升计算效率和数值稳定性。</li>
+<li><strong>超参数调优</strong>：$\alpha$ 通常设为 0.01，过大会影响主任务性能，过小则无法有效平衡负载。</li>
+<li><strong>与主损失结合</strong>：在实际训练中，将 <code>aux_loss</code> 加到 CrossEntropy Loss 上：<code>total_loss = ce_loss + aux_loss</code>。</li>
+</ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>没有约束时，router 可能总把 token 发给少数热门专家，造成容量浪费和训练不稳。</li><li>负载均衡损失通常同时考虑专家被选择的频率和 router 分配概率。</li><li>这类辅助 loss 不直接优化语言建模目标，但能让 MoE 系统更可训练。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>MoE load balancing loss 主要想避免什么问题？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>所有 token 挤到少数专家</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>学习率永远为 0</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>embedding 维度变小</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>统计 top-k 结果中每个专家的 token 占比。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>计算 router probability 在专家维度上的平均值。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>观察负载极不均时辅助 loss 的数值变化。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>MoE Load Balancing Loss 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="06_moe_router.html">上一关：L06</a>
+        <a class="primary" href="08_architecture_tricks.html">下一关：L08</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "07";
+    const answer = 0;
+    const explanation = "负载不均会导致一些专家过载，另一些专家几乎不学习。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 07 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"MoE\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

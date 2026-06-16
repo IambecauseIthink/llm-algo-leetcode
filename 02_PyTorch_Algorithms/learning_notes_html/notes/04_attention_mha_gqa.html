@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Level 04 | Attention MHA GQA</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #667284;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --purple: #7c3aed;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --dark: #101828;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .ghost, .primary, button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero .card:first-child {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        var(--paper);
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 720px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .xp-wrap {
+      width: min(100%, 520px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      transition: width 220ms ease;
+    }
+    .visual {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
+        var(--paper);
+      overflow: hidden;
+      position: relative;
+    }
+    .mini-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      font-weight: 800;
+      color: #1e3f88;
+      padding: 8px;
+      font-size: 13px;
+    }
+    .node strong { display: block; font-size: 20px; }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
+    .section { margin-bottom: 16px; }
+    .deep-dive {
+      display: grid;
+      gap: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
+        var(--paper);
+    }
+    .notebook-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .notebook-content {
+      display: grid;
+      gap: 10px;
+    }
+    .notebook-content h2,
+    .notebook-content h3,
+    .notebook-content h4 {
+      margin: 10px 0 0;
+      letter-spacing: 0;
+    }
+    .notebook-content blockquote {
+      margin: 0;
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .notebook-content p,
+    .notebook-content ul {
+      margin: 0;
+    }
+    .lead-small {
+      max-width: 920px;
+      margin: 0;
+      font-size: 16px;
+    }
+    .lesson-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .lesson {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .lesson-num {
+      width: fit-content;
+      border: 1px solid #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .shape-track,
+    .grad-map,
+    .table-visual {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .shape-track,
+    .grad-map {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .shape-track span,
+    .grad-map span,
+    .table-visual span {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: 800;
+    }
+    .shape-track strong,
+    .grad-map strong {
+      color: var(--amber);
+      white-space: nowrap;
+    }
+    .table-visual {
+      grid-template-columns: 90px 30px minmax(0, 1fr);
+    }
+    .callout,
+    .boss-panel {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5f370d;
+      line-height: 1.6;
+    }
+    .boss-panel {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .choice, .task {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
+    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
+    .quest-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .reward {
+      border: 1px solid #f0c483;
+      background: var(--soft-amber);
+      color: #7b430c;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lab-card {
+      background:
+        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
+        var(--dark);
+      color: #f8fbff;
+      border-color: rgba(255,255,255,0.14);
+    }
+    .lab-card p,
+    .lab-card li { color: #b9c4d4; }
+    .lab-card .pill {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: #dbe7ff;
+    }
+    .lab {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lab-actions button {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: #f8fbff;
+      font-weight: 800;
+    }
+    .lab-actions button.primary-run {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .console {
+      min-height: 130px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      background: #050914;
+      color: #d1fae5;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    @media (max-width: 880px) {
+      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
+      .shape-track,
+      .grad-map,
+      .table-visual { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .mini-map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="status">本关进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Level 04 | 结构 | Medium</p>
+        <h1>Attention MHA GQA</h1>
+        <p class="lead">从 shape 和 KV cache 成本理解 MHA、MQA、GQA 的差异。</p>
+        <div class="meta">
+          <span class="pill">04_Attention_MHA_GQA.ipynb</span>
+          <span class="pill">Attention</span><span class="pill">MHA</span><span class="pill">GQA</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card visual">
+        <div class="mini-map">
+          <div class="node"><strong>1</strong>知识点</div>
+          <div class="node"><strong>2</strong>闯关答题</div>
+          <div class="node"><strong>3</strong>代码训练场</div>
+        </div>
+        <div class="formula">Attention(Q,K,V) = softmax(QK^T / sqrt(d)) V</div>
+      </div>
+    </section>
+
+    
+    <section class="card notebook-guide section">
+      <div class="quest-title">
+        <h2>Notebook 原文导学</h2>
+        <span class="reward">来自 04_Attention_MHA_GQA.ipynb</span>
+      </div>
+      <div class="notebook-content">
+        <h2>04. Attention MHA GQA | 注意力机制与键值缓存 (MHA / GQA / MQA)</h2>
+<p><strong>难度：</strong> Medium | <strong>标签：</strong> <code>基础架构</code>, <code>PyTorch</code>, <code>推理优化</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
+<p>欢迎来到 LLM-LeetCode！本节我们将深入解析大语言模型的核心组件：<strong>注意力机制</strong>，并实现支持 KV Cache 和 GQA (Grouped-Query Attention) 的代码。</p>
+<h4>Step 1: 核心思想与痛点</h4>
+<p>在大语言模型中，<strong>注意力机制 (Attention)</strong> 决定了模型如何“回顾”并提取历史上下文的信息。随着模型层数加深和序列变长，Attention 模块在推理阶段面临极大的性能挑战。</p>
+<blockquote>
+<p><strong>什么是 KV Cache？为什么它是性能瓶颈？</strong></p>
+<p>在自回归生成中，每次生成第 $N$ 个 Token 时，我们需要计算它与前面 $N-1$ 个 Token 的相关性。为了避免重复计算前 $N-1$ 个 Token 的特征，我们将其投影后的 Key 和 Value 张量<strong>缓存（Cache）</strong>在显存中，当前步直接拼接读取。</p>
+<p></p>
+<p>然而，读取巨量的 KV Cache 会面临严重的<strong>显存容量瓶颈</strong>和<strong>内存带宽瓶颈 (Memory-bound)</strong>，导致推理极慢。</p>
+</blockquote>
+<blockquote>
+<p><strong>从 MHA 到 GQA：大模型架构的进化</strong></p>
+<p>* <strong>MHA (Multi-Head Attention)</strong>: 标准的多头注意力。每个 Query 头都有自己专属的 Key 和 Value 头。其巨大的 KV Cache 让推理寸步难行。</p>
+<p>* <strong>MQA (Multi-Query Attention)</strong>: 所有的 Query 头共享<strong>同一个</strong> Key 和 Value 头。极大地减少了 KV Cache 的占用，但由于表达能力锐减，模型效果往往打折。</p>
+<p>* <strong>GQA (Grouped-Query Attention)</strong>: LLaMA-2/3 采用的折中方案。将 Query 头分组，每组共享一个 Key 和 Value 头。这在<strong>模型效果和显存占用之间取得了良好的工程平衡</strong>。</p>
+</blockquote>
+<h4>Step 2: 核心公式与张量维度</h4>
+<p><strong>注意力计算公式：</strong></p>
+<p>$$ \text{Attention}(Q, K, V) = \text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$</p>
+<p><strong>张量维度追踪 (Shape Tracking) - 算法工程师的灵魂：</strong></p>
+<p>假设 <code>Batch=B</code>, <code>Seq_len=S</code>, <code>Num_Heads=H</code>, <code>Head_Dim=D</code></p>
+<ul>
+<li>线性投影后：<code>Q</code> 形状为 <code>[B, S, H * D]</code></li>
+<li>切分多头后：转置为 <code>[B, H, S, D]</code></li>
+<li>注意力分数计算：<code>Q @ K^T</code> -&gt; <code>[B, H, S, D] @ [B, H, D, S]</code> -&gt; <code>[B, H, S, S]</code></li>
+<li>乘以 Value：<code>Scores @ V</code> -&gt; <code>[B, H, S, S] @ [B, H, S, D]</code> -&gt; <code>[B, H, S, D]</code></li>
+<li>最后合并多头：转置回 <code>[B, S, H, D]</code> 并 <code>view</code> 成 <code>[B, S, H * D]</code>。</li>
+</ul>
+<h4>Step 3: 工业界源码映射</h4>
+<p>在真实的工业界代码中，这段逻辑在哪里？</p>
+<ul>
+<li><strong>HuggingFace LLaMA</strong>: <code>transformers/models/llama/modeling_llama.py</code> 中的 <code>LlamaAttention</code> 类。</li>
+<li><strong>vLLM (推理框架)</strong>: 核心关注它的 PagedAttention 实现，用来解决这里 KV Cache 的显存碎片化问题。</li>
+</ul>
+<h4>Step 4: 动手实战</h4>
+<p><strong>要求</strong>：请补全下方 <code>GroupedQueryAttention</code> 的 <code>forward</code> 函数中的 <code>TODO</code> 部分，实现：</p>
+<ul>
+<li>张量的多头切分与 Reshape</li>
+<li>KV Cache 的拼接逻辑</li>
+<li>注意力分数的计算</li>
+</ul>
+<h3>参考代码与解析</h3>
+<h4>代码</h4>
+<h4>解析</h4>
+<p><strong>1. TODO 1 (多头切分与维度转置)</strong></p>
+<ul>
+<li><strong>切分多头：</strong> 使用 <code>view(batch_size, seq_len, num_heads, head_dim)</code> 将线性投影后的张量从 <code>[B, S, H*D]</code> 重塑为 <code>[B, S, H, D]</code>，其中 <code>H</code> 是头数，<code>D</code> 是每个头的维度。</li>
+<li><strong>维度转置：</strong> 通过 <code>.transpose(1, 2)</code> 将形状从 <code>[B, S, H, D]</code> 转为 <code>[B, H, S, D]</code>，这是注意力计算的标准格式，方便后续的矩阵乘法。</li>
+<li><strong>GQA 的 KV 头数：</strong> 注意 <code>xk</code> 和 <code>xv</code> 使用 <code>num_kv_heads</code> 而不是 <code>num_heads</code>，这是 GQA 的核心区别。例如 LLaMA-2 70B 使用 64 个 Query 头但只有 8 个 KV 头。</li>
+<li><strong>工程细节：</strong> 为什么要 transpose？因为注意力分数计算 <code>Q @ K^T</code> 需要在 <code>[S, D]</code> 和 <code>[D, S]</code> 维度上进行矩阵乘法，将 heads 维度放在第二个位置可以让 batch 和 heads 维度自动广播。</li>
+</ul>
+<p><strong>2. TODO 2 (KV Cache 拼接)</strong></p>
+<ul>
+<li><strong>自回归生成场景：</strong> 在推理时，每次只生成一个新 token，但需要用到之前所有 token 的 Key 和 Value。如果每次都重新计算，时间复杂度是 $O(N^2)$。</li>
+<li><strong>Cache 机制：</strong> 将历史的 <code>k_cache</code> 和 <code>v_cache</code> 与当前步的 <code>xk</code>、<code>xv</code> 在 <code>seq_len</code> 维度（<code>dim=2</code>）拼接，形状从 <code>[B, H, old_len, D]</code> 变为 <code>[B, H, old_len+1, D]</code>。</li>
+<li><strong>显存优化：</strong> GQA 的 KV Cache 只需存储 <code>num_kv_heads</code> 个头，而不是 <code>num_heads</code> 个。例如 LLaMA-2 70B 的 KV Cache 显存占用是 MHA 的 1/8。</li>
+<li><strong>工程陷阱：</strong> 必须在 <code>repeat_kv</code> 之前进行拼接，否则会重复缓存已扩展的 KV，导致显存浪费。</li>
+</ul>
+<p><strong>3. TODO 3 (Scaled Dot-Product Attention)</strong></p>
+<ul>
+<li><strong>注意力分数计算：</strong> <code>scores = Q @ K^T / sqrt(d_k)</code>，其中 <code>xk.transpose(2, 3)</code> 将 <code>[B, H, S, D]</code> 转为 <code>[B, H, D, S]</code>，与 <code>xq</code> 的 <code>[B, H, S, D]</code> 相乘得到 <code>[B, H, S, S]</code> 的注意力矩阵。</li>
+<li><strong>缩放因子：</strong> 除以 <code>sqrt(head_dim)</code> 是为了防止点积结果过大导致 softmax 梯度消失。这是 Transformer 原论文的核心设计。</li>
+<li><strong>Mask 机制：</strong> <code>attention_mask</code> 通常是一个下三角矩阵（Causal Mask），用 <code>-inf</code> 填充上三角部分，确保当前 token 只能看到之前的 token。</li>
+<li><strong>Softmax 归一化：</strong> 在最后一个维度（<code>dim=-1</code>）上进行 softmax，将注意力分数转为概率分布。</li>
+<li><strong>加权求和：</strong> <code>output = probs @ V</code> 将注意力权重与 Value 相乘，得到加权后的特征表示。</li>
+</ul>
+<p><strong>4. TODO 4 (多头合并与输出投影)</strong></p>
+<ul>
+<li><strong>维度转置：</strong> <code>.transpose(1, 2)</code> 将 <code>[B, H, S, D]</code> 转回 <code>[B, S, H, D]</code>。</li>
+<li><strong>内存连续性：</strong> <code>.contiguous()</code> 确保张量在内存中是连续存储的，这是 <code>view</code> 操作的前提。如果不调用 <code>contiguous()</code>，<code>view</code> 可能会报错。</li>
+<li><strong>合并多头：</strong> <code>.view(batch_size, seq_len, -1)</code> 将 <code>[B, S, H, D]</code> 展平为 <code>[B, S, H*D]</code>，其中 <code>-1</code> 自动推断为 <code>num_heads * head_dim</code>。</li>
+<li><strong>输出投影：</strong> 通过 <code>o_proj</code> 线性层将多头特征映射回 <code>hidden_dim</code>，这是标准 Transformer 的最后一步。</li>
+</ul>
+<p><strong>进阶思考：GQA 的延迟扩充 (Lazy Expansion)</strong></p>
+<ul>
+<li><strong>为什么不直接缓存扩充后的 KV？</strong> 如果在缓存时就用 <code>repeat_kv</code> 扩充，显存占用会和 MHA 一样大，失去了 GQA 的优势。</li>
+<li><strong>正确做法：</strong> 只缓存原始的 <code>num_kv_heads</code> 个头，在每次前向传播时临时扩充。虽然增加了计算量，但由于注意力计算是 Memory-bound（受限于显存带宽而非计算速度），这个开销可以忽略。</li>
+<li><strong>工业实践：</strong> vLLM、TensorRT-LLM 等推理框架都采用这种延迟扩充策略，在 70B 模型上可以节省数十 GB 的 KV Cache 显存。</li>
+</ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
+        <ul><li>MHA 中 Q/K/V 都有多个 head；GQA 让多个 query heads 共享较少的 key/value heads。</li><li>GQA 的重要收益是减少 KV cache 体积，推理时尤其关键。</li><li>实现 GQA 时需要把 K/V heads repeat 或 broadcast 到 query heads 对应的分组。</li></ul>
+      </article>
+
+      <article class="card section">
+        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
+        <p>GQA 相比标准 MHA 最直接减少的是哪部分推理存储？</p>
+        <div id="choices">
+            <label class="choice">
+              <input type="radio" name="quiz" value="0">
+              <span>KV cache</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="1">
+              <span>token embedding table</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="quiz" value="2">
+              <span>optimizer states</span>
+            </label></div>
+        <div class="feedback" id="quiz-feedback"></div>
+      </article>
+    </section>
+
+    <section class="wide-grid section">
+      <article class="card">
+        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
+        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
+        <div id="tasks">
+            <label class="task">
+              <input type="checkbox" data-task="0">
+              <span>打印 Q、K、V 的 shape，区分 num_heads 和 num_kv_heads。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="1">
+              <span>实现 repeat_kv，把 K/V 对齐到 query heads 数量。</span>
+            </label>
+            <label class="task">
+              <input type="checkbox" data-task="2">
+              <span>比较 MHA 与 GQA 的 KV cache 元素数量。</span>
+            </label></div>
+      </article>
+
+      <article class="card lab-card">
+        <div class="quest-title"><h2>Attention MHA GQA 训练场：写一个小函数巩固本关关键词</h2><span class="reward">+100 XP</span></div>
+        <p>这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。</p>
+        <div class="lab">
+          <textarea id="code-editor" spellcheck="false"></textarea>
+          <div class="lab-actions">
+            <button class="primary-run" id="run-code">运行测试</button>
+            <button id="save-code">保存到本地缓存</button>
+            <button id="reset-code">恢复初始代码</button>
+          </div>
+          <div class="console" id="console">等待运行。</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="03_rope_tutorial.html">上一关：L03</a>
+        <a class="primary" href="05_llama3_block_tutorial.html">下一关：L05</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "04";
+    const answer = 0;
+    const explanation = "GQA 使用更少的 K/V heads，因此每层每 token 缓存的 K/V 更少。";
+    const taskCount = 3;
+    const taskKey = "pytorch-level-" + levelId + "-tasks";
+    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const labKey = "pytorch-level-" + levelId + "-lab";
+    const codeKey = "pytorch-level-" + levelId + "-code";
+    const completeKey = "pytorch-levels-complete";
+    const starterCode = "// Level 04 mini-lab\n// 目标：返回本关最关键的一个概念标签。\n\nfunction missionKeyword() {\n  // TODO: 把返回值改成本关关键标签\n  return \"\";\n}";
+    const labTests = "assert.equal(missionKeyword(), \"Attention\", \"missionKeyword 应返回本关第一个关键标签\");";
+    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
+    let quizDone = localStorage.getItem(quizKey) === "true";
+    let labDone = localStorage.getItem(labKey) === "true";
+    const editor = document.querySelector("#code-editor");
+    const consoleBox = document.querySelector("#console");
+    editor.value = localStorage.getItem(codeKey) || starterCode;
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    }
+
+    function updateStatus() {
+      document.querySelectorAll("[data-task]").forEach((input) => {
+        const done = tasksDone.has(input.dataset.task);
+        input.checked = done;
+        input.closest(".task").classList.toggle("done", done);
+      });
+
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
+      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+
+      if (units === 3) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+      }
+    }
+
+    document.querySelector("#choices").addEventListener("change", (event) => {
+      if (event.target.type !== "radio") return;
+      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
+      const selected = Number(event.target.value);
+      const label = event.target.closest(".choice");
+      const feedback = document.querySelector("#quiz-feedback");
+      if (selected === answer) {
+        label.classList.add("correct");
+        feedback.textContent = "答对了：" + explanation;
+        feedback.className = "feedback ok";
+        quizDone = true;
+        localStorage.setItem(quizKey, "true");
+      } else {
+        label.classList.add("wrong");
+        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
+        feedback.className = "feedback warn";
+      }
+      updateStatus();
+    });
+
+    const assert = {
+      equal(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(message + "\nexpected: " + JSON.stringify(expected) + "\nactual: " + JSON.stringify(actual));
+        }
+      },
+      deepEqual(actual, expected, message) {
+        const a = JSON.stringify(actual);
+        const e = JSON.stringify(expected);
+        if (a !== e) {
+          throw new Error(message + "\nexpected: " + e + "\nactual: " + a);
+        }
+      },
+      ok(value, message) {
+        if (!value) throw new Error(message);
+      }
+    };
+
+    function runCode() {
+      localStorage.setItem(codeKey, editor.value);
+      const logs = [];
+      const fakeConsole = {
+        log(...args) {
+          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
+        }
+      };
+      try {
+        const execute = new Function("assert", "console", editor.value + "\n" + labTests);
+        execute(assert, fakeConsole);
+        labDone = true;
+        localStorage.setItem(labKey, "true");
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
+        consoleBox.style.color = "#d1fae5";
+      } catch (error) {
+        consoleBox.textContent = (logs.length ? logs.join("\n") + "\n" : "") + "FAIL: " + error.message;
+        consoleBox.style.color = "#fecdd3";
+      }
+      updateStatus();
+    }
+
+    document.querySelector("#run-code").addEventListener("click", runCode);
+    document.querySelector("#save-code").addEventListener("click", () => {
+      localStorage.setItem(codeKey, editor.value);
+      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
+      consoleBox.style.color = "#bfdbfe";
+    });
+    document.querySelector("#reset-code").addEventListener("click", () => {
+      editor.value = starterCode;
+      localStorage.removeItem(codeKey);
+      localStorage.removeItem(labKey);
+      labDone = false;
+      consoleBox.textContent = "已恢复初始代码。";
+      consoleBox.style.color = "#d1fae5";
+      updateStatus();
+    });
+
+    document.querySelector("#tasks").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-task]")) return;
+      if (event.target.checked) {
+        tasksDone.add(event.target.dataset.task);
+      } else {
+        tasksDone.delete(event.target.dataset.task);
+      }
+      saveTasks();
+      updateStatus();
+    });
+
+    if (quizDone) {
+      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
+      if (answerInput) {
+        answerInput.checked = true;
+        answerInput.closest(".choice").classList.add("correct");
+        const feedback = document.querySelector("#quiz-feedback");
+        feedback.textContent = "答题已完成：" + explanation;
+        feedback.className = "feedback ok";
+      }
+    }
+    updateStatus();
+  </script>
+</body>
+</html>
