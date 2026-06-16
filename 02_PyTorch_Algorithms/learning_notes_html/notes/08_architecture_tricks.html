@@ -9,18 +9,16 @@
       --bg: #f7f6f1;
       --paper: #ffffff;
       --ink: #182033;
-      --muted: #667284;
+      --muted: #657184;
       --line: #dce2e8;
       --blue: #2563eb;
       --green: #12805c;
       --amber: #bd6516;
       --rose: #be3f5b;
-      --purple: #7c3aed;
       --soft-blue: #e8f0ff;
       --soft-green: #e7f6ee;
       --soft-amber: #fff1dd;
       --soft-rose: #fff0f4;
-      --dark: #101828;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
     * { box-sizing: border-box; }
@@ -36,44 +34,55 @@
     }
     a { color: inherit; text-decoration: none; }
     .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--line);
       background: var(--paper);
       border-radius: 8px;
       padding: 10px 12px;
       font: inherit;
-      cursor: pointer;
     }
     .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       align-items: stretch;
       margin-bottom: 18px;
     }
-    .card {
+    .card, .lesson-card {
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 22px;
     }
-    .hero .card:first-child {
+    .hero-main {
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
         var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
     }
     .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
       display: inline-flex;
       align-items: center;
       min-height: 30px;
@@ -83,10 +92,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .xp-wrap {
-      width: min(100%, 520px);
+      width: min(100%, 540px);
       margin-top: 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -97,157 +109,165 @@
       width: 0%;
       height: 14px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background: linear-gradient(90deg, var(--green), var(--blue));
       transition: width 220ms ease;
     }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
       display: grid;
       place-items: center;
       text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
     }
-    .node strong { display: block; font-size: 20px; }
     .formula {
       border: 1px solid rgba(24,32,51,0.13);
       border-radius: 8px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.55;
-      overflow-x: auto;
+      color: var(--muted);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
       padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
       display: grid;
       gap: 10px;
+      margin: 12px 0;
     }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
+    .story-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
       text-align: center;
       padding: 8px;
-      font-weight: 800;
+      font-weight: 900;
     }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
     }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
+    .channel-plane {
+      border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
+      padding: 34px 10px 10px;
+      position: relative;
     }
-    .boss-panel {
-      border-color: #99d6bf;
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
       background: var(--soft-green);
+      border: 1px solid #a9dbc7;
       color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    pre {
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
       margin: 0;
       border: 1px solid #1f2937;
       border-radius: 8px;
@@ -257,36 +277,262 @@
       overflow-x: auto;
       font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .choice, .task {
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #fff;
       padding: 12px;
       margin-top: 10px;
       cursor: pointer;
     }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -308,22 +554,18 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
     }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
+    @media (max-width: 640px) {
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
+      .map-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -332,140 +574,157 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level 08 | 结构 | Medium</p>
+      <div class="card hero-main">
+        <p class="eyebrow">Level 08 | 零基础导学关卡</p>
         <h1>Architecture Tricks</h1>
-        <p class="lead">梳理现代 LLM 结构中的常用技巧：norm、激活、位置编码、残差与初始化。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">08_Architecture_Tricks.ipynb</span>
           <span class="pill">LLM</span><span class="pill">Tricks</span><span class="pill">Stability</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
         </div>
         <div class="formula">Good architecture = quality + stability + efficiency</div>
       </div>
     </section>
 
-    
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 08_Architecture_Tricks.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>08. Architecture Tricks | 经典架构变体：Qwen 与 Gemma 的核心机制 (Architecture Tricks)</h2>
-<p><strong>难度：</strong> Easy | <strong>标签：</strong> <code>模型架构</code>, <code>Qwen</code>, <code>Gemma</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
-<p>在 <code>06_LLaMA3_Block_Tutorial</code> 中我们搭建了 LLaMA 的骨架。但如果你去面试阿里云（通义千问团队）或者谷歌，他们必然会问自家模型与 LLaMA 的区别。</p>
-<p>本节我们将以“打补丁”的方式，在 PyTorch 中快速实现 <strong>Qwen 的 Tie Word Embeddings</strong> 以及 <strong>Gemma 的带偏置 RMSNorm</strong>。</p>
-<h4>Step 1: 核心差异与机制</h4>
-<blockquote>
-<p><strong>Trick 1: Tie Word Embeddings (权重绑定) - Qwen 系列 / GPT-2</strong></p>
-<p>*   <strong>做法</strong>：在绝大多数模型（如 LLaMA）中，最开始的 <code>Token Embedding</code> 矩阵（把 ID 变向量）和最后的 <code>LM Head</code> 矩阵（把向量变概率）是两个独立的权重矩阵。但在 Qwen 中，<strong>这两个矩阵共享同一份物理内存的参数！</strong></p>
-<p>*   <strong>意义</strong>：极大减少了参数量（词表动辄 15 万，非常占参数），并且在训练时能让 Embedding 获得更直接的梯度更新。</p>
-</blockquote>
-<blockquote>
-<p><strong>Trick 2: RMSNorm 的 &quot;+1 缩放&quot; - Gemma 系列</strong></p>
-<p>*   <strong>做法</strong>：标准的 RMSNorm 公式是 $y = \frac{x}{RMS} \cdot w$。而 Google 的 Gemma 把它改成了 $y = \frac{x}{RMS} \cdot (1 + w)$。</p>
-<p>*   <strong>意义</strong>：在 PyTorch 中，权重的默认初始化通常是 0（或者很小的值）。Gemma 加上 1，使得在训练的极早期（$w pprox 0$ 时），RMSNorm 直接等价于一个不做任何缩放的纯归一化层，<strong>这带来了非常平滑的梯度和非常稳定的早期训练！</strong></p>
-</blockquote>
-<h4>Step 2: Weight Tying 与偏置项的权衡</h4>
-<p>Weight Tying（权重绑定）强制 Embedding 层和最终的 LM Head 线性层共享同一个权重矩阵。这种方法在早期的模型中很流行，因为它大幅减少了参数量。但在现代极大规模 LLM 中，解绑通常能获得更好的容量表达。此外，取消大部分 Linear 和 Norm 层中的 Bias 项，可以略微提高计算效率并防止显存浪费。</p>
-<h4>Step 3: 代码实现框架</h4>
-<p>要实现权重绑定，只需在网络初始化时将 LM Head 的 <code>weight</code> 引用直接指向 Embedding 层的 <code>weight</code>。注意，这意味着隐藏层维度必须与词表维度兼容（或者存在中间投影层）。</p>
-<h4>Step 4: 动手实战</h4>
-<p><strong>要求</strong>：</p>
-<ul>
-<li>补全 <code>GemmaRMSNorm</code> 的公式。</li>
-<li>补全 <code>QwenTieEmbeddings</code> 中的参数共享逻辑。</li>
-</ul>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>解析</h4>
-<p><strong>1. TODO 1: Gemma 的 +1 缩放机制</strong></p>
-<ul>
-<li><strong>实现方式</strong>：<code>output = x_norm * (1 + self.weight)</code></li>
-<li><strong>核心思想</strong>：在标准 RMSNorm 的基础上，将缩放因子从 <code>w</code> 改为 <code>(1 + w)</code>。</li>
-<li><strong>初始化优势</strong>：权重初始化为 0 时，<code>(1 + 0) = 1</code>，此时 RMSNorm 等价于纯归一化层（无缩放），梯度非常平滑。</li>
-<li><strong>训练稳定性</strong>：在训练早期（权重接近 0），避免了因权重过小导致的梯度消失问题。随着训练进行，权重逐渐学习到合适的缩放值。</li>
-<li><strong>工程细节</strong>：必须先转换为 FP32 计算（<code>x.float()</code>），最后再转回原始精度（<code>type_as(x)</code>），防止 FP16/BF16 下的数值不稳定。</li>
-</ul>
-<p><strong>2. TODO 2: Qwen 的权重绑定（Weight Tying）</strong></p>
-<ul>
-<li><strong>实现方式</strong>：<code>self.lm_head.weight = self.embed_tokens.weight</code></li>
-<li><strong>物理指针级共享</strong>：这不是复制权重，而是让两个模块的 <code>weight</code> 参数指向同一块内存。修改其中一个，另一个自动同步。</li>
-<li><strong>参数量优势</strong>：词表通常很大（15万+），绑定后可以节省一半的参数量。例如，词表 150k、隐藏层 4096 的模型，可以节省 150k × 4096 × 4 bytes ≈ 2.4GB 显存。</li>
-<li><strong>梯度更新</strong>：训练时，Embedding 层和 LM Head 的梯度会累加到同一个权重上，使得 Embedding 获得更直接的监督信号。</li>
-<li><strong>适用场景</strong>：Qwen、GPT-2 等模型使用此技巧。但在超大规模模型（如 LLaMA 70B）中，解绑通常能获得更好的表达能力。</li>
-</ul>
-<p><strong>工程要点</strong></p>
-<ul>
-<li><strong>内存验证</strong>：可以通过 <code>data_ptr()</code> 检查两个权重是否指向同一内存地址。</li>
-<li><strong>训练同步</strong>：由于是物理指针共享，更新 Embedding 权重时，LM Head 权重会自动同步，无需手动处理。</li>
-<li><strong>架构权衡</strong>：权重绑定减少参数但可能限制表达能力；+1 缩放提升训练稳定性但增加计算量（需要额外的加法）。</li>
-</ul>
-      </div>
-    </section>
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="gemma-rmsnorm-plus-one">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 1</span>
+          </div>
+          <h2>Gemma 的 +1 缩放</h2>
 
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul><li>架构技巧通常服务于三个目标：训练稳定、推理高效、表达力更强。</li><li>RMSNorm、RoPE、SwiGLU、GQA 是许多现代 decoder-only LLM 的常见组合。</li><li>理解 trick 时要问：它改变了数学表达、计算量、显存，还是训练动态？</li></ul>
-      </article>
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>RMSNorm 输出会再乘一个可学习缩放向量。</li><li>普通写法直接学习 weight。</li><li>Gemma 写法学习的是 weight + 1。</li></ul>
+          </div>
 
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>评估一个架构技巧时，最应该同时关注哪三类影响？</p>
-        <div id="choices">
-            <label class="choice">
-              <input type="radio" name="quiz" value="0">
-              <span>表达力、计算量、稳定性</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="1">
-              <span>文件名、注释数量、变量长度</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="2">
-              <span>只看参数量</span>
-            </label></div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>把默认缩放设为 1，参数只负责学“我要比默认多一点还是少一点”。</p>
+            <div class="scale-demo"><span>normalized x</span><span>weight=[0.1, -0.2]</span><strong>scale=1+weight=[1.1, 0.8]</strong></div>
+            <div class="syntax-card"><h4>语法热身：参数和常数相加</h4><pre><code>gain_delta = nn.Parameter(torch.zeros(4))
+scale = 1.0 + gain_delta
+y = x * scale</code></pre></div>
+          </div>
 
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">
-            <label class="task">
-              <input type="checkbox" data-task="0">
-              <span>为每个 trick 写一句话：解决什么问题，代价是什么。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="1">
-              <span>把这些 trick 标注到 LLaMA block 的数据流图上。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="2">
-              <span>选一个 trick 做 ablation 思考：去掉它会怎样？</span>
-            </label></div>
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>Gemma RMSNorm 中，如果 weight 初始化为 0，实际缩放是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="0">
+                <span>1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="1">
+                <span>0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="2">
+                <span>hidden_size</span>
+              </label></div>
+            <div class="feedback" data-feedback="gemma-rmsnorm-plus-one"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-0">
+                <span>实现归一化后的 (1 + weight) 缩放。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-1">
+                <span>确认初始化时输出不会被缩放到 0。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-2">
+                <span>用测试检查 Gemma 写法和预期输出一致。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="qwen-tie-embeddings">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 2</span>
+          </div>
+          <h2>权重绑定：输入词表和输出词表共用一张表</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>Embedding 权重把 token id 映射成向量。</li><li>lm_head 权重把 hidden 向量映射回 vocab logits。</li><li>权重绑定要求两个模块指向同一块 Parameter。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>读词和猜词使用同一套词典坐标，既省参数，也让输入输出空间保持一致。</p>
+            <div class="lookup"><span>embed_tokens.weight</span><strong>同一块内存</strong><span>lm_head.weight</span></div>
+            <div class="syntax-card"><h4>语法热身：让两个属性指向同一个权重</h4><pre><code>emb = nn.Embedding(100, 16)
+head = nn.Linear(16, 100, bias=False)
+head.weight = emb.weight
+assert head.weight is emb.weight</code></pre></div>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>判断权重绑定是否真的共享内存，最直接的检查是？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="0">
+                <span>lm_head.weight is embed_tokens.weight</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="1">
+                <span>lm_head.weight.shape == embed_tokens.weight.shape</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="2">
+                <span>两个模块名字相同</span>
+              </label></div>
+            <div class="feedback" data-feedback="qwen-tie-embeddings"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="qwen-tie-embeddings-0">
+                <span>把 lm_head.weight 直接绑定到 embed_tokens.weight。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="qwen-tie-embeddings-1">
+                <span>用 is 检查是否同一块 Parameter。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="qwen-tie-embeddings-2">
+                <span>确认 forward 的 vocab logits shape 没有改变。</span>
+              </label>
+          </div>
+        </article>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
         <a class="ghost" href="07_moe_load_balancing_loss.html">上一关：L07</a>
@@ -476,81 +735,89 @@
 
   <script>
     const levelId = "08";
-    const answer = 0;
-    const explanation = "架构设计通常是在效果、成本和稳定性之间取平衡。";
-    const taskCount = 3;
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const checkpointData = {"gemma-rmsnorm-plus-one":{"answer":0,"explain":"实际使用的是 1 + weight，所以初始化为 0 时等价于不改变尺度。"},"qwen-tie-embeddings":{"answer":0,"explain":"shape 相同不代表共享；is 检查两个引用是否指向同一对象。"}};
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
     const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
 
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
     }
 
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
         input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
+        input.closest(".homework-item").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
 
-      if (units === 2) {
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
       }
     }
 
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
       }
-      updateStatus();
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
     });
 
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
+    refresh();
   </script>
 </body>
 </html>

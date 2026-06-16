@@ -9,18 +9,16 @@
       --bg: #f7f6f1;
       --paper: #ffffff;
       --ink: #182033;
-      --muted: #667284;
+      --muted: #657184;
       --line: #dce2e8;
       --blue: #2563eb;
       --green: #12805c;
       --amber: #bd6516;
       --rose: #be3f5b;
-      --purple: #7c3aed;
       --soft-blue: #e8f0ff;
       --soft-green: #e7f6ee;
       --soft-amber: #fff1dd;
       --soft-rose: #fff0f4;
-      --dark: #101828;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
     * { box-sizing: border-box; }
@@ -36,44 +34,55 @@
     }
     a { color: inherit; text-decoration: none; }
     .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--line);
       background: var(--paper);
       border-radius: 8px;
       padding: 10px 12px;
       font: inherit;
-      cursor: pointer;
     }
     .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       align-items: stretch;
       margin-bottom: 18px;
     }
-    .card {
+    .card, .lesson-card {
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 22px;
     }
-    .hero .card:first-child {
+    .hero-main {
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
         var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
     }
     .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
       display: inline-flex;
       align-items: center;
       min-height: 30px;
@@ -83,10 +92,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .xp-wrap {
-      width: min(100%, 520px);
+      width: min(100%, 540px);
       margin-top: 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -97,157 +109,165 @@
       width: 0%;
       height: 14px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background: linear-gradient(90deg, var(--green), var(--blue));
       transition: width 220ms ease;
     }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
       display: grid;
       place-items: center;
       text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
     }
-    .node strong { display: block; font-size: 20px; }
     .formula {
       border: 1px solid rgba(24,32,51,0.13);
       border-radius: 8px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.55;
-      overflow-x: auto;
+      color: var(--muted);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
       padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
       display: grid;
       gap: 10px;
+      margin: 12px 0;
     }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
+    .story-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
       text-align: center;
       padding: 8px;
-      font-weight: 800;
+      font-weight: 900;
     }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
     }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
+    .channel-plane {
+      border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
+      padding: 34px 10px 10px;
+      position: relative;
     }
-    .boss-panel {
-      border-color: #99d6bf;
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
       background: var(--soft-green);
+      border: 1px solid #a9dbc7;
       color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    pre {
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
       margin: 0;
       border: 1px solid #1f2937;
       border-radius: 8px;
@@ -257,36 +277,262 @@
       overflow-x: auto;
       font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .choice, .task {
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #fff;
       padding: 12px;
       margin-top: 10px;
       cursor: pointer;
     }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -308,22 +554,18 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
     }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
+    @media (max-width: 640px) {
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
+      .map-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -332,126 +574,157 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level 24 | 训练 | Hard</p>
+      <div class="card hero-main">
+        <p class="eyebrow">Level 24 | 零基础导学关卡</p>
         <h1>Tensor Parallelism Sim</h1>
-        <p class="lead">把大矩阵乘法沿列或行切开，理解 tensor parallel 的通信位置。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">24_Tensor_Parallelism_Sim.ipynb</span>
           <span class="pill">Tensor Parallel</span><span class="pill">MatMul</span><span class="pill">Distributed</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
         </div>
         <div class="formula">Y = X [W1 W2] -&gt; concat(XW1, XW2)</div>
       </div>
     </section>
 
-    
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 24_Tensor_Parallelism_Sim.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>24. 突破单卡显存上限：张量并行 (Tensor Parallelism, TP) 的矩阵切片模拟</h2>
-<p><strong>难度：</strong> Hard | <strong>标签：</strong> <code>Distributed Training</code>, <code>Tensor Parallelism</code>, <code>Megatron-LM</code> | <strong>目标人群：</strong> 核心 Infra 与算子开发</p>
-<p>ZeRO 切分了状态，但<strong>模型参数本身（Weights）</strong>在每张卡上依然是完整的。如果模型高达 70B（140GB 显存），甚至连一张 80G 的 A100 都放不下完整的模型，这时 ZeRO-1/2 也无能为力了。</p>
-<p>Megatron-LM 提出了 <strong>Tensor Parallelism (张量并行，TP)</strong>。它将一个大规模的矩阵乘法 $Y = XA$，把权重矩阵 $A$ 切成几小块，分别放在不同的 GPU 上算，最后再把结果拼起来。</p>
-<p>本节我们将纯粹用张量切片操作，模拟 TP 是如何把一个大规模的 Linear 层拆分到 2 张逻辑卡上的。</p>
-<h4>Step 1: TP的两种切法</h4>
-<p>假设输入 $X$ 形状为 <code>(batch, in_dim)</code>，权重 $A$ 形状为 <code>(in_dim, out_dim)</code>，经过线性层变为 $Y = XA$，形状 <code>(batch, out_dim)</code>。</p>
-<blockquote>
-<p><strong>Column Parallel (列切分)：切分 $A$ 的列 (输出维度)</strong></p>
-<p>1. $A$ 被竖着切成左右两块 $A_1, A_2$ 分别放到 GPU 0 和 1。</p>
-<p>2. GPU 0 计算 $Y_1 = X A_1$，GPU 1 计算 $Y_2 = X A_2$。</p>
-<p>3. <strong>通信：</strong> 各自算完后，通过 <code>All-Gather</code>，把左右结果拼起来，得到完整的 $Y = [Y_1, Y_2]$。</p>
-<p>*适用场景：MLP 的第一个全连接层（扩大隐藏维度时）。*</p>
-</blockquote>
-<blockquote>
-<p><strong>Row Parallel (行切分)：切分 $A$ 的行 (输入维度)</strong></p>
-<p>1. $A$ 被横着切成上下两块 $A_1, A_2$ 分别放到 GPU 0 和 1。</p>
-<p>2. 输入 $X$ 也要沿着特征维度切成左右两半 $X_1, X_2$ 给不同的卡。</p>
-<p>3. GPU 0 计算 $Y_1 = X_1 A_1$，GPU 1 计算 $Y_2 = X_2 A_2$。</p>
-<p>4. <strong>通信：</strong> 完整的结果其实是两者的加和：$Y = Y_1 + Y_2$。所以需要做一次 <code>All-Reduce (Sum)</code>。</p>
-<p>*适用场景：MLP 的第二个全连接层（缩回原始维度时）。*</p>
-</blockquote>
-<p><strong>精妙之处</strong>：如果把 Column Parallel 放前面，Row Parallel 放后面，中间甚至可以省掉一次通信！</p>
-<h4>Step 2: Column 与 Row Parallelism 推导</h4>
-<p>在一个两层的前馈网络 $Y = X \cdot W_1 \cdot W_2$ 中：</p>
-<ul>
-<li>我们将 $W_1$ 按列切分（Column Parallel），得到两块。计算后各个 GPU 得到不完整的部分输出矩阵。</li>
-<li>紧接着，将 $W_2$ 按行切分（Row Parallel），利用刚才的部分输出分别与之相乘。</li>
-<li>最后，所有 GPU 执行一次 <code>All-Reduce</code> 聚合结果。这样在两层神经网络中，只产生了一次通信开销！</li>
-</ul>
-<h4>Step 3: 代码实现框架</h4>
-<p>你需要实现张量切片操作（类似 <code>torch.chunk</code>），分别针对线性层的权重矩阵在维度 0 或维度 1 进行切割。然后在模拟多进程执行时，分别利用切好的局部权重完成前向传播，最终利用 <code>torch.sum</code> 模拟一次 All-Reduce 收集聚合数据。</p>
-<h4>Step 4: 动手实战</h4>
-<p><strong>要求</strong>：请补全下方代码，手动将一个大规模的矩阵乘法拆分成两张“逻辑卡”上的 Column Parallel 操作，并验证结果拼接后与单卡全量计算一致。</p>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-      </div>
-    </section>
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="tp-column">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 1 / TODO 2 / TODO 3</span>
+          </div>
+          <h2>Tensor Parallel 列切分：每张卡算一部分输出特征</h2>
 
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul><li>Column parallel 通常切输出维，多个 rank 各算一部分输出。</li><li>Row parallel 通常切输入维，需要对各 rank 局部结果做 all-reduce。</li><li>Megatron 风格 TP 的关键是把线性层切分和通信配对设计好。</li></ul>
-      </article>
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>Linear 可写成 X @ A。</li><li>沿 A 的列切分，相当于把输出特征切给不同 GPU。</li><li>每张卡得到部分输出，最后沿特征维拼接。</li></ul>
+          </div>
 
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>Row parallel linear 通常需要哪种通信来合并局部输出？</p>
-        <div id="choices">
-            <label class="choice">
-              <input type="radio" name="quiz" value="0">
-              <span>All-reduce</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="1">
-              <span>Top-k sampling</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="2">
-              <span>Tokenizer decode</span>
-            </label></div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>一张大表的列太多，就分给多个人各算几列，最后把列并回去。</p>
+            <div class="matrix-flow"><span>X</span><span>A 列切成 A0/A1</span><span>X@A0, X@A1</span><strong>cat dim=1</strong></div>
+            <div class="syntax-card"><h4>语法热身：按列 chunk 再拼接</h4><pre><code>shards = torch.chunk(A, world_size, dim=1)
+partials = [X @ shard for shard in shards]
+out = torch.cat(partials, dim=1)</code></pre></div>
+          </div>
 
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">
-            <label class="task">
-              <input type="checkbox" data-task="0">
-              <span>把一个 Linear 权重按列切成两块，分别计算输出后 concat。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="1">
-              <span>把权重按行切分，分别计算局部输出后求和。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="2">
-              <span>标注每种切法需要 concat 还是 all-reduce。</span>
-            </label></div>
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>矩阵 A 沿 dim=1 切分，最后 partial outputs 应该沿哪个维度拼接？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column" value="0">
+                <span>dim=1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column" value="1">
+                <span>dim=0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column" value="2">
+                <span>不用拼接</span>
+              </label></div>
+            <div class="feedback" data-feedback="tp-column"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-0">
+                <span>沿列方向切分权重 A。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-1">
+                <span>每张 GPU 用本地权重分片做矩阵乘法。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-2">
+                <span>把各 GPU 输出沿特征维 cat 回完整输出。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="tp-row">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">延伸理解</span>
+          </div>
+          <h2>行切分的直觉：各卡贡献要相加</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>沿输入特征切分权重时，输入 X 也要按对应维度切分。</li><li>每张卡算的是输出的一部分贡献。</li><li>贡献之间通常需要 all-reduce 求和。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>列切分像各算几列，行切分像各算同一个结果的一部分加数，最后要把加数相加。</p>
+            <div class="sum-flow"><span>X0@A0</span><span>+</span><span>X1@A1</span><strong>all-reduce sum</strong></div>
+            <div class="syntax-card"><h4>语法热身：部分结果求和</h4><pre><code>x_parts = torch.chunk(X, world_size, dim=1)
+a_parts = torch.chunk(A, world_size, dim=0)
+partials = [x @ a for x, a in zip(x_parts, a_parts)]
+out = sum(partials)</code></pre></div>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>行切分 Linear 的 partial outputs 通常如何合并？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row" value="0">
+                <span>相加</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row" value="1">
+                <span>沿 batch 维拼接</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row" value="2">
+                <span>取最大值</span>
+              </label></div>
+            <div class="feedback" data-feedback="tp-row"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-0">
+                <span>对比 notebook 的列切分实现，理解为什么它用 cat。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-1">
+                <span>用小矩阵手算行切分时为什么要 sum。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-2">
+                <span>把列切分和行切分的通信差异写进自己的笔记。</span>
+              </label>
+          </div>
+        </article>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
         <a class="ghost" href="23_zero_optimizer_sim.html">上一关：L23</a>
@@ -462,81 +735,89 @@
 
   <script>
     const levelId = "24";
-    const answer = 0;
-    const explanation = "各 rank 计算部分输入贡献，需要求和得到完整输出。";
-    const taskCount = 3;
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const checkpointData = {"tp-column":{"answer":0,"explain":"列切分对应输出特征维切分，所以结果也沿特征维拼接。"},"tp-row":{"answer":0,"explain":"每张卡算的是同一输出的部分加和，合并方式是求和。"}};
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
     const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
 
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
     }
 
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
         input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
+        input.closest(".homework-item").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
 
-      if (units === 2) {
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
       }
     }
 
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
       }
-      updateStatus();
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
     });
 
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
+    refresh();
   </script>
 </body>
 </html>

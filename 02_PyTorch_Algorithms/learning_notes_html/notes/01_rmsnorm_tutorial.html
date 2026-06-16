@@ -9,18 +9,16 @@
       --bg: #f7f6f1;
       --paper: #ffffff;
       --ink: #182033;
-      --muted: #667284;
+      --muted: #657184;
       --line: #dce2e8;
       --blue: #2563eb;
       --green: #12805c;
       --amber: #bd6516;
       --rose: #be3f5b;
-      --purple: #7c3aed;
       --soft-blue: #e8f0ff;
       --soft-green: #e7f6ee;
       --soft-amber: #fff1dd;
       --soft-rose: #fff0f4;
-      --dark: #101828;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
     * { box-sizing: border-box; }
@@ -36,44 +34,55 @@
     }
     a { color: inherit; text-decoration: none; }
     .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--line);
       background: var(--paper);
       border-radius: 8px;
       padding: 10px 12px;
       font: inherit;
-      cursor: pointer;
     }
     .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       align-items: stretch;
       margin-bottom: 18px;
     }
-    .card {
+    .card, .lesson-card {
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 22px;
     }
-    .hero .card:first-child {
+    .hero-main {
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
         var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
     }
     .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
       display: inline-flex;
       align-items: center;
       min-height: 30px;
@@ -83,10 +92,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .xp-wrap {
-      width: min(100%, 520px);
+      width: min(100%, 540px);
       margin-top: 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -97,157 +109,165 @@
       width: 0%;
       height: 14px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background: linear-gradient(90deg, var(--green), var(--blue));
       transition: width 220ms ease;
     }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
       display: grid;
       place-items: center;
       text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
     }
-    .node strong { display: block; font-size: 20px; }
     .formula {
       border: 1px solid rgba(24,32,51,0.13);
       border-radius: 8px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.55;
-      overflow-x: auto;
+      color: var(--muted);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
       padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
       display: grid;
       gap: 10px;
+      margin: 12px 0;
     }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
+    .story-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
       text-align: center;
       padding: 8px;
-      font-weight: 800;
+      font-weight: 900;
     }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
     }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
+    .channel-plane {
+      border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
+      padding: 34px 10px 10px;
+      position: relative;
     }
-    .boss-panel {
-      border-color: #99d6bf;
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
       background: var(--soft-green);
+      border: 1px solid #a9dbc7;
       color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    pre {
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
       margin: 0;
       border: 1px solid #1f2937;
       border-radius: 8px;
@@ -257,36 +277,262 @@
       overflow-x: auto;
       font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .choice, .task {
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #fff;
       padding: 12px;
       margin-top: 10px;
       cursor: pointer;
     }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -308,22 +554,18 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
     }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
+    @media (max-width: 640px) {
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
+      .map-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -332,155 +574,156 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level 01 | 结构 | Easy</p>
+      <div class="card hero-main">
+        <p class="eyebrow">Level 01 | 零基础导学关卡</p>
         <h1>RMSNorm Tutorial</h1>
-        <p class="lead">理解 RMSNorm 为什么省掉均值中心化，也能稳定 Transformer hidden states。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">01_RMSNorm_Tutorial.ipynb</span>
           <span class="pill">Norm</span><span class="pill">LLM</span><span class="pill">Scale</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
         </div>
         <div class="formula">RMSNorm(x) = x / sqrt(mean(x^2) + eps) * gamma</div>
       </div>
     </section>
 
-    
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 01_RMSNorm_Tutorial.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>01. RMSNorm Tutorial | 均方根层归一化 (RMSNorm)</h2>
-<p><strong>难度：</strong> Easy | <strong>标签：</strong> <code>基础架构</code>, <code>PyTorch</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
-<p>本节我们将实现大语言模型（如 LLaMA、Gemma）中最常用的归一化技术：<strong>RMSNorm (Root Mean Square Normalization)</strong>。相比于传统的 LayerNorm，它能带来可观的训练加速，同时几乎不损失模型表现。</p>
-<blockquote>
-<p><strong>相关阅读</strong>:</p>
-<p>本节使用纯 PyTorch 实现了算法逻辑与数学推导。</p>
-<p>如果你想学习工业界如何打破该算子的 Memory Bound (访存瓶颈)，请前往 Triton 篇：</p>
-<p> [03_Triton_Fused_RMSNorm](../03_CUDA_and_Triton_Kernels/03_Triton_Fused_RMSNorm.ipynb)</p>
-</blockquote>
-<h4>Step 1: 核心思想与痛点</h4>
-<blockquote>
-<p><strong>为什么抛弃了 LayerNorm？</strong></p>
-<p>标准的 LayerNorm 需要计算均值（Mean）和方差（Variance）。</p>
-<p><strong>RMSNorm 的本质：</strong></p>
-<p>假设输入的均值已经接近 0（在大型网络中通常成立），那么我们<strong>直接去掉减去均值的操作</strong>，只用均方根（RMS）去归一化特征。这减少了同步开销，显著提升了前向和反向传播的计算速度。</p>
-</blockquote>
-<h4>Step 2: 核心公式与张量维度</h4>
-<p>给定输入向量 $x \in \mathbb{R}^d$，RMSNorm 的输出 $y$ 为：</p>
-<ul>
-<li><strong>计算均方根 (RMS)：</strong></li>
-</ul>
-<p>$$ \text{RMS}(x) = \sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon} $$</p>
-<p>其中 $\epsilon$ 是为了防止除以 0 的极小值（如 <code>1e-6</code>）。</p>
-<ul>
-<li><strong>归一化并缩放 (Scale)：</strong></li>
-</ul>
-<p>$$ y = \frac{x}{\text{RMS}(x)} \odot \gamma $$</p>
-<p>其中 $\gamma \in \mathbb{R}^d$ 是可学习的权重参数（Weight）。<strong>RMSNorm 没有偏置项 (Bias)</strong>。</p>
-<h4>Step 3: 代码实现与混合精度 (AMP) 陷阱</h4>
-<p>在 PyTorch 中，我们需要通过 <code>torch.mean</code> 计算均方，加上一个极小的 <code>eps</code> 防止除以零，最后乘以可学习的参数 <code>weight</code>。</p>
-<p>在代码实现时，有一个非常关键的工程细节需要处理：<strong>数值溢出 (Numerical Overflow)</strong>。</p>
-<blockquote>
-<p><strong>工程经验：为什么要强制转换精度？</strong></p>
-<p>现代大模型训练与推理几乎都会使用混合精度 (AMP) 或半精度格式 (<code>FP16</code>) 以节省显存。但我们需要注意，<code>FP16</code> 的最大安全数值仅为 <code>65504</code>。</p>
-<p></p>
-<p>在计算 RMSNorm 时，第一步是求输入张量的平方 ($x^2$)。如果输入特征中某个值大于 $256$（由于 $256^2 = 65536 &gt; 65504$），该位置计算后就会溢出变为 <code>inf</code>（无穷大），进而导致损失函数出现 <code>NaN</code>，引发训练崩溃。</p>
-<p></p>
-<p><strong>标准处理方案 (Upcasting)：</strong></p>
-<p>无论模型输入是什么精度格式，在执行平方和均值操作前，通常需要显式地将其转换为 <code>float32</code> 计算。待归一化计算完毕后，再将结果转换回原有精度。这是深度学习框架中处理该算子的标准做法。</p>
-</blockquote>
-<h4>Step 4: 动手实战</h4>
-<p><strong>要求</strong>：请补全下方 <code>RMSNorm</code> 的 <code>forward</code> 方法。</p>
-<p><strong>注意：</strong></p>
-<ul>
-<li>确保在浮点数精度较高的情况下计算 RMS，以防止半精度（FP16/BF16）溢出。即：强制转换 <code>x</code> 为 <code>float32</code> 计算 <code>pow(2).mean()</code>。</li>
-</ul>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>解析</h4>
-<p><strong>1. TODO 1 (可学习参数)</strong></p>
-<ul>
-<li><strong>参数定义：</strong> RMSNorm 的 <code>weight</code>（论文中称为 $\gamma$）是逐元素乘以归一化结果的，形状应与特征维度 <code>hidden_size</code> 一致，初始化为全 1。</li>
-</ul>
-<p><strong>2. TODO 2 (核心计算逻辑)</strong></p>
-<ul>
-<li><strong>防溢出：</strong> 大模型特征的平方和极易越界（超过 FP16 的 <code>65504</code> 上限），因此在计算均方值前，必须将输入强制转换为 <code>float32</code>。</li>
-<li><strong>张量广播：</strong> 使用 <code>.mean(dim=-1, keepdim=True)</code> 保留维度数量（形状变为 <code>(batch_size, seq_len, 1)</code>），以便与 <code>x_fp32</code> 正确广播相乘。</li>
-<li><strong>指令优化：</strong> 使用 <code>torch.rsqrt(x)</code>（相当于 $1/\sqrt{x}$）而非 <code>1.0 / torch.sqrt(x)</code>，前者直接映射为 CUDA 快速倒数平方根指令，速度更快且数值更稳定。</li>
-<li><strong>精度保持：</strong> 返回 <code>float32</code> 结果，不要急着转换精度。</li>
-</ul>
-<p><strong>3. TODO 3 (类型恢复与权重缩放)</strong></p>
-<ul>
-<li><strong>精度一致性：</strong> 必须确保最终输出的精度与输入一致。在经过 FP32 的归一化计算后，将其与 <code>weight</code> 相乘，最后统一通过 <code>.to(x.dtype)</code> 转换回原生精度（如 <code>float16</code>）。</li>
-<li><strong>进阶思考：</strong> 为什么最后的乘法敢在低精度做（真实场景下 weight 也是低精度），不怕溢出吗？因为 <code>_norm(x)</code> 计算完毕后，数值的均方根为 1，绝大多数值落在 [-3, 3] 区间（3σ 原则），乘以 weight（通常接近 1）后仍远低于 FP16 的溢出上限 65504。而 <code>weight</code>（初始为 1）通常在 <code>[0.5, 2.0]</code> 附近波动。两者的乘积一般在 <code>[-6, 6]</code> 之间，距离 FP16 的溢出红线 <code>65504</code> 差了一万倍，因此发生溢出的概率极低。</li>
-</ul>
-      </div>
-    </section>
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="rmsnorm-scale">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 1 / TODO 2</span>
+          </div>
+          <h2>RMS：用向量自己的大小做刻度尺</h2>
 
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul><li>LayerNorm 会减均值再除标准差；RMSNorm 只用 root mean square 做缩放，计算更轻。</li><li>RMSNorm 常用于 LLaMA 系模型，目标是稳定激活尺度，而不是强制每个 token 的 hidden state 零均值。</li><li>可学习参数 gamma 负责把归一化后的向量重新缩放到模型需要的尺度。</li></ul>
-      </article>
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>hidden_size 是最后一维特征数。</li><li>mean(dim=-1, keepdim=True) 会保留可广播维度。</li><li>eps 用来避免除以 0。</li></ul>
+          </div>
 
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>RMSNorm 相比 LayerNorm 最核心的简化是什么？</p>
-        <div id="choices">
-            <label class="choice">
-              <input type="radio" name="quiz" value="0">
-              <span>不再减去均值，只按均方根缩放</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="1">
-              <span>完全没有可学习参数</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="2">
-              <span>只适用于 batch size 为 1</span>
-            </label></div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>RMSNorm 不关心向量平均值是不是 0，只把每个 token 的 hidden 向量缩放到稳定尺度。</p>
+            <div class="scale-demo"><span>原向量: [3,4]</span><span>RMS≈3.54</span><span>缩放后: [0.85,1.13]</span></div>
+            <div class="syntax-card"><h4>语法热身：对最后一维求均值并保留维度</h4><pre><code>x = torch.randn(2, 3, 4)
+last_mean = x.mean(dim=-1, keepdim=True)  # [2,3,1]
+y = x / (last_mean.abs() + 1e-6)</code></pre></div>
+          </div>
 
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">
-            <label class="task">
-              <input type="checkbox" data-task="0">
-              <span>实现 rms = sqrt(mean(x^2) + eps)，并检查输出 shape 是否与输入一致。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="1">
-              <span>把你的 RMSNorm 输出和 notebook 中参考实现对齐。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="2">
-              <span>调大输入幅度，观察归一化前后向量范数的变化。</span>
-            </label></div>
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>x shape 为 [2,3,4]，x.pow(2).mean(dim=-1, keepdim=True) 的 shape 是？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-scale" value="0">
+                <span>[2,3,1]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-scale" value="1">
+                <span>[2,4]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-scale" value="2">
+                <span>[1,3,4]</span>
+              </label></div>
+            <div class="feedback" data-feedback="rmsnorm-scale"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-0">
+                <span>定义 shape 为 [hidden_size] 的可学习 weight。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-1">
+                <span>用平方、均值、rsqrt 写出归一化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-2">
+                <span>检查输出 shape 与输入一致。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="rmsnorm-precision">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 2 / TODO 3</span>
+          </div>
+          <h2>先用 FP32 计算，再回到输入 dtype</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>float16 的可表示范围有限。</li><li>平方会放大数值。</li><li>.to(x.dtype) 可以恢复原始精度。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>归一化里的平方像放大镜，半精度数值太大时容易溢出，所以先换到更稳的 FP32。</p>
+            <div class="dtype-demo"><span>FP16: 300² → overflow</span><span>FP32: 300² → 90000</span><span>输出再转回 FP16</span></div>
+            <div class="syntax-card"><h4>语法热身：临时升精度做统计量</h4><pre><code>scores = torch.tensor([1000, 2000], dtype=torch.float16)
+mean32 = scores.float().mean()
+centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>为什么 RMSNorm 中常先把 x 转成 float32 再平方？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-precision" value="0">
+                <span>避免 FP16 平方溢出</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-precision" value="1">
+                <span>让 shape 自动变小</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-precision" value="2">
+                <span>让参数不参与训练</span>
+              </label></div>
+            <div class="feedback" data-feedback="rmsnorm-precision"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-0">
+                <span>在 pow(2).mean 前使用 float32。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-1">
+                <span>最终输出转回输入 dtype。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-2">
+                <span>和参考实现比较 dtype、shape、数值误差。</span>
+              </label>
+          </div>
+        </article>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
         <a class="ghost" href="00_pytorch_warmup.html">上一关：L00</a>
@@ -491,81 +734,89 @@
 
   <script>
     const levelId = "01";
-    const answer = 0;
-    const explanation = "RMSNorm 保留按尺度归一化的效果，但省掉 mean-centering。";
-    const taskCount = 3;
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const checkpointData = {"rmsnorm-scale":{"answer":0,"explain":"沿最后一维 4 求均值，keepdim=True 会把最后一维保留为 1，方便和原张量广播。"},"rmsnorm-precision":{"answer":0,"explain":"平方会迅速放大数值；FP32 计算统计量更稳，最后再转回输入 dtype。"}};
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
     const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
 
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
     }
 
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
         input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
+        input.closest(".homework-item").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
 
-      if (units === 2) {
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
       }
     }
 
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
       }
-      updateStatus();
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
     });
 
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
+    refresh();
   </script>
 </body>
 </html>

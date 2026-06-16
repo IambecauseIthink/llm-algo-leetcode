@@ -9,18 +9,16 @@
       --bg: #f7f6f1;
       --paper: #ffffff;
       --ink: #182033;
-      --muted: #667284;
+      --muted: #657184;
       --line: #dce2e8;
       --blue: #2563eb;
       --green: #12805c;
       --amber: #bd6516;
       --rose: #be3f5b;
-      --purple: #7c3aed;
       --soft-blue: #e8f0ff;
       --soft-green: #e7f6ee;
       --soft-amber: #fff1dd;
       --soft-rose: #fff0f4;
-      --dark: #101828;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
     * { box-sizing: border-box; }
@@ -36,44 +34,55 @@
     }
     a { color: inherit; text-decoration: none; }
     .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--line);
       background: var(--paper);
       border-radius: 8px;
       padding: 10px 12px;
       font: inherit;
-      cursor: pointer;
     }
     .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       align-items: stretch;
       margin-bottom: 18px;
     }
-    .card {
+    .card, .lesson-card {
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 22px;
     }
-    .hero .card:first-child {
+    .hero-main {
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
         var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
     }
     .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
       display: inline-flex;
       align-items: center;
       min-height: 30px;
@@ -83,10 +92,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .xp-wrap {
-      width: min(100%, 520px);
+      width: min(100%, 540px);
       margin-top: 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -97,157 +109,165 @@
       width: 0%;
       height: 14px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background: linear-gradient(90deg, var(--green), var(--blue));
       transition: width 220ms ease;
     }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
       display: grid;
       place-items: center;
       text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
     }
-    .node strong { display: block; font-size: 20px; }
     .formula {
       border: 1px solid rgba(24,32,51,0.13);
       border-radius: 8px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.55;
-      overflow-x: auto;
+      color: var(--muted);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
       padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
       display: grid;
       gap: 10px;
+      margin: 12px 0;
     }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
+    .story-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
       text-align: center;
       padding: 8px;
-      font-weight: 800;
+      font-weight: 900;
     }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
     }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
+    .channel-plane {
+      border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
+      padding: 34px 10px 10px;
+      position: relative;
     }
-    .boss-panel {
-      border-color: #99d6bf;
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
       background: var(--soft-green);
+      border: 1px solid #a9dbc7;
       color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    pre {
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
       margin: 0;
       border: 1px solid #1f2937;
       border-radius: 8px;
@@ -257,36 +277,262 @@
       overflow-x: auto;
       font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .choice, .task {
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #fff;
       padding: 12px;
       margin-top: 10px;
       cursor: pointer;
     }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -308,22 +554,18 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
     }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
+    @media (max-width: 640px) {
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
+      .map-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -332,159 +574,156 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level 07 | 训练 | Medium</p>
+      <div class="card hero-main">
+        <p class="eyebrow">Level 07 | 零基础导学关卡</p>
         <h1>MoE Load Balancing Loss</h1>
-        <p class="lead">让专家别扎堆：用辅助损失推动路由概率和实际分配更均衡。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">07_MoE_Load_Balancing_Loss.ipynb</span>
           <span class="pill">MoE</span><span class="pill">Loss</span><span class="pill">Balance</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
         </div>
         <div class="formula">balance_loss ∝ num_experts * sum(tokens_per_expert * prob_per_expert)</div>
       </div>
     </section>
 
-    
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 07_MoE_Load_Balancing_Loss.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>07. MoE Load Balancing Loss | MoE 进阶：负载均衡损失函数 (Load Balancing Loss)</h2>
-<p><strong>难度：</strong> Hard | <strong>标签：</strong> <code>MoE</code>, <code>Loss Function</code>, <code>Mixtral</code> | <strong>目标人群：</strong> 核心 Infra 与算子开发</p>
-<p>在上一节 <code>06_MoE_Router</code> 中，我们实现了 Top-K 路由。但在真实的 MoE 模型（如 Mixtral 8x7B, DeepSeek）训练中，会遇到一个非常严重的问题：<strong>路由崩塌 (Router Collapse)</strong>。</p>
-<p>即门控网络“偷懒”，把所有的 Token 都发给了第 0 号和第 1 号专家，导致其他专家被饿死（闲置），不仅失去了 MoE 的意义，还会导致算力非常不均衡（OOM）。</p>
-<p>因此，面试官非常爱考：<strong>如何用代码实现 MoE 的辅助损失函数 (Auxiliary Loss) 来强制负载均衡？</strong></p>
-<h4>Step 1: 核心数学公式</h4>
-<p>为了让 $N$ 个 Token 均匀地分配给 $E$ 个专家，我们需要设计一个惩罚项，加到总的 CrossEntropy Loss 里。</p>
-<p>Mixtral / Switch Transformer 使用的经典公式：</p>
-<p>$$ L_{aux} = \alpha \cdot E \sum_{i=1}^E f_i \cdot P_i $$</p>
-<ul>
-<li>$E$: 专家总数。</li>
-<li>$f_i$: 专家 $i$ 被路由到的 <strong>Token 比例</strong>（即选了专家 $i$ 的 token 数 / 总 token 数）。</li>
-<li>$P_i$: 专家 $i$ 在所有 Token 上的 <strong>平均路由概率得分</strong>（Softmax 之后的概率的均值）。</li>
-<li>$\alpha$: 辅助损失的权重系数（通常很小，如 0.01）。</li>
-</ul>
-<p><strong>为什么这个公式有效？</strong></p>
-<p>根据均值不等式，给定总和为 1 的 $f$ 和 $P$，当且仅当所有的 $f_i = 1/E$ 且 $P_i = 1/E$ 时（即绝对均匀分配），它们的内积（点积）之和最小。优化器为了降低这个 Loss，会拼命把 Token 往不同的专家那里赶！</p>
-<h4>Step 2: 代码实现框架</h4>
-<p>你需要统计在当前批次中每个专家实际被选中的次数（形成频率分布 $f_i$），同时求出门控概率的均值分布（$P_i$）。将这两个分布点乘并乘以专家总数 $E$ 和超参数 $\alpha$，即可得到最终的 Load Balancing Loss。</p>
-<p><strong>关键点</strong>：本实现支持 Top-K 路由（不仅限于 Top-1），通过 <code>top_k</code> 参数控制每个 Token 选择的专家数量。</p>
-<h4>Step 3: 动手实战</h4>
-<p><strong>要求</strong>：请补全下方 <code>compute_load_balancing_loss</code> 的逻辑。</p>
-<p><strong>注意</strong>：本实现支持 Top-K 路由，即每个 Token 可以选择 K 个专家（通常 K=2）。</p>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>解析</h4>
-<p><strong>1. TODO 1: 计算 P_i（平均路由概率）</strong></p>
-<ul>
-<li><strong>实现方式</strong>：</li>
-</ul>
-<p>```python</p>
-<p>P_i = torch.zeros(num_experts, dtype=routing_weights.dtype, device=routing_weights.device)</p>
-<p>P_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())</p>
-<p>P_i = P_i / (total_tokens * top_k)</p>
-<p>```</p>
-<ul>
-<li><strong>核心逻辑</strong>：使用 <code>scatter_add_</code> 将每个 token 对选中专家的权重累加到对应专家的位置。</li>
-<li><strong>归一化</strong>：除以总的选择次数 <code>(total_tokens * top_k)</code> 得到平均权重。</li>
-<li><strong>物理含义</strong>：$P_i$ 表示专家 $i$ 在所有 token 上的平均被选中概率。</li>
-</ul>
-<p><strong>2. TODO 2: 计算 f_i（Token 分配比例）</strong></p>
-<ul>
-<li><strong>实现方式</strong>：</li>
-</ul>
-<p>```python</p>
-<p>expert_mask = F.one_hot(selected_experts, num_classes=num_experts)</p>
-<p>tokens_per_expert = expert_mask.sum(dim=(0, 1)).float()</p>
-<p>f_i = tokens_per_expert / (total_tokens * top_k)</p>
-<p>```</p>
-<ul>
-<li><strong>核心逻辑</strong>：<code>F.one_hot</code> 将专家索引转换为 one-hot 编码，形状为 <code>[batch_size_x_seq_len, top_k, num_experts]</code>。</li>
-<li><strong>统计方法</strong>：沿前两个维度求和，统计每个专家被选中的总次数。</li>
-<li><strong>归一化</strong>：除以总的选择次数得到比例。</li>
-<li><strong>物理含义</strong>：$f_i$ 表示专家 $i$ 实际分到的 token 比例。</li>
-</ul>
-<p><strong>3. TODO 3: 计算辅助损失</strong></p>
-<ul>
-<li><strong>实现方式</strong>：<code>aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></li>
-<li><strong>数学公式</strong>：$L_{aux} = \alpha \cdot E \sum_{i=1}^E f_i \cdot P_i$</li>
-<li><strong>最小值分析</strong>：根据均值不等式，当 $f_i = P_i = 1/E$ 时（完全均匀），损失最小。对于 Top-K 路由，理论最小值为 $\alpha / K$。</li>
-<li><strong>优化目标</strong>：优化器为了降低这个 Loss，会强制将 Token 均匀分配给所有专家，防止路由崩塌。</li>
-</ul>
-<p><strong>工程要点</strong></p>
-<ul>
-<li><strong>Top-K 兼容性</strong>：代码支持任意 K 值，通过 <code>(total_tokens * top_k)</code> 归一化确保比例计算正确。</li>
-<li><strong>数值稳定性</strong>：使用 <code>scatter_add_</code> 而非循环累加，提升计算效率和数值稳定性。</li>
-<li><strong>超参数调优</strong>：$\alpha$ 通常设为 0.01，过大会影响主任务性能，过小则无法有效平衡负载。</li>
-<li><strong>与主损失结合</strong>：在实际训练中，将 <code>aux_loss</code> 加到 CrossEntropy Loss 上：<code>total_loss = ce_loss + aux_loss</code>。</li>
-</ul>
-      </div>
-    </section>
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="moe-balance-token-frequency">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 2</span>
+          </div>
+          <h2>负载均衡先数人头</h2>
 
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul><li>没有约束时，router 可能总把 token 发给少数热门专家，造成容量浪费和训练不稳。</li><li>负载均衡损失通常同时考虑专家被选择的频率和 router 分配概率。</li><li>这类辅助 loss 不直接优化语言建模目标，但能让 MoE 系统更可训练。</li></ul>
-      </article>
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>MoE 如果总选同一个专家，就会出现拥堵。</li><li>f_i 表示第 i 个专家实际收到的 token 比例。</li><li>one_hot 可以把专家 id 转成按专家统计的计数表。</li></ul>
+          </div>
 
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>MoE load balancing loss 主要想避免什么问题？</p>
-        <div id="choices">
-            <label class="choice">
-              <input type="radio" name="quiz" value="0">
-              <span>所有 token 挤到少数专家</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="1">
-              <span>学习率永远为 0</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="2">
-              <span>embedding 维度变小</span>
-            </label></div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>像给多个窗口排队：只看 router 觉得谁好还不够，还要统计每个窗口真正排了多少人。</p>
+            <div class="mini-table"><span>选中专家</span><span>[0, 2, 2, 1]</span><span>one-hot 计数</span><strong>f=[1/4, 1/4, 2/4]</strong></div>
+            <div class="syntax-card"><h4>语法热身：one_hot 计数</h4><pre><code>ids = torch.tensor([0, 2, 2, 1])
+hot = F.one_hot(ids, num_classes=3).float()
+freq = hot.mean(dim=0)</code></pre></div>
+          </div>
 
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">
-            <label class="task">
-              <input type="checkbox" data-task="0">
-              <span>统计 top-k 结果中每个专家的 token 占比。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="1">
-              <span>计算 router probability 在专家维度上的平均值。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="2">
-              <span>观察负载极不均时辅助 loss 的数值变化。</span>
-            </label></div>
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>4 个 token 分给专家 [0,2,2,1]，专家 2 的 f_i 是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="0">
+                <span>0.5</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="1">
+                <span>0.25</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="2">
+                <span>2.0</span>
+              </label></div>
+            <div class="feedback" data-feedback="moe-balance-token-frequency"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-token-frequency-0">
+                <span>把 selected_experts 转成 one_hot。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-token-frequency-1">
+                <span>沿 token 维求平均得到每个专家的 f_i。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-token-frequency-2">
+                <span>检查所有 f_i 的和接近 1。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="moe-balance-prob-loss">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 1 / TODO 3</span>
+          </div>
+          <h2>P_i 看偏好，f_i 看实际分配</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>P_i 是 router 给第 i 个专家的平均概率。</li><li>f_i 是第 i 个专家实际被选中的比例。</li><li>辅助损失会惩罚概率偏好和实际分配过于集中。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>P_i 像问卷里的偏好，f_i 像真实排队人数；两者都均匀，专家才不会冷热不均。</p>
+            <div class="ratio-board"><span>P=[.33, .34, .33]</span><span>f=[.25, .25, .50]</span><strong>loss 关注 P 和 f 的乘积和</strong></div>
+            <div class="syntax-card"><h4>语法热身：按列求平均</h4><pre><code>probs = torch.tensor([[.7, .2, .1], [.1, .7, .2]])
+p_i = probs.mean(dim=0)
+loss = (p_i * torch.tensor([.5, .5, 0.0])).sum()</code></pre></div>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>如果一个专家 P_i 很高且 f_i 也很高，辅助损失会如何看待它？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="0">
+                <span>说明负载集中，需要惩罚</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="1">
+                <span>说明这个专家应被删除</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="2">
+                <span>说明 softmax 失效</span>
+              </label></div>
+            <div class="feedback" data-feedback="moe-balance-prob-loss"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-prob-loss-0">
+                <span>用 routing_probs.mean(dim=0) 得到 P_i。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-prob-loss-1">
+                <span>用 one_hot 或 scatter 统计 f_i。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="moe-balance-prob-loss-2">
+                <span>按 notebook 公式组合 P_i、f_i 和专家数量得到辅助损失。</span>
+              </label>
+          </div>
+        </article>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
         <a class="ghost" href="06_moe_router.html">上一关：L06</a>
@@ -495,81 +734,89 @@
 
   <script>
     const levelId = "07";
-    const answer = 0;
-    const explanation = "负载不均会导致一些专家过载，另一些专家几乎不学习。";
-    const taskCount = 3;
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const checkpointData = {"moe-balance-token-frequency":{"answer":0,"explain":"专家 2 收到 2 个 token，占 4 个 token 的一半。"},"moe-balance-prob-loss":{"answer":0,"explain":"负载均衡希望专家被更平均地使用，高偏好和高占用同时出现会推高惩罚项。"}};
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
     const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
 
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
     }
 
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
         input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
+        input.closest(".homework-item").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
 
-      if (units === 2) {
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
       }
     }
 
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
       }
-      updateStatus();
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
     });
 
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
+    refresh();
   </script>
 </body>
 </html>

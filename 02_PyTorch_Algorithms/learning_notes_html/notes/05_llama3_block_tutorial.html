@@ -9,18 +9,16 @@
       --bg: #f7f6f1;
       --paper: #ffffff;
       --ink: #182033;
-      --muted: #667284;
+      --muted: #657184;
       --line: #dce2e8;
       --blue: #2563eb;
       --green: #12805c;
       --amber: #bd6516;
       --rose: #be3f5b;
-      --purple: #7c3aed;
       --soft-blue: #e8f0ff;
       --soft-green: #e7f6ee;
       --soft-amber: #fff1dd;
       --soft-rose: #fff0f4;
-      --dark: #101828;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
     * { box-sizing: border-box; }
@@ -36,44 +34,55 @@
     }
     a { color: inherit; text-decoration: none; }
     .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--line);
       background: var(--paper);
       border-radius: 8px;
       padding: 10px 12px;
       font: inherit;
-      cursor: pointer;
     }
     .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       align-items: stretch;
       margin-bottom: 18px;
     }
-    .card {
+    .card, .lesson-card {
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       padding: 22px;
     }
-    .hero .card:first-child {
+    .hero-main {
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
         var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
     }
     .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
     h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
       display: inline-flex;
       align-items: center;
       min-height: 30px;
@@ -83,10 +92,13 @@
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .xp-wrap {
-      width: min(100%, 520px);
+      width: min(100%, 540px);
       margin-top: 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -97,157 +109,165 @@
       width: 0%;
       height: 14px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background: linear-gradient(90deg, var(--green), var(--blue));
       transition: width 220ms ease;
     }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
       display: grid;
       place-items: center;
       text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
     }
-    .node strong { display: block; font-size: 20px; }
     .formula {
       border: 1px solid rgba(24,32,51,0.13);
       border-radius: 8px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.55;
-      overflow-x: auto;
+      color: var(--muted);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
       padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
       display: grid;
       gap: 10px;
+      margin: 12px 0;
     }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
+    .story-panel {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
       text-align: center;
       padding: 8px;
-      font-weight: 800;
+      font-weight: 900;
     }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
     }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
+    .channel-plane {
+      border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
+      padding: 34px 10px 10px;
+      position: relative;
     }
-    .boss-panel {
-      border-color: #99d6bf;
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
       background: var(--soft-green);
+      border: 1px solid #a9dbc7;
       color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    pre {
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
       margin: 0;
       border: 1px solid #1f2937;
       border-radius: 8px;
@@ -257,36 +277,262 @@
       overflow-x: auto;
       font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .choice, .task {
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #fff;
       padding: 12px;
       margin-top: 10px;
       cursor: pointer;
     }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -308,22 +554,18 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
     }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
+    @media (max-width: 640px) {
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
+      .map-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -332,168 +574,160 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="status">进度：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level 05 | 结构 | Medium</p>
+      <div class="card hero-main">
+        <p class="eyebrow">Level 05 | 零基础导学关卡</p>
         <h1>LLaMA3 Block Tutorial</h1>
-        <p class="lead">把 RMSNorm、Attention、SwiGLU FFN 和残差连接组装成现代 decoder block。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">05_LLaMA3_Block_Tutorial.ipynb</span>
           <span class="pill">Decoder Block</span><span class="pill">Residual</span><span class="pill">RMSNorm</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
         </div>
         <div class="formula">x = x + Attention(RMSNorm(x)); x = x + MLP(RMSNorm(x))</div>
       </div>
     </section>
 
-    
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 05_LLaMA3_Block_Tutorial.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>05. LLaMA3 Block Tutorial | 经典模型搭建: LLaMA-3 Transformer Block</h2>
-<p><strong>难度：</strong> Medium | <strong>标签：</strong> <code>模型架构</code>, <code>PyTorch</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
-<p>本节我们将进入激动人心的“组装阶段”！我们将把之前实现的 <strong>RMSNorm</strong>、<strong>RoPE</strong> 和 <strong>GQA (Grouped-Query Attention)</strong> 拼装在一起，外加一个 <strong>SwiGLU</strong> 激活函数的 MLP 层，构建一个真正的 <strong>LLaMA-3 Decoder Layer</strong>。这也是面试中常考的全局架构题。</p>
-<h4>Step 1: 核心思想与痛点</h4>
-<blockquote>
-<p><strong>LLaMA 架构 vs 传统 Transformer (如 GPT-2)</strong></p>
-<p>1. <strong>归一化位置 (Pre-Norm vs Post-Norm)</strong>：LLaMA 使用 Pre-Norm（在 Attention 和 MLP <strong>之前</strong>进行归一化），这让深层网络的训练更加稳定；而早期模型多用 Post-Norm。</p>
-<p>2. <strong>归一化算法</strong>：将 LayerNorm 替换为无偏置、不减均值的 <strong>RMSNorm</strong>，提升计算效率。</p>
-<p>3. <strong>激活函数</strong>：将 ReLU/GELU 替换为 <strong>SwiGLU</strong>，通过门控机制（Gating）显著提升了模型的表达能力。</p>
-<p>4. <strong>位置编码</strong>：彻底抛弃绝对位置编码，拥抱 <strong>RoPE</strong>。</p>
-<p>5. <strong>注意力机制</strong>：从 LLaMA-2 开始，为了优化推理时的 KV Cache，将标准 MHA 升级为 <strong>GQA</strong>。</p>
-</blockquote>
-<h4>Step 2: 模块集成框架</h4>
-<p>LLaMA-3 的 Decoder 层采用了 Pre-RMSNorm 结构。前向传播的具体流程为：</p>
-<ul>
-<li>输入经过 Attention 层的 RMSNorm。</li>
-<li>执行带 KV Cache 的 GQA 注意力机制（内含 RoPE 旋转）。</li>
-<li>将残差相加：<code>x = x + attn_out</code>。</li>
-<li>经过 MLP 层的 RMSNorm。</li>
-<li>执行 SwiGLU 前馈网络并再次加上残差。</li>
-</ul>
-<h4>Step 3: 核心公式与架构</h4>
-<p><strong>1. SwiGLU MLP:</strong></p>
-<p>$$ \text{SwiGLU}(x) = (\text{Swish}(x W_{\text{gate}}) \otimes (x W_{\text{up}})) W_{\text{down}} $$</p>
-<p>其中 $\text{Swish}(z) = z \cdot \sigma(z)$ (在 PyTorch 中对应 <code>F.silu</code>)。注意，为了保持参数量与传统 MLP 一致，LLaMA 中的隐藏层维度通常设置为 $\frac{8}{3} d$ 并向上取整。</p>
-<p><strong>2. Decoder Layer 残差连接 (Residual Connections):</strong></p>
-<p>$$ h = x + \text{Attention}(\text{RMSNorm}(x)) $$</p>
-<p>$$ \text{out} = h + \text{MLP}(\text{RMSNorm}(h)) $$</p>
-<p>*注意：这里的 Attention 内部包含了 RoPE 旋转位置编码。*</p>
-<h4>Step 4: 动手实战</h4>
-<p><strong>要求</strong>：请补全下方 <code>LlamaMLP</code> 和 <code>LlamaDecoderLayer</code>。</p>
-<p>为了让你直接上手核心逻辑，我们假设 <code>RMSNorm</code> 和 <code>Attention</code> 模块已经由你之前的代码提供（这里我们用 Dummy Class 占位模拟）。</p>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>解析</h4>
-<p><strong>1. TODO 1 (SwiGLU 的三个线性层定义)</strong></p>
-<ul>
-<li><strong>gate_proj（门控投影）：</strong> 将输入从 <code>hidden_size</code> 映射到 <code>intermediate_size</code>，用于生成门控信号。这是 SwiGLU 的核心创新，通过门控机制动态调节信息流。</li>
-<li><strong>up_proj（上投影）：</strong> 同样将输入映射到 <code>intermediate_size</code>，生成要被门控的特征。与 gate_proj 并行计算。</li>
-<li><strong>down_proj（下投影）：</strong> 将 <code>intermediate_size</code> 映射回 <code>hidden_size</code>，完成前馈网络的降维。</li>
-<li><strong>无偏置设计：</strong> <code>bias=False</code> 是 LLaMA 的标准配置，减少参数量并提升训练稳定性。在大规模模型中，偏置项的作用相对较小，去除后可以节省显存和计算。</li>
-<li><strong>工程细节：</strong> 为什么需要三个线性层？传统 MLP 只有两层（up + down），而 SwiGLU 引入了门控机制，需要额外的 gate_proj 来生成门控信号。这使得模型能够动态选择哪些特征需要被激活。</li>
-</ul>
-<p><strong>2. TODO 2 (SwiGLU 前向传播)</strong></p>
-<ul>
-<li><strong>门控计算：</strong> <code>F.silu(self.gate_proj(x))</code> 使用 SiLU (Swish) 激活函数处理门控投影。SiLU 定义为 $f(x) = x \cdot \sigma(x)$，其中 $\sigma$ 是 sigmoid 函数。</li>
-<li><strong>逐元素乘法：</strong> <code>* self.up_proj(x)</code> 将门控信号与上投影特征进行逐元素相乘（Hadamard 积），实现动态特征选择。</li>
-<li><strong>降维输出：</strong> <code>self.down_proj(...)</code> 将中间特征映射回原始维度。</li>
-<li><strong>数学公式：</strong> $\text{SwiGLU}(x) = (\text{SiLU}(xW_{\text{gate}}) \odot xW_{\text{up}})W_{\text{down}}$</li>
-<li><strong>为什么用 SiLU 而不是 ReLU？</strong> SiLU 是平滑的非线性函数，梯度更加稳定，在深层网络中表现更好。ReLU 在负值区域梯度为 0，容易导致神经元死亡。</li>
-<li><strong>进阶思考：</strong> 为什么 <code>intermediate_size</code> 通常是 $\frac{8}{3} \times \text{hidden\_size}$？这是为了在引入门控机制后，保持与传统 MLP（通常是 $4 \times \text{hidden\_size}$）相近的参数量。由于 SwiGLU 需要两个投影（gate + up），所以每个投影的维度相应减小。</li>
-</ul>
-<p><strong>3. TODO 3 (Pre-Norm 残差连接)</strong></p>
-<ul>
-<li><strong>Pre-Norm 架构：</strong> 在每个子层（Attention 或 MLP）<strong>之前</strong>进行归一化，这是 LLaMA 相对于早期 Transformer（如 GPT-2）的重要改进。</li>
-<li><strong>Attention Block 流程：</strong></li>
-<li>保存残差：<code>residual = hidden_states</code></li>
-<li>归一化：<code>hidden_states = self.input_layernorm(hidden_states)</code></li>
-<li>注意力计算：<code>hidden_states = self.self_attn(hidden_states)</code>（内部包含 RoPE 和 GQA）</li>
-<li>残差连接：<code>hidden_states = residual + hidden_states</code></li>
-<li><strong>MLP Block 流程：</strong> 与 Attention Block 完全对称，只是将 self_attn 替换为 mlp。</li>
-<li><strong>为什么 Pre-Norm 更好？</strong> Post-Norm（先计算再归一化）在深层网络中容易出现梯度爆炸或消失。Pre-Norm 将归一化放在前面，使得每个子层的输入都是归一化的，梯度更加稳定，训练更容易收敛。</li>
-<li><strong>残差连接的作用：</strong> 提供梯度的&quot;高速公路&quot;，使得梯度可以直接从输出层反向传播到输入层，缓解深层网络的梯度消失问题。这是训练超过 100 层 Transformer 的关键技术。</li>
-</ul>
-<p><strong>进阶思考：LLaMA 架构的五大创新</strong></p>
-<ul>
-<li><strong>Pre-Norm 拓扑：</strong> 相比 Post-Norm，训练更稳定，支持更深的网络。</li>
-<li><strong>RMSNorm 替代 LayerNorm：</strong> 去除均值计算和偏置，速度提升约 10-15%，且在大规模训练中表现相当。</li>
-<li><strong>SwiGLU 激活函数：</strong> 门控机制带来更强的表达能力，在多个基准测试中优于 GELU 和 ReLU。</li>
-<li><strong>RoPE 位置编码：</strong> 相对位置编码，支持长度外推，是当前大模型的标配。</li>
-<li><strong>GQA 注意力：</strong> 在 LLaMA-2/3 中引入，大幅减少 KV Cache 显存占用（相比 MHA 减少 8 倍），同时保持接近 MHA 的性能。</li>
-</ul>
-<p><strong>工程实践：</strong></p>
-<ul>
-<li><strong>LLaMA-3 8B</strong>：32 层 Decoder Layer，hidden_size=4096，32 个 Query 头，8 个 KV 头（GQA 比例 4:1）。</li>
-<li><strong>LLaMA-3 70B</strong>：80 层 Decoder Layer，hidden_size=8192，64 个 Query 头，8 个 KV 头（GQA 比例 8:1）。</li>
-<li><strong>训练技巧：</strong> 使用 BF16 混合精度训练，梯度裁剪（clip_grad_norm=1.0），AdamW 优化器（β1=0.9, β2=0.95），余弦学习率衰减。</li>
-</ul>
-      </div>
-    </section>
+    <section class="lessons">
+      
+        <article class="lesson-card" data-lesson="llama-mlp-swiglu">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">TODO 1 / TODO 2</span>
+          </div>
+          <h2>LLaMA MLP：gate、up、down 三步走</h2>
 
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul><li>LLaMA 风格 block 通常使用 pre-norm：先归一化，再进入 attention 或 FFN。</li><li>残差连接让每个子层学习增量，帮助深层网络稳定训练。</li><li>一个 block 的主要路径是 norm -&gt; attention -&gt; residual -&gt; norm -&gt; mlp -&gt; residual。</li></ul>
-      </article>
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>nn.Module 里子层要在 __init__ 定义。</li><li>bias=False 是 LLaMA MLP 的常见设置。</li><li>gate 和 up 输出必须同 shape 才能相乘。</li></ul>
+          </div>
 
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>Pre-norm Transformer block 中，归一化通常发生在子层的什么位置？</p>
-        <div id="choices">
-            <label class="choice">
-              <input type="radio" name="quiz" value="0">
-              <span>子层之前</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="1">
-              <span>子层之后且没有残差</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="quiz" value="2">
-              <span>只在最后一层</span>
-            </label></div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>gate 先产生筛选信号，up 产生内容，二者相乘后由 down 投影回 hidden_size。</p>
+            <div class="mlp-demo"><span>x → gate_proj → SiLU</span><span>x → up_proj</span><strong>相乘 → down_proj → hidden</strong></div>
+            <div class="syntax-card"><h4>语法热身：写一个带子层的简单模块</h4><pre><code>class ScaleValue(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.scale = nn.Linear(dim, dim)
+        self.value = nn.Linear(dim, dim)
+    def forward(self, x):
+        return torch.sigmoid(self.scale(x)) * self.value(x)</code></pre></div>
+          </div>
 
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">
-            <label class="task">
-              <input type="checkbox" data-task="0">
-              <span>画出 block 的数据流，标注两条 residual add 的位置。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="1">
-              <span>在 notebook 中打印每个子层输入输出 shape。</span>
-            </label>
-            <label class="task">
-              <input type="checkbox" data-task="2">
-              <span>替换一个组件，例如把 FFN 输出置零，观察残差路径如何保留输入。</span>
-            </label></div>
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>LLaMA 风格 SwiGLU 中，哪两个投影的输出需要逐元素相乘？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="0">
+                <span>gate_proj 和 up_proj</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="1">
+                <span>down_proj 和输入 x</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="2">
+                <span>RMSNorm 和 Attention</span>
+              </label></div>
+            <div class="feedback" data-feedback="llama-mlp-swiglu"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-mlp-swiglu-0">
+                <span>定义 gate_proj、up_proj、down_proj。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-mlp-swiglu-1">
+                <span>用 F.silu(gate_proj(x)) * up_proj(x)。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-mlp-swiglu-2">
+                <span>确认输出 shape 回到 hidden_size。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" data-lesson="llama-prenorm-residual">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 3</span>
+          </div>
+          <h2>Pre-Norm 残差：先归一化，再走子层，最后加回来</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>残差连接是 output = input + update。</li><li>Pre-Norm 表示子层前先 norm。</li><li>一个 Decoder Layer 有 Attention 和 MLP 两个子层。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>直觉图</h3>
+            <p>残差像主路，Attention/MLP 像旁路加工；旁路输出只是在主路表示上加一份更新。</p>
+            <div class="residual-demo"><span>x ─────────────┐</span><span>norm → attention ─┤ +</span><span>再 norm → mlp ────┤ +</span></div>
+            <div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><pre><code>residual = x
+update = sublayer(norm(x))
+x = residual + update</code></pre></div>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>Pre-Norm Transformer block 中，归一化发生在子层的什么位置？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-prenorm-residual" value="0">
+                <span>子层之前</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-prenorm-residual" value="1">
+                <span>子层之后</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-prenorm-residual" value="2">
+                <span>只在最终输出后</span>
+              </label></div>
+            <div class="feedback" data-feedback="llama-prenorm-residual"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-prenorm-residual-0">
+                <span>写出 Attention block 的 residual + norm + self_attn + add。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-prenorm-residual-1">
+                <span>写出 MLP block 的 residual + norm + mlp + add。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="llama-prenorm-residual-2">
+                <span>运行 backward 检查所有参数都有梯度。</span>
+              </label>
+          </div>
+        </article>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
         <a class="ghost" href="04_attention_mha_gqa.html">上一关：L04</a>
@@ -504,81 +738,89 @@
 
   <script>
     const levelId = "05";
-    const answer = 0;
-    const explanation = "Pre-norm 先对输入归一化，再送入 attention 或 MLP。";
-    const taskCount = 3;
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
+    const checkpointData = {"llama-mlp-swiglu":{"answer":0,"explain":"gate 经 SiLU 后作为门控信号，与 up 的内容特征逐元素相乘。"},"llama-prenorm-residual":{"answer":0,"explain":"Pre-Norm 的顺序是 norm → sublayer → residual add。"}};
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
+    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
+    const homeworkKey = "pytorch-level-" + levelId + "-homework";
     const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
 
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
     }
 
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
         input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
+        input.closest(".homework-item").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
 
-      if (units === 2) {
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
       }
     }
 
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
       }
-      updateStatus();
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
     });
 
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
+    refresh();
   </script>
 </body>
 </html>

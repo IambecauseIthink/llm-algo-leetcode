@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const lessonOverrides = require("./lesson_overrides");
 
 const root = __dirname;
 const notesDir = path.join(root, "notes");
@@ -1006,6 +1007,72 @@ function slug(level) {
   return `${level.id}_${level.file.replace(/\.ipynb$/, "").replace(/^\d+_/, "").toLowerCase()}.html`;
 }
 
+function genericExampleHtml(level) {
+  return `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 先认出本关的核心对象</strong>
+              <p>${esc(level.summary)}</p>
+              <div class="concept-badges">
+                ${level.tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}
+              </div>
+            </div>
+            <div class="story-arrow">把名词翻译成张量、函数或训练步骤</div>
+            <div class="story-panel">
+              <strong>2. 再看输入输出关系</strong>
+              <p>每个 notebook 的 TODO 都在训练一种固定动作：先确认输入是什么，再确认输出应该长什么样，最后用测试检查数值或 shape。</p>
+              <div class="mini-pipeline">
+                <span>输入</span><span>核心操作</span><span>输出/测试</span>
+              </div>
+            </div>
+          </div>`;
+}
+
+function genericSyntaxHtml(level) {
+  return `
+          <div class="syntax-card">
+            <h4>语法热身：读 PyTorch 练习时先抓这三件事</h4>
+            <p>下面是通用读法，不直接等同于本关 notebook 答案。</p>
+            <pre><code># 1. 先看 shape，别急着写公式
+print(x.shape)
+
+# 2. 写模块时，参数通常放在 __init__
+class TinyModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.proj = nn.Linear(4, 4, bias=False)
+
+    def forward(self, x):
+        return self.proj(x)
+
+# 3. 测试通常会检查 shape 或数值接近
+assert out.shape[0] == x.shape[0]
+torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
+            <p class="syntax-tip">读法：先找 TODO 附近的输入变量和期望输出，再回到课程区确认这个操作在数学上想做什么。</p>
+          </div>`;
+}
+
+function genericLessons(level) {
+  return [
+    {
+      id: "core",
+      title: `${level.title}：先建立本关直觉`,
+      todo: "本关 TODO",
+      prerequisite: level.concepts,
+      intuition: "先不要背实现。把本关拆成输入、核心操作、输出三段，写代码时就不容易迷路。",
+      exampleHtml: genericExampleHtml(level),
+      syntaxHtml: genericSyntaxHtml(level),
+      checkpoint: {
+        question: level.quiz.question,
+        options: level.quiz.options,
+        answer: level.quiz.answer,
+        explain: level.quiz.explain
+      },
+      homework: level.handsOn
+    }
+  ];
+}
+
 function lessonLevelPage(level, prev, next) {
   const lessons = level.lessons.map((lesson, index) => {
     const prerequisite = lesson.prerequisite.map((item) => `<li>${esc(item)}</li>`).join("");
@@ -1055,13 +1122,22 @@ function lessonLevelPage(level, prev, next) {
         </article>`;
   }).join("");
 
-  const checkpointData = Object.fromEntries(level.lessons.map((lesson) => [
-    lesson.id,
-    {
-      answer: lesson.checkpoint.answer,
-      explain: lesson.checkpoint.explain
+  const checkpointData = Object.fromEntries(level.lessons.map((lesson) => {
+    const rawAnswer = lesson.checkpoint.answer;
+    const answer = typeof rawAnswer === "number"
+      ? rawAnswer
+      : lesson.checkpoint.options.indexOf(rawAnswer);
+    if (answer < 0) {
+      throw new Error(`Invalid checkpoint answer for ${level.id}/${lesson.id}`);
     }
-  ]));
+    return [
+      lesson.id,
+      {
+        answer,
+        explain: lesson.checkpoint.explain
+      }
+    ];
+  }));
   const homeworkCount = level.lessons.reduce((total, lesson) => total + lesson.homework.length, 0);
   const prevLink = prev ? `<a class="ghost" href="${slug(prev)}">上一关：L${prev.id}</a>` : `<a class="ghost" href="../index.html">返回地图</a>`;
   const nextLink = next ? `<a class="primary" href="${slug(next)}">下一关：L${next.id}</a>` : `<a class="primary" href="../index.html">回到地图</a>`;
@@ -1357,6 +1433,156 @@ function lessonLevelPage(level, prev, next) {
       border-radius: 6px;
       padding: 10px;
     }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
     .shape-lesson,
     .grad-lesson {
       display: grid;
@@ -1626,502 +1852,8 @@ function lessonLevelPage(level, prev, next) {
 }
 
 function levelPage(level, prev, next) {
-  if (level.lessons) {
-    return lessonLevelPage(level, prev, next);
-  }
-
-  const options = level.quiz.options.map((option, index) => `
-            <label class="choice">
-              <input type="radio" name="quiz" value="${index}">
-              <span>${esc(option)}</span>
-            </label>`).join("");
-
-  const concepts = level.concepts.map((item) => `<li>${esc(item)}</li>`).join("");
-  const tasks = level.handsOn.map((item, index) => `
-            <label class="task">
-              <input type="checkbox" data-task="${index}">
-              <span>${esc(item)}</span>
-            </label>`).join("");
-  const deepDiveHtml = level.deepDiveHtml || notebookGuideHtml(level);
-
-  const prevLink = prev ? `<a class="ghost" href="${slug(prev)}">上一关：L${prev.id}</a>` : `<a class="ghost" href="../index.html">返回地图</a>`;
-  const nextLink = next ? `<a class="primary" href="${slug(next)}">下一关：L${next.id}</a>` : `<a class="primary" href="../index.html">回到地图</a>`;
-
-  return `<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level ${level.id} | ${esc(level.title)}</title>
-  <style>
-    :root {
-      --bg: #f7f6f1;
-      --paper: #ffffff;
-      --ink: #182033;
-      --muted: #667284;
-      --line: #dce2e8;
-      --blue: #2563eb;
-      --green: #12805c;
-      --amber: #bd6516;
-      --rose: #be3f5b;
-      --purple: #7c3aed;
-      --soft-blue: #e8f0ff;
-      --soft-green: #e7f6ee;
-      --soft-amber: #fff1dd;
-      --soft-rose: #fff0f4;
-      --dark: #101828;
-      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background:
-        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
-        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
-        var(--bg);
-      background-size: 30px 30px;
-    }
-    a { color: inherit; text-decoration: none; }
-    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
-    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .hud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
-    .ghost, .primary, button {
-      border: 1px solid var(--line);
-      background: var(--paper);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font: inherit;
-      cursor: pointer;
-    }
-    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-      gap: 18px;
-      align-items: stretch;
-      margin-bottom: 18px;
-    }
-    .card {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 22px;
-    }
-    .hero .card:first-child {
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.96), rgba(232,240,255,0.78)),
-        var(--paper);
-    }
-    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
-    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: 0; }
-    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
-    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
-    .lead { font-size: 18px; max-width: 720px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 30px;
-      border: 1px solid var(--line);
-      background: #fbfcfd;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .xp-wrap {
-      width: min(100%, 520px);
-      margin-top: 18px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.72);
-      padding: 4px;
-    }
-    .xp-bar {
-      width: 0%;
-      height: 14px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
-      transition: width 220ms ease;
-    }
-    .visual {
-      display: grid;
-      align-content: center;
-      gap: 14px;
-      background:
-        linear-gradient(135deg, rgba(232, 240, 255, 0.95), rgba(231, 246, 238, 0.95)),
-        var(--paper);
-      overflow: hidden;
-      position: relative;
-    }
-    .mini-map {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .node {
-      min-height: 72px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      border: 1px solid rgba(37, 99, 235, 0.22);
-      background: rgba(255,255,255,0.78);
-      border-radius: 8px;
-      font-weight: 800;
-      color: #1e3f88;
-      padding: 8px;
-      font-size: 13px;
-    }
-    .node strong { display: block; font-size: 20px; }
-    .formula {
-      border: 1px solid rgba(24,32,51,0.13);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.8);
-      padding: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      line-height: 1.55;
-      overflow-x: auto;
-    }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .wide-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; }
-    .section { margin-bottom: 16px; }
-    .deep-dive {
-      display: grid;
-      gap: 16px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98)),
-        var(--paper);
-    }
-    .notebook-guide {
-      display: grid;
-      gap: 12px;
-    }
-    .notebook-content {
-      display: grid;
-      gap: 10px;
-    }
-    .notebook-content h2,
-    .notebook-content h3,
-    .notebook-content h4 {
-      margin: 10px 0 0;
-      letter-spacing: 0;
-    }
-    .notebook-content blockquote {
-      margin: 0;
-      border-left: 4px solid var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .notebook-content p,
-    .notebook-content ul {
-      margin: 0;
-    }
-    .lead-small {
-      max-width: 920px;
-      margin: 0;
-      font-size: 16px;
-    }
-    .lesson-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .lesson {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
-      padding: 16px;
-      display: grid;
-      gap: 10px;
-    }
-    .lesson-num {
-      width: fit-content;
-      border: 1px solid #b9cdfb;
-      background: var(--soft-blue);
-      color: #1d4ed8;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-    }
-    .shape-track,
-    .grad-map,
-    .table-visual {
-      display: grid;
-      gap: 8px;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .shape-track,
-    .grad-map {
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-    }
-    .shape-track span,
-    .grad-map span,
-    .table-visual span {
-      min-height: 44px;
-      display: grid;
-      place-items: center;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      text-align: center;
-      padding: 8px;
-      font-weight: 800;
-    }
-    .shape-track strong,
-    .grad-map strong {
-      color: var(--amber);
-      white-space: nowrap;
-    }
-    .table-visual {
-      grid-template-columns: 90px 30px minmax(0, 1fr);
-    }
-    .callout,
-    .boss-panel {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      border-radius: 8px;
-      padding: 12px;
-      color: #5f370d;
-      line-height: 1.6;
-    }
-    .boss-panel {
-      border-color: #99d6bf;
-      background: var(--soft-green);
-      color: #123f31;
-    }
-    pre {
-      margin: 0;
-      border: 1px solid #1f2937;
-      border-radius: 8px;
-      background: #0b1220;
-      color: #e8f0ff;
-      padding: 14px;
-      overflow-x: auto;
-      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .choice, .task {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
-      padding: 12px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    .choice.correct, .task.done { border-color: #99d6bf; background: var(--soft-green); }
-    .choice.wrong { border-color: #e5a6b6; background: #fff0f4; }
-    .quest-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .reward {
-      border: 1px solid #f0c483;
-      background: var(--soft-amber);
-      color: #7b430c;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 13px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
-    .ok { color: var(--green); }
-    .warn { color: var(--rose); }
-    .complete {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid #9bd6bf;
-      background: var(--soft-green);
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 16px;
-    }
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: #eef2f7;
-      border-radius: 5px;
-      padding: 2px 5px;
-    }
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
-    }
-    @media (max-width: 880px) {
-      .hero, .grid, .wide-grid { grid-template-columns: 1fr; }
-      .shape-track,
-      .grad-map,
-      .table-visual { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
-      .shell { width: min(100% - 22px, 1120px); }
-      .top { display: grid; }
-      .mini-map { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
-  <main class="shell">
-    <div class="top">
-      <a class="ghost" href="../index.html">返回关卡地图</a>
-      <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
-      </div>
-    </div>
-
-    <section class="hero">
-      <div class="card">
-        <p class="eyebrow">Level ${level.id} | ${esc(categoryLabel[level.category])} | ${esc(level.difficulty)}</p>
-        <h1>${esc(level.title)}</h1>
-        <p class="lead">${esc(level.summary)}</p>
-        <div class="meta">
-          <span class="pill">${esc(level.file)}</span>
-          ${level.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join("")}
-        </div>
-        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
-      </div>
-      <div class="card visual">
-        <div class="mini-map">
-          <div class="node"><strong>1</strong>知识点</div>
-          <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>Notebook 作业</div>
-        </div>
-        <div class="formula">${esc(level.formula)}</div>
-      </div>
-    </section>
-
-    ${deepDiveHtml}
-
-    <section class="grid">
-      <article class="card section">
-        <div class="quest-title"><h2>知识点</h2><span class="reward">+100 XP</span></div>
-        <ul>${concepts}</ul>
-      </article>
-
-      <article class="card section">
-        <div class="quest-title"><h2>闯关答题</h2><span class="reward">+100 XP</span></div>
-        <p>${esc(level.quiz.question)}</p>
-        <div id="choices">${options}</div>
-        <div class="feedback" id="quiz-feedback"></div>
-      </article>
-    </section>
-
-    <section class="card section">
-      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
-      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
-      <div id="tasks">${tasks}</div>
-    </section>
-
-    <section class="complete">
-      <div>
-        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
-        <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
-      </div>
-      <div>
-        ${prevLink}
-        ${nextLink}
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const levelId = "${level.id}";
-    const answer = ${level.quiz.answer};
-    const explanation = ${JSON.stringify(level.quiz.explain)};
-    const taskCount = ${level.handsOn.length};
-    const taskKey = "pytorch-level-" + levelId + "-tasks";
-    const quizKey = "pytorch-level-" + levelId + "-quiz";
-    const completeKey = "pytorch-levels-complete";
-    const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
-    let quizDone = localStorage.getItem(quizKey) === "true";
-
-    function saveTasks() {
-      localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
-    }
-
-    function updateStatus() {
-      document.querySelectorAll("[data-task]").forEach((input) => {
-        const done = tasksDone.has(input.dataset.task);
-        input.checked = done;
-        input.closest(".task").classList.toggle("done", done);
-      });
-
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
-      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
-
-      if (units === 2) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
-        completed.add(levelId);
-        localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
-      }
-    }
-
-    document.querySelector("#choices").addEventListener("change", (event) => {
-      if (event.target.type !== "radio") return;
-      document.querySelectorAll(".choice").forEach((item) => item.classList.remove("correct", "wrong"));
-      const selected = Number(event.target.value);
-      const label = event.target.closest(".choice");
-      const feedback = document.querySelector("#quiz-feedback");
-      if (selected === answer) {
-        label.classList.add("correct");
-        feedback.textContent = "答对了：" + explanation;
-        feedback.className = "feedback ok";
-        quizDone = true;
-        localStorage.setItem(quizKey, "true");
-      } else {
-        label.classList.add("wrong");
-        feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
-        feedback.className = "feedback warn";
-      }
-      updateStatus();
-    });
-
-    document.querySelector("#tasks").addEventListener("change", (event) => {
-      if (!event.target.matches("[data-task]")) return;
-      if (event.target.checked) {
-        tasksDone.add(event.target.dataset.task);
-      } else {
-        tasksDone.delete(event.target.dataset.task);
-      }
-      saveTasks();
-      updateStatus();
-    });
-
-    if (quizDone) {
-      const answerInput = document.querySelector('input[name="quiz"][value="' + answer + '"]');
-      if (answerInput) {
-        answerInput.checked = true;
-        answerInput.closest(".choice").classList.add("correct");
-        const feedback = document.querySelector("#quiz-feedback");
-        feedback.textContent = "答题已完成：" + explanation;
-        feedback.className = "feedback ok";
-      }
-    }
-    updateStatus();
-  </script>
-</body>
-</html>
-`;
+  const lessons = level.lessons || lessonOverrides[level.id] || genericLessons(level);
+  return lessonLevelPage({ ...level, lessons }, prev, next);
 }
 
 function indexPage() {
