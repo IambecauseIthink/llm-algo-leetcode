@@ -249,6 +249,46 @@
       margin-bottom: 3px;
       font-family: ui-sans-serif, system-ui, sans-serif;
     }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
     .shape-lesson,
     .grad-lesson {
       display: grid;
@@ -469,6 +509,23 @@
             </div>
           </div>
           <p>你不需要先背 <code>permute(0, 2, 3, 1)</code>。先问自己：我要把 C 从第 2 个轴挪到最后，再把 H 和 W 合成序列长度。</p>
+            
+          <div class="syntax-card">
+            <h4>语法热身：换轴和合并维度怎么写</h4>
+            <p>下面用一个“时间序列”小例子练语法，不使用 notebook 里的图像 shape。</p>
+            <pre><code># x: [batch, time, feature]
+x = torch.randn(2, 4, 3)
+
+# 把 feature 放到 time 前面: [batch, feature, time]
+y = x.permute(0, 2, 1)
+
+# 把 batch 和 time 合并: [batch * time, feature]
+z = x.reshape(2 * 4, 3)
+
+# einops 写法：名字就是维度含义
+z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
+            <p class="syntax-tip">读法：<code>permute</code> 是“重新排列轴”，<code>reshape</code> 是“重新分组元素”，<code>einops</code> 是“把变形规则写成句子”。</p>
+          </div>
           </div>
 
           <div class="lesson-section checkpoint">
@@ -535,6 +592,28 @@
             <div class="ids"><strong>输出向量序列</strong><span>[0.5, 0.9]</span><span>[0.1, 0.4]</span><span>[0.3, 0.7]</span></div>
           </div>
           <p><code>nn.Embedding(input_ids)</code> 和 <code>weight[input_ids]</code> 做的是同一个核心动作：按 id 取行。</p>
+            
+          <div class="syntax-card">
+            <h4>语法热身：Embedding 和高级索引</h4>
+            <p>这里用“颜色编号查颜色向量”的例子，不使用 notebook 的 vocab/hidden 设置。</p>
+            <pre><code># 4 种颜色，每种颜色用 3 个数字表示
+palette = torch.tensor([
+    [1.0, 0.0, 0.0],  # red
+    [0.0, 1.0, 0.0],  # green
+    [0.0, 0.0, 1.0],  # blue
+    [1.0, 1.0, 0.0],  # yellow
+])
+
+color_ids = torch.tensor([[2, 0], [3, 1]])
+
+# 高级索引：每个 id 替换成对应行
+colors = palette[color_ids]  # shape: [2, 2, 3]
+
+# nn.Embedding 的调用方式也一样：传入 id，返回向量
+emb = nn.Embedding(num_embeddings=4, embedding_dim=3)
+vectors = emb(color_ids)</code></pre>
+            <p class="syntax-tip">读法：<code>weight[input_ids]</code> 会把 input_ids 的每个整数当成“行号”，输出 shape 会在 input_ids 后面追加 embedding_dim。</p>
+          </div>
           </div>
 
           <div class="lesson-section checkpoint">
@@ -605,6 +684,26 @@
             <span>grad_weight = grad_z.T @ x</span>
           </div>
           <p>如果前向里某个 <code>z</code> 是负数，ReLU 把它压成 0；反向时这条路也会被 mask 关掉。</p>
+            
+          <div class="syntax-card">
+            <h4>语法热身：自定义 autograd 函数长什么样</h4>
+            <p>这里用“平方函数”的 backward 练结构，不直接写 notebook 的 Linear+ReLU。</p>
+            <pre><code>class SquareFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x * x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        (x,) = ctx.saved_tensors
+        grad_x = grad_output * 2 * x
+        return grad_x
+
+# 调用自定义 Function 要用 .apply
+y = SquareFunction.apply(x)</code></pre>
+            <p class="syntax-tip">读法：<code>ctx.save_for_backward</code> 像是在前向路上放书签；<code>backward</code> 里先取回书签，再按链式法则乘上传回来的 <code>grad_output</code>。</p>
+          </div>
           </div>
 
           <div class="lesson-section checkpoint">
