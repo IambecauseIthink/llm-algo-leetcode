@@ -1642,18 +1642,6 @@ function levelPage(level, prev, next) {
               <input type="checkbox" data-task="${index}">
               <span>${esc(item)}</span>
             </label>`).join("");
-  const lab = level.lab || {
-    title: `${level.title} 训练场：写一个小函数巩固本关关键词`,
-    intro: "这是一个轻量浏览器运行时，用 JavaScript 做概念模拟。真正的 PyTorch 实现仍建议回到 notebook 完成。",
-    starter: `// Level ${level.id} mini-lab
-// 目标：返回本关最关键的一个概念标签。
-
-function missionKeyword() {
-  // TODO: 把返回值改成本关关键标签
-  return "";
-}`,
-    tests: `assert.equal(missionKeyword(), ${JSON.stringify(level.tags[0])}, "missionKeyword 应返回本关第一个关键标签");`
-  };
   const deepDiveHtml = level.deepDiveHtml || notebookGuideHtml(level);
 
   const prevLink = prev ? `<a class="ghost" href="${slug(prev)}">上一关：L${prev.id}</a>` : `<a class="ghost" href="../index.html">返回地图</a>`;
@@ -1948,60 +1936,6 @@ function missionKeyword() {
       font-weight: 900;
       white-space: nowrap;
     }
-    .lab-card {
-      background:
-        linear-gradient(135deg, rgba(16,24,40,0.98), rgba(31,41,55,0.96)),
-        var(--dark);
-      color: #f8fbff;
-      border-color: rgba(255,255,255,0.14);
-    }
-    .lab-card p,
-    .lab-card li { color: #b9c4d4; }
-    .lab-card .pill {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.15);
-      color: #dbe7ff;
-    }
-    .lab {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 12px;
-    }
-    textarea {
-      width: 100%;
-      min-height: 310px;
-      resize: vertical;
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 8px;
-      background: #0b1220;
-      color: #e8f0ff;
-      padding: 14px;
-      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      tab-size: 2;
-    }
-    .lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-    .lab-actions button {
-      background: rgba(255,255,255,0.09);
-      border-color: rgba(255,255,255,0.18);
-      color: #f8fbff;
-      font-weight: 800;
-    }
-    .lab-actions button.primary-run {
-      background: #dbeafe;
-      border-color: #93c5fd;
-      color: #1d4ed8;
-    }
-    .console {
-      min-height: 130px;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 8px;
-      background: #050914;
-      color: #d1fae5;
-      padding: 12px;
-      white-space: pre-wrap;
-      overflow: auto;
-      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
     .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
     .ok { color: var(--green); }
     .warn { color: var(--rose); }
@@ -2047,8 +1981,8 @@ function missionKeyword() {
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">本关进度：0 / 3</span>
-        <span class="pill" id="xp">XP 0 / 300</span>
+        <span class="pill" id="status">本关进度：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
       </div>
     </div>
 
@@ -2067,7 +2001,7 @@ function missionKeyword() {
         <div class="mini-map">
           <div class="node"><strong>1</strong>知识点</div>
           <div class="node"><strong>2</strong>闯关答题</div>
-          <div class="node"><strong>3</strong>代码训练场</div>
+          <div class="node"><strong>3</strong>Notebook 作业</div>
         </div>
         <div class="formula">${esc(level.formula)}</div>
       </div>
@@ -2089,31 +2023,15 @@ function missionKeyword() {
       </article>
     </section>
 
-    <section class="wide-grid section">
-      <article class="card">
-        <div class="quest-title"><h2>动手做</h2><span class="reward">Notebook 任务</span></div>
-        <p>回到对应 notebook，把下面任务逐个完成。勾选只保存在当前浏览器，方便你自己追踪学习进度。</p>
-        <div id="tasks">${tasks}</div>
-      </article>
-
-      <article class="card lab-card">
-        <div class="quest-title"><h2>${esc(lab.title)}</h2><span class="reward">+100 XP</span></div>
-        <p>${esc(lab.intro)}</p>
-        <div class="lab">
-          <textarea id="code-editor" spellcheck="false"></textarea>
-          <div class="lab-actions">
-            <button class="primary-run" id="run-code">运行测试</button>
-            <button id="save-code">保存到本地缓存</button>
-            <button id="reset-code">恢复初始代码</button>
-          </div>
-          <div class="console" id="console">等待运行。</div>
-        </div>
-      </article>
+    <section class="card section">
+      <div class="quest-title"><h2>Notebook 作业</h2><span class="reward">学习成果检验</span></div>
+      <p>HTML 只负责把概念和关键语法讲清楚；真正的代码练习回到对应 notebook 完成。下面 checklist 只保存在当前浏览器，用来追踪你的刷题进度。</p>
+      <div id="tasks">${tasks}</div>
     </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成答题、动手任务和代码训练场后即可通关。</strong>
+        <strong id="complete-title">完成闯关题和 Notebook 作业 checklist 后即可通关。</strong>
         <div class="pill">本地进度保存在 localStorage，分享 HTML 不会带走你的个人记录。</div>
       </div>
       <div>
@@ -2130,17 +2048,9 @@ function missionKeyword() {
     const taskCount = ${level.handsOn.length};
     const taskKey = "pytorch-level-" + levelId + "-tasks";
     const quizKey = "pytorch-level-" + levelId + "-quiz";
-    const labKey = "pytorch-level-" + levelId + "-lab";
-    const codeKey = "pytorch-level-" + levelId + "-code";
     const completeKey = "pytorch-levels-complete";
-    const starterCode = ${JSON.stringify(lab.starter)};
-    const labTests = ${JSON.stringify(lab.tests)};
     const tasksDone = new Set(JSON.parse(localStorage.getItem(taskKey) || "[]"));
     let quizDone = localStorage.getItem(quizKey) === "true";
-    let labDone = localStorage.getItem(labKey) === "true";
-    const editor = document.querySelector("#code-editor");
-    const consoleBox = document.querySelector("#console");
-    editor.value = localStorage.getItem(codeKey) || starterCode;
 
     function saveTasks() {
       localStorage.setItem(taskKey, JSON.stringify([...tasksDone]));
@@ -2153,16 +2063,16 @@ function missionKeyword() {
         input.closest(".task").classList.toggle("done", done);
       });
 
-      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0) + (labDone ? 1 : 0);
-      document.querySelector("#status").textContent = "本关进度：" + units + " / 3";
-      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 300";
-      document.querySelector("#xp-bar").style.width = (units / 3 * 100) + "%";
+      const units = (quizDone ? 1 : 0) + (tasksDone.size === taskCount ? 1 : 0);
+      document.querySelector("#status").textContent = "本关进度：" + units + " / 2";
+      document.querySelector("#xp").textContent = "XP " + (units * 100) + " / 200";
+      document.querySelector("#xp-bar").style.width = (units / 2 * 100) + "%";
 
-      if (units === 3) {
+      if (units === 2) {
         const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "已通关，漂亮。可以进入下一关。";
+        document.querySelector("#complete-title").textContent = "已通关。你已经完成课程输入、闯关检查和 notebook 作业。";
       }
     }
 
@@ -2183,62 +2093,6 @@ function missionKeyword() {
         feedback.textContent = "还差一点。先回到知识点，把关键词和公式对齐。";
         feedback.className = "feedback warn";
       }
-      updateStatus();
-    });
-
-    const assert = {
-      equal(actual, expected, message) {
-        if (actual !== expected) {
-          throw new Error(message + "\\nexpected: " + JSON.stringify(expected) + "\\nactual: " + JSON.stringify(actual));
-        }
-      },
-      deepEqual(actual, expected, message) {
-        const a = JSON.stringify(actual);
-        const e = JSON.stringify(expected);
-        if (a !== e) {
-          throw new Error(message + "\\nexpected: " + e + "\\nactual: " + a);
-        }
-      },
-      ok(value, message) {
-        if (!value) throw new Error(message);
-      }
-    };
-
-    function runCode() {
-      localStorage.setItem(codeKey, editor.value);
-      const logs = [];
-      const fakeConsole = {
-        log(...args) {
-          logs.push(args.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" "));
-        }
-      };
-      try {
-        const execute = new Function("assert", "console", editor.value + "\\n" + labTests);
-        execute(assert, fakeConsole);
-        labDone = true;
-        localStorage.setItem(labKey, "true");
-        consoleBox.textContent = (logs.length ? logs.join("\\n") + "\\n" : "") + "PASS: 代码训练场测试通过，获得 100 XP。";
-        consoleBox.style.color = "#d1fae5";
-      } catch (error) {
-        consoleBox.textContent = (logs.length ? logs.join("\\n") + "\\n" : "") + "FAIL: " + error.message;
-        consoleBox.style.color = "#fecdd3";
-      }
-      updateStatus();
-    }
-
-    document.querySelector("#run-code").addEventListener("click", runCode);
-    document.querySelector("#save-code").addEventListener("click", () => {
-      localStorage.setItem(codeKey, editor.value);
-      consoleBox.textContent = "已保存到当前浏览器缓存。分享 HTML 文件时，这些个人记录不会包含进去。";
-      consoleBox.style.color = "#bfdbfe";
-    });
-    document.querySelector("#reset-code").addEventListener("click", () => {
-      editor.value = starterCode;
-      localStorage.removeItem(codeKey);
-      localStorage.removeItem(labKey);
-      labDone = false;
-      consoleBox.textContent = "已恢复初始代码。";
-      consoleBox.style.color = "#d1fae5";
       updateStatus();
     });
 
@@ -2439,7 +2293,7 @@ function indexPage() {
     <section class="hero">
       <div>
         <h1>PyTorch Algorithms 闯关地图</h1>
-        <p class="lead">每个 notebook 都有一个可分享的 HTML 关卡。每关固定包含三件事：知识点讲解、闯关答题、动手做。你可以先在这里建立直觉，再回到 notebook 完成代码。</p>
+        <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
           <div class="stat"><strong>${levels.length}</strong><span>Notebook 关卡</span></div>
@@ -2450,9 +2304,9 @@ function indexPage() {
         <div class="flow">
           <div>知识点<br>图解直觉</div>
           <div>闯关答题<br>即时反馈</div>
-          <div>动手做<br>回到 Notebook</div>
+          <div>Notebook 作业<br>刷题检验</div>
         </div>
-        <p class="lead">建议顺序：先看 HTML 建立地图，再写 notebook 代码，最后回到 HTML 勾选任务通关。</p>
+        <p class="lead">建议顺序：先看 HTML 建立直觉，完成少量闯关题，再回到 notebook 写代码作业。</p>
       </div>
     </section>
 
