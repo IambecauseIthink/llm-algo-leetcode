@@ -630,7 +630,7 @@ for _ in range(needed):
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-paged-block-table" value="0">
-                <span>3</span>
+                <span>17</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-paged-block-table" value="1">
@@ -638,7 +638,7 @@ for _ in range(needed):
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-paged-block-table" value="2">
-                <span>17</span>
+                <span>3</span>
               </label></div>
             <div class="feedback" data-feedback="paged-block-table"></div>
           </div>
@@ -695,11 +695,11 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-paged-decode-growth" value="1">
-                <span>否，因为 9 不是 4 的倍数</span>
+                <span>只和 request_id 有关</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-paged-decode-growth" value="2">
-                <span>只和 request_id 有关</span>
+                <span>否，因为 9 不是 4 的倍数</span>
               </label></div>
             <div class="feedback" data-feedback="paged-decode-growth"></div>
           </div>
@@ -738,7 +738,7 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
 
   <script>
     const levelId = "17";
-    const checkpointData = {"paged-block-table":{"answer":0,"explain":"17 个 token 需要覆盖 0-7、8-15、16 这三段。"},"paged-decode-growth":{"answer":0,"explain":"长度从 8 到 9 时跨入第三个 block 的第一个位置。"}};
+    const checkpointData = {"paged-block-table":{"answer":2,"explain":"17 个 token 需要覆盖 0-7、8-15、16 这三段。"},"paged-decode-growth":{"answer":0,"explain":"长度从 8 到 9 时跨入第三个 block 的第一个位置。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

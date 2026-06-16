@@ -629,11 +629,11 @@ scores = a @ b.transpose(-2, -1)  # [2,3,5,7]</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="0">
-                <span>[2,4,5,7]</span>
+                <span>[2,5,4,7]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="1">
-                <span>[2,5,4,7]</span>
+                <span>[2,4,5,7]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="2">
@@ -687,7 +687,7 @@ updated = torch.cat([history, new], dim=1)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="0">
-                <span>4</span>
+                <span>8</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="1">
@@ -695,7 +695,7 @@ updated = torch.cat([history, new], dim=1)</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="2">
-                <span>8</span>
+                <span>4</span>
               </label></div>
             <div class="feedback" data-feedback="gqa-kv-cache"></div>
           </div>
@@ -734,7 +734,7 @@ updated = torch.cat([history, new], dim=1)</code></pre></div>
 
   <script>
     const levelId = "04";
-    const checkpointData = {"attention-shape-map":{"answer":0,"explain":"batch 和 head 维保持，query 长度 5 对 key 长度 7 打分。"},"gqa-kv-cache":{"answer":0,"explain":"num_queries_per_kv = 8 / 2 = 4。"}};
+    const checkpointData = {"attention-shape-map":{"answer":1,"explain":"batch 和 head 维保持，query 长度 5 对 key 长度 7 打分。"},"gqa-kv-cache":{"answer":2,"explain":"num_queries_per_kv = 8 / 2 = 4。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

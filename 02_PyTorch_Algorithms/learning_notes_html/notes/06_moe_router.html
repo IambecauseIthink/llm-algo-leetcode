@@ -688,15 +688,15 @@ mixed = (expert_out * weights.unsqueeze(-1)).sum(dim=1)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-router-renorm-merge" value="0">
-                <span>routing_weights.unsqueeze(-1)</span>
+                <span>routing_weights.flatten()</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-router-renorm-merge" value="1">
-                <span>routing_weights.argmax()</span>
+                <span>routing_weights.unsqueeze(-1)</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-router-renorm-merge" value="2">
-                <span>routing_weights.flatten()</span>
+                <span>routing_weights.argmax()</span>
               </label></div>
             <div class="feedback" data-feedback="moe-router-renorm-merge"></div>
           </div>
@@ -735,7 +735,7 @@ mixed = (expert_out * weights.unsqueeze(-1)).sum(dim=1)</code></pre></div>
 
   <script>
     const levelId = "06";
-    const checkpointData = {"moe-router-softmax-topk":{"answer":0,"explain":"6 个 token 每个选 2 个专家，所以专家索引表是 [6,2]。"},"moe-router-renorm-merge":{"answer":0,"explain":"unsqueeze(-1) 后变成 [tokens, top_k, 1]，才能广播到 hidden 维。"}};
+    const checkpointData = {"moe-router-softmax-topk":{"answer":0,"explain":"6 个 token 每个选 2 个专家，所以专家索引表是 [6,2]。"},"moe-router-renorm-merge":{"answer":1,"explain":"unsqueeze(-1) 后变成 [tokens, top_k, 1]，才能广播到 hidden 维。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

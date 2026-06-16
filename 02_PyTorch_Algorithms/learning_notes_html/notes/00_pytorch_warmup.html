@@ -688,11 +688,11 @@ z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tensor" value="1">
-                <span>[2, 3, 20]</span>
+                <span>[20, 2, 3]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tensor" value="2">
-                <span>[20, 2, 3]</span>
+                <span>[2, 3, 20]</span>
               </label></div>
             <div class="feedback" data-feedback="tensor"></div>
           </div>
@@ -772,15 +772,15 @@ vectors = emb(color_ids)</code></pre>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-embedding" value="0">
-                <span>[2, 3, 4]</span>
+                <span>[2, 4]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-embedding" value="1">
-                <span>[10, 2, 3]</span>
+                <span>[2, 3, 4]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-embedding" value="2">
-                <span>[2, 4]</span>
+                <span>[10, 2, 3]</span>
               </label></div>
             <div class="feedback" data-feedback="embedding"></div>
           </div>
@@ -862,7 +862,7 @@ y = SquareFunction.apply(x)</code></pre>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-backward" value="0">
-                <span>[0, 0, 5]</span>
+                <span>[-5, 0, 5]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-backward" value="1">
@@ -870,7 +870,7 @@ y = SquareFunction.apply(x)</code></pre>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-backward" value="2">
-                <span>[-5, 0, 5]</span>
+                <span>[0, 0, 5]</span>
               </label></div>
             <div class="feedback" data-feedback="backward"></div>
           </div>
@@ -909,7 +909,7 @@ y = SquareFunction.apply(x)</code></pre>
 
   <script>
     const levelId = "00";
-    const checkpointData = {"tensor":{"answer":0,"explain":"B 保持 2，H*W = 4*5 = 20，C 保持 3，所以是 [2, 20, 3]。"},"embedding":{"answer":0,"explain":"每个 id 会变成一个 hidden_dim=4 的向量，所以在 [2,3] 后面追加 4。"},"backward":{"answer":0,"explain":"ReLU 只有 z > 0 的位置导数为 1；-1 和 0 都不传梯度。"}};
+    const checkpointData = {"tensor":{"answer":0,"explain":"B 保持 2，H*W = 4*5 = 20，C 保持 3，所以是 [2, 20, 3]。"},"embedding":{"answer":1,"explain":"每个 id 会变成一个 hidden_dim=4 的向量，所以在 [2,3] 后面追加 4。"},"backward":{"answer":2,"explain":"ReLU 只有 z > 0 的位置导数为 1；-1 和 0 都不传梯度。"}};
     const checkpointTotal = 3;
     const homeworkTotal = 9;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

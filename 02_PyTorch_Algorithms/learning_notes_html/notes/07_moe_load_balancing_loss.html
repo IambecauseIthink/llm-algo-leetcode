@@ -629,11 +629,11 @@ freq = hot.mean(dim=0)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-balance-token-frequency" value="0">
-                <span>0.5</span>
+                <span>0.25</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-balance-token-frequency" value="1">
-                <span>0.25</span>
+                <span>0.5</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-balance-token-frequency" value="2">
@@ -688,15 +688,15 @@ aux_loss = alpha * num_experts * (f_i * p_i).sum()</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-balance-prob-loss" value="0">
-                <span>说明负载集中，需要惩罚</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="1">
                 <span>说明这个专家应被删除</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="2">
+                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="1">
                 <span>说明 softmax 失效</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="2">
+                <span>说明负载集中，需要惩罚</span>
               </label></div>
             <div class="feedback" data-feedback="moe-balance-prob-loss"></div>
           </div>
@@ -735,7 +735,7 @@ aux_loss = alpha * num_experts * (f_i * p_i).sum()</code></pre></div>
 
   <script>
     const levelId = "07";
-    const checkpointData = {"moe-balance-token-frequency":{"answer":0,"explain":"专家 2 收到 2 个 token，占 4 个 token 的一半。"},"moe-balance-prob-loss":{"answer":0,"explain":"负载均衡希望专家被更平均地使用，高偏好和高占用同时出现会推高惩罚项。"}};
+    const checkpointData = {"moe-balance-token-frequency":{"answer":1,"explain":"专家 2 收到 2 个 token，占 4 个 token 的一半。"},"moe-balance-prob-loss":{"answer":2,"explain":"负载均衡希望专家被更平均地使用，高偏好和高占用同时出现会推高惩罚项。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

@@ -632,15 +632,15 @@ gpu_partitions = {
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-zero-state-shard" value="0">
-                <span>减少每张 GPU 的显存占用</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-state-shard" value="1">
                 <span>让 loss 不需要反传</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-state-shard" value="2">
+                <input type="radio" name="checkpoint-zero-state-shard" value="1">
                 <span>把模型改成 CNN</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero-state-shard" value="2">
+                <span>减少每张 GPU 的显存占用</span>
               </label></div>
             <div class="feedback" data-feedback="zero-state-shard"></div>
           </div>
@@ -739,7 +739,7 @@ gpu_partitions = {
 
   <script>
     const levelId = "23";
-    const checkpointData = {"zero-state-shard":{"answer":0,"explain":"把状态切开后，每张卡只保存自己负责的部分。"},"zero-local-step":{"answer":0,"explain":"真实多卡需要广播或 All-Gather；这个单机模拟直接修改 Parameter 引用，效果等价于模型参数已经更新。"}};
+    const checkpointData = {"zero-state-shard":{"answer":2,"explain":"把状态切开后，每张卡只保存自己负责的部分。"},"zero-local-step":{"answer":0,"explain":"真实多卡需要广播或 All-Gather；这个单机模拟直接修改 Parameter 引用，效果等价于模型参数已经更新。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

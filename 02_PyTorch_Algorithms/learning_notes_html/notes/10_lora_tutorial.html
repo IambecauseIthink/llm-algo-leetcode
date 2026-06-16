@@ -630,11 +630,11 @@ self.lora_B = nn.Parameter(torch.empty(out_features, r))</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="0">
-                <span>控制低秩旁路的瓶颈大小</span>
+                <span>控制 batch size</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="1">
-                <span>控制 batch size</span>
+                <span>控制低秩旁路的瓶颈大小</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="2">
@@ -688,15 +688,15 @@ merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></p
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-forward-merge" value="0">
-                <span>不需要，更新已加进主权重</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-forward-merge" value="1">
                 <span>需要，否则 shape 会变</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-forward-merge" value="2">
+                <input type="radio" name="checkpoint-lora-forward-merge" value="1">
                 <span>只在 batch size 为 1 时需要</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-forward-merge" value="2">
+                <span>不需要，更新已加进主权重</span>
               </label></div>
             <div class="feedback" data-feedback="lora-forward-merge"></div>
           </div>
@@ -735,7 +735,7 @@ merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></p
 
   <script>
     const levelId = "10";
-    const checkpointData = {"lora-low-rank-adapter":{"answer":0,"explain":"r 越小，可训练参数越少；r 越大，旁路表达能力更强。"},"lora-forward-merge":{"answer":0,"explain":"合并后主权重已经包含低秩更新，推理可以只走普通 Linear。"}};
+    const checkpointData = {"lora-low-rank-adapter":{"answer":1,"explain":"r 越小，可训练参数越少；r 越大，旁路表达能力更强。"},"lora-forward-merge":{"answer":2,"explain":"合并后主权重已经包含低秩更新，推理可以只走普通 Linear。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

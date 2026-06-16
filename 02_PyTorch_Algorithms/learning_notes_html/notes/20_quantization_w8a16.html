@@ -629,7 +629,7 @@ q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></di
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-quant-absmax-scale" value="0">
-                <span>把最大绝对值映射到 int8 边界</span>
+                <span>让矩阵转置</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-quant-absmax-scale" value="1">
@@ -637,7 +637,7 @@ q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></di
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-quant-absmax-scale" value="2">
-                <span>让矩阵转置</span>
+                <span>把最大绝对值映射到 int8 边界</span>
               </label></div>
             <div class="feedback" data-feedback="quant-absmax-scale"></div>
           </div>
@@ -691,11 +691,11 @@ out = F.linear(x, dequant_weight, bias)</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-quant-w8a16-linear" value="1">
-                <span>权重有 16 行</span>
+                <span>batch size 必须是 16</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-quant-w8a16-linear" value="2">
-                <span>batch size 必须是 16</span>
+                <span>权重有 16 行</span>
               </label></div>
             <div class="feedback" data-feedback="quant-w8a16-linear"></div>
           </div>
@@ -734,7 +734,7 @@ out = F.linear(x, dequant_weight, bias)</code></pre></div>
 
   <script>
     const levelId = "20";
-    const checkpointData = {"quant-absmax-scale":{"answer":0,"explain":"对称 int8 量化希望最大幅度刚好落在可表示边界附近。"},"quant-w8a16-linear":{"answer":0,"explain":"A 是 activation，16 表示激活通常保留 fp16/bf16 精度。"}};
+    const checkpointData = {"quant-absmax-scale":{"answer":2,"explain":"对称 int8 量化希望最大幅度刚好落在可表示边界附近。"},"quant-w8a16-linear":{"answer":0,"explain":"A 是 activation，16 表示激活通常保留 fp16/bf16 精度。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

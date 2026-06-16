@@ -629,15 +629,15 @@ probs = torch.softmax(scaled_logits, dim=-1)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-temperature" value="0">
-                <span>更尖锐</span>
+                <span>shape 变短</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-temperature" value="1">
-                <span>更平均</span>
+                <span>更尖锐</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-temperature" value="2">
-                <span>shape 变短</span>
+                <span>更平均</span>
               </label></div>
             <div class="feedback" data-feedback="decode-temperature"></div>
           </div>
@@ -691,7 +691,7 @@ filtered_logits = torch.zeros_like(logits).scatter_(-1, sorted_idx, sorted_logit
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-candidate-filter" value="0">
-                <span>-inf</span>
+                <span>1</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-candidate-filter" value="1">
@@ -699,7 +699,7 @@ filtered_logits = torch.zeros_like(logits).scatter_(-1, sorted_idx, sorted_logit
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-decode-candidate-filter" value="2">
-                <span>1</span>
+                <span>-inf</span>
               </label></div>
             <div class="feedback" data-feedback="decode-candidate-filter"></div>
           </div>
@@ -738,7 +738,7 @@ filtered_logits = torch.zeros_like(logits).scatter_(-1, sorted_idx, sorted_logit
 
   <script>
     const levelId = "16";
-    const checkpointData = {"decode-temperature":{"answer":0,"explain":"除以小温度会放大 logit 差距，最高分 token 的概率更高。"},"decode-candidate-filter":{"answer":0,"explain":"softmax(-inf) 约为 0，表示不会被采样到。"}};
+    const checkpointData = {"decode-temperature":{"answer":1,"explain":"除以小温度会放大 logit 差距，最高分 token 的概率更高。"},"decode-candidate-filter":{"answer":2,"explain":"softmax(-inf) 约为 0，表示不会被采样到。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

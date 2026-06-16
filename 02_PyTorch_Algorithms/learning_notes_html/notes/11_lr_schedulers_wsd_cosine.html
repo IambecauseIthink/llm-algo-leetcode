@@ -632,7 +632,7 @@ else:
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-wsd-warmup-stable" value="0">
-                <span>0.005</span>
+                <span>0.05</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-wsd-warmup-stable" value="1">
@@ -640,7 +640,7 @@ else:
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-wsd-warmup-stable" value="2">
-                <span>0.05</span>
+                <span>0.005</span>
               </label></div>
             <div class="feedback" data-feedback="wsd-warmup-stable"></div>
           </div>
@@ -694,11 +694,11 @@ lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-wsd-cosine-decay" value="1">
-                <span>-1 到 1</span>
+                <span>任意大于 1</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-wsd-cosine-decay" value="2">
-                <span>任意大于 1</span>
+                <span>-1 到 1</span>
               </label></div>
             <div class="feedback" data-feedback="wsd-cosine-decay"></div>
           </div>
@@ -737,7 +737,7 @@ lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
 
   <script>
     const levelId = "11";
-    const checkpointData = {"wsd-warmup-stable":{"answer":0,"explain":"走到 warmup 的一半，所以学习率是 base_lr 的一半。"},"wsd-cosine-decay":{"answer":0,"explain":"progress 表示 decay 阶段完成比例，通常夹在 0 到 1。"}};
+    const checkpointData = {"wsd-warmup-stable":{"answer":2,"explain":"走到 warmup 的一半，所以学习率是 base_lr 的一半。"},"wsd-cosine-decay":{"answer":0,"explain":"progress 表示 decay 阶段完成比例，通常夹在 0 到 1。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

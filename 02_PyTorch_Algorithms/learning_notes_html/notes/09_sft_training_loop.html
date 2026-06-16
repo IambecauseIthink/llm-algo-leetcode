@@ -634,11 +634,11 @@ labels = labels[:max_len] + [-100] * max(0, max_len - len(labels))</code></pre><
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-label-mask" value="1">
-                <span>pad_id</span>
+                <span>prompt token 自己</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-label-mask" value="2">
-                <span>prompt token 自己</span>
+                <span>pad_id</span>
               </label></div>
             <div class="feedback" data-feedback="sft-label-mask"></div>
           </div>
@@ -692,15 +692,15 @@ loss = F.cross_entropy(
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="0">
-                <span>[2,4,10]</span>
+                <span>[1,5,10]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="1">
-                <span>[2,5,9]</span>
+                <span>[2,4,10]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="2">
-                <span>[1,5,10]</span>
+                <span>[2,5,9]</span>
               </label></div>
             <div class="feedback" data-feedback="sft-shift-ce"></div>
           </div>
@@ -739,7 +739,7 @@ loss = F.cross_entropy(
 
   <script>
     const levelId = "09";
-    const checkpointData = {"sft-label-mask":{"answer":0,"explain":"-100 会被 PyTorch 的交叉熵忽略，避免训练模型复述题干。"},"sft-shift-ce":{"answer":0,"explain":"去掉最后一个时间步，序列长度从 5 变成 4。"}};
+    const checkpointData = {"sft-label-mask":{"answer":0,"explain":"-100 会被 PyTorch 的交叉熵忽略，避免训练模型复述题干。"},"sft-shift-ce":{"answer":1,"explain":"去掉最后一个时间步，序列长度从 5 变成 4。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

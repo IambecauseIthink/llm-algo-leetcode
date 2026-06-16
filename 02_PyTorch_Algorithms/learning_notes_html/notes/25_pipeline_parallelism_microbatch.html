@@ -630,15 +630,15 @@ for mb in micro_batches:
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-pp-microbatch" value="0">
-                <span>填满流水线，减少空泡</span>
+                <span>替代反向传播</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-pp-microbatch" value="1">
-                <span>改变 vocab size</span>
+                <span>填满流水线，减少空泡</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-pp-microbatch" value="2">
-                <span>替代反向传播</span>
+                <span>改变 vocab size</span>
               </label></div>
             <div class="feedback" data-feedback="pp-microbatch"></div>
           </div>
@@ -689,15 +689,15 @@ for mb in micro_batches:
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-pp-bubble-ratio" value="0">
-                <span>降低</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-pp-bubble-ratio" value="1">
                 <span>升高</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-pp-bubble-ratio" value="2">
+                <input type="radio" name="checkpoint-pp-bubble-ratio" value="1">
                 <span>恒为 1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-pp-bubble-ratio" value="2">
+                <span>降低</span>
               </label></div>
             <div class="feedback" data-feedback="pp-bubble-ratio"></div>
           </div>
@@ -736,7 +736,7 @@ for mb in micro_batches:
 
   <script>
     const levelId = "25";
-    const checkpointData = {"pp-microbatch":{"answer":0,"explain":"micro-batch 越多，流水线越容易被填满，空闲时间比例更低。"},"pp-bubble-ratio":{"answer":0,"explain":"micro-batch 越多，空转时间被更多有效计算摊薄。"}};
+    const checkpointData = {"pp-microbatch":{"answer":1,"explain":"micro-batch 越多，流水线越容易被填满，空闲时间比例更低。"},"pp-bubble-ratio":{"answer":2,"explain":"micro-batch 越多，空转时间被更多有效计算摊薄。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

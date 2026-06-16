@@ -629,15 +629,15 @@ margin = chosen_reward - rejected_reward</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-reward" value="0">
-                <span>chosen_policy_logp - chosen_ref_logp</span>
+                <span>old_logp - new_logp</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-reward" value="1">
-                <span>chosen_loss - rejected_loss</span>
+                <span>chosen_policy_logp - chosen_ref_logp</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-reward" value="2">
-                <span>old_logp - new_logp</span>
+                <span>chosen_loss - rejected_loss</span>
               </label></div>
             <div class="feedback" data-feedback="dpo-implicit-reward"></div>
           </div>
@@ -687,7 +687,7 @@ loss = loss_per_pair.mean()</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-logsigmoid" value="0">
-                <span>更小</span>
+                <span>不变</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-logsigmoid" value="1">
@@ -695,7 +695,7 @@ loss = loss_per_pair.mean()</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-logsigmoid" value="2">
-                <span>不变</span>
+                <span>更小</span>
               </label></div>
             <div class="feedback" data-feedback="dpo-logsigmoid"></div>
           </div>
@@ -734,7 +734,7 @@ loss = loss_per_pair.mean()</code></pre></div>
 
   <script>
     const levelId = "13";
-    const checkpointData = {"dpo-implicit-reward":{"answer":0,"explain":"隐式奖励衡量当前策略相对参考策略对该回答提高了多少概率。"},"dpo-logsigmoid":{"answer":0,"explain":"chosen 相对 rejected 越占优，-logsigmoid(diff) 越接近 0。"}};
+    const checkpointData = {"dpo-implicit-reward":{"answer":1,"explain":"隐式奖励衡量当前策略相对参考策略对该回答提高了多少概率。"},"dpo-logsigmoid":{"answer":2,"explain":"chosen 相对 rejected 越占优，-logsigmoid(diff) 越接近 0。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

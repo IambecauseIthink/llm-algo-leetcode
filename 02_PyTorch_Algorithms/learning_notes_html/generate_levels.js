@@ -1073,15 +1073,58 @@ function genericLessons(level) {
   ];
 }
 
+function stableHash(text) {
+  let hash = 2166136261;
+  for (const char of String(text)) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function answerIndexFor(checkpoint, levelId, lessonId) {
+  const rawAnswer = checkpoint.answer;
+  const answer = typeof rawAnswer === "number"
+    ? rawAnswer
+    : checkpoint.options.indexOf(rawAnswer);
+  if (answer < 0 || answer >= checkpoint.options.length) {
+    throw new Error(`Invalid checkpoint answer for ${levelId}/${lessonId}`);
+  }
+  return answer;
+}
+
+function shuffledCheckpoint(level, lesson, lessonIndex) {
+  const originalAnswer = answerIndexFor(lesson.checkpoint, level.id, lesson.id);
+  const options = lesson.checkpoint.options;
+  const correctOption = options[originalAnswer];
+  const targetAnswer = (Number(level.id) + lessonIndex) % options.length;
+  const slots = options.map((_, index) => index).filter((index) => index !== targetAnswer);
+  const distractors = options
+    .map((option, index) => ({ option, index }))
+    .filter((entry) => entry.index !== originalAnswer)
+    .sort((a, b) => stableHash(`${level.id}:${lesson.id}:${a.option}`) - stableHash(`${level.id}:${lesson.id}:${b.option}`));
+  const shuffled = Array(options.length);
+  shuffled[targetAnswer] = correctOption;
+  slots.forEach((slot, index) => {
+    shuffled[slot] = distractors[index].option;
+  });
+  return {
+    ...lesson.checkpoint,
+    options: shuffled,
+    answer: targetAnswer
+  };
+}
+
 function lessonLevelPage(level, prev, next) {
   const lessons = level.lessons.map((lesson, index) => {
+    const checkpoint = shuffledCheckpoint(level, lesson, index);
     const prerequisite = lesson.prerequisite.map((item) => `<li>${esc(item)}</li>`).join("");
     const homework = lesson.homework.map((item, taskIndex) => `
               <label class="homework-item">
                 <input type="checkbox" data-homework="${lesson.id}-${taskIndex}">
                 <span>${esc(item)}</span>
               </label>`).join("");
-    const options = lesson.checkpoint.options.map((option, optionIndex) => `
+    const options = checkpoint.options.map((option, optionIndex) => `
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-${lesson.id}" value="${optionIndex}">
                 <span>${esc(option)}</span>
@@ -1109,7 +1152,7 @@ function lessonLevelPage(level, prev, next) {
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>${esc(lesson.checkpoint.question)}</p>
+            <p>${esc(checkpoint.question)}</p>
             <div class="checkpoint-options">${options}</div>
             <div class="feedback" data-feedback="${lesson.id}"></div>
           </div>
@@ -1122,19 +1165,13 @@ function lessonLevelPage(level, prev, next) {
         </article>`;
   }).join("");
 
-  const checkpointData = Object.fromEntries(level.lessons.map((lesson) => {
-    const rawAnswer = lesson.checkpoint.answer;
-    const answer = typeof rawAnswer === "number"
-      ? rawAnswer
-      : lesson.checkpoint.options.indexOf(rawAnswer);
-    if (answer < 0) {
-      throw new Error(`Invalid checkpoint answer for ${level.id}/${lesson.id}`);
-    }
+  const checkpointData = Object.fromEntries(level.lessons.map((lesson, index) => {
+    const checkpoint = shuffledCheckpoint(level, lesson, index);
     return [
       lesson.id,
       {
-        answer,
-        explain: lesson.checkpoint.explain
+        answer: checkpoint.answer,
+        explain: checkpoint.explain
       }
     ];
   }));

@@ -629,7 +629,7 @@ filtered = torch.sigmoid(knob) * value</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="0">
-                <span>一条产生门控，一条产生内容</span>
+                <span>为了删除 down_proj</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="1">
@@ -637,7 +637,7 @@ filtered = torch.sigmoid(knob) * value</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="2">
-                <span>为了删除 down_proj</span>
+                <span>一条产生门控，一条产生内容</span>
               </label></div>
             <div class="feedback" data-feedback="swiglu-gate"></div>
           </div>
@@ -691,11 +691,11 @@ aligned = ((people + row - 1) // row) * row  # 32</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-size-align" value="1">
-                <span>48</span>
+                <span>12</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-size-align" value="2">
-                <span>12</span>
+                <span>48</span>
               </label></div>
             <div class="feedback" data-feedback="swiglu-size-align"></div>
           </div>
@@ -734,7 +734,7 @@ aligned = ((people + row - 1) // row) * row  # 32</code></pre></div>
 
   <script>
     const levelId = "02";
-    const checkpointData = {"swiglu-gate":{"answer":0,"explain":"gate 经激活后像开关，up 提供内容，两者相乘后再降维。"},"swiglu-size-align":{"answer":0,"explain":"8/3 × 12 = 32；如果还要求 multiple_of，再继续向上对齐。"}};
+    const checkpointData = {"swiglu-gate":{"answer":2,"explain":"gate 经激活后像开关，up 提供内容，两者相乘后再降维。"},"swiglu-size-align":{"answer":0,"explain":"8/3 × 12 = 32；如果还要求 multiple_of，再继续向上对齐。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

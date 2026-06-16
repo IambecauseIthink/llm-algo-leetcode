@@ -628,7 +628,7 @@ dP = dO @ V.transpose(-2, -1)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attn-backward-pv" value="0">
-                <span>P.transpose(-2,-1) @ dO</span>
+                <span>V @ dO</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attn-backward-pv" value="1">
@@ -636,7 +636,7 @@ dP = dO @ V.transpose(-2, -1)</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attn-backward-pv" value="2">
-                <span>V @ dO</span>
+                <span>P.transpose(-2,-1) @ dO</span>
               </label></div>
             <div class="feedback" data-feedback="attn-backward-pv"></div>
           </div>
@@ -733,7 +733,7 @@ dK = (dS.transpose(-2, -1) @ Q) * scale</code></pre></div>
 
   <script>
     const levelId = "14";
-    const checkpointData = {"attn-backward-pv":{"answer":0,"explain":"对右矩阵 V 的梯度等于左矩阵 P 的转置乘输出梯度。"},"attn-softmax-qk":{"answer":0,"explain":"最后一维求和后保留维度，才能和 P、dP 按元素广播运算。"}};
+    const checkpointData = {"attn-backward-pv":{"answer":2,"explain":"对右矩阵 V 的梯度等于左矩阵 P 的转置乘输出梯度。"},"attn-softmax-qk":{"answer":0,"explain":"最后一维求和后保留维度，才能和 P、dP 按元素广播运算。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

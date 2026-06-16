@@ -636,11 +636,11 @@ for token, p, q in zip(draft_tokens, target_probs, draft_probs):
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-spec-draft-verify" value="1">
-                <span>draft model</span>
+                <span>tokenizer</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-spec-draft-verify" value="2">
-                <span>tokenizer</span>
+                <span>draft model</span>
               </label></div>
             <div class="feedback" data-feedback="spec-draft-verify"></div>
           </div>
@@ -692,11 +692,11 @@ else:
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-spec-accept-rule" value="0">
-                <span>0.5</span>
+                <span>1.0</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-spec-accept-rule" value="1">
-                <span>1.0</span>
+                <span>0.5</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-spec-accept-rule" value="2">
@@ -739,7 +739,7 @@ else:
 
   <script>
     const levelId = "18";
-    const checkpointData = {"spec-draft-verify":{"answer":0,"explain":"draft 负责提出候选；这里练的是用 target 概率 p 和 draft 概率 q 做前缀接受判断。完整投机解码还要补拒绝后的修正采样。"},"spec-accept-rule":{"answer":0,"explain":"target 概率低于 draft 概率，所以按 p/q = 0.5 接受。"}};
+    const checkpointData = {"spec-draft-verify":{"answer":0,"explain":"draft 负责提出候选；这里练的是用 target 概率 p 和 draft 概率 q 做前缀接受判断。完整投机解码还要补拒绝后的修正采样。"},"spec-accept-rule":{"answer":1,"explain":"target 概率低于 draft 概率，所以按 p/q = 0.5 接受。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

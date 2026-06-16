@@ -629,15 +629,15 @@ y = x * scale</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="0">
-                <span>1</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="1">
                 <span>0</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="2">
+                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="1">
                 <span>hidden_size</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="2">
+                <span>1</span>
               </label></div>
             <div class="feedback" data-feedback="gemma-rmsnorm-plus-one"></div>
           </div>
@@ -692,11 +692,11 @@ assert head.weight is emb.weight</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qwen-tie-embeddings" value="1">
-                <span>lm_head.weight.shape == embed_tokens.weight.shape</span>
+                <span>两个模块名字相同</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qwen-tie-embeddings" value="2">
-                <span>两个模块名字相同</span>
+                <span>lm_head.weight.shape == embed_tokens.weight.shape</span>
               </label></div>
             <div class="feedback" data-feedback="qwen-tie-embeddings"></div>
           </div>
@@ -735,7 +735,7 @@ assert head.weight is emb.weight</code></pre></div>
 
   <script>
     const levelId = "08";
-    const checkpointData = {"gemma-rmsnorm-plus-one":{"answer":0,"explain":"实际使用的是 1 + weight，所以初始化为 0 时等价于不改变尺度。"},"qwen-tie-embeddings":{"answer":0,"explain":"shape 相同不代表共享；is 检查两个引用是否指向同一对象。"}};
+    const checkpointData = {"gemma-rmsnorm-plus-one":{"answer":2,"explain":"实际使用的是 1 + weight，所以初始化为 0 时等价于不改变尺度。"},"qwen-tie-embeddings":{"answer":0,"explain":"shape 相同不代表共享；is 检查两个引用是否指向同一对象。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

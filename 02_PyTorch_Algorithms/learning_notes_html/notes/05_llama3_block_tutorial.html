@@ -633,15 +633,15 @@
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-mlp-swiglu" value="0">
-                <span>gate_proj 和 up_proj</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="1">
                 <span>down_proj 和输入 x</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="2">
+                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="1">
                 <span>RMSNorm 和 Attention</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-llama-mlp-swiglu" value="2">
+                <span>gate_proj 和 up_proj</span>
               </label></div>
             <div class="feedback" data-feedback="llama-mlp-swiglu"></div>
           </div>
@@ -738,7 +738,7 @@ x = residual + update</code></pre></div>
 
   <script>
     const levelId = "05";
-    const checkpointData = {"llama-mlp-swiglu":{"answer":0,"explain":"gate 经 SiLU 后作为门控信号，与 up 的内容特征逐元素相乘。"},"llama-prenorm-residual":{"answer":0,"explain":"Pre-Norm 的顺序是 norm → sublayer → residual add。"}};
+    const checkpointData = {"llama-mlp-swiglu":{"answer":2,"explain":"gate 经 SiLU 后作为门控信号，与 up 的内容特征逐元素相乘。"},"llama-prenorm-residual":{"answer":0,"explain":"Pre-Norm 的顺序是 norm → sublayer → residual add。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

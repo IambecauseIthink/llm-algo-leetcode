@@ -634,11 +634,11 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gc-activation-memory" value="1">
-                <span>更大的 batch size 自动出现</span>
+                <span>更少模型参数</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gc-activation-memory" value="2">
-                <span>更少模型参数</span>
+                <span>更大的 batch size 自动出现</span>
               </label></div>
             <div class="feedback" data-feedback="gc-activation-memory"></div>
           </div>
@@ -690,15 +690,15 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gc-recompute" value="0">
-                <span>反向传播时</span>
+                <span>保存模型时</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gc-recompute" value="1">
-                <span>导入 torch 时</span>
+                <span>反向传播时</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gc-recompute" value="2">
-                <span>保存模型时</span>
+                <span>导入 torch 时</span>
               </label></div>
             <div class="feedback" data-feedback="gc-recompute"></div>
           </div>
@@ -737,7 +737,7 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
 
   <script>
     const levelId = "21";
-    const checkpointData = {"gc-activation-memory":{"answer":0,"explain":"它通过反向重算前向片段来减少激活保存。"},"gc-recompute":{"answer":0,"explain":"反向需要中间激活时，会重放 forward 片段来恢复它们。"}};
+    const checkpointData = {"gc-activation-memory":{"answer":0,"explain":"它通过反向重算前向片段来减少激活保存。"},"gc-recompute":{"answer":1,"explain":"反向需要中间激活时，会重放 forward 片段来恢复它们。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

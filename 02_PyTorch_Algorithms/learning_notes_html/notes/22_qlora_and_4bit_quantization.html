@@ -629,15 +629,15 @@ deq = codebook[q] * scale</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-nf4-lookup" value="0">
-                <span>用 4bit 编号查 codebook</span>
+                <span>把编号当 token id 做 embedding</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-nf4-lookup" value="1">
-                <span>对编号做 softmax</span>
+                <span>用 4bit 编号查 codebook</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-nf4-lookup" value="2">
-                <span>把编号当 token id 做 embedding</span>
+                <span>对编号做 softmax</span>
               </label></div>
             <div class="feedback" data-feedback="qlora-nf4-lookup"></div>
           </div>
@@ -687,7 +687,7 @@ out = base_out + lora_out</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-two-path" value="0">
-                <span>LoRA adapter</span>
+                <span>token id</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-two-path" value="1">
@@ -695,7 +695,7 @@ out = base_out + lora_out</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-qlora-two-path" value="2">
-                <span>token id</span>
+                <span>LoRA adapter</span>
               </label></div>
             <div class="feedback" data-feedback="qlora-two-path"></div>
           </div>
@@ -734,7 +734,7 @@ out = base_out + lora_out</code></pre></div>
 
   <script>
     const levelId = "22";
-    const checkpointData = {"qlora-nf4-lookup":{"answer":0,"explain":"4bit 编号本身只是离散码，需要查 codebook 得到近似浮点值。"},"qlora-two-path":{"answer":0,"explain":"基础权重量化并冻结，训练集中在 LoRA adapter。"}};
+    const checkpointData = {"qlora-nf4-lookup":{"answer":1,"explain":"4bit 编号本身只是离散码，需要查 codebook 得到近似浮点值。"},"qlora-two-path":{"answer":2,"explain":"基础权重量化并冻结，训练集中在 LoRA adapter。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

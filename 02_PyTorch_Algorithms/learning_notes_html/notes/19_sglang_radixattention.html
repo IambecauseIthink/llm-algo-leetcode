@@ -633,11 +633,11 @@
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-prefix-cache" value="0">
-                <span>2</span>
+                <span>1</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-prefix-cache" value="1">
-                <span>1</span>
+                <span>2</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-prefix-cache" value="2">
@@ -695,7 +695,7 @@ for child in self.root.children:
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-tree-walk" value="0">
-                <span>复用尽可能多的 KV Cache</span>
+                <span>避免使用 token id</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-tree-walk" value="1">
@@ -703,7 +703,7 @@ for child in self.root.children:
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-tree-walk" value="2">
-                <span>避免使用 token id</span>
+                <span>复用尽可能多的 KV Cache</span>
               </label></div>
             <div class="feedback" data-feedback="radix-tree-walk"></div>
           </div>
@@ -742,7 +742,7 @@ for child in self.root.children:
 
   <script>
     const levelId = "19";
-    const checkpointData = {"radix-prefix-cache":{"answer":0,"explain":"前两个 token 相同，第三个不同。"},"radix-tree-walk":{"answer":0,"explain":"匹配越长，已经缓存的前缀越多，需要新计算的 token 越少。"}};
+    const checkpointData = {"radix-prefix-cache":{"answer":1,"explain":"前两个 token 相同，第三个不同。"},"radix-tree-walk":{"answer":2,"explain":"匹配越长，已经缓存的前缀越多，需要新计算的 token 越少。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

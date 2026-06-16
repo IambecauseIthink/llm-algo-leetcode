@@ -691,11 +691,11 @@ O_new = old_part + new_part</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-flash-online-output" value="0">
-                <span>因为 softmax 的参考最大值变了</span>
+                <span>因为 block_size 变了</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-flash-online-output" value="1">
-                <span>因为 block_size 变了</span>
+                <span>因为 softmax 的参考最大值变了</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-flash-online-output" value="2">
@@ -738,7 +738,7 @@ O_new = old_part + new_part</code></pre></div>
 
   <script>
     const levelId = "15";
-    const checkpointData = {"flash-tiling-max":{"answer":0,"explain":"在线 softmax 需要全局最大值来稳定指数计算，即使分块也不能丢。"},"flash-online-output":{"answer":0,"explain":"exp(score-m) 的 m 变了，同一个 score 的指数值也会变，旧贡献必须换到同一标尺。"}};
+    const checkpointData = {"flash-tiling-max":{"answer":0,"explain":"在线 softmax 需要全局最大值来稳定指数计算，即使分块也不能丢。"},"flash-online-output":{"answer":1,"explain":"exp(score-m) 的 m 变了，同一个 score 的指数值也会变，旧贡献必须换到同一标尺。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

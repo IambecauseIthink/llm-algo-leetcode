@@ -633,11 +633,11 @@ back = torch.view_as_real(z)</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rope-complex-pairs" value="1">
-                <span>batch size 自动变 1</span>
+                <span>所有元素都变成正数</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rope-complex-pairs" value="2">
-                <span>所有元素都变成正数</span>
+                <span>batch size 自动变 1</span>
               </label></div>
             <div class="feedback" data-feedback="rope-complex-pairs"></div>
           </div>
@@ -687,15 +687,15 @@ table = torch.outer(days, rates)  # [3,2]</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rope-frequency-table" value="0">
-                <span>[8,32]</span>
+                <span>[64,8]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rope-frequency-table" value="1">
-                <span>[8,64]</span>
+                <span>[8,32]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rope-frequency-table" value="2">
-                <span>[64,8]</span>
+                <span>[8,64]</span>
               </label></div>
             <div class="feedback" data-feedback="rope-frequency-table"></div>
           </div>
@@ -734,7 +734,7 @@ table = torch.outer(days, rates)  # [3,2]</code></pre></div>
 
   <script>
     const levelId = "03";
-    const checkpointData = {"rope-complex-pairs":{"answer":0,"explain":"旋转只改变方向，不改变模长，这也是 RoPE 测试中会检查的性质。"},"rope-frequency-table":{"answer":0,"explain":"最后一维两两配成复数，所以频率列数是 head_dim/2。"}};
+    const checkpointData = {"rope-complex-pairs":{"answer":0,"explain":"旋转只改变方向，不改变模长，这也是 RoPE 测试中会检查的性质。"},"rope-frequency-table":{"answer":1,"explain":"最后一维两两配成复数，所以频率列数是 head_dim/2。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

@@ -629,15 +629,15 @@ y = x / (last_mean.abs() + 1e-6)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-scale" value="0">
-                <span>[2,3,1]</span>
+                <span>[1,3,4]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-scale" value="1">
-                <span>[2,4]</span>
+                <span>[2,3,1]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-scale" value="2">
-                <span>[1,3,4]</span>
+                <span>[2,4]</span>
               </label></div>
             <div class="feedback" data-feedback="rmsnorm-scale"></div>
           </div>
@@ -687,15 +687,15 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-precision" value="0">
-                <span>避免 FP16 平方溢出</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-rmsnorm-precision" value="1">
                 <span>让 shape 自动变小</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-rmsnorm-precision" value="2">
+                <input type="radio" name="checkpoint-rmsnorm-precision" value="1">
                 <span>让参数不参与训练</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-rmsnorm-precision" value="2">
+                <span>避免 FP16 平方溢出</span>
               </label></div>
             <div class="feedback" data-feedback="rmsnorm-precision"></div>
           </div>
@@ -734,7 +734,7 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
 
   <script>
     const levelId = "01";
-    const checkpointData = {"rmsnorm-scale":{"answer":0,"explain":"沿最后一维 4 求均值，keepdim=True 会把最后一维保留为 1，方便和原张量广播。"},"rmsnorm-precision":{"answer":0,"explain":"平方会迅速放大数值；FP32 计算统计量更稳，最后再转回输入 dtype。"}};
+    const checkpointData = {"rmsnorm-scale":{"answer":1,"explain":"沿最后一维 4 求均值，keepdim=True 会把最后一维保留为 1，方便和原张量广播。"},"rmsnorm-precision":{"answer":2,"explain":"平方会迅速放大数值；FP32 计算统计量更稳，最后再转回输入 dtype。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

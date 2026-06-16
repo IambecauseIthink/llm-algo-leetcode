@@ -687,11 +687,11 @@ assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tp-allgather" value="0">
-                <span>沿特征维拼接</span>
+                <span>逐元素相加</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tp-allgather" value="1">
-                <span>逐元素相加</span>
+                <span>沿特征维拼接</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tp-allgather" value="2">
@@ -734,7 +734,7 @@ assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
 
   <script>
     const levelId = "24";
-    const checkpointData = {"tp-column":{"answer":0,"explain":"A 的 dim=1 是 out_features，切列就是把不同输出特征分给不同 GPU。"},"tp-allgather":{"answer":0,"explain":"列切分得到的是不同输出列，所以要沿 dim=1 拼接回完整输出。"}};
+    const checkpointData = {"tp-column":{"answer":0,"explain":"A 的 dim=1 是 out_features，切列就是把不同输出特征分给不同 GPU。"},"tp-allgather":{"answer":1,"explain":"列切分得到的是不同输出列，所以要沿 dim=1 拼接回完整输出。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

@@ -688,11 +688,11 @@ loss = -objective.mean()</code></pre></div>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-ppo-clip-loss" value="0">
-                <span>[0.8, 1.2]</span>
+                <span>[0.2, 1.0]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-ppo-clip-loss" value="1">
-                <span>[0.2, 1.0]</span>
+                <span>[0.8, 1.2]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-ppo-clip-loss" value="2">
@@ -735,7 +735,7 @@ loss = -objective.mean()</code></pre></div>
 
   <script>
     const levelId = "12";
-    const checkpointData = {"ppo-ratio":{"answer":0,"explain":"ratio = 0.1 / 0.2 = 0.5。"},"ppo-clip-loss":{"answer":0,"explain":"clip 区间是 [1-eps, 1+eps]。"}};
+    const checkpointData = {"ppo-ratio":{"answer":0,"explain":"ratio = 0.1 / 0.2 = 0.5。"},"ppo-clip-loss":{"answer":1,"explain":"clip 区间是 [1-eps, 1+eps]。"}};
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
