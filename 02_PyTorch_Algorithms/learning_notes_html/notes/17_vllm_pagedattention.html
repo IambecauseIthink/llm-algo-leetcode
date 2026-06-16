@@ -574,8 +574,8 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">进度：0 / 3</span>
-        <span class="pill" id="xp">XP 0 / 300</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
       </div>
     </div>
 
@@ -583,7 +583,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 17 | 零基础导学关卡</p>
         <h1>vLLM PagedAttention</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">17_vLLM_PagedAttention.ipynb</span>
           <span class="pill">vLLM</span><span class="pill">KV Cache</span><span class="pill">Serving</span>
@@ -605,7 +605,7 @@
         <article class="lesson-card" data-lesson="paged-block-table">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2 / TODO 3</span>
+            <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
           <h2>PagedAttention：逻辑连续，物理可以不连续</h2>
 
@@ -649,11 +649,11 @@ for _ in range(needed):
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-block-table-0">
-                <span>预分配 physical_kv_cache。</span>
+                <span>用向上取整计算 prefill 需要的 block 数。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-block-table-1">
-                <span>用向上取整计算 prefill 需要的 block 数。</span>
+                <span>检查 free_blocks 是否足够，不够时抛出 OOM。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-block-table-2">
@@ -664,7 +664,7 @@ for _ in range(needed):
         <article class="lesson-card" data-lesson="paged-decode-growth">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 4 / TODO 5</span>
+            <span class="todo-pill">TODO 3 / TODO 4</span>
           </div>
           <h2>Decode 阶段：只有跨入新 block 才分配</h2>
 
@@ -726,7 +726,7 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>

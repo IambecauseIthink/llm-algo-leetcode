@@ -44,7 +44,7 @@ module.exports = {
         "6 个 token 每个选 2 个专家，所以专家索引表是 [6,2]。"
       ),
       homework: [
-        "对 router logits 在专家维度做 softmax。",
+        "对 router_logits.float() 在专家维度做 softmax。",
         "用 torch.topk 取出 routing_weights 和 selected_experts。",
         "检查每个 token 只保留 top_k 个专家索引。"
       ]
@@ -52,7 +52,7 @@ module.exports = {
     lesson({
       id: "moe-router-renorm-merge",
       title: "Top-K 之后要重归一化",
-      todo: "TODO 3 / SparseMoEBlock 聚合",
+      todo: "TODO 3 / 阅读已给聚合逻辑",
       prerequisite: [
         "softmax 的全量概率和为 1。",
         "只取 Top-K 后，剩下概率的和通常小于 1。",
@@ -74,7 +74,7 @@ module.exports = {
       ),
       homework: [
         "对 Top-K 的 routing_weights 沿最后一维重新除以 sum。",
-        "在聚合专家输出时注意 unsqueeze 和广播。",
+        "阅读已给出的 SparseMoEBlock，观察 current_weight 为什么要 unsqueeze(-1)。",
         "确认每个 token 的专家权重和接近 1。"
       ]
     })
@@ -86,7 +86,7 @@ module.exports = {
       todo: "TODO 2",
       prerequisite: [
         "MoE 如果总选同一个专家，就会出现拥堵。",
-        "f_i 表示第 i 个专家实际收到的 token 比例。",
+        "f_i 表示第 i 个专家在所有 Top-K 选择里出现的比例。",
         "one_hot 可以把专家 id 转成按专家统计的计数表。"
       ],
       intuition: "像给多个窗口排队：只看 router 觉得谁好还不够，还要统计每个窗口真正排了多少人。",
@@ -97,14 +97,14 @@ module.exports = {
         "freq = hot.mean(dim=0)"
       ]),
       checkpoint: checkpoint(
-        "4 个 token 分给专家 [0,2,2,1]，专家 2 的 f_i 是多少？",
+        "如果每个 token 只选 1 个专家，4 个 token 分给 [0,2,2,1]，专家 2 的 f_i 是多少？",
         ["0.5", "0.25", "2.0"],
         0,
         "专家 2 收到 2 个 token，占 4 个 token 的一半。"
       ),
       homework: [
         "把 selected_experts 转成 one_hot。",
-        "沿 token 维求平均得到每个专家的 f_i。",
+        "沿 token 和 top_k 两个选择维统计每个专家出现次数。",
         "检查所有 f_i 的和接近 1。"
       ]
     }),
@@ -113,16 +113,17 @@ module.exports = {
       title: "P_i 看偏好，f_i 看实际分配",
       todo: "TODO 1 / TODO 3",
       prerequisite: [
-        "P_i 是 router 给第 i 个专家的平均概率。",
+        "P_i 是 Top-K 路由权重按专家累加后的平均得分。",
         "f_i 是第 i 个专家实际被选中的比例。",
         "辅助损失会惩罚概率偏好和实际分配过于集中。"
       ],
       intuition: "P_i 像问卷里的偏好，f_i 像真实排队人数；两者都均匀，专家才不会冷热不均。",
       exampleHtml: `<div class="ratio-board"><span>P=[.33, .34, .33]</span><span>f=[.25, .25, .50]</span><strong>loss 关注 P 和 f 的乘积和</strong></div>`,
-      syntaxHtml: code("按列求平均", [
-        "probs = torch.tensor([[.7, .2, .1], [.1, .7, .2]])",
-        "p_i = probs.mean(dim=0)",
-        "loss = (p_i * torch.tensor([.5, .5, 0.0])).sum()"
+      syntaxHtml: code("scatter_add 按专家累加", [
+        "p_i = torch.zeros(num_experts, device=routing_weights.device)",
+        "p_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())",
+        "p_i = p_i / (total_tokens * top_k)",
+        "aux_loss = alpha * num_experts * (f_i * p_i).sum()"
       ]),
       checkpoint: checkpoint(
         "如果一个专家 P_i 很高且 f_i 也很高，辅助损失会如何看待它？",
@@ -131,8 +132,8 @@ module.exports = {
         "负载均衡希望专家被更平均地使用，高偏好和高占用同时出现会推高惩罚项。"
       ),
       homework: [
-        "用 routing_probs.mean(dim=0) 得到 P_i。",
-        "用 one_hot 或 scatter 统计 f_i。",
+        "用 scatter_add_ 把 routing_weights 累加到对应专家，得到 P_i。",
+        "用 one_hot 统计 f_i。",
         "按 notebook 公式组合 P_i、f_i 和专家数量得到辅助损失。"
       ]
     })
@@ -596,10 +597,11 @@ module.exports = {
       intuition: "新块来了以后，如果发现更大的分数，旧账本要按新的标尺重算，才能和新块公平相加。",
       exampleHtml: `<div class="online-book"><span>旧 l, O</span><span>新块 l_block, O_block</span><strong>按 m_old/m_new 修正后合并</strong></div>`,
       syntaxHtml: code("带状态的累积更新", [
-        "alpha = torch.exp(m_old - m_new)",
-        "beta = torch.exp(m_block - m_new)",
-        "l_new = alpha * l_old + beta * l_block",
-        "O_new = (alpha * l_old * O_old + beta * block_out) / l_new"
+        "old_scale = torch.exp(m_old - m_new)",
+        "l_new = l_old * old_scale + l_block",
+        "old_part = O_old * (l_old * old_scale / l_new)",
+        "new_part = (P_ij @ v_block) / l_new",
+        "O_new = old_part + new_part"
       ]),
       checkpoint: checkpoint(
         "当 m_new 大于旧 m 时，旧的 exp 和输出为什么要缩放？",
@@ -608,9 +610,9 @@ module.exports = {
         "exp(score-m) 的 m 变了，同一个 score 的指数值也会变，旧贡献必须换到同一标尺。"
       ),
       homework: [
-        "计算当前块的 P_ij 和 l_block。",
-        "更新全局 l_new。",
-        "用在线 softmax 公式更新 O_i。"
+        "用 P_ij = exp(S_ij - m_new) 计算当前块贡献。",
+        "用 l_old * exp(m_old - m_new) + l_block 更新 l_new。",
+        "按 notebook 的 online softmax 公式更新 O_i。"
       ]
     })
   ],
@@ -655,10 +657,13 @@ module.exports = {
       intuition: "Top-K 像固定只看前 K 名；Top-P 像把候选加到概率够一篮子为止。",
       exampleHtml: `<div class="mini-table"><span>概率排序</span><span>.50 .25 .15 .10</span><span>top_p=.8</span><strong>保留前三个</strong></div>`,
       syntaxHtml: code("排序、累计和 mask", [
-        "sorted_probs, sorted_idx = torch.sort(probs, descending=True)",
-        "cumulative = torch.cumsum(sorted_probs, dim=-1)",
+        "sorted_logits, sorted_idx = torch.sort(logits, descending=True)",
+        "cumulative = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)",
         "remove = cumulative > top_p",
-        "filtered_logits = logits.masked_fill(remove_mask, float('-inf'))"
+        "remove[..., 1:] = remove[..., :-1].clone()",
+        "remove[..., 0] = 0",
+        "sorted_logits[remove] = float('-inf')",
+        "filtered_logits = torch.zeros_like(logits).scatter_(-1, sorted_idx, sorted_logits)"
       ]),
       checkpoint: checkpoint(
         "Top-K 过滤后，被淘汰 token 的 logits 常设为？",
@@ -668,8 +673,8 @@ module.exports = {
       ),
       homework: [
         "用 torch.topk 找到 Top-K 阈值并屏蔽其他 token。",
-        "排序后用 cumsum 实现 Top-P 候选集合。",
-        "最后对过滤后的 logits 做 softmax 和 multinomial。"
+        "排序后用 softmax + cumsum 实现 Top-P 候选集合。",
+        "平移移除 mask 后 scatter 回原始 token 顺序，再 softmax 和 multinomial。"
       ]
     })
   ],
@@ -677,7 +682,7 @@ module.exports = {
     lesson({
       id: "paged-block-table",
       title: "PagedAttention：逻辑连续，物理可以不连续",
-      todo: "TODO 1 / TODO 2 / TODO 3",
+      todo: "TODO 1 / TODO 2",
       prerequisite: [
         "KV Cache 会随序列长度增长。",
         "直接连续分配容易产生显存碎片。",
@@ -698,15 +703,15 @@ module.exports = {
         "17 个 token 需要覆盖 0-7、8-15、16 这三段。"
       ),
       homework: [
-        "预分配 physical_kv_cache。",
         "用向上取整计算 prefill 需要的 block 数。",
+        "检查 free_blocks 是否足够，不够时抛出 OOM。",
         "从 free_blocks 分配 block_id 到 req.block_table。"
       ]
     }),
     lesson({
       id: "paged-decode-growth",
       title: "Decode 阶段：只有跨入新 block 才分配",
-      todo: "TODO 4 / TODO 5",
+      todo: "TODO 3 / TODO 4",
       prerequisite: [
         "自回归 decode 每次只新增 1 个 token。",
         "最后一个 block 没满时可以继续写入。",
@@ -743,7 +748,7 @@ module.exports = {
       prerequisite: [
         "draft model 生成快但不够准。",
         "target model 生成慢但质量高。",
-        "投机解码用 target model 批量验证 draft tokens。"
+        "本 notebook 只练接受/拒绝前缀；完整算法还会处理拒绝后的修正采样。"
       ],
       intuition: "像先写草稿再让老师批改：草稿正确的部分直接采用，错误处再由老师接管。",
       exampleHtml: `<div class="mini-flow"><span>draft: A B C</span><span>target 验证</span><strong>接受 A B，拒绝 C</strong></div>`,
@@ -756,15 +761,15 @@ module.exports = {
         "        break"
       ]),
       checkpoint: checkpoint(
-        "Speculative Decoding 的最终分布由谁保证正确？",
+        "在本 notebook 的验证函数里，接受概率 p/q 中的 p 来自哪里？",
         ["target model", "draft model", "tokenizer"],
         0,
-        "draft 只负责提出候选，接受规则由 target 概率校正，保证最终分布对齐 target。"
+        "draft 负责提出候选；这里练的是用 target 概率 p 和 draft 概率 q 做前缀接受判断。完整投机解码还要补拒绝后的修正采样。"
       ),
       homework: [
         "读懂 notebook 中 draft 概率 q 和 target 概率 p 的含义。",
         "确认验证过程按候选 token 顺序进行。",
-        "理解拒绝后为什么要停止接受后续草稿。"
+        "理解拒绝后为什么停止接受后续草稿；完整算法的后续采样不在本 notebook 范围内。"
       ]
     }),
     lesson({
@@ -871,26 +876,26 @@ module.exports = {
       todo: "TODO 1 / TODO 2 / TODO 3",
       prerequisite: [
         "int8 的有效范围通常看作 [-127, 127]。",
-        "scale 把浮点数映射到整数刻度。",
+        "这里的 scale 表示整数刻度密度：127 / absmax。",
         "round 后还要 clamp，防止越界。"
       ],
-      intuition: "先找这组权重里最大的绝对值，把它贴到 127，其它数按同一把尺子缩放。",
-      exampleHtml: `<div class="scale-demo"><span>absmax=2.54</span><span>scale=2.54/127</span><strong>w_int8=round(w/scale)</strong></div>`,
+      intuition: "先找这组权重里最大的绝对值，再算出 1 个浮点单位对应多少个 int8 刻度。",
+      exampleHtml: `<div class="scale-demo"><span>absmax=3.0</span><span>scale=127/3.0</span><strong>w_int8=round(w * scale)</strong></div>`,
       syntaxHtml: code("量化三步", [
         "absmax = weight.abs().max()",
-        "scale = absmax / 127",
-        "q = torch.round(weight / scale).clamp(-127, 127).to(torch.int8)"
+        "scale = 127.0 / absmax",
+        "q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)"
       ]),
       checkpoint: checkpoint(
-        "为什么 scale 常用 absmax / 127？",
+        "这个 notebook 中为什么 scale 常用 127 / absmax？",
         ["把最大绝对值映射到 int8 边界", "把所有数变成正数", "让矩阵转置"],
         0,
         "对称 int8 量化希望最大幅度刚好落在可表示边界附近。"
       ),
       homework: [
         "计算权重绝对最大值。",
-        "用 absmax / 127 得到 scale。",
-        "round、clamp、转 int8 完成量化。"
+        "用 127.0 / absmax 得到 scale。",
+        "先乘 scale，再 round、clamp、转 int8 完成量化。"
       ]
     }),
     lesson({
@@ -900,12 +905,12 @@ module.exports = {
       prerequisite: [
         "W8A16 表示 weight 用 int8 存，activation 用 fp16/bf16 算。",
         "矩阵乘法前通常要把 int8 权重反量化回浮点。",
-        "反量化公式是 q_weight * scale。"
+        "本 notebook 的反量化公式是 q_weight / scale。"
       ],
-      intuition: "存储时用压缩版，真正计算前再按刻度尺展开成近似浮点权重。",
-      exampleHtml: `<div class="matrix-flow"><span>int8 weight</span><span>乘 scale</span><span>fp weight</span><strong>F.linear(x, fp_weight)</strong></div>`,
+      intuition: "量化时把浮点数乘上刻度密度变成整数；反量化时再除以同一把刻度尺还原。",
+      exampleHtml: `<div class="matrix-flow"><span>int8 weight</span><span>除以 scale</span><span>fp weight</span><strong>F.linear(x, fp_weight)</strong></div>`,
       syntaxHtml: code("反量化后做线性层", [
-        "dequant_weight = q_weight.float() * scale",
+        "dequant_weight = q_weight.float() / scale",
         "dequant_weight = dequant_weight.to(x.dtype)",
         "out = F.linear(x, dequant_weight, bias)"
       ]),
@@ -916,7 +921,7 @@ module.exports = {
         "A 是 activation，16 表示激活通常保留 fp16/bf16 精度。"
       ),
       homework: [
-        "用 q_weight.float() * scale 反量化。",
+        "用 q_weight.float() / scale 反量化。",
         "把反量化权重转成输入 dtype。",
         "调用 F.linear 完成前向并比较误差。"
       ]
@@ -1053,11 +1058,13 @@ module.exports = {
       ],
       intuition: "多人共同保管一本大账本，每个人只负责自己的几页，需要时再同步完整结果。",
       exampleHtml: `<div class="gpu-grid"><span>GPU0: 参数 0-3</span><span>GPU1: 参数 4-7</span><span>GPU2: 参数 8-11</span></div>`,
-      syntaxHtml: code("用切片划分负责范围", [
-        "chunk = math.ceil(num_params / world_size)",
-        "start = rank * chunk",
-        "end = min(start + chunk, num_params)",
-        "local_param = flat_param[start:end]"
+      syntaxHtml: code("用参数列表划分负责范围", [
+        "params = list(model.parameters())",
+        "half_idx = len(params) // 2",
+        "gpu_partitions = {",
+        "    0: params[:half_idx],",
+        "    1: params[half_idx:],",
+        "}"
       ]),
       checkpoint: checkpoint(
         "ZeRO 分片的直接目的是什么？",
@@ -1066,37 +1073,39 @@ module.exports = {
         "把状态切开后，每张卡只保存自己负责的部分。"
       ),
       homework: [
-        "按 GPU rank 计算参数负责区间。",
+        "把 model_params 转成参数列表，并按列表切成两份。",
         "为每张 GPU 初始化局部 optimizer state。",
         "确认局部状态长度小于完整参数长度。"
       ]
     }),
     lesson({
       id: "zero-local-step",
-      title: "局部更新后 All-Gather：每张卡拿回完整参数",
+      title: "局部更新：单机模拟里原位修改就是同步",
       todo: "TODO 3 / TODO 4",
       prerequisite: [
-        "每张卡只更新自己负责的参数分片。",
-        "训练下一步通常需要完整参数视图。",
-        "All-Gather 会把所有分片收集成完整张量。"
+        "每张卡只遍历自己负责的参数列表。",
+        "TODO 3 要更新局部动量并用动量更新参数。",
+        "TODO 4 在本 notebook 中不需要写代码，只要理解真实多卡需要把更新后的权重同步出去。"
       ],
-      intuition: "每个人修改自己那几页，最后把所有页重新装订成一本完整账本。",
-      exampleHtml: `<div class="sum-flow"><span>GPU0 shard</span><span>GPU1 shard</span><span>GPU2 shard</span><strong>cat/all-gather to full param</strong></div>`,
-      syntaxHtml: code("局部切片更新再拼接", [
-        "local_param -= lr * local_grad",
-        "shards[rank] = local_param",
-        "full_param = torch.cat(shards, dim=0)"
+      intuition: "本练习里每个 p 都是同一个 Parameter 的引用；你原位改 p.data，模型里的参数也同步变了。",
+      exampleHtml: `<div class="sum-flow"><span>GPU0 负责 fc1</span><span>GPU1 负责 fc2</span><strong>p.data 原位更新</strong><span>真实多卡才需要广播</span></div>`,
+      syntaxHtml: code("遍历本 GPU 参数和梯度", [
+        "for p, g in zip(params, grads):",
+        "    momentum = states[id(p)]",
+        "    momentum = momentum + g",
+        "    states[id(p)] = momentum",
+        "    p.data = p.data - lr * momentum"
       ]),
       checkpoint: checkpoint(
-        "All-Gather 在 ZeRO 模拟里对应什么动作？",
-        ["把各 GPU 的分片拼回完整参数", "删除所有梯度", "重新初始化模型"],
+        "为什么 notebook 的 TODO 4 不需要额外写 All-Gather 代码？",
+        ["p.data 是原位引用，单机模拟里已经同步", "因为 ZeRO 不需要参数", "因为梯度会自动消失"],
         0,
-        "分片更新完成后，需要聚合成完整参数供后续前向使用。"
+        "真实多卡需要广播或 All-Gather；这个单机模拟直接修改 Parameter 引用，效果等价于模型参数已经更新。"
       ),
       homework: [
-        "只更新当前 GPU 负责的参数切片。",
-        "保存每张卡更新后的 shard。",
-        "用拼接模拟 All-Gather 同步完整参数。"
+        "只遍历当前 GPU 负责的 params 和对应 grads。",
+        "更新 states[id(p)] 中保存的动量。",
+        "用 p.data 原位更新参数，并理解 TODO 4 在真实多卡中的同步意义。"
       ]
     })
   ],
@@ -1104,7 +1113,7 @@ module.exports = {
     lesson({
       id: "tp-column",
       title: "Tensor Parallel 列切分：每张卡算一部分输出特征",
-      todo: "TODO 1 / TODO 2 / TODO 3",
+      todo: "TODO 1 / TODO 2",
       prerequisite: [
         "Linear 可写成 X @ A。",
         "沿 A 的列切分，相当于把输出特征切给不同 GPU。",
@@ -1118,44 +1127,43 @@ module.exports = {
         "out = torch.cat(partials, dim=1)"
       ]),
       checkpoint: checkpoint(
-        "矩阵 A 沿 dim=1 切分，最后 partial outputs 应该沿哪个维度拼接？",
-        ["dim=1", "dim=0", "不用拼接"],
+        "列切分 A 后，每张 GPU 拿到的是哪一部分权重？",
+        ["一部分输出列", "一部分 batch 样本", "完整 A 的副本"],
         0,
-        "列切分对应输出特征维切分，所以结果也沿特征维拼接。"
+        "A 的 dim=1 是 out_features，切列就是把不同输出特征分给不同 GPU。"
       ),
       homework: [
         "沿列方向切分权重 A。",
         "每张 GPU 用本地权重分片做矩阵乘法。",
-        "把各 GPU 输出沿特征维 cat 回完整输出。"
+        "确认每个 local_out 的 batch 维不变、输出特征变少。"
       ]
     }),
     lesson({
-      id: "tp-row",
-      title: "行切分的直觉：各卡贡献要相加",
-      todo: "延伸理解",
+      id: "tp-allgather",
+      title: "All-Gather：把列切分结果拼回完整输出",
+      todo: "TODO 3",
       prerequisite: [
-        "沿输入特征切分权重时，输入 X 也要按对应维度切分。",
-        "每张卡算的是输出的一部分贡献。",
-        "贡献之间通常需要 all-reduce 求和。"
+        "列切分后，每张卡得到的是不同输出特征列。",
+        "这些 partial outputs 的 batch 维相同。",
+        "All-Gather 在这个模拟里就是沿特征维拼接。"
       ],
-      intuition: "列切分像各算几列，行切分像各算同一个结果的一部分加数，最后要把加数相加。",
-      exampleHtml: `<div class="sum-flow"><span>X0@A0</span><span>+</span><span>X1@A1</span><strong>all-reduce sum</strong></div>`,
-      syntaxHtml: code("部分结果求和", [
-        "x_parts = torch.chunk(X, world_size, dim=1)",
-        "a_parts = torch.chunk(A, world_size, dim=0)",
-        "partials = [x @ a for x, a in zip(x_parts, a_parts)]",
-        "out = sum(partials)"
+      intuition: "每张卡像各自算出一摞列，最后按原来的列顺序横向贴回去，得到完整 Y。",
+      exampleHtml: `<div class="sum-flow"><span>Y0: [batch, out/2]</span><span>Y1: [batch, out/2]</span><strong>cat dim=1 -> [batch, out]</strong></div>`,
+      syntaxHtml: code("沿特征维拼接 partial outputs", [
+        "gpu_outputs = [X @ shard for shard in weight_shards]",
+        "Y_gathered = torch.cat(gpu_outputs, dim=1)",
+        "assert Y_gathered.shape[1] == A.shape[1]"
       ]),
       checkpoint: checkpoint(
-        "行切分 Linear 的 partial outputs 通常如何合并？",
-        ["相加", "沿 batch 维拼接", "取最大值"],
+        "Column Parallel 的 partial outputs 应该如何合并？",
+        ["沿特征维拼接", "逐元素相加", "沿 batch 维拼接"],
         0,
-        "每张卡算的是同一输出的部分加和，合并方式是求和。"
+        "列切分得到的是不同输出列，所以要沿 dim=1 拼接回完整输出。"
       ),
       homework: [
-        "对比 notebook 的列切分实现，理解为什么它用 cat。",
-        "用小矩阵手算行切分时为什么要 sum。",
-        "把列切分和行切分的通信差异写进自己的笔记。"
+        "收集每张 GPU 的 local_out。",
+        "用 torch.cat(gpu_outputs, dim=1) 模拟 All-Gather。",
+        "和单卡 X @ A 的输出做数值比较。"
       ]
     })
   ],

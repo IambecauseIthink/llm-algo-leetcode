@@ -574,8 +574,8 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">进度：0 / 3</span>
-        <span class="pill" id="xp">XP 0 / 300</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
       </div>
     </div>
 
@@ -583,7 +583,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 07 | 零基础导学关卡</p>
         <h1>MoE Load Balancing Loss</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">07_MoE_Load_Balancing_Loss.ipynb</span>
           <span class="pill">MoE</span><span class="pill">Loss</span><span class="pill">Balance</span>
@@ -611,7 +611,7 @@
 
           <div class="lesson-section">
             <h3>先补的知识</h3>
-            <ul><li>MoE 如果总选同一个专家，就会出现拥堵。</li><li>f_i 表示第 i 个专家实际收到的 token 比例。</li><li>one_hot 可以把专家 id 转成按专家统计的计数表。</li></ul>
+            <ul><li>MoE 如果总选同一个专家，就会出现拥堵。</li><li>f_i 表示第 i 个专家在所有 Top-K 选择里出现的比例。</li><li>one_hot 可以把专家 id 转成按专家统计的计数表。</li></ul>
           </div>
 
           <div class="lesson-section intuition">
@@ -625,7 +625,7 @@ freq = hot.mean(dim=0)</code></pre></div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>4 个 token 分给专家 [0,2,2,1]，专家 2 的 f_i 是多少？</p>
+            <p>如果每个 token 只选 1 个专家，4 个 token 分给 [0,2,2,1]，专家 2 的 f_i 是多少？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-moe-balance-token-frequency" value="0">
@@ -652,7 +652,7 @@ freq = hot.mean(dim=0)</code></pre></div>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="moe-balance-token-frequency-1">
-                <span>沿 token 维求平均得到每个专家的 f_i。</span>
+                <span>沿 token 和 top_k 两个选择维统计每个专家出现次数。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="moe-balance-token-frequency-2">
@@ -669,16 +669,17 @@ freq = hot.mean(dim=0)</code></pre></div>
 
           <div class="lesson-section">
             <h3>先补的知识</h3>
-            <ul><li>P_i 是 router 给第 i 个专家的平均概率。</li><li>f_i 是第 i 个专家实际被选中的比例。</li><li>辅助损失会惩罚概率偏好和实际分配过于集中。</li></ul>
+            <ul><li>P_i 是 Top-K 路由权重按专家累加后的平均得分。</li><li>f_i 是第 i 个专家实际被选中的比例。</li><li>辅助损失会惩罚概率偏好和实际分配过于集中。</li></ul>
           </div>
 
           <div class="lesson-section intuition">
             <h3>直觉图</h3>
             <p>P_i 像问卷里的偏好，f_i 像真实排队人数；两者都均匀，专家才不会冷热不均。</p>
             <div class="ratio-board"><span>P=[.33, .34, .33]</span><span>f=[.25, .25, .50]</span><strong>loss 关注 P 和 f 的乘积和</strong></div>
-            <div class="syntax-card"><h4>语法热身：按列求平均</h4><pre><code>probs = torch.tensor([[.7, .2, .1], [.1, .7, .2]])
-p_i = probs.mean(dim=0)
-loss = (p_i * torch.tensor([.5, .5, 0.0])).sum()</code></pre></div>
+            <div class="syntax-card"><h4>语法热身：scatter_add 按专家累加</h4><pre><code>p_i = torch.zeros(num_experts, device=routing_weights.device)
+p_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())
+p_i = p_i / (total_tokens * top_k)
+aux_loss = alpha * num_experts * (f_i * p_i).sum()</code></pre></div>
           </div>
 
           <div class="lesson-section checkpoint">
@@ -706,11 +707,11 @@ loss = (p_i * torch.tensor([.5, .5, 0.0])).sum()</code></pre></div>
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="moe-balance-prob-loss-0">
-                <span>用 routing_probs.mean(dim=0) 得到 P_i。</span>
+                <span>用 scatter_add_ 把 routing_weights 累加到对应专家，得到 P_i。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="moe-balance-prob-loss-1">
-                <span>用 one_hot 或 scatter 统计 f_i。</span>
+                <span>用 one_hot 统计 f_i。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="moe-balance-prob-loss-2">
@@ -722,7 +723,7 @@ loss = (p_i * torch.tensor([.5, .5, 0.0])).sum()</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>

@@ -544,7 +544,7 @@ y = SquareFunction.apply(x)</code></pre>
       "粗估参数、优化器状态和激活各占多少显存。",
       "思考哪些组件可以 offload 或用更低精度。"
     ],
-    formula: "memory ≈ params + grads + optimizer_states + activations + caches"
+    formula: "actor_loss = -mean(min(r_t * A_t, clip(r_t, 1-eps, 1+eps) * A_t))"
   },
   {
     id: "13",
@@ -1139,6 +1139,7 @@ function lessonLevelPage(level, prev, next) {
     ];
   }));
   const homeworkCount = level.lessons.reduce((total, lesson) => total + lesson.homework.length, 0);
+  const checkpointLabel = `${level.lessons.length} 道`;
   const prevLink = prev ? `<a class="ghost" href="${slug(prev)}">上一关：L${prev.id}</a>` : `<a class="ghost" href="../index.html">返回地图</a>`;
   const nextLink = next ? `<a class="primary" href="${slug(next)}">下一关：L${next.id}</a>` : `<a class="primary" href="../index.html">回到地图</a>`;
 
@@ -1718,8 +1719,8 @@ function lessonLevelPage(level, prev, next) {
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="status">进度：0 / 3</span>
-        <span class="pill" id="xp">XP 0 / 300</span>
+        <span class="pill" id="status">闯关题：0 / ${level.lessons.length}</span>
+        <span class="pill" id="xp">XP 0 / ${level.lessons.length * 100}</span>
       </div>
     </div>
 
@@ -1727,7 +1728,7 @@ function lessonLevelPage(level, prev, next) {
       <div class="card hero-main">
         <p class="eyebrow">Level ${level.id} | 零基础导学关卡</p>
         <h1>${esc(level.title)}</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 3 道题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">先用小例子把必要知识学会，再用 ${checkpointLabel}闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
         <div class="meta">
           <span class="pill">${esc(level.file)}</span>
           ${level.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join("")}
@@ -1750,7 +1751,7 @@ function lessonLevelPage(level, prev, next) {
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 ${checkpointLabel}闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
