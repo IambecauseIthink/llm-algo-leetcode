@@ -47,12 +47,45 @@ const levels = [
         ],
         intuition: "把一张 H×W 的小棋盘摊平成一条路线：每个格子变成一个 token，格子里带着 C 个通道特征。",
         exampleHtml: `
-          <div class="shape-lesson">
-            <span class="shape-card">原始小图<br><strong>[1, 2, 2, 3]</strong><small>1 张图，2 个通道，2×3 网格</small></span>
-            <span class="shape-op">换轴</span>
-            <span class="shape-card">通道放后<br><strong>[1, 2, 3, 2]</strong><small>每个格子带 2 个通道值</small></span>
-            <span class="shape-op">摊平网格</span>
-            <span class="shape-card">token 序列<br><strong>[1, 6, 2]</strong><small>6 个位置，每个位置 2 维</small></span>
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 原始小图：[B=1, C=2, H=2, W=3]</strong>
+              <p>同一张图有两个通道，像两张叠在一起的 2×3 透明胶片。</p>
+              <div class="channel-stack">
+                <div class="channel-plane warm">
+                  <span class="plane-title">Channel 0</span>
+                  <span>a</span><span>b</span><span>c</span>
+                  <span>d</span><span>e</span><span>f</span>
+                </div>
+                <div class="channel-plane cool">
+                  <span class="plane-title">Channel 1</span>
+                  <span>A</span><span>B</span><span>C</span>
+                  <span>D</span><span>E</span><span>F</span>
+                </div>
+              </div>
+            </div>
+            <div class="story-arrow">换轴：把 C 放到每个格子里</div>
+            <div class="story-panel">
+              <strong>2. 通道放后：[B=1, H=2, W=3, C=2]</strong>
+              <p>现在每个空间位置都带着一个 2 维小向量。</p>
+              <div class="pixel-grid">
+                <span>[a,A]</span><span>[b,B]</span><span>[c,C]</span>
+                <span>[d,D]</span><span>[e,E]</span><span>[f,F]</span>
+              </div>
+            </div>
+            <div class="story-arrow">摊平 H×W：按行走成序列</div>
+            <div class="story-panel">
+              <strong>3. Token 序列：[B=1, S=6, C=2]</strong>
+              <p>Transformer 看到的是 6 个 token，每个 token 有 2 个特征。</p>
+              <div class="token-rail">
+                <span><b>t0</b>[a,A]</span>
+                <span><b>t1</b>[b,B]</span>
+                <span><b>t2</b>[c,C]</span>
+                <span><b>t3</b>[d,D]</span>
+                <span><b>t4</b>[e,E]</span>
+                <span><b>t5</b>[f,F]</span>
+              </div>
+            </div>
           </div>
           <p>你不需要先背 <code>permute(0, 2, 3, 1)</code>。先问自己：我要把 C 从第 2 个轴挪到最后，再把 H 和 W 合成序列长度。</p>`,
         checkpoint: {
@@ -79,14 +112,14 @@ const levels = [
         intuition: "像在词典里按页码找词条：id 是页码，Embedding 表是词典，查出来的一整行向量才是模型真正使用的表示。",
         exampleHtml: `
           <div class="lookup-board">
-            <div class="ids"><strong>input_ids</strong><span>[2, 0, 3]</span></div>
+            <div class="ids"><strong>input_ids</strong><span class="id-token">2</span><span class="id-token">0</span><span class="id-token">3</span></div>
             <div class="table">
-              <span>ID 0</span><span>[0.1, 0.4]</span>
+              <span class="hit">ID 0</span><span class="hit">[0.1, 0.4]</span>
               <span>ID 1</span><span>[0.8, 0.2]</span>
-              <span>ID 2</span><span>[0.5, 0.9]</span>
-              <span>ID 3</span><span>[0.3, 0.7]</span>
+              <span class="hit">ID 2</span><span class="hit">[0.5, 0.9]</span>
+              <span class="hit">ID 3</span><span class="hit">[0.3, 0.7]</span>
             </div>
-            <div class="ids"><strong>输出</strong><span>[[0.5,0.9], [0.1,0.4], [0.3,0.7]]</span></div>
+            <div class="ids"><strong>输出向量序列</strong><span>[0.5, 0.9]</span><span>[0.1, 0.4]</span><span>[0.3, 0.7]</span></div>
           </div>
           <p><code>nn.Embedding(input_ids)</code> 和 <code>weight[input_ids]</code> 做的是同一个核心动作：按 id 取行。</p>`,
         checkpoint: {
@@ -113,11 +146,18 @@ const levels = [
         intuition: "把前向看成三扇门：Linear 门、ReLU 门、Loss 门。反向时梯度从 Loss 倒着回来，ReLU 门先决定哪些位置能通行。",
         exampleHtml: `
           <div class="grad-lesson">
-            <span>grad_output<br><strong>上一层传回</strong></span>
-            <span class="shape-op">× ReLU mask</span>
-            <span>grad_z<br><strong>只保留 z &gt; 0</strong></span>
-            <span class="shape-op">矩阵乘法反传</span>
-            <span>grad_x / grad_weight / grad_bias</span>
+            <span>z<br><strong>[-1, 0, 2]</strong></span>
+            <span class="shape-op">生成 mask</span>
+            <span>z &gt; 0<br><strong>[0, 0, 1]</strong></span>
+            <span class="shape-op">乘上传回梯度</span>
+            <span>grad_z<br><strong>[0, 0, 5]</strong></span>
+          </div>
+          <div class="grad-lesson compact">
+            <span>grad_z</span>
+            <span class="shape-op">→</span>
+            <span>grad_x = grad_z @ weight</span>
+            <span class="shape-op">→</span>
+            <span>grad_weight = grad_z.T @ x</span>
           </div>
           <p>如果前向里某个 <code>z</code> 是负数，ReLU 把它压成 0；反向时这条路也会被 mask 关掉。</p>`,
         checkpoint: {
@@ -1112,6 +1152,111 @@ function lessonLevelPage(level, prev, next) {
     .intuition { background: #fffdf8; border-color: #efd1a0; }
     .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
     .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
     .shape-lesson,
     .grad-lesson {
       display: grid;
@@ -1131,6 +1276,10 @@ function lessonLevelPage(level, prev, next) {
       place-items: center;
       text-align: center;
       gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
     }
     .shape-card strong,
     .grad-lesson strong { font-size: 18px; color: var(--blue); }
@@ -1157,11 +1306,35 @@ function lessonLevelPage(level, prev, next) {
       padding: 12px;
     }
     .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
     .table {
       display: grid;
       grid-template-columns: 70px minmax(0, 1fr);
       gap: 6px;
       align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
     }
     .checkpoint-option,
     .homework-item {
@@ -1201,6 +1374,7 @@ function lessonLevelPage(level, prev, next) {
     }
     @media (max-width: 920px) {
       .hero,
+      .channel-stack,
       .shape-lesson,
       .grad-lesson,
       .lookup-board { grid-template-columns: 1fr; }
