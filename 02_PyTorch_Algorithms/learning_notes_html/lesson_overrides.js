@@ -180,55 +180,179 @@ aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="s
   ],
   "03": [
     {
-      id: "rope-complex-pairs",
-      title: "两个相邻数配成一个复数，再旋转",
-      todo: "TODO 2 / TODO 3",
+      id: "rope-frequency-table",
+      title: "位置变转角：为什么‘旋转’能编码相对距离",
+      todo: "TODO 1",
       prerequisite: [
-        "head_dim 需要能两两配对。",
-        "复数乘法可以表示二维旋转。",
-        "旋转会改变方向但保持长度。"
+        "一个 token 在序列里的位置就是它的序号 m（0,1,2,…）。",
+        "二维平面上的一个向量可以画成从原点出发的“小箭头”，旋转角度 θ 只改方向、不改长度。",
+        "两个向量的点积 = |a||b|·cos(夹角)；夹角只取决于两者各自转了多少。"
       ],
-      intuition: "RoPE 把 hidden 向量最后一维两两成对，看成很多小箭头；不同位置让箭头转不同角度。",
-      exampleHtml: `<div class="rotate-demo"><span>[1,0]</span><span>旋转 90°</span><span>[0,1]</span><em>长度仍为 1</em></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：把二维坐标解释成复数</h4><pre><code>points = torch.tensor([[[1.0, 0.0], [0.0, 1.0]]])
-z = torch.view_as_complex(points)
-back = torch.view_as_real(z)</code></pre></div>`,
+      intuition: "RoPE 的核心魔法：把“位置 m”变成“把箭头转 mθ 角度”。当 query 在位置 m、key 在位置 n 时，它们的点积只跟差值 (m−n) 有关——模型于是天生感知“相对距离”，而不用记死“绝对位置”。这一关先建立这个直觉，再做出那张‘位置 × 频率 = 角度’的表。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 痛点：绝对位置编码“记死了”，换个长度就懵</strong>
+              <p>老式做法是给每个位置发一个固定向量（位置 0 一个、位置 1 一个…）再加到 token 上。问题是：训练时只见过 0~4095，推理来个第 8000 位，模型从没见过，直接懵。我们真正想要的，其实不是“你在第几位”，而是“你俩离多远”——也就是<strong>相对距离</strong>。</p>
+            </div>
+            <div class="story-arrow">换个思路：不把位置“加”进去，而是按位置把向量“转”一个角度</div>
+            <div class="story-panel">
+              <strong>1. 位置 = 转角：序号越大，箭头转得越多</strong>
+              <p>把 token 向量看成平面上的小箭头。位置 m 就让它转 mθ：位置 0 不转，位置 1 转 θ，位置 2 转 2θ…… 像钟表指针，走得越远转得越多。</p>
+              <svg viewBox="0 0 360 130" width="100%" style="max-width:520px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <defs><marker id="ar1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/></marker></defs>
+                <g stroke="#2563eb" stroke-width="2.5" marker-end="url(#ar1)" fill="none">
+                  <line x1="40" y1="105" x2="40" y2="35"/>
+                  <line x1="160" y1="105" x2="220" y2="50"/>
+                  <line x1="280" y1="105" x2="330" y2="78"/>
+                </g>
+                <g fill="#657184" font-size="12" text-anchor="middle">
+                  <text x="40" y="122">位置 0：转 0</text>
+                  <text x="175" y="122">位置 1：转 θ</text>
+                  <text x="300" y="122">位置 2：转 2θ</text>
+                </g>
+              </svg>
+            </div>
+            <div class="story-arrow">关键收益：点积只剩下“差值”</div>
+            <div class="story-panel">
+              <strong>2. 魔法发生处：q 转 mθ、k 转 nθ，点积只依赖 (m−n)</strong>
+              <p>注意力要算 query·key。query 在位置 m 转了 mθ，key 在位置 n 转了 nθ。两个箭头的夹角正好是 (m−n)θ，于是点积 = |q||k|·cos((m−n)θ)——<strong>绝对位置 m、n 各自消失了，只剩相对距离 (m−n)</strong>。这就是 RoPE 能自然泛化到更长序列的根本原因。</p>
+              <svg viewBox="0 0 360 140" width="100%" style="max-width:520px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/></marker></defs>
+                <line x1="60" y1="115" x2="60" y2="115" />
+                <g stroke-width="2.5" fill="none">
+                  <line x1="120" y1="115" x2="180" y2="35" stroke="#2563eb" marker-end="url(#ar2)" color="#2563eb"/>
+                  <line x1="120" y1="115" x2="215" y2="80" stroke="#12805c" marker-end="url(#ar2)" color="#12805c"/>
+                </g>
+                <path d="M165 95 A 40 40 0 0 1 180 60" stroke="#bd6516" fill="none" stroke-width="1.5"/>
+                <g font-size="13" font-weight="700">
+                  <text x="185" y="32" fill="#2563eb">q（位置 m，转 mθ）</text>
+                  <text x="222" y="84" fill="#12805c">k（位置 n，转 nθ）</text>
+                  <text x="150" y="58" fill="#bd6516" font-size="12">夹角 = (m−n)θ</text>
+                </g>
+              </svg>
+              <div class="formula"><span>q·k = |q||k| · cos((m−n)θ)</span><strong>只剩相对距离 (m−n)</strong></div>
+            </div>
+            <div class="story-arrow">为什么要“多组”频率：让模型既能分清近处，也能感知远处</div>
+            <div class="story-panel">
+              <strong>3. 不同维度配不同频率：像秒针/分针/时针</strong>
+              <p>如果所有维度都用同一个 θ，转太快的远处会“绕圈重合”，转太慢的近处又分不开。RoPE 让 head_dim 里不同的“维度对”用不同频率：低索引维度转得快（管细微差别），高索引维度转得慢（管大跨度距离）。频率公式：θ_i = 10000<sup>−2i/d</sup>，i 越大频率越低。</p>
+              <div class="rotate-demo"><span>维度对 0：高频（秒针）</span><span>维度对 1：中频（分针）</span><span>维度对 i：低频（时针）</span></div>
+            </div>
+            <div class="story-arrow">把上面这些角度，按 位置 × 频率 摆成一张表（这就是 TODO 1）</div>
+            <div class="story-panel">
+              <strong>4. 做表：每行一个位置，每列一组频率，格子里是“要转的角度”</strong>
+              <p>用 <code>torch.outer(位置, 频率)</code> 一次性算出所有 (位置, 维度) 的角度，再用 <code>torch.polar(1, 角度)</code> 把角度变成复数 cos+i·sin（模长固定为 1，所以只转不缩）。最终表的 shape 是 [seq_len, head_dim/2]——列数是 head_dim/2，因为后面要两两配对成复数。</p>
+              <table class="freq-table"><tr><th>位置 m</th><th>freq0 (快)</th><th>freq1</th><th>… freqi (慢)</th></tr><tr><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1·θ0</td><td>1·θ1</td><td>1·θi</td></tr><tr><td>2</td><td>2·θ0</td><td>2·θ1</td><td>2·θi</td></tr></table>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：用 outer 把“位置 × 频率”摊成一张角度表</h4><pre><code>pos   = torch.arange(3).float()        # 位置 0,1,2
+freqs = torch.tensor([1.0, 0.1])       # 两组频率：一快一慢
+
+# outer：第 i 行第 j 列 = pos[i] * freqs[j]
+angle = torch.outer(pos, freqs)        # shape [3, 2]
+# tensor([[0.0, 0.0],     位置0：都不转
+#         [1.0, 0.1],     位置1：快的转1.0，慢的转0.1
+#         [2.0, 0.2]])    位置2：转得更多
+
+# polar(模长, 角度) → 复数 cos+i·sin，模长全取 1 表示“只转不缩”
+cis = torch.polar(torch.ones_like(angle), angle)  # complex [3,2]</code></pre><p class="syntax-tip">读法：<code>outer(a,b)[i,j] = a[i]*b[j]</code>，正好对应“位置 × 频率 = 该转的角度”。<code>polar</code> 把角度打包成可直接相乘的复数旋转因子 e<sup>iθ</sup>。</p></div>`,
       checkpoint: {
-        question: "一个向量旋转后，哪件事通常保持不变？",
-        options: ["向量长度", "batch size 自动变 1", "所有元素都变成正数"],
+        question: "RoPE 为什么用“按位置旋转”而不是“给每个位置加一个固定向量”？",
+        options: [
+          "旋转后 q·k 只依赖相对距离 (m−n)，能自然泛化到更长序列",
+          "因为旋转计算比加法更省显存",
+          "因为加法会改变向量长度，旋转不会"
+        ],
         answer: 0,
-        explain: "旋转只改变方向，不改变模长，这也是 RoPE 测试中会检查的性质。"
+        explain: "q 转 mθ、k 转 nθ，点积里 m、n 合并成 (m−n)，模型直接获得相对位置感，不依赖训练时见过的绝对位置。"
       },
       homework: [
-        "把最后一维 reshape 成 [..., head_dim/2, 2]。",
-        "用 view_as_complex 转成复数。",
-        "乘频率后用 view_as_real 和 flatten 还原。"
+        "TODO 1：用 arange(0, dim, 2) 配 θ_i = 10000^(−2i/d) 算出每组频率。",
+        "TODO 1：用 torch.outer(位置, 频率) 得到 [seq_len, dim/2] 的角度表。",
+        "TODO 1：用 torch.polar(ones, 角度) 生成复数旋转表 freqs_cis，确认 shape 是 [seq_len, head_dim/2]。"
       ]
     },
     {
-      id: "rope-frequency-table",
-      title: "位置 × 频率：先做一张旋转角度表",
-      todo: "TODO 1",
+      id: "rope-complex-pairs",
+      title: "把数字两两配成小箭头，用复数乘法转一下",
+      todo: "TODO 2 / TODO 3",
       prerequisite: [
-        "位置索引是 0 到 seq_len-1。",
-        "不同维度使用不同旋转频率。",
-        "torch.outer 可以生成二维表。"
+        "head_dim 是偶数，可以把相邻两个数配成一对 (x, y) 当作平面坐标。",
+        "复数乘法 = 旋转：(a+bi)·(cosθ+i·sinθ) 就是把箭头 (a,b) 转 θ 度。",
+        "旋转只改方向不改长度，所以旋转前后向量模长不变（测试会查这一点）。"
       ],
-      intuition: "每一行对应一个位置，每一列对应一组维度频率；表格里的值就是该位置该维度要转的角度。",
-      exampleHtml: `<table class="freq-table"><tr><th>pos</th><th>freq0</th><th>freq1</th></tr><tr><td>0</td><td>0θ</td><td>0φ</td></tr><tr><td>1</td><td>1θ</td><td>1φ</td></tr></table>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：用 outer 生成二维表</h4><pre><code>days = torch.arange(3).float()
-rates = torch.tensor([1.0, 10.0])
-table = torch.outer(days, rates)  # [3,2]</code></pre></div>`,
+      intuition: "拿到上一关的复数角度表后，把 query/key 的最后一维也两两配对、看成复数，直接乘以角度表——一次复数乘法就完成了所有维度对的旋转。最后再把复数拆回实数、展平回原 shape。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 两两配对：head_dim 个数 → head_dim/2 个小箭头</strong>
+              <p>把最后一维 reshape 成 [..., head_dim/2, 2]，相邻两个数 (x0,x1) 组成一个 2D 坐标，再用 <code>view_as_complex</code> 看成一个复数 x0 + i·x1。head_dim=64 就得到 32 个复数（32 个待旋转的小箭头）。</p>
+              <svg viewBox="0 0 360 120" width="100%" style="max-width:520px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="20" width="40" height="30" fill="#e8f0ff" stroke="#a9c2f6"/><text x="40" y="40">x0</text>
+                  <rect x="60" y="20" width="40" height="30" fill="#e8f0ff" stroke="#a9c2f6"/><text x="80" y="40">x1</text>
+                  <rect x="110" y="20" width="40" height="30" fill="#fff1dd" stroke="#e8b66f"/><text x="130" y="40">x2</text>
+                  <rect x="150" y="20" width="40" height="30" fill="#fff1dd" stroke="#e8b66f"/><text x="170" y="40">x3</text>
+                  <text x="230" y="40" fill="#657184">… 共 head_dim 个</text>
+                </g>
+                <g stroke="#657184" stroke-width="1" fill="none"><path d="M60 55 L80 80"/><path d="M150 55 L170 80"/></g>
+                <g font-size="13" text-anchor="middle" font-weight="700">
+                  <text x="80" y="100" fill="#1d4ed8">复数 x0 + i·x1</text>
+                  <text x="170" y="100" fill="#73450d">复数 x2 + i·x3</text>
+                </g>
+              </svg>
+            </div>
+            <div class="story-arrow">复数乘法 = 旋转：乘以 e^{iθ} 就把箭头转 θ 度</div>
+            <div class="story-panel">
+              <strong>2. 一次乘法转全部：x_复数 × freqs_cis</strong>
+              <p>把配好的复数张量乘以上一关的 freqs_cis（每个位置、每个维度对该转的角度）。复数乘法 (a+bi)(cosθ+i·sinθ) 自动展开成二维旋转矩阵的效果——一行代码替你转了所有维度对。</p>
+              <svg viewBox="0 0 360 140" width="100%" style="max-width:520px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/></marker></defs>
+                <circle cx="120" cy="95" r="62" fill="none" stroke="#dce2e8" stroke-dasharray="4 4"/>
+                <line x1="120" y1="95" x2="178" y2="73" stroke="#94a3b8" stroke-width="2" marker-end="url(#ar3)" color="#94a3b8"/>
+                <line x1="120" y1="95" x2="150" y2="40" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ar3)" color="#2563eb"/>
+                <path d="M178 73 A 62 62 0 0 0 152 42" stroke="#bd6516" fill="none" stroke-width="1.5" marker-end="url(#ar3)" color="#bd6516"/>
+                <g font-size="13" font-weight="700">
+                  <text x="182" y="72" fill="#94a3b8">旋转前</text>
+                  <text x="120" y="34" fill="#2563eb">旋转后</text>
+                  <text x="195" y="110" fill="#bd6516" font-size="12">转 θ，长度不变</text>
+                </g>
+              </svg>
+              <div class="formula"><span>(a + bi)(cosθ + i·sinθ)</span><strong>= 把箭头 (a,b) 旋转 θ</strong></div>
+            </div>
+            <div class="story-arrow">转完拆回实数，并补上 FP32 精度这道坑</div>
+            <div class="story-panel">
+              <strong>3. 还原 shape + 精度陷阱</strong>
+              <p>用 <code>view_as_real</code> 把复数拆回 (实部, 虚部) 两个数，再 <code>flatten</code> 合并回 head_dim，shape 与输入完全一致。<strong>关键坑</strong>：复数乘法在 FP16/BF16 下极易出 NaN，所以进复数前先 <code>.float()</code> 升到 FP32 计算，算完再 <code>type_as(xq)</code> 转回原精度——这是 LLaMA 源码强制要求的。旋转不改长度，所以测试会校验旋转前后模长一致。</p>
+              <div class="mini-flow"><span>reshape [..,d/2,2]</span><span>view_as_complex</span><span>× freqs_cis</span><strong>view_as_real → flatten</strong></div>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：把二维坐标当复数旋转，再拆回来</h4><pre><code>import math
+# 一个小箭头 (1, 0)，想转 90°
+v = torch.tensor([[1.0, 0.0]])          # shape [1, 2]
+z = torch.view_as_complex(v)            # 1 + 0i
+
+theta = math.pi / 2                     # 90°
+rot = torch.polar(torch.ones(1), torch.tensor([theta]))  # e^{iθ}
+
+z_rot = z * rot                         # 复数乘法 = 旋转
+out = torch.view_as_real(z_rot)         # 拆回 [[~0, 1]] → (0,1)
+print(out, out.norm())                  # 长度仍是 1（旋转不变性）</code></pre><p class="syntax-tip">读法：<code>view_as_complex</code> 把最后一维 2 个数看成一个复数；乘 e<sup>iθ</sup> 旋转；<code>view_as_real</code> 再拆回两个实数。真实代码里进这步前要 <code>.float()</code> 防 NaN。</p></div>`,
       checkpoint: {
-        question: "seq_len=8、head_dim=64 时，freqs_cis 的 shape 应该是？",
-        options: ["[8,32]", "[8,64]", "[64,8]"],
+        question: "RoPE 里为什么进复数乘法前要先把 q/k 转成 float32？",
+        options: [
+          "复数乘法在 FP16/BF16 下容易出 NaN，先升 FP32 算完再转回原精度更稳",
+          "因为 view_as_complex 只支持 float32 这一种类型",
+          "为了让向量长度在旋转后变大"
+        ],
         answer: 0,
-        explain: "最后一维两两配成复数，所以频率列数是 head_dim/2。"
+        explain: "旋转涉及 cos/sin 连乘，半精度数值范围有限易发散；LLaMA 等源码统一先 .float() 再旋转，最后 type_as 转回。"
       },
       homework: [
-        "用 arange(0, dim, 2) 生成频率维度。",
-        "用 outer 得到位置角度表。",
-        "用 polar 生成 cos+i sin 的复数表。"
+        "TODO 2：把 xq/xk 先 .float()，reshape 成 [.., head_dim/2, 2]，再 view_as_complex。",
+        "TODO 3：乘以广播后的 freqs_cis 完成旋转，view_as_real 后 flatten 回 head_dim。",
+        "TODO 3：用 type_as(xq) 转回原精度；跑测试确认 shape 一致、旋转前后模长不变。"
       ]
     }
   ],
