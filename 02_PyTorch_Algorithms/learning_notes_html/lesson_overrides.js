@@ -91,11 +91,22 @@ value = torch.tensor([10.0, 10.0, 10.0]) # 内容
 gate = torch.sigmoid(knob)               # [0.27, 0.50, 0.88]
 filtered = gate * value                  # [2.7, 5.0, 8.8]
 # 真正的 SwiGLU 用 F.silu 代替 sigmoid，思路完全一样</code></pre></div>`,
+      predict: {
+        hook: "普通 MLP 升维只用 1 块矩阵就够了。SwiGLU 偏要拆成 gate + up 两块，凭空多花一倍参数——它图的到底是什么？",
+        question: "先押一个假设：SwiGLU 多花一块升维矩阵，最核心的目的是？",
+        options: [
+          "让模型一次能处理两倍长的序列",
+          "让“哪些信息该通过”由数据自己学出来，而不是像 ReLU 那样写死",
+          "为了之后可以省掉 down_proj 降维矩阵"
+        ],
+        answer: 1,
+        revealNote: "押好了。带着“这块矩阵是为可学习的开关买单”这个念头，往下看它怎么用 gate ⊙ up 实现。"
+      },
       checkpoint: {
-        question: "SwiGLU 为什么需要 gate 和 up 两条升维支路？",
-        options: ["一条产生门控开关，一条产生内容，相乘实现“数据自己学的过滤”", "为了把 batch size 翻倍", "为了删除 down_proj"],
+        question: "巩固：gate 和 up 两条支路的输出，必须满足什么条件才能执行 gate ⊙ up？",
+        options: ["两者 shape 完全相同（逐元素相乘的前提）", "两者必须都是正数", "up 的维度要比 gate 大一倍"],
         answer: 0,
-        explain: "gate 经 SiLU 后像逐元素开关，up 提供内容，两者相乘后再降维。代价是升维从 1 块矩阵变成 2 块（gate+up），全模块共 3 块。"
+        explain: "逐元素相乘（Hadamard）要求两个张量形状逐维一致，所以 gate 和 up 的 Linear 输出维度都设成 intermediate_size。"
       },
       homework: [
         "定义 gate/up/down 三个投影（工业写法是把 gate 和 up 融合成一块 gate_up_proj）。",
@@ -161,15 +172,22 @@ row    = 8       # 每排 8 个座位（类比 multiple_of）
 # 直接整除会向下丢人：26 // 8 = 3 排，只坐 24 人 ❌
 # 先 +(row-1) 再整除，就能“向上取整”到能装下所有人的排数
 aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="syntax-tip">读法：<code>(n + m - 1) // m * m</code> 是“把 n 向上对齐到 m 的倍数”的标准写法，记下来，工程里到处用。</p></div>`,
-      checkpoint: {
-        question: "LLaMA 为什么把 SwiGLU 的中间维度从 4d 缩到约 8/3 d？",
+      predict: {
+        hook: "传统 MLP 中间层惯例放大到 4d。换成 SwiGLU 后，LLaMA 却把它缩到了奇怪的 8/3 d ≈ 2.67d。这个分数到底从哪冒出来的？",
+        question: "先押一个假设：8/3 这个比例最可能是怎么定下来的？",
         options: [
-          "因为多了 gate 支路（共 3 块矩阵），缩小中间维度让总参数重新等于传统 MLP，从而公平对比",
-          "因为 8/3 是 GPU 硬件唯一支持的维度比例",
-          "为了让参数变多、模型更大，效果自然更好"
+          "GPU 硬件只支持 8/3 这一种维度比例",
+          "工程师试出来的经验值，没有公式",
+          "解一个方程定出来的——让 SwiGLU 的总参数量正好等于传统 MLP"
         ],
+        answer: 2,
+        revealNote: "押好了。如果真是“解方程”，那方程长什么样？往下数清两边的矩阵，亲手解一遍。"
+      },
+      checkpoint: {
+        question: "巩固（动手算）：hidden_size = 12 时，按 8/3 算出的理论 intermediate_size 约是多少？",
+        options: ["32", "48", "12"],
         answer: 0,
-        explain: "SwiGLU 升维多一条 gate 支路，3·d·h 比传统的 8d² 更费参数。令 3·d·h = 8d² 解得 h = 8/3 d，性能提升才能归功于门控结构本身，而不是堆参数。"
+        explain: "8/3 × 12 = 32。若还要求对齐 multiple_of，再在此基础上向上取整。"
       },
       homework: [
         "TODO 1：写出 int(8/3 · hidden_size) 的计算（注意整数除法）。",
@@ -257,15 +275,22 @@ angle = torch.outer(pos, freqs)        # shape [3, 2]
 
 # polar(模长, 角度) → 复数 cos+i·sin，模长全取 1 表示“只转不缩”
 cis = torch.polar(torch.ones_like(angle), angle)  # complex [3,2]</code></pre><p class="syntax-tip">读法：<code>outer(a,b)[i,j] = a[i]*b[j]</code>，正好对应“位置 × 频率 = 该转的角度”。<code>polar</code> 把角度打包成可直接相乘的复数旋转因子 e<sup>iθ</sup>。</p></div>`,
-      checkpoint: {
-        question: "RoPE 为什么用“按位置旋转”而不是“给每个位置加一个固定向量”？",
+      predict: {
+        hook: "老办法是给每个位置发一个固定向量、加到 token 上。RoPE 偏不加，而是按位置把向量“转”一个角度。多此一举？还是另有玄机？",
+        question: "先押一个假设：用“旋转”代替“相加”，最关键的好处是？",
         options: [
-          "旋转后 q·k 只依赖相对距离 (m−n)，能自然泛化到更长序列",
-          "因为旋转计算比加法更省显存",
-          "因为加法会改变向量长度，旋转不会"
+          "算 q·k 时结果只跟两个 token 的位置差 (m−n) 有关，模型天生懂“相对距离”",
+          "旋转比加法计算更快、更省显存",
+          "旋转能让向量变长，从而携带更多信息"
         ],
         answer: 0,
-        explain: "q 转 mθ、k 转 nθ，点积里 m、n 合并成 (m−n)，模型直接获得相对位置感，不依赖训练时见过的绝对位置。"
+        revealNote: "押好了。下面就来验证：q 转 mθ、k 转 nθ，点积里 m、n 会发生什么？"
+      },
+      checkpoint: {
+        question: "巩固（动手算）：seq_len=8、head_dim=64 时，freqs_cis 这张角度表的 shape 应该是？",
+        options: ["[8, 32]", "[8, 64]", "[64, 8]"],
+        answer: 0,
+        explain: "行数 = 位置数 = 8；列数 = head_dim/2 = 32，因为后面要把相邻两维配成一个复数。"
       },
       homework: [
         "TODO 1：用 arange(0, dim, 2) 配 θ_i = 10000^(−2i/d) 算出每组频率。",
@@ -339,10 +364,21 @@ rot = torch.polar(torch.ones(1), torch.tensor([theta]))  # e^{iθ}
 z_rot = z * rot                         # 复数乘法 = 旋转
 out = torch.view_as_real(z_rot)         # 拆回 [[~0, 1]] → (0,1)
 print(out, out.norm())                  # 长度仍是 1（旋转不变性）</code></pre><p class="syntax-tip">读法：<code>view_as_complex</code> 把最后一维 2 个数看成一个复数；乘 e<sup>iθ</sup> 旋转；<code>view_as_real</code> 再拆回两个实数。真实代码里进这步前要 <code>.float()</code> 防 NaN。</p></div>`,
-      checkpoint: {
-        question: "RoPE 里为什么进复数乘法前要先把 q/k 转成 float32？",
+      predict: {
+        hook: "head_dim=64，意味着要把 32 对维度各转一个角度。如果写循环一对一对转，又慢又丑。有没有一行代码全转完的办法？",
+        question: "先押一个假设：RoPE 用什么技巧一次性旋转所有维度对？",
         options: [
-          "复数乘法在 FP16/BF16 下容易出 NaN，先升 FP32 算完再转回原精度更稳",
+          "用一个 for 循环逐对调用旋转矩阵",
+          "把每对维度看成一个复数，整体乘以复数 e^{iθ}（复数乘法 = 旋转）",
+          "先 softmax 归一化，再按概率旋转"
+        ],
+        answer: 1,
+        revealNote: "押好了。关键就是“两个实数 → 一个复数 → 乘 e^{iθ}”。往下看它怎么配对、怎么乘、怎么拆回来。"
+      },
+      checkpoint: {
+        question: "巩固：RoPE 进复数乘法前为什么要先把 q/k 转成 float32？",
+        options: [
+          "复数乘法在 FP16/BF16 下容易出 NaN，先升 FP32 算完再 type_as 转回更稳",
           "因为 view_as_complex 只支持 float32 这一种类型",
           "为了让向量长度在旋转后变大"
         ],
@@ -424,15 +460,22 @@ k = torch.randn(2, 4, 7, 8)   # 7 个 key
 scores = q @ k.transpose(-2, -1)      # [2, 4, 5, 7]
 probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
 # 前面的 batch、head 维（2,4）原样保留，只有最后两维参与乘法</code></pre><p class="syntax-tip">读法：<code>@</code> 对 4D 张量只在最后两维做矩阵乘法，前面的维度当“批量”广播。<code>softmax(dim=-1)</code> 表示“对每一行的 key 打分做归一化”。</p></div>`,
-      checkpoint: {
-        question: "Scaled Dot-Product Attention 里为什么要除以 √head_dim？",
+      predict: {
+        hook: "注意力公式里，Q·Kᵀ 算完不直接 softmax，非要先除以一个 √head_dim。这个除法看着多余，去掉会怎样？",
+        question: "先押一个假设：如果去掉 √head_dim 这个缩放，最可能出什么问题？",
         options: [
-          "点积随维度增大方差变大，不缩放 softmax 会接近 one-hot 导致梯度消失",
-          "为了让 Q 和 K 的 shape 对齐才能相乘",
-          "为了把注意力分数变成整数"
+          "Q 和 K 的 shape 对不上，根本没法相乘",
+          "注意力分数会变成小数，不再是整数",
+          "维度越大点积方差越大，softmax 会几乎全压到一个 token 上，梯度消失、学不动"
         ],
+        answer: 2,
+        revealNote: "押好了。带着“缩放是为了驯服方差”这个想法，往下看 Q·Kᵀ → /√D → softmax 这条链。"
+      },
+      checkpoint: {
+        question: "巩固（动手算）：q=[2,4,5,8]、k=[2,4,7,8]，scores = q @ k.transpose(-2,-1) 的 shape 是？",
+        options: ["[2, 4, 5, 7]", "[2, 5, 4, 7]", "[2, 4, 8, 8]"],
         answer: 0,
-        explain: "D 个数相加方差 ∝ D，缩放到 1/√D 把分数拉回稳定区间，softmax 才平滑、梯度才不消失。"
+        explain: "batch=2、head=4 原样保留，只动最后两维：5 个 query 对 7 个 key 打分 → [2,4,5,7]。"
       },
       homework: [
         "TODO 1：投影结果 view 成 [B,S,H,D] 再 transpose(1,2) → [B,H,S,D]。",
@@ -513,15 +556,22 @@ updated = torch.cat([cache, new_k], dim=2)  # [2, 2, 6, 8]
 n_rep = 2                          # 4 个 Q 头 / 2 个 KV 头
 x = updated[:, :, None, :, :].expand(2, 2, n_rep, 6, 8)
 x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class="syntax-tip">读法：<code>cat(dim=2)</code> 在 seq 维接长；<code>expand</code> 不复制内存只“假装”有 n_rep 份，<code>reshape</code> 时才真正铺开，把 KV 头数从 2 撑到 4。</p></div>`,
-      checkpoint: {
-        question: "GQA 实现里，为什么 repeat_kv 要放在“更新 new_kv_cache 之后”？",
+      predict: {
+        hook: "GQA 省显存，靠的是只存少量“窄”KV 头。但矩阵乘法又要求 KV 头数和 Query 头数一致——于是代码里有个 repeat_kv 把 KV 复制宽。问题来了：这步该放在缓存之前还是之后？",
+        question: "先押一个假设：repeat_kv（把 KV 扩充到 Query 头数）应该放在哪里？",
         options: [
-          "只缓存窄的 num_kv_heads 个头才省显存；先扩充再缓存会把 Cache 撑回 MHA 大小",
-          "因为 repeat_kv 会改变 batch size",
-          "因为 cat 操作必须在 softmax 之后"
+          "放在更新缓存之前——先扩充好再存，省得每步重复扩充",
+          "放在更新缓存之后——缓存里只存窄 KV，每步前向时临时扩充",
+          "放在 softmax 之后——等算完注意力再扩充"
         ],
+        answer: 1,
+        revealNote: "押好了。这一步顺序是 GQA 省显存成败的关键，往下看“先存窄、后扩宽”为什么不能反过来。"
+      },
+      checkpoint: {
+        question: "巩固（动手算）：num_heads=8、num_kv_heads=2 时，每个 KV 头要被复制几份去服务 Query 头？",
+        options: ["4", "2", "8"],
         answer: 0,
-        explain: "GQA 省显存的本质是 Cache 只存窄 KV。扩充只是为了满足矩阵乘法的头数对齐，是临时的、每步重做的，绝不能写进缓存。"
+        explain: "num_queries_per_kv = num_heads // num_kv_heads = 8 // 2 = 4，所以 repeat_kv 把每个 KV 头复制 4 份。"
       },
       homework: [
         "TODO 2：用 torch.cat([k_cache, xk], dim=2) 在 seq 维拼接历史与新 KV。",

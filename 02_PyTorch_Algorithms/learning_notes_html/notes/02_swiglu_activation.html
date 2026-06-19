@@ -144,6 +144,82 @@
     .intuition { background: #fffdf8; border-color: #efd1a0; }
     .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
     .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
     .shape-story {
       display: grid;
       gap: 10px;
@@ -574,6 +650,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -583,7 +660,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 02 | 零基础导学关卡</p>
         <h1>SwiGLU Activation</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">02_SwiGLU_Activation.ipynb</span>
           <span class="pill">FFN</span><span class="pill">Activation</span><span class="pill">Gate</span>
@@ -592,9 +669,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">SwiGLU(x) = (x Wv) * SiLU(x Wg)</div>
       </div>
@@ -602,22 +679,43 @@
 
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="swiglu-gate">
+        <article class="lesson-card inquiry" data-lesson="swiglu-gate">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 3 / TODO 4</span>
           </div>
           <h2>门控：一路当开关，一路当内容（顺便数清楚有几块矩阵）</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>Linear(d_in, d_out) 就是一块权重矩阵，把最后一维从 d_in 映射到 d_out。</li><li>SiLU(x) = x · sigmoid(x)，是一条平滑的激活曲线，输出可正可负、像“软开关”。</li><li>两个 shape 完全相同的张量可以逐元素相乘（Hadamard ⊙）。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">普通 MLP 升维只用 1 块矩阵就够了。SwiGLU 偏要拆成 gate + up 两块，凭空多花一倍参数——它图的到底是什么？</p>
+            <p class="predict-q">先押一个假设：SwiGLU 多花一块升维矩阵，最核心的目的是？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-gate" value="0">
+                <span>让模型一次能处理两倍长的序列</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-gate" value="1">
+                <span>让“哪些信息该通过”由数据自己学出来，而不是像 ReLU 那样写死</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-gate" value="2">
+                <span>为了之后可以省掉 down_proj 降维矩阵</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="swiglu-gate">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>传统 MLP 升维后只过一次激活，像一条单行道；SwiGLU 把升维这步分成并行两条：gate 支路算“开关强度”，up 支路算“内容”，两者相乘后再降维。记住它一共用了 3 块矩阵——下一关的参数推导全靠这个数字。</p>
-            
+          <div class="gated" data-gated="swiglu-gate">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Linear(d_in, d_out) 就是一块权重矩阵，把最后一维从 d_in 映射到 d_out。</li><li>SiLU(x) = x · sigmoid(x)，是一条平滑的激活曲线，输出可正可负、像“软开关”。</li><li>两个 shape 完全相同的张量可以逐元素相乘（Hadamard ⊙）。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>传统 MLP 升维后只过一次激活，像一条单行道；SwiGLU 把升维这步分成并行两条：gate 支路算“开关强度”，up 支路算“内容”，两者相乘后再降维。记住它一共用了 3 块矩阵——下一关的参数推导全靠这个数字。</p>
+              
           <div class="shape-story">
             <div class="story-panel">
               <strong>普通 MLP：一条单行道（2 块矩阵）</strong>
@@ -637,32 +735,33 @@
               <p>数一数矩阵：<strong>W_gate、W_up、W_down 共 3 块</strong>。传统 MLP 只有 2 块。多出来的那块 gate 就是门控的“代价”，下一关要把它算进账。</p>
             </div>
           </div>
-            <div class="syntax-card"><h4>语法热身：用“开关 × 内容”筛选数值</h4><pre><code>knob  = torch.tensor([-1.0, 0.0, 2.0])   # 开关原始打分
+              <div class="syntax-card"><h4>语法热身：用“开关 × 内容”筛选数值</h4><pre><code>knob  = torch.tensor([-1.0, 0.0, 2.0])   # 开关原始打分
 value = torch.tensor([10.0, 10.0, 10.0]) # 内容
 
 # sigmoid 把开关压到 0~1：负数→趋近 0(关)，正数→趋近 1(开)
 gate = torch.sigmoid(knob)               # [0.27, 0.50, 0.88]
 filtered = gate * value                  # [2.7, 5.0, 8.8]
 # 真正的 SwiGLU 用 F.silu 代替 sigmoid，思路完全一样</code></pre></div>
-          </div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>SwiGLU 为什么需要 gate 和 up 两条升维支路？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>巩固：gate 和 up 两条支路的输出，必须满足什么条件才能执行 gate ⊙ up？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="0">
-                <span>为了删除 down_proj</span>
+                <span>两者必须都是正数</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="1">
-                <span>为了把 batch size 翻倍</span>
+                <span>up 的维度要比 gate 大一倍</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-gate" value="2">
-                <span>一条产生门控开关，一条产生内容，相乘实现“数据自己学的过滤”</span>
+                <span>两者 shape 完全相同（逐元素相乘的前提）</span>
               </label></div>
-            <div class="feedback" data-feedback="swiglu-gate"></div>
+              <div class="feedback" data-feedback="swiglu-gate"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -683,22 +782,43 @@ filtered = gate * value                  # [2.7, 5.0, 8.8]
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="swiglu-size-align">
+        <article class="lesson-card inquiry" data-lesson="swiglu-size-align">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
           <h2>为什么是 8/3 d？——给门控“多出来的那块矩阵”买单</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>一块权重矩阵的参数量 ≈ 输入维度 × 输出维度。</li><li>传统 MLP 用 2 块矩阵；SwiGLU 因为多了 gate 支路，用 3 块（见上一关）。</li><li>“计算开销 / 参数量相同”是人为加的约束，目的是做公平对比，不是天然规律。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">传统 MLP 中间层惯例放大到 4d。换成 SwiGLU 后，LLaMA 却把它缩到了奇怪的 8/3 d ≈ 2.67d。这个分数到底从哪冒出来的？</p>
+            <p class="predict-q">先押一个假设：8/3 这个比例最可能是怎么定下来的？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-size-align" value="0">
+                <span>GPU 硬件只支持 8/3 这一种维度比例</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-size-align" value="1">
+                <span>工程师试出来的经验值，没有公式</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-swiglu-size-align" value="2">
+                <span>解一个方程定出来的——让 SwiGLU 的总参数量正好等于传统 MLP</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="swiglu-size-align">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>8/3 不是魔法数字，而是一道初中解方程题的答案。先想清楚我们到底在跟谁比、为什么要比平，再把两边的矩阵数清楚，令它们相等，h 自然就解出来了。</p>
-            
+          <div class="gated" data-gated="swiglu-size-align">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>一块权重矩阵的参数量 ≈ 输入维度 × 输出维度。</li><li>传统 MLP 用 2 块矩阵；SwiGLU 因为多了 gate 支路，用 3 块（见上一关）。</li><li>“计算开销 / 参数量相同”是人为加的约束，目的是做公平对比，不是天然规律。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>8/3 不是魔法数字，而是一道初中解方程题的答案。先想清楚我们到底在跟谁比、为什么要比平，再把两边的矩阵数清楚，令它们相等，h 自然就解出来了。</p>
+              
           <div class="shape-story">
             <div class="story-panel">
               <strong>0. 先想清楚：我们到底在比什么、为什么要比平？</strong>
@@ -740,31 +860,32 @@ filtered = gate * value                  # [2.7, 5.0, 8.8]
               <p>对齐会让参数量比理论值<em>略大一点点</em>，这是为了硬件效率付的小钱，不影响“追平传统 MLP”的初衷。</p>
             </div>
           </div>
-            <div class="syntax-card"><h4>语法热身：把一个数向上补齐到某个倍数</h4><p>TODO 2 要把 8/3 d 向上对齐到 multiple_of。先用排座位的小例子练这个“向上取整”技巧：</p><pre><code>people = 26      # 要坐的人数（类比理论 intermediate_size）
+              <div class="syntax-card"><h4>语法热身：把一个数向上补齐到某个倍数</h4><p>TODO 2 要把 8/3 d 向上对齐到 multiple_of。先用排座位的小例子练这个“向上取整”技巧：</p><pre><code>people = 26      # 要坐的人数（类比理论 intermediate_size）
 row    = 8       # 每排 8 个座位（类比 multiple_of）
 
 # 直接整除会向下丢人：26 // 8 = 3 排，只坐 24 人 ❌
 # 先 +(row-1) 再整除，就能“向上取整”到能装下所有人的排数
 aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="syntax-tip">读法：<code>(n + m - 1) // m * m</code> 是“把 n 向上对齐到 m 的倍数”的标准写法，记下来，工程里到处用。</p></div>
-          </div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>LLaMA 为什么把 SwiGLU 的中间维度从 4d 缩到约 8/3 d？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>巩固（动手算）：hidden_size = 12 时，按 8/3 算出的理论 intermediate_size 约是多少？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-size-align" value="0">
-                <span>因为多了 gate 支路（共 3 块矩阵），缩小中间维度让总参数重新等于传统 MLP，从而公平对比</span>
+                <span>32</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-size-align" value="1">
-                <span>为了让参数变多、模型更大，效果自然更好</span>
+                <span>12</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-swiglu-size-align" value="2">
-                <span>因为 8/3 是 GPU 硬件唯一支持的维度比例</span>
+                <span>48</span>
               </label></div>
-            <div class="feedback" data-feedback="swiglu-size-align"></div>
+              <div class="feedback" data-feedback="swiglu-size-align"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -801,18 +922,46 @@ aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="s
 
   <script>
     const levelId = "02";
-    const checkpointData = {"swiglu-gate":{"answer":2,"explain":"gate 经 SiLU 后像逐元素开关，up 提供内容，两者相乘后再降维。代价是升维从 1 块矩阵变成 2 块（gate+up），全模块共 3 块。"},"swiglu-size-align":{"answer":0,"explain":"SwiGLU 升维多一条 gate 支路，3·d·h 比传统的 8d² 更费参数。令 3·d·h = 8d² 解得 h = 8/3 d，性能提升才能归功于门控结构本身，而不是堆参数。"}};
+    const checkpointData = {"swiglu-gate":{"answer":2,"explain":"逐元素相乘（Hadamard）要求两个张量形状逐维一致，所以 gate 和 up 的 Linear 输出维度都设成 intermediate_size。"},"swiglu-size-align":{"answer":0,"explain":"8/3 × 12 = 32。若还要求对齐 multiple_of，再在此基础上向上取整。"}};
+    const predictData = {"swiglu-gate":{"answer":1,"revealNote":"押好了。带着“这块矩阵是为可学习的开关买单”这个念头，往下看它怎么用 gate ⊙ up 实现。"},"swiglu-size-align":{"answer":2,"revealNote":"押好了。如果真是“解方程”，那方程长什么样？往下数清两边的矩阵，亲手解一遍。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
     const homeworkKey = "pytorch-level-" + levelId + "-homework";
+    const predictKey = "pytorch-level-" + levelId + "-predicts";
     const completeKey = "pytorch-levels-complete";
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
       localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
     }
 
     function refresh() {
@@ -821,6 +970,12 @@ aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="s
         input.checked = done;
         input.closest(".homework-item").classList.toggle("done", done);
       });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
 
       for (const lessonId of checkpointsDone) {
         const answer = checkpointData[lessonId].answer;
@@ -850,7 +1005,19 @@ aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="s
     }
 
     document.querySelector(".lessons").addEventListener("change", (event) => {
-      if (event.target.matches('input[type="radio"]')) {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
         const lessonId = event.target.name.replace("checkpoint-", "");
         const selected = Number(event.target.value);
         const data = checkpointData[lessonId];

@@ -144,6 +144,82 @@
     .intuition { background: #fffdf8; border-color: #efd1a0; }
     .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
     .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
     .shape-story {
       display: grid;
       gap: 10px;
@@ -574,6 +650,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -583,7 +660,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 04 | 零基础导学关卡</p>
         <h1>Attention MHA GQA</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">04_Attention_MHA_GQA.ipynb</span>
           <span class="pill">Attention</span><span class="pill">MHA</span><span class="pill">GQA</span>
@@ -592,9 +669,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">Attention(Q,K,V) = softmax(QK^T / sqrt(d)) V</div>
       </div>
@@ -602,22 +679,43 @@
 
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="attention-shape-map">
+        <article class="lesson-card inquiry" data-lesson="attention-shape-map">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1 / TODO 3 / TODO 4</span>
           </div>
           <h2>注意力到底在算什么：打分表 → 概率 → 混合 value</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>Q/K/V 都是输入 x 经过三个不同 Linear 投影得到的——可以理解成同一句话的三种“视角”。</li><li>多头：把宽向量切成 H 份，每份独立算注意力，让不同头关注不同模式。计算时用 [B,H,S,D] 布局。</li><li>softmax 把一行打分变成“加起来等于 1 的概率”，再用这组概率去加权求和。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">注意力公式里，Q·Kᵀ 算完不直接 softmax，非要先除以一个 √head_dim。这个除法看着多余，去掉会怎样？</p>
+            <p class="predict-q">先押一个假设：如果去掉 √head_dim 这个缩放，最可能出什么问题？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-shape-map" value="0">
+                <span>Q 和 K 的 shape 对不上，根本没法相乘</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-shape-map" value="1">
+                <span>注意力分数会变成小数，不再是整数</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-shape-map" value="2">
+                <span>维度越大点积方差越大，softmax 会几乎全压到一个 token 上，梯度消失、学不动</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="attention-shape-map">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>一句话版的注意力：每个 token 拿自己的 query 去问所有 token 的 key“我跟你多相关？”，得到一张打分表；softmax 把每一行变成概率；最后按这组概率把所有 token 的 value 混合起来，就是这个 token 的新表示。这一关把 4 个公式步骤配上 shape 流转图，一步步走通。</p>
-            
+          <div class="gated" data-gated="attention-shape-map">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Q/K/V 都是输入 x 经过三个不同 Linear 投影得到的——可以理解成同一句话的三种“视角”。</li><li>多头：把宽向量切成 H 份，每份独立算注意力，让不同头关注不同模式。计算时用 [B,H,S,D] 布局。</li><li>softmax 把一行打分变成“加起来等于 1 的概率”，再用这组概率去加权求和。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>一句话版的注意力：每个 token 拿自己的 query 去问所有 token 的 key“我跟你多相关？”，得到一张打分表；softmax 把每一行变成概率；最后按这组概率把所有 token 的 value 混合起来，就是这个 token 的新表示。这一关把 4 个公式步骤配上 shape 流转图，一步步走通。</p>
+              
           <div class="shape-story">
             <div class="story-panel">
               <strong>1. 切多头：一根宽向量拆成 H 个小专家</strong>
@@ -665,7 +763,7 @@
               <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了步长、内存没真正重排，直接 view 会报错。</p>
             </div>
           </div>
-            <div class="syntax-card"><h4>语法热身：批量矩阵乘法只动最后两维</h4><pre><code>import torch.nn.functional as F
+              <div class="syntax-card"><h4>语法热身：批量矩阵乘法只动最后两维</h4><pre><code>import torch.nn.functional as F
 # [B, H, S, D] 想象成 B*H 个独立的 [S, D] 小矩阵
 q = torch.randn(2, 4, 5, 8)   # 5 个 query，每个 8 维
 k = torch.randn(2, 4, 7, 8)   # 7 个 key
@@ -674,25 +772,26 @@ k = torch.randn(2, 4, 7, 8)   # 7 个 key
 scores = q @ k.transpose(-2, -1)      # [2, 4, 5, 7]
 probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
 # 前面的 batch、head 维（2,4）原样保留，只有最后两维参与乘法</code></pre><p class="syntax-tip">读法：<code>@</code> 对 4D 张量只在最后两维做矩阵乘法，前面的维度当“批量”广播。<code>softmax(dim=-1)</code> 表示“对每一行的 key 打分做归一化”。</p></div>
-          </div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>Scaled Dot-Product Attention 里为什么要除以 √head_dim？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>巩固（动手算）：q=[2,4,5,8]、k=[2,4,7,8]，scores = q @ k.transpose(-2,-1) 的 shape 是？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="0">
-                <span>为了让 Q 和 K 的 shape 对齐才能相乘</span>
+                <span>[2, 5, 4, 7]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="1">
-                <span>点积随维度增大方差变大，不缩放 softmax 会接近 one-hot 导致梯度消失</span>
+                <span>[2, 4, 5, 7]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-shape-map" value="2">
-                <span>为了把注意力分数变成整数</span>
+                <span>[2, 4, 8, 8]</span>
               </label></div>
-            <div class="feedback" data-feedback="attention-shape-map"></div>
+              <div class="feedback" data-feedback="attention-shape-map"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -713,22 +812,43 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="gqa-kv-cache">
+        <article class="lesson-card inquiry" data-lesson="gqa-kv-cache">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 2 / repeat_kv</span>
           </div>
           <h2>KV Cache 与 GQA：推理为什么慢，又怎么省显存</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>自回归生成：模型一次只吐 1 个 token，然后把它接回输入再算下一个。</li><li>算第 N 个 token 时要和前面所有 token 的 Key/Value 做注意力——但前面那些 K/V 每步都一样，没必要重算。</li><li>GQA：让多个 Query 头共享同一组 K/V 头，介于 MHA（各用各的）和 MQA（全共享一个）之间。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">GQA 省显存，靠的是只存少量“窄”KV 头。但矩阵乘法又要求 KV 头数和 Query 头数一致——于是代码里有个 repeat_kv 把 KV 复制宽。问题来了：这步该放在缓存之前还是之后？</p>
+            <p class="predict-q">先押一个假设：repeat_kv（把 KV 扩充到 Query 头数）应该放在哪里？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-gqa-kv-cache" value="0">
+                <span>放在更新缓存之前——先扩充好再存，省得每步重复扩充</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-gqa-kv-cache" value="1">
+                <span>放在更新缓存之后——缓存里只存窄 KV，每步前向时临时扩充</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-gqa-kv-cache" value="2">
+                <span>放在 softmax 之后——等算完注意力再扩充</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="gqa-kv-cache">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>两个独立但相关的优化：① KV Cache——把算过的 K/V 存起来，每步只算新 token 的，避免 O(N²) 重算；② GQA——只存少量共享的 KV 头省显存，真正算注意力前再临时复制成 Query 头数。注意顺序：先拼接缓存、存下未扩展的 KV，最后才 repeat_kv 扩充。</p>
-            
+          <div class="gated" data-gated="gqa-kv-cache">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>自回归生成：模型一次只吐 1 个 token，然后把它接回输入再算下一个。</li><li>算第 N 个 token 时要和前面所有 token 的 Key/Value 做注意力——但前面那些 K/V 每步都一样，没必要重算。</li><li>GQA：让多个 Query 头共享同一组 K/V 头，介于 MHA（各用各的）和 MQA（全共享一个）之间。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>两个独立但相关的优化：① KV Cache——把算过的 K/V 存起来，每步只算新 token 的，避免 O(N²) 重算；② GQA——只存少量共享的 KV 头省显存，真正算注意力前再临时复制成 Query 头数。注意顺序：先拼接缓存、存下未扩展的 KV，最后才 repeat_kv 扩充。</p>
+              
           <div class="shape-story">
             <div class="story-panel">
               <strong>1. 痛点：不缓存就要每步重算整段历史（O(N²)）</strong>
@@ -781,7 +901,7 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
               <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存了宽 KV = 显存退回 MHA，GQA 优势归零。</p>
             </div>
           </div>
-            <div class="syntax-card"><h4>语法热身：沿时间维拼接 + 复制头</h4><pre><code># ① KV Cache：把新 K 拼到历史末尾（dim=2 是 seq 维）
+              <div class="syntax-card"><h4>语法热身：沿时间维拼接 + 复制头</h4><pre><code># ① KV Cache：把新 K 拼到历史末尾（dim=2 是 seq 维）
 cache = torch.randn(2, 2, 5, 8)   # [B, H_kv, 旧长度5, D]
 new_k = torch.randn(2, 2, 1, 8)   # 新 token 的 K，长度1
 updated = torch.cat([cache, new_k], dim=2)  # [2, 2, 6, 8]
@@ -791,25 +911,26 @@ updated = torch.cat([cache, new_k], dim=2)  # [2, 2, 6, 8]
 n_rep = 2                          # 4 个 Q 头 / 2 个 KV 头
 x = updated[:, :, None, :, :].expand(2, 2, n_rep, 6, 8)
 x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class="syntax-tip">读法：<code>cat(dim=2)</code> 在 seq 维接长；<code>expand</code> 不复制内存只“假装”有 n_rep 份，<code>reshape</code> 时才真正铺开，把 KV 头数从 2 撑到 4。</p></div>
-          </div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>GQA 实现里，为什么 repeat_kv 要放在“更新 new_kv_cache 之后”？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>巩固（动手算）：num_heads=8、num_kv_heads=2 时，每个 KV 头要被复制几份去服务 Query 头？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="0">
-                <span>因为 repeat_kv 会改变 batch size</span>
+                <span>8</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="1">
-                <span>因为 cat 操作必须在 softmax 之后</span>
+                <span>2</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-gqa-kv-cache" value="2">
-                <span>只缓存窄的 num_kv_heads 个头才省显存；先扩充再缓存会把 Cache 撑回 MHA 大小</span>
+                <span>4</span>
               </label></div>
-            <div class="feedback" data-feedback="gqa-kv-cache"></div>
+              <div class="feedback" data-feedback="gqa-kv-cache"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -846,18 +967,46 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
 
   <script>
     const levelId = "04";
-    const checkpointData = {"attention-shape-map":{"answer":1,"explain":"D 个数相加方差 ∝ D，缩放到 1/√D 把分数拉回稳定区间，softmax 才平滑、梯度才不消失。"},"gqa-kv-cache":{"answer":2,"explain":"GQA 省显存的本质是 Cache 只存窄 KV。扩充只是为了满足矩阵乘法的头数对齐，是临时的、每步重做的，绝不能写进缓存。"}};
+    const checkpointData = {"attention-shape-map":{"answer":1,"explain":"batch=2、head=4 原样保留，只动最后两维：5 个 query 对 7 个 key 打分 → [2,4,5,7]。"},"gqa-kv-cache":{"answer":2,"explain":"num_queries_per_kv = num_heads // num_kv_heads = 8 // 2 = 4，所以 repeat_kv 把每个 KV 头复制 4 份。"}};
+    const predictData = {"attention-shape-map":{"answer":2,"revealNote":"押好了。带着“缩放是为了驯服方差”这个想法，往下看 Q·Kᵀ → /√D → softmax 这条链。"},"gqa-kv-cache":{"answer":1,"revealNote":"押好了。这一步顺序是 GQA 省显存成败的关键，往下看“先存窄、后扩宽”为什么不能反过来。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
     const homeworkKey = "pytorch-level-" + levelId + "-homework";
+    const predictKey = "pytorch-level-" + levelId + "-predicts";
     const completeKey = "pytorch-levels-complete";
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
       localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
     }
 
     function refresh() {
@@ -866,6 +1015,12 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
         input.checked = done;
         input.closest(".homework-item").classList.toggle("done", done);
       });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
 
       for (const lessonId of checkpointsDone) {
         const answer = checkpointData[lessonId].answer;
@@ -895,7 +1050,19 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
     }
 
     document.querySelector(".lessons").addEventListener("change", (event) => {
-      if (event.target.matches('input[type="radio"]')) {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
         const lessonId = event.target.name.replace("checkpoint-", "");
         const selected = Number(event.target.value);
         const data = checkpointData[lessonId];
