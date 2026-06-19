@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>一张大表的列太多，就分给多个人各算几列，最后把列并回去。</p>
             <div class="matrix-flow"><span>X</span><span>A 列切成 A0/A1</span><span>X@A0, X@A1</span><strong>cat dim=1</strong></div>
             <div class="syntax-card"><h4>语法热身：按列 chunk 再拼接</h4><pre><code>shards = torch.chunk(A, world_size, dim=1)
@@ -673,7 +673,7 @@ out = torch.cat(partials, dim=1)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>每张卡像各自算出一摞列，最后按原来的列顺序横向贴回去，得到完整 Y。</p>
             <div class="sum-flow"><span>Y0: [batch, out/2]</span><span>Y1: [batch, out/2]</span><strong>cat dim=1 -> [batch, out]</strong></div>
             <div class="syntax-card"><h4>语法热身：沿特征维拼接 partial outputs</h4><pre><code>gpu_outputs = [X @ shard for shard in weight_shards]
@@ -798,7 +798,7 @@ assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

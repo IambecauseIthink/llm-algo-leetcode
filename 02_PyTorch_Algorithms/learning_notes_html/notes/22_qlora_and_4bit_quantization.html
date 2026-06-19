@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>4bit 权重像色号，不直接是颜色；先用色号查调色盘，再按亮度 scale 调整。</p>
             <div class="lookup"><span>q=[0, 7, 15]</span><span>NF4 codebook</span><strong>float values * scale</strong></div>
             <div class="syntax-card"><h4>语法热身：用整数索引查 codebook</h4><pre><code>codebook = torch.tensor([-1.0, -0.5, 0.0, 0.5, 1.0])
@@ -673,7 +673,7 @@ deq = codebook[q] * scale</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>基座模型压缩保存，只负责提供主干能力；小旁路负责学习新任务的改动。</p>
             <div class="branches"><span>base: dequant W</span><span>adapter: A to B</span><strong>base_out + lora_out</strong></div>
             <div class="syntax-card"><h4>语法热身：两条前向路径相加</h4><pre><code>base_out = F.linear(x, dequant_weight, bias)
@@ -798,7 +798,7 @@ out = base_out + lora_out</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

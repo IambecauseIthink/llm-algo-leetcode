@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>先从最后的混合结果倒推：输出对 V 的依赖像加权求和，输出对 P 的依赖像每个 value 被选了多少。</p>
             <div class="matrix-flow"><span>dO</span><span>dV = P^T @ dO</span><span>dP = dO @ V^T</span></div>
             <div class="syntax-card"><h4>语法热身：矩阵乘法的转置位置</h4><pre><code>dV = P.transpose(-2, -1) @ dO
@@ -672,7 +672,7 @@ dP = dO @ V.transpose(-2, -1)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>梯度先穿过概率归一化层，再穿过打分矩阵；打分来自 Q 和 K 的相似度。</p>
             <div class="softmax-row"><span>dP</span><span>softmax backward</span><span>dS</span><strong>dQ, dK</strong></div>
             <div class="syntax-card"><h4>语法热身：softmax backward 的常见写法</h4><pre><code>dS = P * (dP - (dP * P).sum(dim=-1, keepdim=True))
@@ -797,7 +797,7 @@ dK = (dS.transpose(-2, -1) @ Q) * scale</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

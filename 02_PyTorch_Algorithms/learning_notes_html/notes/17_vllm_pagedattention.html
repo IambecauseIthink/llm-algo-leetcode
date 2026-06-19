@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像操作系统分页：请求看到的是连续的 token 序列，底层实际由一块块物理页拼起来。</p>
             <div class="tile-grid"><span>逻辑 token 0-3</span><span>block 7</span><span>逻辑 token 4-7</span><span>block 2</span></div>
             <div class="syntax-card"><h4>语法热身：向上取整算 block 数</h4><pre><code>needed = (seq_len + block_size - 1) // block_size
@@ -674,7 +674,7 @@ for _ in range(needed):
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>不要每来一个 token 就搬家；只有当前页写满，才申请下一页。</p>
             <div class="timeline"><span>len=8: block 满</span><span>len=9: 进入新 block</span><strong>此时分配 1 块</strong></div>
             <div class="syntax-card"><h4>语法热身：取模判断边界</h4><pre><code>req.seq_len += 1
@@ -802,7 +802,7 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

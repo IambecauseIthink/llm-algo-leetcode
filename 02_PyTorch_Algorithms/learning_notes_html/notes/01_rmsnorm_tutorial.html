@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>RMSNorm 不关心向量平均值是不是 0，只把每个 token 的 hidden 向量缩放到稳定尺度。</p>
             <div class="scale-demo"><span>原向量: [3,4]</span><span>RMS≈3.54</span><span>缩放后: [0.85,1.13]</span></div>
             <div class="syntax-card"><h4>语法热身：对最后一维求均值并保留维度</h4><pre><code>x = torch.randn(2, 3, 4)
@@ -673,7 +673,7 @@ y = x / (last_mean.abs() + 1e-6)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>归一化里的平方像放大镜，半精度数值太大时容易溢出，所以先换到更稳的 FP32。</p>
             <div class="dtype-demo"><span>FP16: 300² → overflow</span><span>FP32: 300² → 90000</span><span>输出再转回 FP16</span></div>
             <div class="syntax-card"><h4>语法热身：临时升精度做统计量</h4><pre><code>scores = torch.tensor([1000, 2000], dtype=torch.float16)
@@ -798,7 +798,7 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

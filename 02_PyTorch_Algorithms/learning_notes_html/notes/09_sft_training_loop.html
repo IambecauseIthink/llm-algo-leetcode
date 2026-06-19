@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>题目部分像试卷题干，模型读它；答案部分才是要批改的作答。</p>
             <div class="mini-table"><span>tokens</span><span>[题, 题, 答, 答]</span><span>labels</span><strong>[-100, -100, 答, 答]</strong></div>
             <div class="syntax-card"><h4>语法热身：列表拼接、截断和填充</h4><pre><code>ids = prompt_ids + answer_ids
@@ -674,7 +674,7 @@ labels = labels[:max_len] + [-100] * max(0, max_len - len(labels))</code></pre><
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像遮住下一格让模型猜：第 0 个位置的输出，应该和第 1 个 token 对齐。</p>
             <div class="timeline"><span>logits: 0 1 2</span><span>labels: 1 2 3</span><strong>最后一个 logits 没有下一个 label</strong></div>
             <div class="syntax-card"><h4>语法热身：切片和 reshape</h4><pre><code>shift_logits = logits[:, :-1, :]
@@ -803,7 +803,7 @@ loss = F.cross_entropy(
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像自动补全目录：多个 prompt 从同一段开头分叉，公共开头只存一份。</p>
             <div class="flow"><span>[1,2]</span><span>到 [3]</span><span>到 [8]</span><strong>另一路到 [4]</strong></div>
             <div class="syntax-card"><h4>语法热身：列表前缀比较</h4><pre><code>def common_prefix(a, b):
@@ -677,7 +677,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>在分叉路口先看哪条路的路牌和 prompt 开头对得上，对得越长越值得走。</p>
             <div class="branches"><span>prompt: A B C D</span><span>child1: A B</span><span>child2: A X</span><strong>走 child1</strong></div>
             <div class="syntax-card"><h4>语法热身：遍历节点找最长匹配</h4><pre><code>best = None
@@ -806,7 +806,7 @@ for child in self.root.children:
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

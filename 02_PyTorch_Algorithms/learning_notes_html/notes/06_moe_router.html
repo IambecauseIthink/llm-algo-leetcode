@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>MoE Router 像分诊台：先给每个专家算匹配度，再把 token 送给最适合的 Top-K 专家。</p>
             <div class="mini-flow"><span>token h</span><span>router logits<br>[1.2, 0.1, 2.0, -0.5]</span><span>softmax probs<br>[.27, .09, .60, .04]</span><strong>top2: expert 2, 0</strong></div>
             <div class="syntax-card"><h4>语法热身：softmax 和 topk</h4><pre><code>scores = torch.tensor([[1.0, 3.0, 2.0]])
@@ -673,7 +673,7 @@ values, indices = torch.topk(probs, k=2, dim=-1)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>Top-K 像只留下票数最高的候选人；留下的人需要重新分配 100% 的票，否则输出会被整体压小。</p>
             <div class="ratio-board"><span>top2 概率: .60 + .27 = .87</span><span>重归一化: .60/.87, .27/.87</span><strong>加权专家输出</strong></div>
             <div class="syntax-card"><h4>语法热身：保留维度做归一化</h4><pre><code>picked = torch.tensor([[0.6, 0.3]])
@@ -799,7 +799,7 @@ mixed = (expert_out * weights.unsqueeze(-1)).sum(dim=1)</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>DPO 不训练一个单独奖励模型，而是用当前模型和参考模型的 logprob 差值当作隐式奖励。</p>
             <div class="pref-pair"><span>chosen: policy-ref = +1.2</span><span>rejected: policy-ref = +0.2</span><strong>chosen 优势更大</strong></div>
             <div class="syntax-card"><h4>语法热身：成对样本相减</h4><pre><code>chosen_reward = chosen_policy_logp - chosen_ref_logp
@@ -673,7 +673,7 @@ margin = chosen_reward - rejected_reward</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像判断一场二选一投票：chosen 赢得越明显，损失越低；输掉时损失会变高。</p>
             <div class="reward-gap"><span>diff 小于 0: 惩罚大</span><span>diff = 0: 不确定</span><strong>diff 大于 0: 损失小</strong></div>
             <div class="syntax-card"><h4>语法热身：稳定的 logsigmoid</h4><pre><code>diff = beta * (chosen_reward - rejected_reward)
@@ -798,7 +798,7 @@ loss = loss_per_pair.mean()</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

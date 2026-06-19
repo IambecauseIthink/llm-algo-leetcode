@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>温度像创作旋钮：低温更保守，高温更发散；但旋钮不能拧到 0。</p>
             <div class="scale-demo"><span>logits / 0.5</span><span>差距变大</span><strong>更偏向最高分 token</strong></div>
             <div class="syntax-card"><h4>语法热身：防止除零</h4><pre><code>temperature = max(float(temperature), 1e-6)
@@ -673,7 +673,7 @@ probs = torch.softmax(scaled_logits, dim=-1)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>Top-K 像固定只看前 K 名；Top-P 像把候选加到概率够一篮子为止。</p>
             <div class="mini-table"><span>概率排序</span><span>.50 .25 .15 .10</span><span>top_p=.8</span><strong>保留前三个</strong></div>
             <div class="syntax-card"><h4>语法热身：排序、累计和 mask</h4><pre><code>sorted_logits, sorted_idx = torch.sort(logits, descending=True)
@@ -802,7 +802,7 @@ filtered_logits = torch.zeros_like(logits).scatter_(-1, sorted_idx, sorted_logit
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

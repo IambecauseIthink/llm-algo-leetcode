@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像工厂流水线：第一段处理第 2 个小批次时，第二段已经在处理第 1 个小批次。</p>
             <div class="timeline"><span>t0: S0-M0</span><span>t1: S0-M1 / S1-M0</span><span>t2: S0-M2 / S1-M1</span></div>
             <div class="syntax-card"><h4>语法热身：把 batch 切成 micro-batch</h4><pre><code>micro_batches = torch.chunk(batch, chunks=num_micro_batches, dim=0)
@@ -674,7 +674,7 @@ for mb in micro_batches:
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>流水线刚启动和收尾时总有人闲着；小批次越多，这段闲着的比例越小。</p>
             <div class="ratio-board"><span>stages=4</span><span>micro_batches=8</span><strong>bubble = (4-1)/(8+4-1)</strong></div>
             <div class="syntax-card"><h4>语法热身：写一个比例函数</h4><pre><code>def bubble_ratio(num_stages, num_micro_batches):
@@ -800,7 +800,7 @@ for mb in micro_batches:
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>传统 MLP 升维后只过一次激活，像一条单行道；SwiGLU 把升维这步分成并行两条：gate 支路算“开关强度”，up 支路算“内容”，两者相乘后再降维。记住它一共用了 3 块矩阵——下一关的参数推导全靠这个数字。</p>
             
           <div class="shape-story">
@@ -696,7 +696,7 @@ filtered = gate * value                  # [2.7, 5.0, 8.8]
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>8/3 不是魔法数字，而是一道初中解方程题的答案。先想清楚我们到底在跟谁比、为什么要比平，再把两边的矩阵数清楚，令它们相等，h 自然就解出来了。</p>
             
           <div class="shape-story">
@@ -865,7 +865,7 @@ aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="s
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

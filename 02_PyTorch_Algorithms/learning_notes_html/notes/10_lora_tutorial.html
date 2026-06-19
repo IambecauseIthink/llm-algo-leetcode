@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>不直接改整面墙，只在旁边贴一张可训练的小补丁；补丁由 A 先降维、B 再升维组成。</p>
             <div class="matrix-flow"><span>x</span><span>A: in to r</span><span>B: r to out</span><strong>加到 base linear</strong></div>
             <div class="syntax-card"><h4>语法热身：定义可训练和不可训练参数</h4><pre><code>self.weight = nn.Parameter(torch.empty(out_features, in_features))
@@ -674,7 +674,7 @@ self.lora_B = nn.Parameter(torch.empty(out_features, r))</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>训练时走两条路方便只改小补丁；部署时把补丁贴回主权重，前向就不多绕路。</p>
             <div class="branches"><span>base: xW</span><span>LoRA: x A^T B^T * scale</span><strong>输出相加</strong></div>
             <div class="syntax-card"><h4>语法热身：线性层和权重合并</h4><pre><code>base = F.linear(x, self.weight, self.bias)
@@ -799,7 +799,7 @@ merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></p
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

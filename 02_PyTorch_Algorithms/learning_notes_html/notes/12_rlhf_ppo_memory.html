@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>ratio 像“新方案相对旧方案的加码倍数”：大于 1 表示新策略更愿意选这个动作。</p>
             <div class="ratio-board"><span>old prob=.20</span><span>new prob=.30</span><strong>ratio=1.5</strong></div>
             <div class="syntax-card"><h4>语法热身：从 log 概率还原比率</h4><pre><code>old_logp = torch.log(torch.tensor([0.2]))
@@ -673,7 +673,7 @@ ratio = torch.exp(new_logp - old_logp)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>PPO 像给更新装护栏：允许改进，但不允许新策略突然偏离旧策略太远。</p>
             <div class="clip-box"><span>ratio=1.8</span><span>eps=.2</span><strong>clipped=1.2</strong></div>
             <div class="syntax-card"><h4>语法热身：clamp 和 min</h4><pre><code>raw = ratio * advantages
@@ -799,7 +799,7 @@ loss = -objective.mean()</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

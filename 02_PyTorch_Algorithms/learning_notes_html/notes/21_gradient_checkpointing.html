@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像不保存每一步草稿，只保存关键页码；需要复查时再把中间步骤重新算一遍。</p>
             <div class="flow"><span>普通: 保存 a1,a2,a3</span><span>checkpoint: 保存输入</span><strong>反向时重算 a1,a2,a3</strong></div>
             <div class="syntax-card"><h4>语法热身：包装一个函数</h4><pre><code>from torch.utils.checkpoint import checkpoint
@@ -674,7 +674,7 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>把一段计算交给 checkpoint 管家：前向先不保存全部细节，反向需要时再现场复现。</p>
             <div class="mini-flow"><span>x</span><span>checkpoint(block, x)</span><span>y</span><strong>backward 时重算 block(x)</strong></div>
             <div class="syntax-card"><h4>语法热身：lambda 包住额外参数</h4><pre><code>out = checkpoint(
@@ -801,7 +801,7 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

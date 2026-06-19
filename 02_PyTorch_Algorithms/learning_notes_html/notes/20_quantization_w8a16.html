@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>先找这组权重里最大的绝对值，再算出 1 个浮点单位对应多少个 int8 刻度。</p>
             <div class="scale-demo"><span>absmax=3.0</span><span>scale=127/3.0</span><strong>w_int8=round(w * scale)</strong></div>
             <div class="syntax-card"><h4>语法热身：量化三步</h4><pre><code>absmax = weight.abs().max()
@@ -673,7 +673,7 @@ q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></di
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>量化时把浮点数乘上刻度密度变成整数；反量化时再除以同一把刻度尺还原。</p>
             <div class="matrix-flow"><span>int8 weight</span><span>除以 scale</span><span>fp weight</span><strong>F.linear(x, fp_weight)</strong></div>
             <div class="syntax-card"><h4>语法热身：反量化后做线性层</h4><pre><code>dequant_weight = q_weight.float() / scale
@@ -798,7 +798,7 @@ out = F.linear(x, dequant_weight, bias)</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

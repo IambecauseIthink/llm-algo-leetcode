@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>RoPE 的核心魔法：把“位置 m”变成“把箭头转 mθ 角度”。当 query 在位置 m、key 在位置 n 时，它们的点积只跟差值 (m−n) 有关——模型于是天生感知“相对距离”，而不用记死“绝对位置”。这一关先建立这个直觉，再做出那张‘位置 × 频率 = 角度’的表。</p>
             
           <div class="shape-story">
@@ -737,7 +737,7 @@ cis = torch.polar(torch.ones_like(angle), angle)  # complex [3,2]</code></pre><p
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>拿到上一关的复数角度表后，把 query/key 的最后一维也两两配对、看成复数，直接乘以角度表——一次复数乘法就完成了所有维度对的旋转。最后再把复数拆回实数、展平回原 shape。</p>
             
           <div class="shape-story">
@@ -914,7 +914,7 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

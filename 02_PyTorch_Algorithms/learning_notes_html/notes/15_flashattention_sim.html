@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像分批扫描一大张表：每次只读一块，但要记住目前见过的最大分数，保证 softmax 稳定。</p>
             <div class="tile-grid"><span>Q block</span><span>K/V block 1</span><span>K/V block 2</span><strong>滚动更新 m</strong></div>
             <div class="syntax-card"><h4>语法热身：分块循环</h4><pre><code>for start in range(0, seq_len, block_size):
@@ -675,7 +675,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>新块来了以后，如果发现更大的分数，旧账本要按新的标尺重算，才能和新块公平相加。</p>
             <div class="online-book"><span>旧 l, O</span><span>新块 l_block, O_block</span><strong>按 m_old/m_new 修正后合并</strong></div>
             <div class="syntax-card"><h4>语法热身：带状态的累积更新</h4><pre><code>old_scale = torch.exp(m_old - m_new)
@@ -802,7 +802,7 @@ O_new = old_part + new_part</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

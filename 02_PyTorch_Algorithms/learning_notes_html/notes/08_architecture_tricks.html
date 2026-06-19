@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>把默认缩放设为 1，参数只负责学“我要比默认多一点还是少一点”。</p>
             <div class="scale-demo"><span>normalized x</span><span>weight=[0.1, -0.2]</span><strong>scale=1+weight=[1.1, 0.8]</strong></div>
             <div class="syntax-card"><h4>语法热身：参数和常数相加</h4><pre><code>gain_delta = nn.Parameter(torch.zeros(4))
@@ -673,7 +673,7 @@ y = x * scale</code></pre></div>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>读词和猜词使用同一套词典坐标，既省参数，也让输入输出空间保持一致。</p>
             <div class="lookup"><span>embed_tokens.weight</span><strong>同一块内存</strong><span>lm_head.weight</span></div>
             <div class="syntax-card"><h4>语法热身：让两个属性指向同一个权重</h4><pre><code>emb = nn.Embedding(100, 16)
@@ -799,7 +799,7 @@ assert head.weight is emb.weight</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -1144,7 +1144,7 @@ function lessonLevelPage(level, prev, next) {
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>${esc(lesson.intuition)}</p>
             ${lesson.exampleHtml}
             ${lesson.syntaxHtml || ""}
@@ -1864,7 +1864,7 @@ function lessonLevelPage(level, prev, next) {
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

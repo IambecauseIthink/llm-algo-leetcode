@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>把一张 H×W 的小棋盘摊平成一条路线：每个格子变成一个 token，格子里带着 C 个通道特征。</p>
             
           <div class="shape-story">
@@ -728,7 +728,7 @@ z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>像在词典里按页码找词条：id 是页码，Embedding 表是词典，查出来的一整行向量才是模型真正使用的表示。</p>
             
           <div class="lookup-board">
@@ -816,7 +816,7 @@ vectors = emb(color_ids)</code></pre>
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>把前向看成三扇门：Linear 门、ReLU 门、Loss 门。反向时梯度从 Loss 倒着回来，ReLU 门先决定哪些位置能通行。</p>
             
           <div class="grad-lesson">
@@ -973,7 +973,7 @@ y = SquareFunction.apply(x)</code></pre>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

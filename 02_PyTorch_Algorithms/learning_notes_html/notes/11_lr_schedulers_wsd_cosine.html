@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>开车先平稳起步，再进入匀速巡航；学习率也先从小到大，再保持一段时间。</p>
             <div class="curve-legend"><span>step 0: 0</span><span>warmup end: base_lr</span><strong>stable: base_lr</strong></div>
             <div class="syntax-card"><h4>语法热身：用 if/elif 划阶段</h4><pre><code>if step &lt; warmup_steps:
@@ -676,7 +676,7 @@ else:
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>最后不是突然刹车，而是沿着半个余弦曲线平滑降速。</p>
             <div class="timeline"><span>progress=0: base_lr</span><span>progress=.5: 中间值</span><span>progress=1: min_lr</span></div>
             <div class="syntax-card"><h4>语法热身：余弦衰减比例</h4><pre><code>progress = (step - decay_start) / decay_steps
@@ -801,7 +801,7 @@ lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>多人共同保管一本大账本，每个人只负责自己的几页，需要时再同步完整结果。</p>
             <div class="gpu-grid"><span>GPU0: 参数 0-3</span><span>GPU1: 参数 4-7</span><span>GPU2: 参数 8-11</span></div>
             <div class="syntax-card"><h4>语法热身：用参数列表划分负责范围</h4><pre><code>params = list(model.parameters())
@@ -676,7 +676,7 @@ gpu_partitions = {
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>本练习里每个 p 都是同一个 Parameter 的引用；你原位改 p.data，模型里的参数也同步变了。</p>
             <div class="sum-flow"><span>GPU0 负责 fc1</span><span>GPU1 负责 fc2</span><strong>p.data 原位更新</strong><span>真实多卡才需要广播</span></div>
             <div class="syntax-card"><h4>语法热身：遍历本 GPU 参数和梯度</h4><pre><code>for p, g in zip(params, grads):
@@ -803,7 +803,7 @@ gpu_partitions = {
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

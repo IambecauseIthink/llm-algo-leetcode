@@ -615,7 +615,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>gate 先产生筛选信号，up 产生内容，二者相乘后由 down 投影回 hidden_size。</p>
             <div class="mlp-demo"><span>x → gate_proj → SiLU</span><span>x → up_proj</span><strong>相乘 → down_proj → hidden</strong></div>
             <div class="syntax-card"><h4>语法热身：写一个带子层的简单模块</h4><pre><code>class ScaleValue(nn.Module):
@@ -677,7 +677,7 @@
           </div>
 
           <div class="lesson-section intuition">
-            <h3>直觉图</h3>
+            <h3>图解原理</h3>
             <p>残差像主路，Attention/MLP 像旁路加工；旁路输出只是在主路表示上加一份更新。</p>
             <div class="residual-demo"><span>x ─────────────┐</span><span>norm → attention ─┤ +</span><span>再 norm → mlp ────┤ +</span></div>
             <div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><pre><code>residual = x
@@ -802,7 +802,7 @@ x = residual + update</code></pre></div>
           checkpointsDone.add(lessonId);
         } else {
           event.target.closest(".checkpoint-option").classList.add("wrong");
-          feedback.textContent = "再想一下。先看本节的直觉图，再回来看这道题。";
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
         }
         save();

@@ -359,54 +359,174 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
   "04": [
     {
       id: "attention-shape-map",
-      title: "多头注意力先看 shape，再看公式",
+      title: "注意力到底在算什么：打分表 → 概率 → 混合 value",
       todo: "TODO 1 / TODO 3 / TODO 4",
       prerequisite: [
-        "Q/K/V 都来自输入的线性投影。",
-        "多头格式常用 [B,H,S,D]。",
-        "Q @ K^T 会得到 token 对 token 的分数表。"
+        "Q/K/V 都是输入 x 经过三个不同 Linear 投影得到的——可以理解成同一句话的三种“视角”。",
+        "多头：把宽向量切成 H 份，每份独立算注意力，让不同头关注不同模式。计算时用 [B,H,S,D] 布局。",
+        "softmax 把一行打分变成“加起来等于 1 的概率”，再用这组概率去加权求和。"
       ],
-      intuition: "每个 query token 都拿自己的向量去和所有 key token 打分，softmax 后再按分数混合 value。",
-      exampleHtml: `<div class="attn-grid"><span>rows: query tokens</span><span>cols: key tokens</span><strong>score[i,j] = qi 看 kj 的程度</strong></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：最后两维做矩阵乘法</h4><pre><code>a = torch.randn(2, 3, 5, 4)
-b = torch.randn(2, 3, 7, 4)
-scores = a @ b.transpose(-2, -1)  # [2,3,5,7]</code></pre></div>`,
+      intuition: "一句话版的注意力：每个 token 拿自己的 query 去问所有 token 的 key“我跟你多相关？”，得到一张打分表；softmax 把每一行变成概率；最后按这组概率把所有 token 的 value 混合起来，就是这个 token 的新表示。这一关把 4 个公式步骤配上 shape 流转图，一步步走通。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 切多头：一根宽向量拆成 H 个小专家</strong>
+              <p>投影后 Q 是 [B, S, H·D]，先 <code>view</code> 成 [B, S, H, D]，再 <code>transpose(1,2)</code> 成 [B, H, S, D]。为什么转置？因为后面要让每个头（H）独立地在它自己的 [S, D] 上做矩阵乘法，把 H 提到前面当“批量维”最方便。</p>
+              <div class="mini-flow"><span>[B, S, H·D]</span><span>view → [B, S, H, D]</span><strong>transpose(1,2) → [B, H, S, D]</strong></div>
+              <p style="color:#657184">直觉：H 个头像 H 个分工不同的读者，有的盯语法、有的盯指代，各读各的。</p>
+            </div>
+            <div class="story-arrow">每个头里：query 逐一去问每个 key（TODO 3 第一步）</div>
+            <div class="story-panel">
+              <strong>2. Q @ Kᵀ：打一张 token×token 的相关性分数表</strong>
+              <p>Q 是 [.., S, D]，K 转置成 [.., D, S]，相乘得到 [.., S, S]。第 i 行第 j 列 = 第 i 个 query 和第 j 个 key 的点积 = “token i 该多关注 token j”。</p>
+              <svg viewBox="0 0 360 150" width="100%" style="max-width:480px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <g font-size="12" text-anchor="middle">
+                  <text x="30" y="20" fill="#2563eb" font-weight="700">query↓ / key→</text>
+                  <text x="120" y="20">k0</text><text x="170" y="20">k1</text><text x="220" y="20">k2</text>
+                  <text x="80" y="50" fill="#2563eb">q0</text><text x="80" y="85" fill="#2563eb">q1</text><text x="80" y="120" fill="#2563eb">q2</text>
+                </g>
+                <g font-size="12" text-anchor="middle">
+                  <rect x="100" y="38" width="44" height="24" fill="#fde68a" stroke="#d9a15a"/><text x="122" y="55">9.1</text>
+                  <rect x="150" y="38" width="44" height="24" fill="#fef3c7" stroke="#d9a15a"/><text x="172" y="55">2.0</text>
+                  <rect x="200" y="38" width="44" height="24" fill="#fef9e7" stroke="#d9a15a"/><text x="222" y="55">0.3</text>
+                  <rect x="100" y="73" width="44" height="24" fill="#fef3c7" stroke="#d9a15a"/><text x="122" y="90">1.5</text>
+                  <rect x="150" y="73" width="44" height="24" fill="#fde68a" stroke="#d9a15a"/><text x="172" y="90">8.4</text>
+                  <rect x="200" y="73" width="44" height="24" fill="#fef9e7" stroke="#d9a15a"/><text x="222" y="90">0.6</text>
+                  <rect x="100" y="108" width="44" height="24" fill="#fef9e7" stroke="#d9a15a"/><text x="122" y="125">0.4</text>
+                  <rect x="150" y="108" width="44" height="24" fill="#fef3c7" stroke="#d9a15a"/><text x="172" y="125">1.1</text>
+                  <rect x="200" y="108" width="44" height="24" fill="#fde68a" stroke="#d9a15a"/><text x="222" y="125">7.9</text>
+                </g>
+                <text x="300" y="88" font-size="12" fill="#657184" text-anchor="middle">颜色越深=</text>
+                <text x="300" y="104" font-size="12" fill="#657184" text-anchor="middle">越相关</text>
+              </svg>
+            </div>
+            <div class="story-arrow">除以 √D，再 softmax（TODO 3 第二、三步）</div>
+            <div class="story-panel">
+              <strong>3. 为什么要除以 √D？防止 softmax “一家独大”</strong>
+              <p>点积是 D 个数相加，D 越大，分数的方差越大、数值越极端。直接 softmax 会几乎把全部概率压到一个 token 上（接近 one-hot），其它位置梯度趋近 0，训练学不动。除以 √D 把方差拉回稳定区间，softmax 才平滑。</p>
+              <div class="formula"><span>scores = Q·Kᵀ / √D</span><span>probs = softmax(scores)</span><strong>每行加起来 = 1</strong></div>
+              <p style="color:#657184">Causal Mask：生成任务里给上三角填 −∞，让 token 只能看自己和左边——softmax 后这些位置概率自然变 0。</p>
+            </div>
+            <div class="story-arrow">用概率加权 value，再把多头拼回去（TODO 3 末 + TODO 4）</div>
+            <div class="story-panel">
+              <strong>4. probs @ V → 合并多头 → 输出投影</strong>
+              <p>probs [.., S, S] 乘 V [.., S, D] 得 [.., S, D]：每个 token 的新向量 = 按注意力概率混合所有 token 的 value。最后 <code>transpose(1,2)</code> 把 H 放回去、<code>contiguous().view</code> 合并成 [B, S, H·D]，再过 <code>o_proj</code> 回到 hidden_dim。</p>
+              <div class="mini-flow"><span>probs @ V → [B,H,S,D]</span><span>transpose+view → [B,S,H·D]</span><strong>o_proj → [B,S,hidden]</strong></div>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了步长、内存没真正重排，直接 view 会报错。</p>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：批量矩阵乘法只动最后两维</h4><pre><code>import torch.nn.functional as F
+# [B, H, S, D] 想象成 B*H 个独立的 [S, D] 小矩阵
+q = torch.randn(2, 4, 5, 8)   # 5 个 query，每个 8 维
+k = torch.randn(2, 4, 7, 8)   # 7 个 key
+
+# K 最后两维转置 [.., D, S]，再和 Q 相乘 → 打分表 [.., S, S']
+scores = q @ k.transpose(-2, -1)      # [2, 4, 5, 7]
+probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
+# 前面的 batch、head 维（2,4）原样保留，只有最后两维参与乘法</code></pre><p class="syntax-tip">读法：<code>@</code> 对 4D 张量只在最后两维做矩阵乘法，前面的维度当“批量”广播。<code>softmax(dim=-1)</code> 表示“对每一行的 key 打分做归一化”。</p></div>`,
       checkpoint: {
-        question: "q shape=[2,4,5,8]，k shape=[2,4,7,8]，q @ k.transpose(-2,-1) 的 shape 是？",
-        options: ["[2,4,5,7]", "[2,5,4,7]", "[2,4,8,8]"],
+        question: "Scaled Dot-Product Attention 里为什么要除以 √head_dim？",
+        options: [
+          "点积随维度增大方差变大，不缩放 softmax 会接近 one-hot 导致梯度消失",
+          "为了让 Q 和 K 的 shape 对齐才能相乘",
+          "为了把注意力分数变成整数"
+        ],
         answer: 0,
-        explain: "batch 和 head 维保持，query 长度 5 对 key 长度 7 打分。"
+        explain: "D 个数相加方差 ∝ D，缩放到 1/√D 把分数拉回稳定区间，softmax 才平滑、梯度才不消失。"
       },
       homework: [
-        "把投影结果 view 成 [B,S,H,D] 再 transpose。",
-        "计算缩放点积注意力。",
-        "把 [B,H,S,D] 合并回 [B,S,H*D]。"
+        "TODO 1：投影结果 view 成 [B,S,H,D] 再 transpose(1,2) → [B,H,S,D]。",
+        "TODO 3：算 Q@Kᵀ/√D，加 mask，softmax，再 @ V。",
+        "TODO 4：transpose 回来 + contiguous().view 合并多头 → o_proj。"
       ]
     },
     {
       id: "gqa-kv-cache",
-      title: "GQA：少存 KV 头，用时再扩成 Query 头",
+      title: "KV Cache 与 GQA：推理为什么慢，又怎么省显存",
       todo: "TODO 2 / repeat_kv",
       prerequisite: [
-        "自回归生成一次只新增少量 token。",
-        "KV Cache 存历史 key/value。",
-        "GQA 让多个 Query 头共享一组 KV 头。"
+        "自回归生成：模型一次只吐 1 个 token，然后把它接回输入再算下一个。",
+        "算第 N 个 token 时要和前面所有 token 的 Key/Value 做注意力——但前面那些 K/V 每步都一样，没必要重算。",
+        "GQA：让多个 Query 头共享同一组 K/V 头，介于 MHA（各用各的）和 MQA（全共享一个）之间。"
       ],
-      intuition: "不要给每个 query 头都存一份 KV；先存少量共享 KV，真正算 attention 前临时复制。",
-      exampleHtml: `<div class="gqa-demo"><span>Q heads: 0 1 2 3</span><span>KV heads: A B</span><span>0/1→A, 2/3→B</span></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：沿时间轴拼接新记录</h4><pre><code>history = torch.randn(2, 5, 3)
-new = torch.randn(2, 1, 3)
-updated = torch.cat([history, new], dim=1)</code></pre></div>`,
+      intuition: "两个独立但相关的优化：① KV Cache——把算过的 K/V 存起来，每步只算新 token 的，避免 O(N²) 重算；② GQA——只存少量共享的 KV 头省显存，真正算注意力前再临时复制成 Query 头数。注意顺序：先拼接缓存、存下未扩展的 KV，最后才 repeat_kv 扩充。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 痛点：不缓存就要每步重算整段历史（O(N²)）</strong>
+              <p>生成第 100 个 token 时，注意力要用到前 99 个 token 的 K/V。可这 99 个 K/V 在前几步早就算过了，而且不会变。每步都从头算 → 总开销 ∝ N²，序列越长越爆炸。</p>
+            </div>
+            <div class="story-arrow">解法：把历史 K/V 存进 Cache，每步只算新增的那一个（TODO 2）</div>
+            <div class="story-panel">
+              <strong>2. KV Cache：沿 seq 维 cat 一下就行</strong>
+              <p>缓存里存着历史 K/V，形状 [B, H_kv, 旧长度, D]。新 token 算出自己的 xk/xv（长度 1），用 <code>torch.cat(..., dim=2)</code> 拼到时间轴末尾，长度 +1。下一步再接着拼。</p>
+              <svg viewBox="0 0 360 96" width="100%" style="max-width:500px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="20" y="35" width="40" height="30" fill="#e8f0ff" stroke="#a9c2f6"/><text x="40" y="54">k0</text>
+                  <rect x="62" y="35" width="40" height="30" fill="#e8f0ff" stroke="#a9c2f6"/><text x="82" y="54">k1</text>
+                  <rect x="104" y="35" width="40" height="30" fill="#e8f0ff" stroke="#a9c2f6"/><text x="124" y="54">k2</text>
+                  <text x="82" y="22" fill="#657184">cache（已存）</text>
+                  <text x="170" y="54" font-size="20" fill="#12805c">＋</text>
+                  <rect x="195" y="35" width="40" height="30" fill="#e7f6ee" stroke="#99d6bf"/><text x="215" y="54">k3</text>
+                  <text x="215" y="22" fill="#12805c">新 token</text>
+                  <text x="270" y="54" font-size="16" fill="#657184">→</text>
+                  <rect x="295" y="38" width="58" height="24" fill="#fff1dd" stroke="#e8b66f"/><text x="324" y="54">长度+1</text>
+                </g>
+              </svg>
+            </div>
+            <div class="story-arrow">另一条线：怎么让 Cache 本身更小？→ GQA</div>
+            <div class="story-panel">
+              <strong>3. MHA → MQA → GQA：在效果和显存间取平衡</strong>
+              <p>MHA 每个 Query 头配一个独立 KV 头，Cache 最大、效果最好；MQA 所有 Query 头共用 1 个 KV 头，Cache 最小但效果掉；GQA 折中——分组共享。下图 4 个 Q 头、2 个 KV 头，每 2 个 Q 共享 1 个 KV，Cache 直接砍半。</p>
+              <svg viewBox="0 0 360 120" width="100%" style="max-width:500px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:6px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="20" y="15" width="34" height="24" fill="#e8f0ff" stroke="#a9c2f6"/><text x="37" y="31">Q0</text>
+                  <rect x="58" y="15" width="34" height="24" fill="#e8f0ff" stroke="#a9c2f6"/><text x="75" y="31">Q1</text>
+                  <rect x="120" y="15" width="34" height="24" fill="#fff1dd" stroke="#e8b66f"/><text x="137" y="31">Q2</text>
+                  <rect x="158" y="15" width="34" height="24" fill="#fff1dd" stroke="#e8b66f"/><text x="175" y="31">Q3</text>
+                  <rect x="38" y="80" width="36" height="24" fill="#c8d9ff" stroke="#1e3f88"/><text x="56" y="96">KV A</text>
+                  <rect x="138" y="80" width="36" height="24" fill="#f8d8aa" stroke="#73450d"/><text x="156" y="96">KV B</text>
+                </g>
+                <g stroke="#94a3b8" stroke-width="1.5" fill="none">
+                  <path d="M37 39 L56 80"/><path d="M75 39 L56 80"/>
+                  <path d="M137 39 L156 80"/><path d="M175 39 L156 80"/>
+                </g>
+                <text x="250" y="60" font-size="12" fill="#657184" text-anchor="middle">2 组共享</text>
+                <text x="250" y="78" font-size="12" fill="#657184" text-anchor="middle">Cache 砍半</text>
+              </svg>
+            </div>
+            <div class="story-arrow">关键顺序：先存“瘦” KV，再临时扩充（repeat_kv）</div>
+            <div class="story-panel">
+              <strong>4. 延迟扩充：缓存窄的，算注意力前才复制宽的</strong>
+              <p>矩阵乘法要求 Q 头数和 K/V 头数一致。GQA 的解法不是把 KV 存成宽的（那就退化回 MHA、白省了），而是<strong>只缓存窄的 num_kv_heads 个头</strong>，每次前向用 <code>repeat_kv</code> 临时把每个 KV 头复制 num_queries_per_kv 份，对齐到 Query 头数。</p>
+              <div class="mini-flow"><span>cat 更新 cache（窄）</span><span>new_kv_cache = 窄 KV</span><strong>repeat_kv → 宽，喂给注意力</strong></div>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存了宽 KV = 显存退回 MHA，GQA 优势归零。</p>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：沿时间维拼接 + 复制头</h4><pre><code># ① KV Cache：把新 K 拼到历史末尾（dim=2 是 seq 维）
+cache = torch.randn(2, 2, 5, 8)   # [B, H_kv, 旧长度5, D]
+new_k = torch.randn(2, 2, 1, 8)   # 新 token 的 K，长度1
+updated = torch.cat([cache, new_k], dim=2)  # [2, 2, 6, 8]
+
+# ② repeat_kv：每个 KV 头复制 n_rep 份，对齐 Query 头数
+#   先插一个新轴 expand，再 reshape 把它并进 head 维
+n_rep = 2                          # 4 个 Q 头 / 2 个 KV 头
+x = updated[:, :, None, :, :].expand(2, 2, n_rep, 6, 8)
+x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class="syntax-tip">读法：<code>cat(dim=2)</code> 在 seq 维接长；<code>expand</code> 不复制内存只“假装”有 n_rep 份，<code>reshape</code> 时才真正铺开，把 KV 头数从 2 撑到 4。</p></div>`,
       checkpoint: {
-        question: "num_heads=8、num_kv_heads=2 时，每个 KV 头要服务几个 Query 头？",
-        options: ["4", "2", "8"],
+        question: "GQA 实现里，为什么 repeat_kv 要放在“更新 new_kv_cache 之后”？",
+        options: [
+          "只缓存窄的 num_kv_heads 个头才省显存；先扩充再缓存会把 Cache 撑回 MHA 大小",
+          "因为 repeat_kv 会改变 batch size",
+          "因为 cat 操作必须在 softmax 之后"
+        ],
         answer: 0,
-        explain: "num_queries_per_kv = 8 / 2 = 4。"
+        explain: "GQA 省显存的本质是 Cache 只存窄 KV。扩充只是为了满足矩阵乘法的头数对齐，是临时的、每步重做的，绝不能写进缓存。"
       },
       homework: [
-        "先在 seq 维拼接旧 cache 和新 KV。",
-        "再 repeat_kv 扩到 Query 头数。",
-        "检查 new_kv_cache 保存的是未扩展的 KV。"
+        "TODO 2：用 torch.cat([k_cache, xk], dim=2) 在 seq 维拼接历史与新 KV。",
+        "确认 new_kv_cache 存的是拼接后、repeat_kv 之前的“窄”KV。",
+        "理解 repeat_kv：num_queries_per_kv = num_heads // num_kv_heads，扩充后头数对齐 Query。"
       ]
     }
   ],
