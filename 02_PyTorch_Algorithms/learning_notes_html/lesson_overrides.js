@@ -56,54 +56,125 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>`,
   "02": [
     {
       id: "swiglu-gate",
-      title: "门控：一路决定开关，一路携带内容",
+      title: "门控：一路当开关，一路当内容（顺便数清楚有几块矩阵）",
       todo: "TODO 3 / TODO 4",
       prerequisite: [
-        "Linear 会把最后一维映射到新维度。",
-        "SiLU 是平滑激活函数。",
-        "两个同 shape 张量可以逐元素相乘。"
+        "Linear(d_in, d_out) 就是一块权重矩阵，把最后一维从 d_in 映射到 d_out。",
+        "SiLU(x) = x · sigmoid(x)，是一条平滑的激活曲线，输出可正可负、像“软开关”。",
+        "两个 shape 完全相同的张量可以逐元素相乘（Hadamard ⊙）。"
       ],
-      intuition: "SwiGLU 有两条并行支路：gate 支路决定哪些信息通过，up 支路提供要被筛选的内容。",
-      exampleHtml: `<div class="gate-demo"><span>gate → SiLU → 开关强度</span><span>up → 内容特征</span><strong>逐元素相乘 → down</strong></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：用门控信号筛选数值</h4><pre><code>knob = torch.tensor([-1.0, 0.0, 2.0])
-value = torch.tensor([10.0, 10.0, 10.0])
-filtered = torch.sigmoid(knob) * value</code></pre></div>`,
+      intuition: "传统 MLP 升维后只过一次激活，像一条单行道；SwiGLU 把升维这步分成并行两条：gate 支路算“开关强度”，up 支路算“内容”，两者相乘后再降维。记住它一共用了 3 块矩阵——下一关的参数推导全靠这个数字。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>普通 MLP：一条单行道（2 块矩阵）</strong>
+              <p>x 先升维，过一次固定激活（如 ReLU 把负数一刀切成 0），再降维。开关是写死的，不会随数据变。</p>
+              <div class="mini-flow"><span>x</span><span>W_up → 激活</span><strong>W_down</strong></div>
+            </div>
+            <div class="story-arrow">SwiGLU：把“升维 + 激活”这一步拆成并行两条支路</div>
+            <div class="story-panel">
+              <strong>门控 MLP：内容 × 开关（3 块矩阵）</strong>
+              <p>up 支路（W_up）产出“内容”；gate 支路（W_gate）产出一个经 SiLU 的“开关强度”。两条 shape 一样，逐元素相乘，再用 W_down 降回原维度。</p>
+              <div class="gate-demo">
+                <span>gate = SiLU(x · W_gate) → 开关</span>
+                <span>up = x · W_up → 内容</span>
+                <strong>W_down( gate ⊙ up )</strong>
+              </div>
+              <p>开关由数据自己学：该放行的位置接近 1，该压制的接近 0，比固定的 ReLU 灵活得多——这就是 SwiGLU 表达力更强的来源。</p>
+              <p>数一数矩阵：<strong>W_gate、W_up、W_down 共 3 块</strong>。传统 MLP 只有 2 块。多出来的那块 gate 就是门控的“代价”，下一关要把它算进账。</p>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：用“开关 × 内容”筛选数值</h4><pre><code>knob  = torch.tensor([-1.0, 0.0, 2.0])   # 开关原始打分
+value = torch.tensor([10.0, 10.0, 10.0]) # 内容
+
+# sigmoid 把开关压到 0~1：负数→趋近 0(关)，正数→趋近 1(开)
+gate = torch.sigmoid(knob)               # [0.27, 0.50, 0.88]
+filtered = gate * value                  # [2.7, 5.0, 8.8]
+# 真正的 SwiGLU 用 F.silu 代替 sigmoid，思路完全一样</code></pre></div>`,
       checkpoint: {
         question: "SwiGLU 为什么需要 gate 和 up 两条升维支路？",
-        options: ["一条产生门控，一条产生内容", "为了把 batch size 翻倍", "为了删除 down_proj"],
+        options: ["一条产生门控开关，一条产生内容，相乘实现“数据自己学的过滤”", "为了把 batch size 翻倍", "为了删除 down_proj"],
         answer: 0,
-        explain: "gate 经激活后像开关，up 提供内容，两者相乘后再降维。"
+        explain: "gate 经 SiLU 后像逐元素开关，up 提供内容，两者相乘后再降维。代价是升维从 1 块矩阵变成 2 块（gate+up），全模块共 3 块。"
       },
       homework: [
-        "定义 gate/up/down 三个投影或融合投影。",
-        "确认 gate 与 up 的 shape 相同。",
-        "检查最终输出回到 hidden_size。"
+        "定义 gate/up/down 三个投影（工业写法是把 gate 和 up 融合成一块 gate_up_proj）。",
+        "前向里确认 gate 与 up 的 shape 完全相同，才能逐元素相乘。",
+        "检查最终输出 shape 回到 hidden_size。"
       ]
     },
     {
       id: "swiglu-size-align",
-      title: "8/3 hidden：让门控 MLP 参数量接近传统 MLP",
+      title: "为什么是 8/3 d？——给门控“多出来的那块矩阵”买单",
       todo: "TODO 1 / TODO 2",
       prerequisite: [
-        "矩阵参数量约等于输入维度 × 输出维度。",
-        "SwiGLU 升维阶段有两组矩阵。",
-        "向上取整到 multiple_of 方便硬件和并行切分。"
+        "一块权重矩阵的参数量 ≈ 输入维度 × 输出维度。",
+        "传统 MLP 用 2 块矩阵；SwiGLU 因为多了 gate 支路，用 3 块（见上一关）。",
+        "“计算开销 / 参数量相同”是人为加的约束，目的是做公平对比，不是天然规律。"
       ],
-      intuition: "传统 MLP 是两块大矩阵，SwiGLU 是三块矩阵；为了总量接近，要把中间维度从 4d 调小到 8/3d。",
-      exampleHtml: `<div class="param-demo"><span>传统: 2 × d × 4d = 8d²</span><span>SwiGLU: 3 × d × h</span><strong>h ≈ 8d/3</strong></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：向上补齐到倍数</h4><pre><code>people = 26
-row = 8
-aligned = ((people + row - 1) // row) * row  # 32</code></pre></div>`,
+      intuition: "8/3 不是魔法数字，而是一道初中解方程题的答案。先想清楚我们到底在跟谁比、为什么要比平，再把两边的矩阵数清楚，令它们相等，h 自然就解出来了。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先想清楚：我们到底在比什么、为什么要比平？</strong>
+              <p>SwiGLU 听起来更强，但它比传统 MLP 多了一条 gate 支路——等于凭空多塞了一整块大矩阵。如果直接加上去，模型自然变大、变慢。</p>
+              <p>那它效果好，究竟是<em>“门控结构聪明”</em>，还是单纯<em>“参数更多、堆料堆出来的”</em>？为了把这两者分开，研究者<strong>人为规定：让 SwiGLU 的参数量 = 传统 MLP 的参数量</strong>。这样一来，在“同样大小、同样算力预算”下 SwiGLU 还更好，功劳才能确凿地算到门控结构头上。这就是“让计算开销完全相同”的真正动机——它是一条公平竞赛规则，不是物理定律。</p>
+            </div>
+            <div class="story-arrow">既然要比平，那就把两边的参数各数一遍</div>
+            <div class="story-panel">
+              <strong>1. 传统 MLP 有多少参数？→ 8d²</strong>
+              <p>设输入维度 = d，按惯例中间层放大到 4d。两块矩阵：升维一块、降维一块。一块的参数量 ≈ 行 × 列。</p>
+              <div class="param-demo">
+                <span>W_up：d × 4d = 4d²</span>
+                <span>W_down：4d × d = 4d²</span>
+                <strong>合计 = 8d²</strong>
+              </div>
+            </div>
+            <div class="story-arrow">SwiGLU 升维分叉成两块，于是是 3 块矩阵</div>
+            <div class="story-panel">
+              <strong>2. SwiGLU 有多少参数？→ 3 · d · h</strong>
+              <p>设 SwiGLU 的中间维度是未知数 h。升维分成 gate、up 两块（各 d × h），降维一块（h × d）。</p>
+              <div class="param-demo">
+                <span>W_gate：d × h</span>
+                <span>W_up：d × h</span>
+                <span>W_down：h × d</span>
+                <strong>合计 = 3 · d · h</strong>
+              </div>
+            </div>
+            <div class="story-arrow">套用公平规则：令两边相等，解出 h</div>
+            <div class="story-panel">
+              <strong>3. 解方程 → h = 8/3 d</strong>
+              <p>把竞赛规则写成等式，两边都有一个 d，约掉即可：</p>
+              <div class="formula"><span>3 · d · h = 8d²</span><strong>h = 8d / 3 ≈ 2.67 d</strong></div>
+              <p>看懂这个结果：SwiGLU 的中间维度不是 4d，而是缩到约 2.67d。<strong>缩小的这部分，正好补偿掉多养一块 gate 矩阵的开销</strong>，于是总参数追平。这就是 LLaMA 源码里 <code>int(8 * hidden_size / 3)</code> 的全部来历。</p>
+            </div>
+            <div class="story-arrow">最后一步工程修正：对齐到整齐的倍数</div>
+            <div class="story-panel">
+              <strong>4. 向上对齐 multiple_of（如 256）</strong>
+              <p>8/3 算出来常是零碎数（d=4096 时 ≈ 10922）。GPU 喜欢整齐维度：Tensor Core 要求对齐、张量并行时还得能被 GPU 张数整除。所以向上取整到 256 的倍数：10922 → 11008。</p>
+              <p>对齐会让参数量比理论值<em>略大一点点</em>，这是为了硬件效率付的小钱，不影响“追平传统 MLP”的初衷。</p>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：把一个数向上补齐到某个倍数</h4><p>TODO 2 要把 8/3 d 向上对齐到 multiple_of。先用排座位的小例子练这个“向上取整”技巧：</p><pre><code>people = 26      # 要坐的人数（类比理论 intermediate_size）
+row    = 8       # 每排 8 个座位（类比 multiple_of）
+
+# 直接整除会向下丢人：26 // 8 = 3 排，只坐 24 人 ❌
+# 先 +(row-1) 再整除，就能“向上取整”到能装下所有人的排数
+aligned = ((people + row - 1) // row) * row   # = 32 ✅</code></pre><p class="syntax-tip">读法：<code>(n + m - 1) // m * m</code> 是“把 n 向上对齐到 m 的倍数”的标准写法，记下来，工程里到处用。</p></div>`,
       checkpoint: {
-        question: "hidden_size=12 时，理论 SwiGLU intermediate_size 约是多少？",
-        options: ["32", "48", "12"],
+        question: "LLaMA 为什么把 SwiGLU 的中间维度从 4d 缩到约 8/3 d？",
+        options: [
+          "因为多了 gate 支路（共 3 块矩阵），缩小中间维度让总参数重新等于传统 MLP，从而公平对比",
+          "因为 8/3 是 GPU 硬件唯一支持的维度比例",
+          "为了让参数变多、模型更大，效果自然更好"
+        ],
         answer: 0,
-        explain: "8/3 × 12 = 32；如果还要求 multiple_of，再继续向上对齐。"
+        explain: "SwiGLU 升维多一条 gate 支路，3·d·h 比传统的 8d² 更费参数。令 3·d·h = 8d² 解得 h = 8/3 d，性能提升才能归功于门控结构本身，而不是堆参数。"
       },
       homework: [
-        "写出 8/3 hidden_size 的计算。",
-        "把结果向 multiple_of 对齐。",
-        "用参数量检查维度是否合理。"
+        "TODO 1：写出 int(8/3 · hidden_size) 的计算（注意整数除法）。",
+        "TODO 2：用 (n + m - 1) // m * m 把结果向上对齐到 multiple_of。",
+        "跑测试：4096 应得到 11008，并用 3·d·h 验证参数量与传统 MLP 接近。"
       ]
     }
   ],
