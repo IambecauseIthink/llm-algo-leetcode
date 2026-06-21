@@ -220,6 +220,72 @@
       pointer-events: none;
       z-index: 2;
     }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
     .shape-story {
       display: grid;
       gap: 10px;
@@ -709,19 +775,31 @@
           <div class="gated" data-gated="attention-shape-map">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>Q/K/V 都是输入 x 经过三个不同 Linear 投影得到的——可以理解成同一句话的三种“视角”。</li><li>多头：把宽向量切成 H 份，每份独立算注意力，让不同头关注不同模式。计算时用 [B,H,S,D] 布局。</li><li>softmax 把一行打分变成“加起来等于 1 的概率”，再用这组概率去加权求和。</li></ul>
+              <ul><li>先记一个生活类比：注意力就像“查资料”——你心里的问题是 Query，每份资料的标题是 Key，资料的正文是 Value。标题越对得上你的问题，就越多地去读它的正文。</li><li>Q/K/V 都是同一个输入 x 各乘一个不同的 Linear 矩阵得到的。同一句话，从“我想问什么(Q)/我能回答什么(K)/我有什么内容(V)”三个角度各投影一次。</li><li>“多头”= 把每个 token 的长向量切成 H 段，每段单独做一遍上面的查资料，让不同的“头”各盯一种规律（有的盯语法、有的盯指代）。计算时摆成 [B, H, S, D]：批次、头、序列长度、每头维度。</li><li>softmax：把一排任意大小的分数压成“加起来等于 1 的概率”，分数越高拿到的概率越大。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>一句话版的注意力：每个 token 拿自己的 query 去问所有 token 的 key“我跟你多相关？”，得到一张打分表；softmax 把每一行变成概率；最后按这组概率把所有 token 的 value 混合起来，就是这个 token 的新表示。这一关把 4 个公式步骤配上 shape 流转图，一步步走通。</p>
+              <p>一句话版：每个 token 拿自己的 Query 去和所有 token 的 Key 比一比“我跟你多相关”，得到一张打分表；softmax 把每一行变成一组概率；再按这组概率去混合所有 token 的 Value，混出来的就是这个 token 的新表示。下面把这 4 步拆开、每步配图，并在关键处停下来让你先想一想再看解释。</p>
               
           <div class="shape-story">
             <div class="story-panel">
+              <strong>0. 先建立画面：一句话里，每个词都在“偷看”别的词</strong>
+              <p>读“它躺在桌上”时，你要搞清楚“它”指什么，就得回头看前面的词。注意力做的就是这件事：让每个 token 都能按需去看序列里的其他 token，再把看到的信息揉进自己的新表示里。“按需”——就是下面那张打分表决定的。</p>
+              <details class="think">
+                <summary>想一想：为什么 Q、K、V 要用三个不同的矩阵，而不是直接拿 x 本身去两两点积？</summary>
+                <div class="think-body">
+                  <p>如果直接用 x 和 x 点积，那“我作为提问方”和“我作为被查方”用的是同一个向量，模型没法分别学习“我想找什么”和“我能提供什么匹配特征”这两件不同的事。</p>
+                  <p>拆成 Q、K 两个独立投影后，同一个词可以“以一种姿态发问、以另一种姿态被检索”，匹配关系才学得灵活。V 再单独一个矩阵，是因为“被选中后该交出什么内容”又是第三件事。三个角色、三个矩阵，各司其职。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">第一步：把每个 token 的长向量切成 H 个头（TODO 1）</div>
+            <div class="story-panel">
               <strong>1. 切多头：一根宽向量拆成 H 个小专家</strong>
-              <p>投影后 Q 是 [B, S, H·D]，先 <code>view</code> 成 [B, S, H, D]，再 <code>transpose(1,2)</code> 成 [B, H, S, D]。为什么转置？因为后面要让每个头（H）独立地在它自己的 [S, D] 上做矩阵乘法，把 H 提到前面当“批量维”最方便。</p>
+              <p>投影后 Q 是 [B, S, H·D]，先 <code>view</code> 成 [B, S, H, D]（把最后一根长向量切成 H 段），再 <code>transpose(1,2)</code> 成 [B, H, S, D]。为什么要转置？因为下一步要让每个头（H）<strong>各自独立</strong>地在它自己的 [S, D] 小表上做矩阵乘法，把 H 提到前面、和 batch 并排当“批量维”最顺手。</p>
               <div class="mini-flow"><span>[B, S, H·D]</span><span>view → [B, S, H, D]</span><strong>transpose(1,2) → [B, H, S, D]</strong></div>
-              <p style="color:#657184">直觉：H 个头像 H 个分工不同的读者，有的盯语法、有的盯指代，各读各的。</p>
+              <p style="color:#657184">直觉：H 个头像 H 个分工不同的读者，有的盯语法、有的盯指代，各读各的，最后再汇总。</p>
             </div>
             <div class="story-arrow">每个头里：query 逐一去问每个 key（TODO 3 第一步）</div>
             <div class="story-panel">
@@ -751,16 +829,28 @@
             <div class="story-arrow">除以 √D，再 softmax（TODO 3 第二、三步）</div>
             <div class="story-panel">
               <strong>3. 为什么要除以 √D？防止 softmax “一家独大”</strong>
-              <p>点积是 D 个数相加，D 越大，分数的方差越大、数值越极端。直接 softmax 会几乎把全部概率压到一个 token 上（接近 one-hot），其它位置梯度趋近 0，训练学不动。除以 √D 把方差拉回稳定区间，softmax 才平滑。</p>
+              <p>点积 = 把 D 个数乘起来再相加。D 越大，这个和的“波动范围”（方差）就越大，分数越容易出现某个特别大的极端值。直接喂给 softmax，它会几乎把全部概率压到那一个 token 上（接近非 0 即 1 的 one-hot），别的位置概率趋近 0、梯度也趋近 0，模型就学不动了。除以 √D 正好把方差拉回到大约 1 的稳定区间，softmax 才平滑、可训练。</p>
               <div class="formula"><span>scores = Q·Kᵀ / √D</span><span>probs = softmax(scores)</span><strong>每行加起来 = 1</strong></div>
-              <p style="color:#657184">Causal Mask：生成任务里给上三角填 −∞，让 token 只能看自己和左边——softmax 后这些位置概率自然变 0。</p>
+              <details class="think">
+                <summary>想一想：为什么偏偏是除以“√D”，而不是除以 D 或别的数？</summary>
+                <div class="think-body">
+                  <p>假设 Q、K 的每个分量都是均值 0、方差 1 的独立随机数。点积是 D 个“乘积项”相加，每项方差约为 1，独立相加后总方差 ≈ D，于是标准差 ≈ √D。</p>
+                  <p>我们想把分数的“典型尺度”拉回到 1 左右，所以除以标准差 √D 最自然——除以 D 会矫枉过正、把分数压得太小，反而让 softmax 太平、谁都差不多。这就是原论文选 √D 的来历。</p>
+                </div>
+              </details>
+              <p style="color:#657184">Causal Mask：生成任务里给打分表的“上三角”填 −∞（代表“还没出现的未来 token”），softmax 后这些位置概率自然变 0，保证每个 token 只能看自己和左边。</p>
             </div>
             <div class="story-arrow">用概率加权 value，再把多头拼回去（TODO 3 末 + TODO 4）</div>
             <div class="story-panel">
               <strong>4. probs @ V → 合并多头 → 输出投影</strong>
               <p>probs [.., S, S] 乘 V [.., S, D] 得 [.., S, D]：每个 token 的新向量 = 按注意力概率混合所有 token 的 value。最后 <code>transpose(1,2)</code> 把 H 放回去、<code>contiguous().view</code> 合并成 [B, S, H·D]，再过 <code>o_proj</code> 回到 hidden_dim。</p>
               <div class="mini-flow"><span>probs @ V → [B,H,S,D]</span><span>transpose+view → [B,S,H·D]</span><strong>o_proj → [B,S,hidden]</strong></div>
-              <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了步长、内存没真正重排，直接 view 会报错。</p>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了“怎么读这块内存”的步长、并没真正搬动数据，直接 view 会因内存不连续报错。</p>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：这张 S×S 打分表，正是大模型的成本中心</div>
+              <p>注意力之所以打败了 RNN，关键在于它<strong>一步就能让任意两个 token 直接相连</strong>（RNN 要一格一格传，远距离信息会衰减），而且整张打分表能在 GPU 上并行算完。这是 Transformer 能堆大、能记长上下文的根本。</p>
+              <p>但代价也在这张表：它的大小是 S×S，序列翻倍、显存和计算就翻 4 倍。这就是为什么“长上下文”这么贵，也催生了 <strong>FlashAttention</strong>（不把整张表落地到显存，分块边算边累加）这类工程优化——本仓库后面的 FlashAttention 关就是专门拆这个的。今天你手写的这版是“教科书版”，理解它才能看懂工业版在优化什么。</p>
             </div>
           </div>
               <div class="syntax-card"><h4>语法热身：批量矩阵乘法只动最后两维</h4><pre><code>import torch.nn.functional as F
@@ -842,12 +932,12 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
           <div class="gated" data-gated="gqa-kv-cache">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>自回归生成：模型一次只吐 1 个 token，然后把它接回输入再算下一个。</li><li>算第 N 个 token 时要和前面所有 token 的 Key/Value 做注意力——但前面那些 K/V 每步都一样，没必要重算。</li><li>GQA：让多个 Query 头共享同一组 K/V 头，介于 MHA（各用各的）和 MQA（全共享一个）之间。</li></ul>
+              <ul><li>先理解“自回归生成”：模型像打字一样一次只吐 1 个字，然后把这个字接到句子末尾，再用更长的句子算下一个字，循环往复。</li><li>算新字时，注意力要让它去看前面所有字的 Key/Value。但前面那些字的 K/V 上一步就算过了、而且不会再变——重算就是纯浪费。</li><li>三种省法的名字：MHA（每个 Query 头配一个专属 KV 头，最费）、MQA（所有 Query 头挤用 1 个 KV 头，最省但效果掉）、GQA（分组共享，折中，LLaMA-2/3 采用）。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>两个独立但相关的优化：① KV Cache——把算过的 K/V 存起来，每步只算新 token 的，避免 O(N²) 重算；② GQA——只存少量共享的 KV 头省显存，真正算注意力前再临时复制成 Query 头数。注意顺序：先拼接缓存、存下未扩展的 KV，最后才 repeat_kv 扩充。</p>
+              <p>这一关是两个独立但配合使用的优化：① KV Cache——把算过的 K/V 存起来，每步只算新字那一个，把“每步重算整段历史”的浪费去掉；② GQA——让缓存里只存少量共享的 KV 头来省显存，等真正算注意力前再临时把它们复制成和 Query 一样多。最关键的一个细节：复制（repeat_kv）必须放在“存进缓存之后”，先存窄的、后扩宽的——下面会讲为什么反过来就前功尽弃。</p>
               
           <div class="shape-story">
             <div class="story-panel">
@@ -871,6 +961,13 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
                   <rect x="295" y="38" width="58" height="24" fill="#fff1dd" stroke="#e8b66f"/><text x="324" y="54">长度+1</text>
                 </g>
               </svg>
+              <details class="think">
+                <summary>想一想：KV Cache 把时间省下来了，那它代价是什么？</summary>
+                <div class="think-body">
+                  <p>天下没有免费的午餐：省了重算的时间，代价是<strong>显存</strong>。每生成一个 token，缓存就长大一截，要一直占着显存直到这句话生成完。</p>
+                  <p>粗略感受一下规模：层数 L、KV 头数 H_kv、每头维度 D、序列长 S、再算上 K 和 V 两份，缓存大小 ≈ 2 · L · H_kv · D · S。序列越长占用线性增长——长上下文推理时，KV Cache 往往比模型权重还吃显存。这正是下面要用 GQA 来砍它的原因。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">另一条线：怎么让 Cache 本身更小？→ GQA</div>
             <div class="story-panel">
@@ -892,13 +989,25 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
                 <text x="250" y="60" font-size="12" fill="#657184" text-anchor="middle">2 组共享</text>
                 <text x="250" y="78" font-size="12" fill="#657184" text-anchor="middle">Cache 砍半</text>
               </svg>
+              <details class="think">
+                <summary>想一想：MQA 把 KV 砍到只剩 1 个头、最省显存，为什么大家不直接全用它？</summary>
+                <div class="think-body">
+                  <p>KV 头可以理解成“资料库的不同检索视角”。MHA 有 H 个独立视角，能从很多角度去匹配；MQA 把它压成 1 个，所有 Query 头只能共用同一套 Key/Value，表达力明显变窄，效果通常会掉。</p>
+                  <p>GQA 是中庸之道：保留几组（比如 8 组）视角，让每组被若干 Query 头共享。显存接近 MQA，效果接近 MHA——这就是 LLaMA-2/3 选它的原因。工程里很多决策都是这种“在两个极端之间找平衡点”。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">关键顺序：先存“瘦” KV，再临时扩充（repeat_kv）</div>
             <div class="story-panel">
               <strong>4. 延迟扩充：缓存窄的，算注意力前才复制宽的</strong>
               <p>矩阵乘法要求 Q 头数和 K/V 头数一致。GQA 的解法不是把 KV 存成宽的（那就退化回 MHA、白省了），而是<strong>只缓存窄的 num_kv_heads 个头</strong>，每次前向用 <code>repeat_kv</code> 临时把每个 KV 头复制 num_queries_per_kv 份，对齐到 Query 头数。</p>
               <div class="mini-flow"><span>cat 更新 cache（窄）</span><span>new_kv_cache = 窄 KV</span><strong>repeat_kv → 宽，喂给注意力</strong></div>
-              <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存了宽 KV = 显存退回 MHA，GQA 优势归零。</p>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存里存了宽 KV = 显存退回 MHA，GQA 等于白做。</p>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：GQA 为什么是 70B 模型能跑起来的关键之一</div>
+              <p>LLaMA-2 70B 有 64 个 Query 头，但只用 8 个 KV 头（每 8 个 Q 共享 1 个 KV），KV Cache 直接降到 MHA 的 <strong>1/8</strong>——在长上下文推理时能省下几十 GB 显存，这往往决定了一张卡到底装不装得下、能开多长上下文、能同时服务多少用户。</p>
+              <p>而“先存窄、用时再扩”的延迟扩充，正是 vLLM、TensorRT-LLM 这些推理框架的标准做法。它们之所以敢这么干，是因为注意力是 <strong>Memory-bound</strong>（瓶颈在搬数据而非算数）——临时复制几下的计算量可以忽略，省下的显存带宽才是大头。本仓库后面的 vLLM PagedAttention 关会接着讲怎么把这些 KV 块管得更省。</p>
             </div>
           </div>
               <div class="syntax-card"><h4>语法热身：沿时间维拼接 + 复制头</h4><pre><code># ① KV Cache：把新 K 拼到历史末尾（dim=2 是 seq 维）

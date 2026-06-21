@@ -398,18 +398,31 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
       title: "注意力到底在算什么：打分表 → 概率 → 混合 value",
       todo: "TODO 1 / TODO 3 / TODO 4",
       prerequisite: [
-        "Q/K/V 都是输入 x 经过三个不同 Linear 投影得到的——可以理解成同一句话的三种“视角”。",
-        "多头：把宽向量切成 H 份，每份独立算注意力，让不同头关注不同模式。计算时用 [B,H,S,D] 布局。",
-        "softmax 把一行打分变成“加起来等于 1 的概率”，再用这组概率去加权求和。"
+        "先记一个生活类比：注意力就像“查资料”——你心里的问题是 Query，每份资料的标题是 Key，资料的正文是 Value。标题越对得上你的问题，就越多地去读它的正文。",
+        "Q/K/V 都是同一个输入 x 各乘一个不同的 Linear 矩阵得到的。同一句话，从“我想问什么(Q)/我能回答什么(K)/我有什么内容(V)”三个角度各投影一次。",
+        "“多头”= 把每个 token 的长向量切成 H 段，每段单独做一遍上面的查资料，让不同的“头”各盯一种规律（有的盯语法、有的盯指代）。计算时摆成 [B, H, S, D]：批次、头、序列长度、每头维度。",
+        "softmax：把一排任意大小的分数压成“加起来等于 1 的概率”，分数越高拿到的概率越大。"
       ],
-      intuition: "一句话版的注意力：每个 token 拿自己的 query 去问所有 token 的 key“我跟你多相关？”，得到一张打分表；softmax 把每一行变成概率；最后按这组概率把所有 token 的 value 混合起来，就是这个 token 的新表示。这一关把 4 个公式步骤配上 shape 流转图，一步步走通。",
+      intuition: "一句话版：每个 token 拿自己的 Query 去和所有 token 的 Key 比一比“我跟你多相关”，得到一张打分表；softmax 把每一行变成一组概率；再按这组概率去混合所有 token 的 Value，混出来的就是这个 token 的新表示。下面把这 4 步拆开、每步配图，并在关键处停下来让你先想一想再看解释。",
       exampleHtml: `
           <div class="shape-story">
             <div class="story-panel">
+              <strong>0. 先建立画面：一句话里，每个词都在“偷看”别的词</strong>
+              <p>读“它躺在桌上”时，你要搞清楚“它”指什么，就得回头看前面的词。注意力做的就是这件事：让每个 token 都能按需去看序列里的其他 token，再把看到的信息揉进自己的新表示里。“按需”——就是下面那张打分表决定的。</p>
+              <details class="think">
+                <summary>想一想：为什么 Q、K、V 要用三个不同的矩阵，而不是直接拿 x 本身去两两点积？</summary>
+                <div class="think-body">
+                  <p>如果直接用 x 和 x 点积，那“我作为提问方”和“我作为被查方”用的是同一个向量，模型没法分别学习“我想找什么”和“我能提供什么匹配特征”这两件不同的事。</p>
+                  <p>拆成 Q、K 两个独立投影后，同一个词可以“以一种姿态发问、以另一种姿态被检索”，匹配关系才学得灵活。V 再单独一个矩阵，是因为“被选中后该交出什么内容”又是第三件事。三个角色、三个矩阵，各司其职。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">第一步：把每个 token 的长向量切成 H 个头（TODO 1）</div>
+            <div class="story-panel">
               <strong>1. 切多头：一根宽向量拆成 H 个小专家</strong>
-              <p>投影后 Q 是 [B, S, H·D]，先 <code>view</code> 成 [B, S, H, D]，再 <code>transpose(1,2)</code> 成 [B, H, S, D]。为什么转置？因为后面要让每个头（H）独立地在它自己的 [S, D] 上做矩阵乘法，把 H 提到前面当“批量维”最方便。</p>
+              <p>投影后 Q 是 [B, S, H·D]，先 <code>view</code> 成 [B, S, H, D]（把最后一根长向量切成 H 段），再 <code>transpose(1,2)</code> 成 [B, H, S, D]。为什么要转置？因为下一步要让每个头（H）<strong>各自独立</strong>地在它自己的 [S, D] 小表上做矩阵乘法，把 H 提到前面、和 batch 并排当“批量维”最顺手。</p>
               <div class="mini-flow"><span>[B, S, H·D]</span><span>view → [B, S, H, D]</span><strong>transpose(1,2) → [B, H, S, D]</strong></div>
-              <p style="color:#657184">直觉：H 个头像 H 个分工不同的读者，有的盯语法、有的盯指代，各读各的。</p>
+              <p style="color:#657184">直觉：H 个头像 H 个分工不同的读者，有的盯语法、有的盯指代，各读各的，最后再汇总。</p>
             </div>
             <div class="story-arrow">每个头里：query 逐一去问每个 key（TODO 3 第一步）</div>
             <div class="story-panel">
@@ -439,16 +452,28 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
             <div class="story-arrow">除以 √D，再 softmax（TODO 3 第二、三步）</div>
             <div class="story-panel">
               <strong>3. 为什么要除以 √D？防止 softmax “一家独大”</strong>
-              <p>点积是 D 个数相加，D 越大，分数的方差越大、数值越极端。直接 softmax 会几乎把全部概率压到一个 token 上（接近 one-hot），其它位置梯度趋近 0，训练学不动。除以 √D 把方差拉回稳定区间，softmax 才平滑。</p>
+              <p>点积 = 把 D 个数乘起来再相加。D 越大，这个和的“波动范围”（方差）就越大，分数越容易出现某个特别大的极端值。直接喂给 softmax，它会几乎把全部概率压到那一个 token 上（接近非 0 即 1 的 one-hot），别的位置概率趋近 0、梯度也趋近 0，模型就学不动了。除以 √D 正好把方差拉回到大约 1 的稳定区间，softmax 才平滑、可训练。</p>
               <div class="formula"><span>scores = Q·Kᵀ / √D</span><span>probs = softmax(scores)</span><strong>每行加起来 = 1</strong></div>
-              <p style="color:#657184">Causal Mask：生成任务里给上三角填 −∞，让 token 只能看自己和左边——softmax 后这些位置概率自然变 0。</p>
+              <details class="think">
+                <summary>想一想：为什么偏偏是除以“√D”，而不是除以 D 或别的数？</summary>
+                <div class="think-body">
+                  <p>假设 Q、K 的每个分量都是均值 0、方差 1 的独立随机数。点积是 D 个“乘积项”相加，每项方差约为 1，独立相加后总方差 ≈ D，于是标准差 ≈ √D。</p>
+                  <p>我们想把分数的“典型尺度”拉回到 1 左右，所以除以标准差 √D 最自然——除以 D 会矫枉过正、把分数压得太小，反而让 softmax 太平、谁都差不多。这就是原论文选 √D 的来历。</p>
+                </div>
+              </details>
+              <p style="color:#657184">Causal Mask：生成任务里给打分表的“上三角”填 −∞（代表“还没出现的未来 token”），softmax 后这些位置概率自然变 0，保证每个 token 只能看自己和左边。</p>
             </div>
             <div class="story-arrow">用概率加权 value，再把多头拼回去（TODO 3 末 + TODO 4）</div>
             <div class="story-panel">
               <strong>4. probs @ V → 合并多头 → 输出投影</strong>
               <p>probs [.., S, S] 乘 V [.., S, D] 得 [.., S, D]：每个 token 的新向量 = 按注意力概率混合所有 token 的 value。最后 <code>transpose(1,2)</code> 把 H 放回去、<code>contiguous().view</code> 合并成 [B, S, H·D]，再过 <code>o_proj</code> 回到 hidden_dim。</p>
               <div class="mini-flow"><span>probs @ V → [B,H,S,D]</span><span>transpose+view → [B,S,H·D]</span><strong>o_proj → [B,S,hidden]</strong></div>
-              <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了步长、内存没真正重排，直接 view 会报错。</p>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>view</code> 前必须 <code>.contiguous()</code>，因为 transpose 只是改了“怎么读这块内存”的步长、并没真正搬动数据，直接 view 会因内存不连续报错。</p>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：这张 S×S 打分表，正是大模型的成本中心</div>
+              <p>注意力之所以打败了 RNN，关键在于它<strong>一步就能让任意两个 token 直接相连</strong>（RNN 要一格一格传，远距离信息会衰减），而且整张打分表能在 GPU 上并行算完。这是 Transformer 能堆大、能记长上下文的根本。</p>
+              <p>但代价也在这张表：它的大小是 S×S，序列翻倍、显存和计算就翻 4 倍。这就是为什么“长上下文”这么贵，也催生了 <strong>FlashAttention</strong>（不把整张表落地到显存，分块边算边累加）这类工程优化——本仓库后面的 FlashAttention 关就是专门拆这个的。今天你手写的这版是“教科书版”，理解它才能看懂工业版在优化什么。</p>
             </div>
           </div>`,
       syntaxHtml: `<div class="syntax-card"><h4>语法热身：批量矩阵乘法只动最后两维</h4><pre><code>import torch.nn.functional as F
@@ -488,11 +513,11 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
       title: "KV Cache 与 GQA：推理为什么慢，又怎么省显存",
       todo: "TODO 2 / repeat_kv",
       prerequisite: [
-        "自回归生成：模型一次只吐 1 个 token，然后把它接回输入再算下一个。",
-        "算第 N 个 token 时要和前面所有 token 的 Key/Value 做注意力——但前面那些 K/V 每步都一样，没必要重算。",
-        "GQA：让多个 Query 头共享同一组 K/V 头，介于 MHA（各用各的）和 MQA（全共享一个）之间。"
+        "先理解“自回归生成”：模型像打字一样一次只吐 1 个字，然后把这个字接到句子末尾，再用更长的句子算下一个字，循环往复。",
+        "算新字时，注意力要让它去看前面所有字的 Key/Value。但前面那些字的 K/V 上一步就算过了、而且不会再变——重算就是纯浪费。",
+        "三种省法的名字：MHA（每个 Query 头配一个专属 KV 头，最费）、MQA（所有 Query 头挤用 1 个 KV 头，最省但效果掉）、GQA（分组共享，折中，LLaMA-2/3 采用）。"
       ],
-      intuition: "两个独立但相关的优化：① KV Cache——把算过的 K/V 存起来，每步只算新 token 的，避免 O(N²) 重算；② GQA——只存少量共享的 KV 头省显存，真正算注意力前再临时复制成 Query 头数。注意顺序：先拼接缓存、存下未扩展的 KV，最后才 repeat_kv 扩充。",
+      intuition: "这一关是两个独立但配合使用的优化：① KV Cache——把算过的 K/V 存起来，每步只算新字那一个，把“每步重算整段历史”的浪费去掉；② GQA——让缓存里只存少量共享的 KV 头来省显存，等真正算注意力前再临时把它们复制成和 Query 一样多。最关键的一个细节：复制（repeat_kv）必须放在“存进缓存之后”，先存窄的、后扩宽的——下面会讲为什么反过来就前功尽弃。",
       exampleHtml: `
           <div class="shape-story">
             <div class="story-panel">
@@ -516,6 +541,13 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
                   <rect x="295" y="38" width="58" height="24" fill="#fff1dd" stroke="#e8b66f"/><text x="324" y="54">长度+1</text>
                 </g>
               </svg>
+              <details class="think">
+                <summary>想一想：KV Cache 把时间省下来了，那它代价是什么？</summary>
+                <div class="think-body">
+                  <p>天下没有免费的午餐：省了重算的时间，代价是<strong>显存</strong>。每生成一个 token，缓存就长大一截，要一直占着显存直到这句话生成完。</p>
+                  <p>粗略感受一下规模：层数 L、KV 头数 H_kv、每头维度 D、序列长 S、再算上 K 和 V 两份，缓存大小 ≈ 2 · L · H_kv · D · S。序列越长占用线性增长——长上下文推理时，KV Cache 往往比模型权重还吃显存。这正是下面要用 GQA 来砍它的原因。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">另一条线：怎么让 Cache 本身更小？→ GQA</div>
             <div class="story-panel">
@@ -537,13 +569,25 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
                 <text x="250" y="60" font-size="12" fill="#657184" text-anchor="middle">2 组共享</text>
                 <text x="250" y="78" font-size="12" fill="#657184" text-anchor="middle">Cache 砍半</text>
               </svg>
+              <details class="think">
+                <summary>想一想：MQA 把 KV 砍到只剩 1 个头、最省显存，为什么大家不直接全用它？</summary>
+                <div class="think-body">
+                  <p>KV 头可以理解成“资料库的不同检索视角”。MHA 有 H 个独立视角，能从很多角度去匹配；MQA 把它压成 1 个，所有 Query 头只能共用同一套 Key/Value，表达力明显变窄，效果通常会掉。</p>
+                  <p>GQA 是中庸之道：保留几组（比如 8 组）视角，让每组被若干 Query 头共享。显存接近 MQA，效果接近 MHA——这就是 LLaMA-2/3 选它的原因。工程里很多决策都是这种“在两个极端之间找平衡点”。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">关键顺序：先存“瘦” KV，再临时扩充（repeat_kv）</div>
             <div class="story-panel">
               <strong>4. 延迟扩充：缓存窄的，算注意力前才复制宽的</strong>
               <p>矩阵乘法要求 Q 头数和 K/V 头数一致。GQA 的解法不是把 KV 存成宽的（那就退化回 MHA、白省了），而是<strong>只缓存窄的 num_kv_heads 个头</strong>，每次前向用 <code>repeat_kv</code> 临时把每个 KV 头复制 num_queries_per_kv 份，对齐到 Query 头数。</p>
               <div class="mini-flow"><span>cat 更新 cache（窄）</span><span>new_kv_cache = 窄 KV</span><strong>repeat_kv → 宽，喂给注意力</strong></div>
-              <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存了宽 KV = 显存退回 MHA，GQA 优势归零。</p>
+              <p style="color:#bd6516"><strong>易错点</strong>：<code>repeat_kv</code> 必须在“存进 new_kv_cache 之后”才做。先扩充再缓存 = 缓存里存了宽 KV = 显存退回 MHA，GQA 等于白做。</p>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：GQA 为什么是 70B 模型能跑起来的关键之一</div>
+              <p>LLaMA-2 70B 有 64 个 Query 头，但只用 8 个 KV 头（每 8 个 Q 共享 1 个 KV），KV Cache 直接降到 MHA 的 <strong>1/8</strong>——在长上下文推理时能省下几十 GB 显存，这往往决定了一张卡到底装不装得下、能开多长上下文、能同时服务多少用户。</p>
+              <p>而“先存窄、用时再扩”的延迟扩充，正是 vLLM、TensorRT-LLM 这些推理框架的标准做法。它们之所以敢这么干，是因为注意力是 <strong>Memory-bound</strong>（瓶颈在搬数据而非算数）——临时复制几下的计算量可以忽略，省下的显存带宽才是大头。本仓库后面的 vLLM PagedAttention 关会接着讲怎么把这些 KV 块管得更省。</p>
             </div>
           </div>`,
       syntaxHtml: `<div class="syntax-card"><h4>语法热身：沿时间维拼接 + 复制头</h4><pre><code># ① KV Cache：把新 K 拼到历史末尾（dim=2 是 seq 维）
@@ -583,58 +627,188 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
   "05": [
     {
       id: "llama-mlp-swiglu",
-      title: "LLaMA MLP：gate、up、down 三步走",
+      title: "LLaMA MLP：为什么是 gate、up、down 三条路",
       todo: "TODO 1 / TODO 2",
       prerequisite: [
-        "nn.Module 里子层要在 __init__ 定义。",
-        "bias=False 是 LLaMA MLP 的常见设置。",
-        "gate 和 up 输出必须同 shape 才能相乘。"
+        "标准 Transformer 的 MLP 通常是两层：先把 hidden_size 放大到 4 倍左右，再用激活函数，最后投影回 hidden_size。",
+        "SwiGLU 多了一条 gate 分支：一条分支判断“哪些特征该打开”，另一条分支提供“要传递的内容”，两者逐元素相乘。",
+        "LLaMA 里线性层常用 bias=False。对初学者来说先按接口写对；直觉上它少一组偏置参数，归一化和残差已经承担了很多平移校正。"
       ],
-      intuition: "gate 先产生筛选信号，up 产生内容，二者相乘后由 down 投影回 hidden_size。",
-      exampleHtml: `<div class="mlp-demo"><span>x → gate_proj → SiLU</span><span>x → up_proj</span><strong>相乘 → down_proj → hidden</strong></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：写一个带子层的简单模块</h4><pre><code>class ScaleValue(nn.Module):
-    def __init__(self, dim):
+      intuition: "普通 MLP 像“把信息放大后统一加工”；SwiGLU 更像“内容通道 + 阀门通道”：up_proj 负责把可用内容拿出来，gate_proj 经 SiLU 后决定每个中间特征开多大，最后 down_proj 把中间表示收回到原来的 hidden_size，方便残差相加。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 先看普通 MLP：两次投影，中间放大</strong>
+              <p>输入 x 的 shape 是 [B, S, d]。普通 MLP 常见写法是 <code>d → 4d → d</code>：先扩宽，让模型有更多中间特征可组合；再投影回 d，才能和残差主路相加。</p>
+              <div class="mini-flow"><span>x<br>[B,S,d]</span><span>up<br>[B,S,4d]</span><span>activation</span><strong>down<br>[B,S,d]</strong></div>
+            </div>
+            <div class="story-arrow">SwiGLU 多一条 gate 分支：不是只激活，而是“先决定开关，再传内容”</div>
+            <div class="story-panel">
+              <strong>2. gate 和 up 必须同 shape，因为它们要逐元素相乘</strong>
+              <p><code>gate_proj(x)</code> 和 <code>up_proj(x)</code> 都输出 [B, S, intermediate_size]。SiLU 让 gate 变成平滑门控信号：有些位置放大、有些位置压低；再和 up 分支的内容逐元素相乘。</p>
+              <svg viewBox="0 0 520 180" width="100%" style="max-width:680px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <defs>
+                  <marker id="arrow05a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L7,3 z" fill="#657184"></path>
+                  </marker>
+                </defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="18" y="70" width="72" height="36" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect>
+                  <text x="54" y="93">x [B,S,d]</text>
+                  <line x1="90" y1="88" x2="145" y2="50" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="90" y1="88" x2="145" y2="126" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <rect x="145" y="26" width="110" height="38" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect>
+                  <text x="200" y="50">gate_proj → SiLU</text>
+                  <rect x="145" y="112" width="110" height="38" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect>
+                  <text x="200" y="136">up_proj</text>
+                  <text x="315" y="92" font-size="24" fill="#8a4d0a">⊙</text>
+                  <line x1="255" y1="45" x2="302" y2="82" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="255" y1="131" x2="302" y2="98" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="328" y1="90" x2="376" y2="90" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <rect x="376" y="70" width="92" height="38" rx="8" fill="#f4f1ff" stroke="#c9bdf0"></rect>
+                  <text x="422" y="94">down_proj</text>
+                  <text x="422" y="125" fill="#657184">回到 [B,S,d]</text>
+                </g>
+              </svg>
+              <p>这就是 notebook 里 forward 的核心公式：<code>down(SiLU(gate(x)) * up(x))</code>。你写代码时只要保证 gate/up 输出维度一致，down 的输入就是 intermediate_size。</p>
+            </div>
+            <div class="story-arrow">为什么 intermediate_size 常接近 8/3 × hidden_size？</div>
+            <div class="story-panel">
+              <strong>3. 8/3 不是玄学，是为了让 SwiGLU 的开销接近原始 4d MLP</strong>
+              <p>普通 MLP 两个大矩阵：<code>d → 4d</code> 和 <code>4d → d</code>，参数量大约是 <code>8d²</code>。</p>
+              <p>SwiGLU 有三个矩阵：gate、up、down。若中间维度是 m，参数量大约是 <code>d·m + d·m + m·d = 3dm</code>。为了和普通 MLP 的 <code>8d²</code> 接近，令 <code>3dm ≈ 8d²</code>，得到 <code>m ≈ 8/3·d</code>。</p>
+              <div class="matrix-flow"><span>普通 MLP<br>2 个矩阵<br>≈ 8d²</span><span>SwiGLU<br>3 个矩阵<br>≈ 3dm</span><strong>令 3dm≈8d²<br>m≈8/3d</strong></div>
+              <details class="think">
+                <summary>为什么要让计算开销接近原始模型，而不是随便变大？</summary>
+                <div class="think-body">
+                  <p>因为这样才能公平比较“结构改进”本身。如果参数量和 FLOPs 暴涨，效果变好可能只是因为模型更大，不一定是 SwiGLU 更好。</p>
+                  <p>工程上也要控制训练和推理预算。保持相近开销，意味着可以把普通 MLP 换成 SwiGLU，同时显存、速度和部署成本不会突然失控。</p>
+                </div>
+              </details>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：写一个“门控内容”的小模块</h4><p>下面用不同命名练结构，不直接复制 notebook 的类名和字段名。</p><pre><code>class TinyGatedBlock(nn.Module):
+    def __init__(self, in_dim, mid_dim):
         super().__init__()
-        self.scale = nn.Linear(dim, dim)
-        self.value = nn.Linear(dim, dim)
+        self.switch = nn.Linear(in_dim, mid_dim, bias=False)
+        self.value = nn.Linear(in_dim, mid_dim, bias=False)
+        self.out = nn.Linear(mid_dim, in_dim, bias=False)
+
     def forward(self, x):
-        return torch.sigmoid(self.scale(x)) * self.value(x)</code></pre></div>`,
-      checkpoint: {
-        question: "LLaMA 风格 SwiGLU 中，哪两个投影的输出需要逐元素相乘？",
-        options: ["gate_proj 和 up_proj", "down_proj 和输入 x", "RMSNorm 和 Attention"],
+        opened = F.silu(self.switch(x))      # [B, S, mid_dim]
+        content = self.value(x)             # [B, S, mid_dim]
+        mixed = opened * content            # 逐元素乘法，shape 不变
+        return self.out(mixed)              # [B, S, in_dim]</code></pre><p class="syntax-tip">读法：子层在 <code>__init__</code> 里注册，计算在 <code>forward</code> 里串起来；<code>*</code> 是逐元素乘法，不是矩阵乘法，所以两边 shape 必须完全一致或可广播。</p></div>`,
+      predict: {
+        hook: "SwiGLU 比普通 MLP 多了一条 gate 分支。如果中间维度还写成 4d，参数和计算会明显变大。",
+        question: "先判断：为什么 LLaMA 常把 SwiGLU 的 intermediate_size 设到接近 8/3 × hidden_size？",
+        options: [
+          "为了让三个投影的总开销接近普通 4d MLP，方便公平替换和控制预算",
+          "因为 8/3 可以让张量自动变成整数，不需要取整",
+          "因为 SiLU 只能处理 8/3 倍宽度的向量"
+        ],
         answer: 0,
-        explain: "gate 经 SiLU 后作为门控信号，与 up 的内容特征逐元素相乘。"
+        revealNote: "关键是参数量近似相等：普通 MLP ≈ 8d²，SwiGLU ≈ 3dm，所以 m≈8/3d。实际模型还会按硬件友好的倍数取整。"
+      },
+      checkpoint: {
+        question: "x 的 shape 是 [2, 16, 512]，intermediate_size=1376。经过 gate_proj 和 up_proj 后，哪一步能合法相乘？",
+        options: ["两个输出都是 [2,16,1376]，先对 gate 做 SiLU，再与 up 输出逐元素相乘", "gate 输出 [2,16,512]，up 输出 [2,16,1376]，直接相乘", "down_proj 输出 [2,16,512] 后再和 up_proj 输出相乘"],
+        answer: 0,
+        explain: "gate/up 都从 hidden_size 投影到同一个 intermediate_size，shape 对齐后才能逐元素相乘；down_proj 是乘完后再把维度收回 hidden_size。"
       },
       homework: [
-        "定义 gate_proj、up_proj、down_proj。",
-        "用 F.silu(gate_proj(x)) * up_proj(x)。",
-        "确认输出 shape 回到 hidden_size。"
+        "TODO 1：在 __init__ 定义 gate_proj、up_proj、down_proj，三者都用 bias=False。",
+        "TODO 2：forward 里写出 down_proj(F.silu(gate_proj(x)) * up_proj(x)) 这条链。",
+        "测试时确认 LlamaMLP 的输出 shape 回到 [batch_size, seq_len, hidden_size]，并且所有参数都连在计算图上。"
       ]
     },
     {
       id: "llama-prenorm-residual",
-      title: "Pre-Norm 残差：先归一化，再走子层，最后加回来",
+      title: "Pre-Norm 残差：每个子层只写一份 update",
       todo: "TODO 3",
       prerequisite: [
-        "残差连接是 output = input + update。",
-        "Pre-Norm 表示子层前先 norm。",
-        "一个 Decoder Layer 有 Attention 和 MLP 两个子层。"
+        "残差连接是 output = input + update：主路 input 保留，子层只负责提供一份增量。",
+        "Pre-Norm 表示先归一化再进子层：norm → attention/mlp → add residual。",
+        "LLaMA Decoder Layer 有两个连续子层：Attention 子层先更新一次，MLP 子层再更新一次。两次都要各自保存 residual。"
       ],
-      intuition: "残差像主路，Attention/MLP 像旁路加工；旁路输出只是在主路表示上加一份更新。",
-      exampleHtml: `<div class="residual-demo"><span>x ─────────────┐</span><span>norm → attention ─┤ +</span><span>再 norm → mlp ────┤ +</span></div>`,
-      syntaxHtml: `<div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><pre><code>residual = x
-update = sublayer(norm(x))
-x = residual + update</code></pre></div>`,
+      intuition: "把 hidden_states 想成一条主干信息流。Attention 和 MLP 不直接替换主干，而是在“归一化后的输入”上算一份 update，再加回主干。这样深层网络反传时始终有一条清晰的梯度通路。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. Post-Norm 和 Pre-Norm 的区别先别混</strong>
+              <div class="mini-flow"><span>Post-Norm<br>sublayer → add → norm</span><strong>Pre-Norm<br>norm → sublayer → add</strong></div>
+              <p>LLaMA 用的是 Pre-Norm。写 TODO 时不要把 layernorm 放到残差相加之后。</p>
+            </div>
+            <div class="story-arrow">第一段：Attention update</div>
+            <div class="story-panel">
+              <strong>2. 保存旧 hidden_states，再让归一化后的版本去跑 attention</strong>
+              <svg viewBox="0 0 540 150" width="100%" style="max-width:700px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <defs>
+                  <marker id="arrow05b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L7,3 z" fill="#657184"></path>
+                  </marker>
+                </defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="56" width="86" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="63" y="78">hidden</text>
+                  <path d="M106 73 C150 20, 275 20, 345 64" fill="none" stroke="#2f7fc4" stroke-width="3" marker-end="url(#arrow05b)"></path>
+                  <text x="210" y="24" fill="#2f7fc4">residual 主路</text>
+                  <line x1="106" y1="73" x2="160" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <rect x="160" y="56" width="92" height="34" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect><text x="206" y="78">input_norm</text>
+                  <line x1="252" y1="73" x2="305" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <rect x="305" y="56" width="82" height="34" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="346" y="78">self_attn</text>
+                  <line x1="387" y1="73" x2="430" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <circle cx="452" cy="73" r="18" fill="#f4f1ff" stroke="#c9bdf0"></circle><text x="452" y="78" font-size="20">+</text>
+                  <line x1="470" y1="73" x2="510" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <text x="511" y="101" fill="#657184">hidden'</text>
+                </g>
+              </svg>
+              <p>第一段的代码顺序是：保存 residual → input_layernorm → self_attn → residual + update。</p>
+            </div>
+            <div class="story-arrow">第二段：MLP update，结构完全一样，只是换子层</div>
+            <div class="story-panel">
+              <strong>3. 注意 residual 要重新保存为 Attention 后的新 hidden_states</strong>
+              <p>MLP 子层不是加回最开始的 x，而是加回 Attention 更新之后的 hidden_states。所以第二段开始要再写一次 <code>residual = hidden_states</code>。</p>
+              <div class="residual-demo"><span>hidden' ─ residual ─────────────┐</span><span>post_attention_norm → mlp ─────┤ +</span><strong>hidden'' 继续传给下一层</strong></div>
+              <details class="think">
+                <summary>为什么测试会检查“所有参数都有梯度”？</summary>
+                <div class="think-body">
+                  <p>如果你忘了调用 self_attn 或 mlp，或者把某段 update 丢掉，对应参数就不参与输出计算，反向传播时 grad 会是 None。</p>
+                  <p>所以这个测试不是只看 shape，而是在检查两段子层都真的接进了计算图。</p>
+                </div>
+              </details>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><p>先用玩具子层练顺序。重点是 residual 在 norm 前保存，add 在子层后发生。</p><pre><code>def prenorm_step(x, norm, block):
+    residual = x
+    x = norm(x)
+    update = block(x)
+    x = residual + update
+    return x
+
+# 一个 Decoder Layer 通常连续做两次：
+x = prenorm_step(x, norm_a, attention_like_block)
+x = prenorm_step(x, norm_b, mlp_like_block)</code></pre><p class="syntax-tip">读法：不要写成 <code>x = norm(residual + block(x))</code>，那是 Post-Norm 的味道；LLaMA 这里要先 norm，再进子层，最后加 residual。</p></div>`,
+      predict: {
+        hook: "TODO 3 最容易写错的点不是加号，而是 residual 保存的时机。尤其第二段 MLP，residual 应该是谁？",
+        question: "先判断：MLP block 开始前，residual 应该保存哪个张量？",
+        options: [
+          "最原始输入 x，因为整层都应该加回同一个起点",
+          "Attention block 完成后的 hidden_states，因为 MLP 是在这个新状态上继续更新",
+          "post_attention_layernorm 的输出，因为它已经归一化"
+        ],
+        answer: 1,
+        revealNote: "第二段 residual 要重新保存 Attention 后的 hidden_states。每个子层都有自己的 residual 主路。"
+      },
       checkpoint: {
-        question: "Pre-Norm Transformer block 中，归一化发生在子层的什么位置？",
-        options: ["子层之前", "子层之后", "只在最终输出后"],
+        question: "LLaMA Decoder Layer 的正确顺序是哪一个？",
+        options: ["residual=x → norm → attention → add；再 residual=当前hidden → norm → mlp → add", "norm → attention → norm → mlp → 最后只加一次最初的 residual", "attention → residual add → mlp → layernorm 放在最后"],
         answer: 0,
-        explain: "Pre-Norm 的顺序是 norm → sublayer → residual add。"
+        explain: "Pre-Norm 残差是每个子层一段：先保存当前 hidden_states，再 norm、子层、加回 residual。Attention 和 MLP 各做一次。"
       },
       homework: [
-        "写出 Attention block 的 residual + norm + self_attn + add。",
-        "写出 MLP block 的 residual + norm + mlp + add。",
-        "运行 backward 检查所有参数都有梯度。"
+        "TODO 3 第一段：写 Attention block，顺序是 residual → input_layernorm → self_attn → residual + hidden_states。",
+        "TODO 3 第二段：重新保存 residual，再写 post_attention_layernorm → mlp → residual + hidden_states。",
+        "跑 notebook 测试：输出 shape 必须等于输入 shape，且 named_parameters 里的每个参数都应该拿到 grad。"
       ]
     }
   ],

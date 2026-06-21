@@ -220,6 +220,72 @@
       pointer-events: none;
       z-index: 2;
     }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
     .shape-story {
       display: grid;
       gap: 10px;
@@ -650,7 +716,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -660,7 +726,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 05 | 零基础导学关卡</p>
         <h1>LLaMA3 Block Tutorial</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">05_LLaMA3_Block_Tutorial.ipynb</span>
           <span class="pill">Decoder Block</span><span class="pill">Residual</span><span class="pill">RMSNorm</span>
@@ -669,9 +735,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">x = x + Attention(RMSNorm(x)); x = x + MLP(RMSNorm(x))</div>
       </div>
@@ -679,48 +745,126 @@
 
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="llama-mlp-swiglu">
+        <article class="lesson-card inquiry" data-lesson="llama-mlp-swiglu">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
-          <h2>LLaMA MLP：gate、up、down 三步走</h2>
+          <h2>LLaMA MLP：为什么是 gate、up、down 三条路</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>nn.Module 里子层要在 __init__ 定义。</li><li>bias=False 是 LLaMA MLP 的常见设置。</li><li>gate 和 up 输出必须同 shape 才能相乘。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">SwiGLU 比普通 MLP 多了一条 gate 分支。如果中间维度还写成 4d，参数和计算会明显变大。</p>
+            <p class="predict-q">先判断：为什么 LLaMA 常把 SwiGLU 的 intermediate_size 设到接近 8/3 × hidden_size？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-mlp-swiglu" value="0">
+                <span>为了让三个投影的总开销接近普通 4d MLP，方便公平替换和控制预算</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-mlp-swiglu" value="1">
+                <span>因为 8/3 可以让张量自动变成整数，不需要取整</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-mlp-swiglu" value="2">
+                <span>因为 SiLU 只能处理 8/3 倍宽度的向量</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="llama-mlp-swiglu">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>gate 先产生筛选信号，up 产生内容，二者相乘后由 down 投影回 hidden_size。</p>
-            <div class="mlp-demo"><span>x → gate_proj → SiLU</span><span>x → up_proj</span><strong>相乘 → down_proj → hidden</strong></div>
-            <div class="syntax-card"><h4>语法热身：写一个带子层的简单模块</h4><pre><code>class ScaleValue(nn.Module):
-    def __init__(self, dim):
+          <div class="gated" data-gated="llama-mlp-swiglu">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>标准 Transformer 的 MLP 通常是两层：先把 hidden_size 放大到 4 倍左右，再用激活函数，最后投影回 hidden_size。</li><li>SwiGLU 多了一条 gate 分支：一条分支判断“哪些特征该打开”，另一条分支提供“要传递的内容”，两者逐元素相乘。</li><li>LLaMA 里线性层常用 bias=False。对初学者来说先按接口写对；直觉上它少一组偏置参数，归一化和残差已经承担了很多平移校正。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>普通 MLP 像“把信息放大后统一加工”；SwiGLU 更像“内容通道 + 阀门通道”：up_proj 负责把可用内容拿出来，gate_proj 经 SiLU 后决定每个中间特征开多大，最后 down_proj 把中间表示收回到原来的 hidden_size，方便残差相加。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. 先看普通 MLP：两次投影，中间放大</strong>
+              <p>输入 x 的 shape 是 [B, S, d]。普通 MLP 常见写法是 <code>d → 4d → d</code>：先扩宽，让模型有更多中间特征可组合；再投影回 d，才能和残差主路相加。</p>
+              <div class="mini-flow"><span>x<br>[B,S,d]</span><span>up<br>[B,S,4d]</span><span>activation</span><strong>down<br>[B,S,d]</strong></div>
+            </div>
+            <div class="story-arrow">SwiGLU 多一条 gate 分支：不是只激活，而是“先决定开关，再传内容”</div>
+            <div class="story-panel">
+              <strong>2. gate 和 up 必须同 shape，因为它们要逐元素相乘</strong>
+              <p><code>gate_proj(x)</code> 和 <code>up_proj(x)</code> 都输出 [B, S, intermediate_size]。SiLU 让 gate 变成平滑门控信号：有些位置放大、有些位置压低；再和 up 分支的内容逐元素相乘。</p>
+              <svg viewBox="0 0 520 180" width="100%" style="max-width:680px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <defs>
+                  <marker id="arrow05a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L7,3 z" fill="#657184"></path>
+                  </marker>
+                </defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="18" y="70" width="72" height="36" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect>
+                  <text x="54" y="93">x [B,S,d]</text>
+                  <line x1="90" y1="88" x2="145" y2="50" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="90" y1="88" x2="145" y2="126" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <rect x="145" y="26" width="110" height="38" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect>
+                  <text x="200" y="50">gate_proj → SiLU</text>
+                  <rect x="145" y="112" width="110" height="38" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect>
+                  <text x="200" y="136">up_proj</text>
+                  <text x="315" y="92" font-size="24" fill="#8a4d0a">⊙</text>
+                  <line x1="255" y1="45" x2="302" y2="82" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="255" y1="131" x2="302" y2="98" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <line x1="328" y1="90" x2="376" y2="90" stroke="#657184" stroke-width="2" marker-end="url(#arrow05a)"></line>
+                  <rect x="376" y="70" width="92" height="38" rx="8" fill="#f4f1ff" stroke="#c9bdf0"></rect>
+                  <text x="422" y="94">down_proj</text>
+                  <text x="422" y="125" fill="#657184">回到 [B,S,d]</text>
+                </g>
+              </svg>
+              <p>这就是 notebook 里 forward 的核心公式：<code>down(SiLU(gate(x)) * up(x))</code>。你写代码时只要保证 gate/up 输出维度一致，down 的输入就是 intermediate_size。</p>
+            </div>
+            <div class="story-arrow">为什么 intermediate_size 常接近 8/3 × hidden_size？</div>
+            <div class="story-panel">
+              <strong>3. 8/3 不是玄学，是为了让 SwiGLU 的开销接近原始 4d MLP</strong>
+              <p>普通 MLP 两个大矩阵：<code>d → 4d</code> 和 <code>4d → d</code>，参数量大约是 <code>8d²</code>。</p>
+              <p>SwiGLU 有三个矩阵：gate、up、down。若中间维度是 m，参数量大约是 <code>d·m + d·m + m·d = 3dm</code>。为了和普通 MLP 的 <code>8d²</code> 接近，令 <code>3dm ≈ 8d²</code>，得到 <code>m ≈ 8/3·d</code>。</p>
+              <div class="matrix-flow"><span>普通 MLP<br>2 个矩阵<br>≈ 8d²</span><span>SwiGLU<br>3 个矩阵<br>≈ 3dm</span><strong>令 3dm≈8d²<br>m≈8/3d</strong></div>
+              <details class="think">
+                <summary>为什么要让计算开销接近原始模型，而不是随便变大？</summary>
+                <div class="think-body">
+                  <p>因为这样才能公平比较“结构改进”本身。如果参数量和 FLOPs 暴涨，效果变好可能只是因为模型更大，不一定是 SwiGLU 更好。</p>
+                  <p>工程上也要控制训练和推理预算。保持相近开销，意味着可以把普通 MLP 换成 SwiGLU，同时显存、速度和部署成本不会突然失控。</p>
+                </div>
+              </details>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：写一个“门控内容”的小模块</h4><p>下面用不同命名练结构，不直接复制 notebook 的类名和字段名。</p><pre><code>class TinyGatedBlock(nn.Module):
+    def __init__(self, in_dim, mid_dim):
         super().__init__()
-        self.scale = nn.Linear(dim, dim)
-        self.value = nn.Linear(dim, dim)
-    def forward(self, x):
-        return torch.sigmoid(self.scale(x)) * self.value(x)</code></pre></div>
-          </div>
+        self.switch = nn.Linear(in_dim, mid_dim, bias=False)
+        self.value = nn.Linear(in_dim, mid_dim, bias=False)
+        self.out = nn.Linear(mid_dim, in_dim, bias=False)
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>LLaMA 风格 SwiGLU 中，哪两个投影的输出需要逐元素相乘？</p>
-            <div class="checkpoint-options">
+    def forward(self, x):
+        opened = F.silu(self.switch(x))      # [B, S, mid_dim]
+        content = self.value(x)             # [B, S, mid_dim]
+        mixed = opened * content            # 逐元素乘法，shape 不变
+        return self.out(mixed)              # [B, S, in_dim]</code></pre><p class="syntax-tip">读法：子层在 <code>__init__</code> 里注册，计算在 <code>forward</code> 里串起来；<code>*</code> 是逐元素乘法，不是矩阵乘法，所以两边 shape 必须完全一致或可广播。</p></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>x 的 shape 是 [2, 16, 512]，intermediate_size=1376。经过 gate_proj 和 up_proj 后，哪一步能合法相乘？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-mlp-swiglu" value="0">
-                <span>down_proj 和输入 x</span>
+                <span>down_proj 输出 [2,16,512] 后再和 up_proj 输出相乘</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-mlp-swiglu" value="1">
-                <span>RMSNorm 和 Attention</span>
+                <span>gate 输出 [2,16,512]，up 输出 [2,16,1376]，直接相乘</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-mlp-swiglu" value="2">
-                <span>gate_proj 和 up_proj</span>
+                <span>两个输出都是 [2,16,1376]，先对 gate 做 SiLU，再与 up 输出逐元素相乘</span>
               </label></div>
-            <div class="feedback" data-feedback="llama-mlp-swiglu"></div>
+              <div class="feedback" data-feedback="llama-mlp-swiglu"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -729,56 +873,130 @@
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-mlp-swiglu-0">
-                <span>定义 gate_proj、up_proj、down_proj。</span>
+                <span>TODO 1：在 __init__ 定义 gate_proj、up_proj、down_proj，三者都用 bias=False。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-mlp-swiglu-1">
-                <span>用 F.silu(gate_proj(x)) * up_proj(x)。</span>
+                <span>TODO 2：forward 里写出 down_proj(F.silu(gate_proj(x)) * up_proj(x)) 这条链。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-mlp-swiglu-2">
-                <span>确认输出 shape 回到 hidden_size。</span>
+                <span>测试时确认 LlamaMLP 的输出 shape 回到 [batch_size, seq_len, hidden_size]，并且所有参数都连在计算图上。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="llama-prenorm-residual">
+        <article class="lesson-card inquiry" data-lesson="llama-prenorm-residual">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 3</span>
           </div>
-          <h2>Pre-Norm 残差：先归一化，再走子层，最后加回来</h2>
+          <h2>Pre-Norm 残差：每个子层只写一份 update</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>残差连接是 output = input + update。</li><li>Pre-Norm 表示子层前先 norm。</li><li>一个 Decoder Layer 有 Attention 和 MLP 两个子层。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">TODO 3 最容易写错的点不是加号，而是 residual 保存的时机。尤其第二段 MLP，residual 应该是谁？</p>
+            <p class="predict-q">先判断：MLP block 开始前，residual 应该保存哪个张量？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-prenorm-residual" value="0">
+                <span>最原始输入 x，因为整层都应该加回同一个起点</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-prenorm-residual" value="1">
+                <span>Attention block 完成后的 hidden_states，因为 MLP 是在这个新状态上继续更新</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-llama-prenorm-residual" value="2">
+                <span>post_attention_layernorm 的输出，因为它已经归一化</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="llama-prenorm-residual">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>残差像主路，Attention/MLP 像旁路加工；旁路输出只是在主路表示上加一份更新。</p>
-            <div class="residual-demo"><span>x ─────────────┐</span><span>norm → attention ─┤ +</span><span>再 norm → mlp ────┤ +</span></div>
-            <div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><pre><code>residual = x
-update = sublayer(norm(x))
-x = residual + update</code></pre></div>
-          </div>
+          <div class="gated" data-gated="llama-prenorm-residual">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>残差连接是 output = input + update：主路 input 保留，子层只负责提供一份增量。</li><li>Pre-Norm 表示先归一化再进子层：norm → attention/mlp → add residual。</li><li>LLaMA Decoder Layer 有两个连续子层：Attention 子层先更新一次，MLP 子层再更新一次。两次都要各自保存 residual。</li></ul>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>Pre-Norm Transformer block 中，归一化发生在子层的什么位置？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把 hidden_states 想成一条主干信息流。Attention 和 MLP 不直接替换主干，而是在“归一化后的输入”上算一份 update，再加回主干。这样深层网络反传时始终有一条清晰的梯度通路。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>1. Post-Norm 和 Pre-Norm 的区别先别混</strong>
+              <div class="mini-flow"><span>Post-Norm<br>sublayer → add → norm</span><strong>Pre-Norm<br>norm → sublayer → add</strong></div>
+              <p>LLaMA 用的是 Pre-Norm。写 TODO 时不要把 layernorm 放到残差相加之后。</p>
+            </div>
+            <div class="story-arrow">第一段：Attention update</div>
+            <div class="story-panel">
+              <strong>2. 保存旧 hidden_states，再让归一化后的版本去跑 attention</strong>
+              <svg viewBox="0 0 540 150" width="100%" style="max-width:700px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <defs>
+                  <marker id="arrow05b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L7,3 z" fill="#657184"></path>
+                  </marker>
+                </defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="56" width="86" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="63" y="78">hidden</text>
+                  <path d="M106 73 C150 20, 275 20, 345 64" fill="none" stroke="#2f7fc4" stroke-width="3" marker-end="url(#arrow05b)"></path>
+                  <text x="210" y="24" fill="#2f7fc4">residual 主路</text>
+                  <line x1="106" y1="73" x2="160" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <rect x="160" y="56" width="92" height="34" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect><text x="206" y="78">input_norm</text>
+                  <line x1="252" y1="73" x2="305" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <rect x="305" y="56" width="82" height="34" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="346" y="78">self_attn</text>
+                  <line x1="387" y1="73" x2="430" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <circle cx="452" cy="73" r="18" fill="#f4f1ff" stroke="#c9bdf0"></circle><text x="452" y="78" font-size="20">+</text>
+                  <line x1="470" y1="73" x2="510" y2="73" stroke="#657184" stroke-width="2" marker-end="url(#arrow05b)"></line>
+                  <text x="511" y="101" fill="#657184">hidden'</text>
+                </g>
+              </svg>
+              <p>第一段的代码顺序是：保存 residual → input_layernorm → self_attn → residual + update。</p>
+            </div>
+            <div class="story-arrow">第二段：MLP update，结构完全一样，只是换子层</div>
+            <div class="story-panel">
+              <strong>3. 注意 residual 要重新保存为 Attention 后的新 hidden_states</strong>
+              <p>MLP 子层不是加回最开始的 x，而是加回 Attention 更新之后的 hidden_states。所以第二段开始要再写一次 <code>residual = hidden_states</code>。</p>
+              <div class="residual-demo"><span>hidden' ─ residual ─────────────┐</span><span>post_attention_norm → mlp ─────┤ +</span><strong>hidden'' 继续传给下一层</strong></div>
+              <details class="think">
+                <summary>为什么测试会检查“所有参数都有梯度”？</summary>
+                <div class="think-body">
+                  <p>如果你忘了调用 self_attn 或 mlp，或者把某段 update 丢掉，对应参数就不参与输出计算，反向传播时 grad 会是 None。</p>
+                  <p>所以这个测试不是只看 shape，而是在检查两段子层都真的接进了计算图。</p>
+                </div>
+              </details>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：通用 pre-norm 残差模板</h4><p>先用玩具子层练顺序。重点是 residual 在 norm 前保存，add 在子层后发生。</p><pre><code>def prenorm_step(x, norm, block):
+    residual = x
+    x = norm(x)
+    update = block(x)
+    x = residual + update
+    return x
+
+# 一个 Decoder Layer 通常连续做两次：
+x = prenorm_step(x, norm_a, attention_like_block)
+x = prenorm_step(x, norm_b, mlp_like_block)</code></pre><p class="syntax-tip">读法：不要写成 <code>x = norm(residual + block(x))</code>，那是 Post-Norm 的味道；LLaMA 这里要先 norm，再进子层，最后加 residual。</p></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>LLaMA Decoder Layer 的正确顺序是哪一个？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-prenorm-residual" value="0">
-                <span>子层之前</span>
+                <span>residual=x → norm → attention → add；再 residual=当前hidden → norm → mlp → add</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-prenorm-residual" value="1">
-                <span>子层之后</span>
+                <span>attention → residual add → mlp → layernorm 放在最后</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-llama-prenorm-residual" value="2">
-                <span>只在最终输出后</span>
+                <span>norm → attention → norm → mlp → 最后只加一次最初的 residual</span>
               </label></div>
-            <div class="feedback" data-feedback="llama-prenorm-residual"></div>
+              <div class="feedback" data-feedback="llama-prenorm-residual"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -787,15 +1005,15 @@ x = residual + update</code></pre></div>
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-prenorm-residual-0">
-                <span>写出 Attention block 的 residual + norm + self_attn + add。</span>
+                <span>TODO 3 第一段：写 Attention block，顺序是 residual → input_layernorm → self_attn → residual + hidden_states。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-prenorm-residual-1">
-                <span>写出 MLP block 的 residual + norm + mlp + add。</span>
+                <span>TODO 3 第二段：重新保存 residual，再写 post_attention_layernorm → mlp → residual + hidden_states。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-prenorm-residual-2">
-                <span>运行 backward 检查所有参数都有梯度。</span>
+                <span>跑 notebook 测试：输出 shape 必须等于输入 shape，且 named_parameters 里的每个参数都应该拿到 grad。</span>
               </label>
           </div>
         </article>
@@ -815,9 +1033,9 @@ x = residual + update</code></pre></div>
 
   <script>
     const levelId = "05";
-    const checkpointData = {"llama-mlp-swiglu":{"answer":2,"explain":"gate 经 SiLU 后作为门控信号，与 up 的内容特征逐元素相乘。"},"llama-prenorm-residual":{"answer":0,"explain":"Pre-Norm 的顺序是 norm → sublayer → residual add。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const checkpointData = {"llama-mlp-swiglu":{"answer":2,"explain":"gate/up 都从 hidden_size 投影到同一个 intermediate_size，shape 对齐后才能逐元素相乘；down_proj 是乘完后再把维度收回 hidden_size。"},"llama-prenorm-residual":{"answer":0,"explain":"Pre-Norm 残差是每个子层一段：先保存当前 hidden_states，再 norm、子层、加回 residual。Attention 和 MLP 各做一次。"}};
+    const predictData = {"llama-mlp-swiglu":{"answer":0,"revealNote":"关键是参数量近似相等：普通 MLP ≈ 8d²，SwiGLU ≈ 3dm，所以 m≈8/3d。实际模型还会按硬件友好的倍数取整。"},"llama-prenorm-residual":{"answer":1,"revealNote":"第二段 residual 要重新保存 Attention 后的 hidden_states。每个子层都有自己的 residual 主路。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
