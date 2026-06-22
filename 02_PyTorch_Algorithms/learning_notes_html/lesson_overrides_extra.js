@@ -29,15 +29,33 @@ module.exports = {
       prerequisite: [
         "MoE 的目标是“大容量、低激活”：模型有很多专家，但每个 token 只去少数几个专家那里计算。",
         "Router 是一个很小的线性层，把每个 token 的 hidden state 映射成 num_experts 个 logit 分数。",
-        "本 notebook 的实现路径是：先对所有专家做 softmax 得到完整概率表，再从概率里取 Top-K，最后对 Top-K 权重重归一化。"
+        "本 notebook 的实现路径是：先对所有专家做 softmax 得到完整概率表，再从概率里取 Top-K，最后对 Top-K 权重重归一化。",
+        "Router 不负责真正执行专家网络，它只输出两张清单：选了哪些专家 selected_experts，以及每个专家拿多少权重 routing_weights。"
       ],
-      intuition: "把 Router 想成分诊台。每个 token 先拿自己的特征名片给所有专家打分，softmax 把分数变成全局概率，再只保留最适合的 K 个专家。Notebook 的 TODO 1/2 本质就是这两步。",
+      intuition: "把 Router 想成分诊台。每个 token 先拿自己的特征名片给所有专家打分，softmax 把分数变成全局概率，再只保留最适合的 K 个专家。Notebook 的 TODO 1/2 本质就是这两步。初学时先盯住一行：一行代表一个 token，这一行里所有列代表它对所有专家的偏好。",
       exampleHtml: `
           <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先读 forward 的输入输出合同</strong>
+              <p><code>TopKRouter.forward</code> 输入是 [batch_size, seq_len, hidden_size]，但输出不再按 batch/seq 分组，而是把所有 token 排成一列：<code>routing_weights</code> 和 <code>selected_experts</code> 都是 [batch_size * seq_len, top_k]。这就是后面 SparseMoEBlock 能按专家找 token 的原因。</p>
+              <div class="mini-table">
+                <span>输入</span><strong>hidden_states [B,S,H]</strong>
+                <span>输出 1</span><strong>routing_weights [B*S,K]</strong>
+                <span>输出 2</span><strong>selected_experts [B*S,K]</strong>
+              </div>
+            </div>
+            <div class="story-arrow">第一步：把 batch 和 seq 合并，变成 token 队列</div>
             <div class="story-panel">
               <strong>1. 先把 [B,S,H] 展平成 token 列表</strong>
               <p>Router 不是一次处理“一整句话”，而是逐 token 分配专家。输入 hidden_states 是 [batch, seq, hidden]，展平后变成 [num_tokens, hidden]，其中 <code>num_tokens = batch * seq</code>。</p>
               <div class="mini-flow"><span>hidden_states<br>[2,4,16]</span><span>view(-1,16)</span><strong>flat tokens<br>[8,16]</strong></div>
+              <details class="think">
+                <summary>为什么 Router 要按 token 展平，而不是按整句话路由？</summary>
+                <div class="think-body">
+                  <p>因为同一句话里的不同 token 可能需要不同专家。比如数字 token 可能更需要算术专家，代码 token 可能更需要语法专家。</p>
+                  <p>把 [B,S,H] 展平成 [B*S,H] 后，每一行都能独立得到自己的专家选择，MoE 才真正做到“稀疏激活”。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">每个 token 对所有专家打一排分数</div>
             <div class="story-panel">
@@ -73,17 +91,54 @@ module.exports = {
               <div class="ratio-board"><span>router_logits<br>[tokens,E]</span><span>softmax 概率表<br>[tokens,E]</span><strong>topk 后<br>weights/indices [tokens,K]</strong></div>
               <p>技术上要注意：如果后面一定会对 Top-K 权重重归一化，那么“topk logits 后在局部 softmax”和“全量 softmax 后 topk 再重归一化”对最终 Top-K 权重是等价的。本关按 notebook 的写法来做，不把另一种写法当成数学错误。</p>
               <p>这也是 TODO 1 强调 <code>router_logits.float()</code> 的原因：softmax 对数值很敏感，先转 FP32 更稳，最后再转回 hidden_states 的 dtype。</p>
+              <details class="think">
+                <summary>softmax 的 dim=-1 到底是什么意思？</summary>
+                <div class="think-body">
+                  <p>最后一维是 experts。<code>dim=-1</code> 表示对每个 token 的“专家分数行”做归一化，让这一行所有专家概率加起来等于 1。</p>
+                  <p>如果维度选错，概率就会跨 token 混在一起，那就变成“不同 token 互相抢概率”，完全不是 Router 想要的行为。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">topk 同时给你“值”和“索引”</div>
+            <div class="story-panel">
+              <strong>4. routing_weights 是概率，selected_experts 是专家编号</strong>
+              <p><code>torch.topk</code> 返回两个张量：第一个是 Top-K 的值，也就是被选专家的概率权重；第二个是这些值原本在专家维的下标，也就是专家 id。后面的聚合逻辑靠专家 id 找人，靠权重决定每个专家输出占多少。</p>
+              <div class="mini-table">
+                <span>routing_probs 一行</span><span>[0.05, 0.62, 0.08, 0.25]</span>
+                <span>top_k=2 values</span><strong>[0.62, 0.25]</strong>
+                <span>top_k=2 indices</span><strong>[1, 3]</strong>
+              </div>
+              <p style="color:#bd6516"><strong>易错点</strong>：notebook TODO 后面有 zero 占位初始化。写完 TODO 后，要让函数返回你真正算出的 <code>routing_weights</code> 和 <code>selected_experts</code>，不要被占位变量覆盖。</p>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：Router 是 MoE 的调度器</div>
+              <p>MoE 的专家像很多并行工作台，Router 决定每个 token 送去哪几个工作台。调度得好，模型容量变大但每个 token 只激活少数专家；调度得差，热门专家拥堵、冷门专家闲置，吞吐和效果都会受影响。</p>
+              <p>下一关的负载均衡损失，就是专门约束这个调度器不要总偏心同几个专家。</p>
             </div>
           </div>`,
-      syntaxHtml: code("Router 的 softmax 和 topk", [
-        "flat = hidden_states.view(-1, hidden_size)          # [tokens, hidden]",
-        "router_logits = gate(flat)                         # [tokens, experts]",
-        "routing_probs = F.softmax(router_logits.float(), dim=-1)",
-        "routing_weights, selected_experts = torch.topk(",
-        "    routing_probs, k=top_k, dim=-1",
-        ")",
-        "routing_weights = routing_weights.to(hidden_states.dtype)"
-      ]),
+      syntaxHtml: code("先用一行玩具分数练 softmax 和 topk", [
+        "toy_logits = torch.tensor([[1.2, 0.1, 2.0, -0.5]])  # 1 个 token, 4 个专家",
+        "",
+        "# dim=-1：只在“专家这一行”里归一化，得到每个专家的概率",
+        "toy_probs = F.softmax(toy_logits.float(), dim=-1)   # [1, 4]",
+        "",
+        "# topk 同时返回值(values)和下标(indices)",
+        "toy_weights, toy_ids = torch.topk(toy_probs, k=2, dim=-1)",
+        "print(toy_weights)  # 概率值，例如 [[0.62, 0.25]]",
+        "print(toy_ids)      # 专家编号，例如 [[2, 0]]"
+      ]) + `
+        <div class="syntax-card">
+          <h4>举一反三：把玩具张量换成 notebook 变量</h4>
+          <p>玩具例子只有 1 个 token。notebook 只是把很多 token 排成 [tokens, experts]，同样沿最后一维做 softmax/topk。</p>
+          <div class="mini-table">
+            <span>toy_logits</span><strong>router_logits</strong>
+            <span>toy_probs</span><strong>routing_probs</strong>
+            <span>toy_weights</span><strong>routing_weights</strong>
+            <span>toy_ids</span><strong>selected_experts</strong>
+            <span>k=2</span><strong>self.top_k</strong>
+          </div>
+          <p class="syntax-tip">迁移口诀：先把输入展平成 [tokens, hidden]，gate 后得到 [tokens, experts]；之后所有 softmax/topk 都沿 <code>dim=-1</code>，因为最后一维就是专家维。</p>
+        </div>`,
       predict: {
         hook: "Router 有多种等价写法。本关 notebook 明确要求先得到完整概率表，再从概率里取 Top-K。",
         question: "先判断：为什么 notebook 要先对全量 router_logits 做 softmax？",
@@ -103,8 +158,8 @@ module.exports = {
       ),
       homework: [
         "TODO 1：对 router_logits.float() 在专家维度 dim=-1 做全局 softmax。",
-        "TODO 2：用 torch.topk(routing_probs, self.top_k, dim=-1) 同时取 routing_weights 和 selected_experts。",
-        "注意把 TODO 后面的 zero 占位返回替换掉，不要让它覆盖你算出的 routing_weights 和 selected_experts。",
+        "TODO 2：用 torch.topk(routing_probs, self.top_k, dim=-1) 同时取 routing_weights（概率值）和 selected_experts（专家编号）。",
+        "注意把 TODO 后面的 zero 占位返回替换掉，不要让它覆盖你算出的 routing_weights 和 selected_experts；这是本关最常见的低级坑。",
         "检查返回 shape：二者都应该是 [batch_size * seq_len, top_k]，专家索引必须落在 [0, num_experts) 内。"
       ]
     }),
@@ -115,21 +170,39 @@ module.exports = {
       prerequisite: [
         "全量 softmax 的一整行概率和为 1；但丢掉非 Top-K 专家后，留下来的概率和通常小于 1。",
         "重归一化就是把留下来的 Top-K 权重按比例放大，让每个 token 的这 K 个权重重新加和为 1。",
-        "SparseMoEBlock 的聚合逻辑是：找到选中某专家的 token，跑这个专家，再乘对应权重，加回 final_hidden_states。"
+        "SparseMoEBlock 的聚合逻辑是：找到选中某专家的 token，跑这个专家，再乘对应权重，加回 final_hidden_states。",
+        "同一个 token 会被 top_k 个专家各处理一次，所以 final_hidden_states 需要用累加，而不是赋值覆盖。"
       ],
-      intuition: "Top-K 像只留下票数最高的两位专家，但他们原本只拿到了全体专家票数的一部分。重归一化把这部分票按比例摊成 100%，保证输出尺度稳定；聚合时每个专家贡献多少，由 routing weight 决定。",
+      intuition: "Top-K 像只留下票数最高的两位专家，但他们原本只拿到了全体专家票数的一部分。重归一化把这部分票按比例摊成 100%，保证输出尺度稳定；聚合时每个专家贡献多少，由 routing weight 决定。把这段想成“先重新分配投票权，再按投票权合成专家意见”。",
       exampleHtml: `
           <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先分清本 Mission 的两条线</strong>
+              <p>TODO 3 只要求你把 Top-K 权重重新归一化；后面的 SparseMoEBlock 聚合逻辑已经给好，主要让你读懂它。一个是“权重准备”，一个是“专家输出合成”，不要混成一件事。</p>
+              <div class="mini-table">
+                <span>你要补的</span><strong>routing_weights 重新除以每行 sum</strong>
+                <span>你要读懂的</span><strong>where 找 token → expert 计算 → 加权累加</strong>
+              </div>
+            </div>
+            <div class="story-arrow">先看为什么 Top-K 后的概率和不再是 1</div>
             <div class="story-panel">
               <strong>1. Top-K 权重为什么要重新除以 sum？</strong>
               <p>假设某 token 的全局概率是 [0.60, 0.27, 0.10, 0.03]，Top-2 留下 [0.60, 0.27]，和是 0.87。如果直接拿它们混合专家输出，结果整体会被乘小。重归一化后变成 [0.60/0.87, 0.27/0.87]，两者重新加和为 1。</p>
               <div class="ratio-board"><span>Top-2 原权重<br>.60 + .27 = .87</span><span>重归一化<br>.60/.87, .27/.87</span><strong>新权重<br>.69 + .31 = 1.00</strong></div>
+              <details class="think">
+                <summary>如果不重归一化，模型一定会崩吗？</summary>
+                <div class="think-body">
+                  <p>不一定立刻崩，但输出尺度会系统性变小：Top-K 丢掉的概率质量越多，专家混合结果越被压低。</p>
+                  <p>深层网络最怕每层尺度悄悄漂移。重归一化相当于告诉模型：既然只留下 K 个专家，那这 K 个专家内部重新按 100% 分配贡献。</p>
+                </div>
+              </details>
             </div>
             <div class="story-arrow">keepdim=True 是为了让广播除法不丢轴</div>
             <div class="story-panel">
               <strong>2. 形状读法：sum 后还要保持 [tokens, 1]</strong>
               <p><code>routing_weights</code> 是 [tokens, top_k]。如果 <code>sum(dim=-1)</code> 得到 [tokens]，再相除容易因为维度不对出错；<code>keepdim=True</code> 保持成 [tokens, 1]，就能自动广播到每个 Top-K 槽位。</p>
               <div class="mini-flow"><span>weights<br>[8,2]</span><span>sum(..., keepdim=True)<br>[8,1]</span><strong>weights / sum<br>[8,2]</strong></div>
+              <p style="color:#657184">测试里的 <code>weights.sum(dim=-1)</code> 接近 1，就是专门检查这一行有没有写对。</p>
             </div>
             <div class="story-arrow">读懂 SparseMoEBlock：where 找人，weight 乘输出，再累加</div>
             <div class="story-panel">
@@ -142,18 +215,64 @@ module.exports = {
               <p>然后用 <code>routing_weights[token_idx, kth_expert]</code> 拿到对应权重；<code>unsqueeze(-1)</code> 把 [n] 变成 [n,1]，才能乘到专家输出 [n, hidden] 的每个 hidden 维上。</p>
               <div class="matrix-flow"><span>expert_output<br>[n, hidden]</span><span>current_weight<br>[n, 1]</span><strong>加权后累加到<br>final_hidden_states[token_idx]</strong></div>
             </div>
+            <div class="story-arrow">为什么是 +=：一个 token 会收集多个专家的贡献</div>
+            <div class="story-panel">
+              <strong>4. top_k=2 时，同一个 token 会被写回两次</strong>
+              <p>如果 token 0 选了专家 2 和专家 0，那么遍历 expert_idx=2 时会给 token 0 加一次输出；遍历 expert_idx=0 时还会再给 token 0 加一次输出。最终结果是两个专家输出的加权和，所以这里必须是 <code>+=</code> 累加。</p>
+              <div class="sum-flow">
+                <b>token0 输出</b>
+                <em>expert2(x0) * w0,0</em>
+                <em>expert0(x0) * w0,1</em>
+                <strong>两份贡献相加</strong>
+              </div>
+              <p style="color:#bd6516"><strong>易错点</strong>：如果写成赋值覆盖，后一个专家会把前一个专家的贡献抹掉，top_k 就退化得很奇怪。</p>
+            </div>
+            <div class="story-arrow">最后按测试反查三件事</div>
+            <div class="story-panel">
+              <strong>5. Router 测试其实在帮你做 code review</strong>
+              <p>本关测试不关心专家内容学得好不好，它只检查路由协议是否成立：shape 对、权重和为 1、专家 id 合法、MoE 输出回到原 shape。</p>
+              <div class="mini-table">
+                <span>weights / indices shape</span><strong>[batch_size * seq_len, top_k]</strong>
+                <span>weights.sum(dim=-1)</span><strong>每行接近 1</strong>
+                <span>final output</span><strong>回到 [batch_size, seq_len, hidden_size]</strong>
+              </div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：玩具循环易懂，工业实现会先排队再批处理</div>
+              <p>这里用 for 循环遍历专家，是为了让逻辑透明。真实推理框架会把同一个专家的 token 先排序聚到一起，一次性组成大 batch 喂给专家网络，减少小矩阵调用带来的 GPU 空转。</p>
+              <p>但无论实现多复杂，核心协议都没变：Router 给专家 id 和权重，专家产出向量，最后按权重加回对应 token。</p>
+            </div>
           </div>`,
-      syntaxHtml: code("重归一化与专家聚合的关键形状", [
-        "routing_weights = routing_weights / routing_weights.sum(",
-        "    dim=-1, keepdim=True",
-        ")",
+      syntaxHtml: code("先用一行权重练 keepdim=True", [
+        "toy_weights = torch.tensor([[0.60, 0.27], [0.40, 0.10]])  # [tokens=2, top_k=2]",
         "",
-        "# 读懂 SparseMoEBlock 里的聚合：",
-        "token_idx, kth_expert = torch.where(selected_experts == expert_idx)",
-        "current_weight = routing_weights[token_idx, kth_expert].unsqueeze(-1)",
-        "current_output = expert(flat_hidden_states[token_idx])",
-        "final_hidden_states[token_idx] += current_output * current_weight"
-      ]),
+        "# keepdim=True：sum 后保留成 [2, 1]，才能逐行广播除回 [2, 2]",
+        "row_sum = toy_weights.sum(dim=-1, keepdim=True)            # [[0.87], [0.50]]",
+        "toy_normed = toy_weights / row_sum                         # 每行和都变成 1",
+        "print(toy_normed.sum(dim=-1))                               # tensor([1., 1.])"
+      ]) + code("再用玩具 selected_experts 读懂 where 和 unsqueeze", [
+        "selected = torch.tensor([[2, 0], [1, 2], [3, 1]])  # [tokens=3, top_k=2]",
+        "expert_idx = 2",
+        "",
+        "# where 返回两个坐标：第几个 token、第几个 top-k 槽位",
+        "token_idx, kth = torch.where(selected == expert_idx)",
+        "print(token_idx)  # tensor([0, 1])",
+        "print(kth)        # tensor([0, 1])",
+        "",
+        "weights = torch.tensor([[0.7, 0.3], [0.4, 0.6], [0.5, 0.5]])",
+        "w = weights[token_idx, kth].unsqueeze(-1)  # [2] -> [2, 1]，才能乘 [2, hidden]"
+      ]) + `
+        <div class="syntax-card">
+          <h4>举一反三：把玩具写法搬回 notebook</h4>
+          <p>TODO 3 只需要第一张卡的重归一化写法。第二张卡是为了读懂后面已经给出的专家聚合代码。</p>
+          <div class="mini-table">
+            <span>toy_weights</span><strong>routing_weights</strong>
+            <span>selected</span><strong>selected_experts</strong>
+            <span>expert_idx</span><strong>for 循环里的 expert_idx</strong>
+            <span>w</span><strong>current_weight</strong>
+          </div>
+          <p class="syntax-tip">迁移口诀：归一化看最后一维 <code>top_k</code>，所以 <code>sum(dim=-1, keepdim=True)</code>；聚合时权重先从 [n] 变 [n,1]，才能广播乘到专家输出的 hidden 维。</p>
+        </div>`,
       predict: {
         hook: "Top-K 后，两个留下的概率可能是 0.60 和 0.27。它们已经是概率了，看起来可以直接用。",
         question: "先判断：为什么还要做 routing_weights / routing_weights.sum(..., keepdim=True)？",
@@ -173,8 +292,8 @@ module.exports = {
       ),
       homework: [
         "TODO 3：用 routing_weights / routing_weights.sum(dim=-1, keepdim=True) 完成 Top-K 权重重归一化。",
-        "按顺序阅读 SparseMoEBlock：final_hidden_states 初始化、flat_hidden_states 展平、遍历专家、torch.where 找 token、加权累加。",
-        "跑 notebook 测试：weights.sum(dim=-1) 应接近 1，输出 shape 应回到原来的 [batch_size, seq_len, hidden_size]。"
+        "按顺序阅读 SparseMoEBlock：final_hidden_states 初始化、flat_hidden_states 展平、遍历专家、torch.where 找 token、取权重 unsqueeze、加权累加。",
+        "跑 notebook 测试：weights.sum(dim=-1) 应接近 1，专家索引不能越界，输出 shape 应回到原来的 [batch_size, seq_len, hidden_size]。"
       ]
     })
   ],
