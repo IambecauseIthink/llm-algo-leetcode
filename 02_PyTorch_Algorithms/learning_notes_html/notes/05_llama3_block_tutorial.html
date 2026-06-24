@@ -1028,8 +1028,30 @@
             <div class="story-arrow">第二段：MLP update，结构完全一样，只是换子层</div>
             <div class="story-panel">
               <strong>3. 注意 residual 要重新保存为 Attention 后的新 hidden_states</strong>
-              <p>MLP 子层不是加回最开始的 x，而是加回 Attention 更新之后的 hidden_states。所以第二段开始要再写一次 <code>residual = hidden_states</code>。</p>
-              <div class="residual-demo"><span>hidden' ─ residual ─────────────┐</span><span>post_attention_norm → mlp ─────┤ +</span><strong>hidden'' 继续传给下一层</strong></div>
+              <p>MLP 子层不是加回最开始的 x，而是加回 Attention 更新之后的 <code>hidden_states</code>。把 Attention 后的状态记成 <code>hidden1</code>：第二段开始时，residual 应该保存 <code>hidden1</code>，MLP 只负责算一份新的 update，最后得到 <code>hidden2</code>。</p>
+              <div class="formula">
+                <span><code>hidden1 = hidden0 + attn_update</code></span>
+                <strong><code>residual = hidden1</code></strong>
+                <span><code>hidden2 = hidden1 + mlp_update</code></span>
+              </div>
+              <table class="freq-table">
+                <tr><th style="width:120px">第二段动作</th><th>Notebook 里对应的代码意图</th><th>为什么这样写</th></tr>
+                <tr>
+                  <td><strong>保存入口</strong></td>
+                  <td style="text-align:left"><code>residual = hidden_states</code></td>
+                  <td style="text-align:left">此时的 <code>hidden_states</code> 已经是 Attention 后的 <code>hidden1</code>，不是最开始的 x。</td>
+                </tr>
+                <tr>
+                  <td><strong>计算 update</strong></td>
+                  <td style="text-align:left"><code>post_attention_layernorm → mlp</code></td>
+                  <td style="text-align:left">Pre-Norm 先归一化，再让 MLP 产出要加到主路上的增量。</td>
+                </tr>
+                <tr>
+                  <td><strong>加回主路</strong></td>
+                  <td style="text-align:left"><code>hidden_states = residual + hidden_states</code></td>
+                  <td style="text-align:left">把 MLP update 加回 <code>hidden1</code>，得到传给下一层的 <code>hidden2</code>。</td>
+                </tr>
+              </table>
               <table class="freq-table">
                 <tr><th style="width:120px">常见错法</th><th>为什么不对</th></tr>
                 <tr><td>第二段还加最初的 x</td><td style="text-align:left">MLP 应该接着 Attention 后的新状态更新，否则会跳过第一段更新。</td></tr>
