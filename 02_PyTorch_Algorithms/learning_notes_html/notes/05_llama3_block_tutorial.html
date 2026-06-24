@@ -1025,14 +1025,23 @@
               </svg>
               <p>第一段的代码顺序是：保存 residual → input_layernorm → self_attn → residual + update。</p>
             </div>
-            <div class="story-arrow">第二段：MLP update，结构完全一样，只是换子层</div>
+            <div class="story-arrow">第二段关键：先保存 Attention 后的 hidden1，再计算 MLP update</div>
             <div class="story-panel">
               <strong>3. 注意 residual 要重新保存为 Attention 后的新 hidden_states</strong>
               <p>MLP 子层不是加回最开始的 x，而是加回 Attention 更新之后的 <code>hidden_states</code>。把 Attention 后的状态记成 <code>hidden1</code>：第二段开始时，residual 应该保存 <code>hidden1</code>，MLP 只负责算一份新的 update，最后得到 <code>hidden2</code>。</p>
-              <div class="formula">
-                <span><code>hidden1 = hidden0 + attn_update</code></span>
-                <strong><code>residual = hidden1</code></strong>
-                <span><code>hidden2 = hidden1 + mlp_update</code></span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0;">
+                <div style="border:1px solid #b9cdfb;background:#f8fbff;border-radius:8px;padding:12px;display:grid;gap:6px;">
+                  <strong style="color:#1d4ed8;">入口状态 hidden1</strong>
+                  <span style="color:#657184;line-height:1.55;">Attention 已经更新完：<code>hidden1 = hidden0 + attn_update</code></span>
+                </div>
+                <div style="border:1px solid #e8b66f;background:#fffaf2;border-radius:8px;padding:12px;display:grid;gap:6px;">
+                  <strong style="color:#7b430c;">先拍快照 residual</strong>
+                  <span style="color:#657184;line-height:1.55;">第二段主路保存的是 <code>hidden1</code>：<code>residual = hidden_states</code></span>
+                </div>
+                <div style="border:1px solid #99d6bf;background:#f7fff9;border-radius:8px;padding:12px;display:grid;gap:6px;">
+                  <strong style="color:#12805c;">输出状态 hidden2</strong>
+                  <span style="color:#657184;line-height:1.55;">MLP 只产出增量：<code>hidden2 = residual + mlp_update</code></span>
+                </div>
               </div>
               <table class="freq-table">
                 <tr><th style="width:120px">第二段动作</th><th>Notebook 里对应的代码意图</th><th>为什么这样写</th></tr>
