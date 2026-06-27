@@ -34,103 +34,222 @@ module.exports = {
       ],
       intuition: "把 Router 想成分诊台。每个 token 先拿自己的特征名片给所有专家打分，softmax 把分数变成全局概率，再只保留最适合的 K 个专家。Notebook 的 TODO 1/2 本质就是这两步。初学时先盯住一行：一行代表一个 token，这一行里所有列代表它对所有专家的偏好。",
       exampleHtml: `
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先读 forward 的输入输出合同</strong>
-              <p><code>TopKRouter.forward</code> 输入是 [batch_size, seq_len, hidden_size]，但输出不再按 batch/seq 分组，而是把所有 token 排成一列：<code>routing_weights</code> 和 <code>selected_experts</code> 都是 [batch_size * seq_len, top_k]。这就是后面 SparseMoEBlock 能按专家找 token 的原因。</p>
-              <div class="mini-table">
-                <span>输入</span><strong>hidden_states [B,S,H]</strong>
-                <span>输出 1</span><strong>routing_weights [B*S,K]</strong>
-                <span>输出 2</span><strong>selected_experts [B*S,K]</strong>
+          <div class="shape-story moe-story">
+            <style>
+              .moe-story { gap: 12px; }
+              .moe-concept-grid,
+              .moe-practice-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 12px;
+                margin: 12px 0;
+                align-items: stretch;
+              }
+              .moe-practice-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+              .moe-practice-grid .syntax-card { margin-top: 0; }
+              .moe-card {
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #fff;
+                padding: 14px;
+                display: grid;
+                gap: 10px;
+                align-content: start;
+              }
+              .moe-card > strong {
+                color: #1d4ed8;
+                font-size: 17px;
+              }
+              .moe-card.accent {
+                border-color: #e8b66f;
+                background: #fff8ed;
+              }
+              .moe-card.good {
+                border-color: #99d6bf;
+                background: #f4fcf8;
+              }
+              .moe-card.warn {
+                border-color: #e8b66f;
+                background: #fff6e8;
+              }
+              .moe-card p { margin: 0; }
+              .moe-route {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 8px;
+                margin: 12px 0;
+              }
+              .moe-route span,
+              .moe-route strong {
+                min-height: 76px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #fff;
+                padding: 10px;
+                display: grid;
+                place-items: center;
+                text-align: center;
+                line-height: 1.45;
+              }
+              .moe-route b {
+                display: block;
+                color: #1d4ed8;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+              }
+              .moe-route strong {
+                border-color: #99d6bf;
+                background: var(--soft-green);
+                color: #123f31;
+              }
+              .moe-kv {
+                display: grid;
+                grid-template-columns: minmax(130px, 0.42fr) minmax(0, 1fr);
+                gap: 8px;
+                margin: 12px 0;
+              }
+              .moe-kv span,
+              .moe-kv strong {
+                min-height: 44px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #fff;
+                padding: 10px;
+                display: grid;
+                align-items: center;
+                line-height: 1.45;
+              }
+              .moe-kv span {
+                color: var(--muted);
+                font-weight: 800;
+                text-align: center;
+                background: #fbfcfd;
+              }
+              .moe-kv strong {
+                color: #182033;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                overflow-wrap: anywhere;
+              }
+              .moe-token-row {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(82px, 1fr));
+                gap: 8px;
+                margin: 12px 0;
+              }
+              .moe-token-row span {
+                min-height: 58px;
+                border: 1px solid #dce2e8;
+                border-radius: 8px;
+                background: #f8fbff;
+                display: grid;
+                place-items: center;
+                text-align: center;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-weight: 800;
+              }
+              .moe-token-row .hot {
+                border-color: #d9a15a;
+                background: #fde68a;
+                color: #6f3d08;
+              }
+              @media (max-width: 640px) {
+                .moe-kv,
+                .moe-token-row { grid-template-columns: 1fr; }
+              }
+            </style>
+            <div class="moe-concept-grid">
+              <div class="moe-card">
+                <strong>0. 先读 forward 的输入输出合同</strong>
+                <p><code>TopKRouter.forward</code> 的输入仍是三维句子张量，但输出是按 token 排好的两张清单。先把这个合同读清楚，后面代码就不会绕。</p>
+                <div class="moe-kv">
+                  <span>输入</span><strong>hidden_states [B,S,H]</strong>
+                  <span>输出权重</span><strong>routing_weights [B*S,K]</strong>
+                  <span>输出专家</span><strong>selected_experts [B*S,K]</strong>
+                </div>
+              </div>
+              <div class="moe-card accent">
+                <strong>TODO 1 / 2 只负责“选专家”</strong>
+                <p>先算每个 token 对所有专家的概率，再保留 Top-K。真正执行专家网络是后面的 <code>SparseMoEBlock</code>，不要在 Router 里混进去。</p>
+                <div class="moe-route">
+                  <span><b>TODO 1</b>softmax 概率表</span>
+                  <strong><b>TODO 2</b>topk 权重 + 专家 id</strong>
+                </div>
               </div>
             </div>
-            <div class="story-arrow">第一步：把 batch 和 seq 合并，变成 token 队列</div>
+
+            <div class="story-arrow">主线：先把 [B,S,H] 变成 token 队列，再沿专家维做 softmax/topk</div>
             <div class="story-panel">
-              <strong>1. 先把 [B,S,H] 展平成 token 列表</strong>
-              <p>Router 不是一次处理“一整句话”，而是逐 token 分配专家。输入 hidden_states 是 [batch, seq, hidden]，展平后变成 [num_tokens, hidden]，其中 <code>num_tokens = batch * seq</code>。</p>
-              <div class="mini-flow"><span>hidden_states<br>[2,4,16]</span><span>view(-1,16)</span><strong>flat tokens<br>[8,16]</strong></div>
-              <details class="think">
-                <summary>为什么 Router 要按 token 展平，而不是按整句话路由？</summary>
-                <div class="think-body">
-                  <p>因为同一句话里的不同 token 可能需要不同专家。比如数字 token 可能更需要算术专家，代码 token 可能更需要语法专家。</p>
-                  <p>把 [B,S,H] 展平成 [B*S,H] 后，每一行都能独立得到自己的专家选择，MoE 才真正做到“稀疏激活”。</p>
-                </div>
-              </details>
-            </div>
-            <div class="story-arrow">每个 token 对所有专家打一排分数</div>
-            <div class="story-panel">
-              <strong>2. gate 输出 router_logits：[num_tokens, num_experts]</strong>
-              <p>如果有 8 个 token、4 个专家，router_logits 就是一张 8×4 表。每一行是一枚 token 对全部专家的原始打分。</p>
-              <svg viewBox="0 0 470 210" width="100%" style="max-width:640px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12" text-anchor="middle">
-                  <text x="88" y="24" fill="#2563eb" font-weight="700">token↓ / expert→</text>
-                  <text x="170" y="24">E0</text><text x="230" y="24">E1</text><text x="290" y="24">E2</text><text x="350" y="24">E3</text>
-                  <text x="105" y="58" fill="#2563eb">t0</text><text x="105" y="93" fill="#2563eb">t1</text><text x="105" y="128" fill="#2563eb">t2</text><text x="105" y="163" fill="#2563eb">...</text>
-                </g>
-                <g font-size="12" text-anchor="middle">
-                  <rect x="145" y="42" width="46" height="24" fill="#fff6e8" stroke="#e8b66f"></rect><text x="168" y="59">1.2</text>
-                  <rect x="205" y="42" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="228" y="59">0.1</text>
-                  <rect x="265" y="42" width="46" height="24" fill="#fde68a" stroke="#d9a15a"></rect><text x="288" y="59">2.0</text>
-                  <rect x="325" y="42" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="348" y="59">-0.5</text>
-                  <rect x="145" y="77" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="168" y="94">0.4</text>
-                  <rect x="205" y="77" width="46" height="24" fill="#fde68a" stroke="#d9a15a"></rect><text x="228" y="94">2.4</text>
-                  <rect x="265" y="77" width="46" height="24" fill="#fff6e8" stroke="#e8b66f"></rect><text x="288" y="94">1.0</text>
-                  <rect x="325" y="77" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="348" y="94">0.0</text>
-                  <rect x="145" y="112" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="168" y="129">-1.0</text>
-                  <rect x="205" y="112" width="46" height="24" fill="#fff6e8" stroke="#e8b66f"></rect><text x="228" y="129">0.9</text>
-                  <rect x="265" y="112" width="46" height="24" fill="#f8fbff" stroke="#b8c8e8"></rect><text x="288" y="129">0.2</text>
-                  <rect x="325" y="112" width="46" height="24" fill="#fde68a" stroke="#d9a15a"></rect><text x="348" y="129">1.8</text>
-                </g>
-                <text x="230" y="190" font-size="13" fill="#657184">一行 softmax，一行 top_k；不同 token 可以选不同专家</text>
-              </svg>
-            </div>
-            <div class="story-arrow">本关写法：先完整概率表，再 topk</div>
-            <div class="story-panel">
-              <strong>3. 为什么 notebook 先写 softmax，再写 topk？</strong>
-              <p>这样代码最直观：先得到每个 token 对所有专家的概率分布，再从这张概率表里挑最大的 K 个。它也方便后续课程继续统计专家使用率、负载均衡等信息。</p>
-              <div class="ratio-board"><span>router_logits<br>[tokens,E]</span><span>softmax 概率表<br>[tokens,E]</span><strong>topk 后<br>weights/indices [tokens,K]</strong></div>
-              <p>技术上要注意：如果后面一定会对 Top-K 权重重归一化，那么“topk logits 后在局部 softmax”和“全量 softmax 后 topk 再重归一化”对最终 Top-K 权重是等价的。本关按 notebook 的写法来做，不把另一种写法当成数学错误。</p>
-              <p>这也是 TODO 1 强调 <code>router_logits.float()</code> 的原因：softmax 对数值很敏感，先转 FP32 更稳，最后再转回 hidden_states 的 dtype。</p>
-              <details class="think">
-                <summary>softmax 的 dim=-1 到底是什么意思？</summary>
-                <div class="think-body">
-                  <p>最后一维是 experts。<code>dim=-1</code> 表示对每个 token 的“专家分数行”做归一化，让这一行所有专家概率加起来等于 1。</p>
-                  <p>如果维度选错，概率就会跨 token 混在一起，那就变成“不同 token 互相抢概率”，完全不是 Router 想要的行为。</p>
-                </div>
-              </details>
-            </div>
-            <div class="story-arrow">topk 同时给你“值”和“索引”</div>
-            <div class="story-panel">
-              <strong>4. routing_weights 是概率，selected_experts 是专家编号</strong>
-              <p><code>torch.topk</code> 返回两个张量：第一个是 Top-K 的值，也就是被选专家的概率权重；第二个是这些值原本在专家维的下标，也就是专家 id。后面的聚合逻辑靠专家 id 找人，靠权重决定每个专家输出占多少。</p>
-              <div class="mini-table">
-                <span>routing_probs 一行</span><span>[0.05, 0.62, 0.08, 0.25]</span>
-                <span>top_k=2 values</span><strong>[0.62, 0.25]</strong>
-                <span>top_k=2 indices</span><strong>[1, 3]</strong>
+              <div class="moe-route">
+                <span><b>hidden_states</b>[B,S,H]</span>
+                <span><b>flatten</b>[B*S,H]</span>
+                <span><b>gate</b>router_logits [B*S,E]</span>
+                <span><b>softmax</b>routing_probs [B*S,E]</span>
+                <strong><b>topk</b>weights / experts [B*S,K]</strong>
               </div>
-              <p style="color:#bd6516"><strong>易错点</strong>：notebook TODO 后面有 zero 占位初始化。写完 TODO 后，要让函数返回你真正算出的 <code>routing_weights</code> 和 <code>selected_experts</code>，不要被占位变量覆盖。</p>
+              <p>这里的关键不是画很多线，而是抓住最后一维的含义：展平后每一行是一枚 token，最后一维是全部专家。</p>
             </div>
+
+            <div class="moe-concept-grid">
+              <div class="moe-card">
+                <strong>1. 每一行是一枚 token</strong>
+                <p>如果有 4 个专家，一行 logits 就是这个 token 对 4 个专家的偏好分数。softmax 和 topk 都只在这一行内部做。</p>
+                <div class="moe-token-row">
+                  <span>E0<br>1.2</span>
+                  <span>E1<br>0.1</span>
+                  <span class="hot">E2<br>2.0</span>
+                  <span>E3<br>-0.5</span>
+                </div>
+              </div>
+              <div class="moe-card">
+                <strong>2. <code>dim=-1</code> 就是专家维</strong>
+                <p>不要把不同 token 混在一起归一化。Router 要让“同一个 token 的所有专家概率”加起来等于 1。</p>
+                <div class="moe-kv">
+                  <span>正确</span><strong>F.softmax(router_logits.float(), dim=-1)</strong>
+                  <span>读法</span><strong>每个 token 自己在专家列表里分配概率</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-arrow">topk 返回两张表：values 是权重，indices 是专家编号</div>
+            <div class="moe-concept-grid">
+              <div class="moe-card good">
+                <strong>3. 值和编号要一起拿</strong>
+                <div class="moe-kv">
+                  <span>routing_probs 一行</span><strong>[0.05, 0.62, 0.08, 0.25]</strong>
+                  <span>values</span><strong>routing_weights = [0.62, 0.25]</strong>
+                  <span>indices</span><strong>selected_experts = [1, 3]</strong>
+                </div>
+              </div>
+              <div class="moe-card warn">
+                <strong>4. 最容易掉坑的地方</strong>
+                <p>notebook 里 TODO 后面有 zero 占位变量。写完 TODO 后，要返回你真正算出的 <code>routing_weights</code> 和 <code>selected_experts</code>，不要让占位值覆盖结果。</p>
+              </div>
+            </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：Router 是 MoE 的调度器</div>
-              <p>MoE 的专家像很多并行工作台，Router 决定每个 token 送去哪几个工作台。调度得好，模型容量变大但每个 token 只激活少数专家；调度得差，热门专家拥堵、冷门专家闲置，吞吐和效果都会受影响。</p>
+              <p>MoE 的专家像并行工作台，Router 只决定每个 token 送去哪几个工作台，以及每个工作台占多少权重。调度得好，模型容量变大但每个 token 只激活少数专家；调度得差，热门专家拥堵，冷门专家闲置。</p>
               <p>下一关的负载均衡损失，就是专门约束这个调度器不要总偏心同几个专家。</p>
             </div>
           </div>`,
-      syntaxHtml: code("先用一行玩具分数练 softmax 和 topk", [
-        "toy_logits = torch.tensor([[1.2, 0.1, 2.0, -0.5]])  # 1 个 token, 4 个专家",
+      syntaxHtml: `<div class="moe-practice-grid">
+          ${code("先用一行玩具分数练 softmax 和 topk", [
+        "# 1 个 token, 4 个专家",
+        "toy_logits = torch.tensor([[1.2, 0.1, 2.0, -0.5]])",
         "",
         "# dim=-1：只在“专家这一行”里归一化，得到每个专家的概率",
-        "toy_probs = F.softmax(toy_logits.float(), dim=-1)   # [1, 4]",
+        "toy_probs = F.softmax(toy_logits.float(), dim=-1)",
         "",
         "# topk 同时返回值(values)和下标(indices)",
-        "toy_weights, toy_ids = torch.topk(toy_probs, k=2, dim=-1)",
-        "print(toy_weights)  # 概率值，例如 [[0.62, 0.25]]",
-        "print(toy_ids)      # 专家编号，例如 [[2, 0]]"
-      ]) + `
-        <div class="syntax-card">
+        "toy_weights, toy_ids = torch.topk(",
+        "    toy_probs, k=2, dim=-1",
+        ")",
+        "print(toy_weights)",
+        "print(toy_ids)"
+      ])}
+          <div class="syntax-card">
           <h4>举一反三：把玩具张量换成 notebook 变量</h4>
           <p>玩具例子只有 1 个 token。notebook 只是把很多 token 排成 [tokens, experts]，同样沿最后一维做 softmax/topk。</p>
-          <div class="mini-table">
+          <div class="moe-kv">
             <span>toy_logits</span><strong>router_logits</strong>
             <span>toy_probs</span><strong>routing_probs</strong>
             <span>toy_weights</span><strong>routing_weights</strong>
@@ -138,7 +257,8 @@ module.exports = {
             <span>k=2</span><strong>self.top_k</strong>
           </div>
           <p class="syntax-tip">迁移口诀：先把输入展平成 [tokens, hidden]，gate 后得到 [tokens, experts]；之后所有 softmax/topk 都沿 <code>dim=-1</code>，因为最后一维就是专家维。</p>
-        </div>`,
+        </div>
+      </div>`,
       predict: {
         hook: "Router 有多种等价写法。本关 notebook 明确要求先得到完整概率表，再从概率里取 Top-K。",
         question: "先判断：为什么 notebook 要先对全量 router_logits 做 softmax？",
@@ -175,83 +295,116 @@ module.exports = {
       ],
       intuition: "Top-K 像只留下票数最高的两位专家，但他们原本只拿到了全体专家票数的一部分。重归一化把这部分票按比例摊成 100%，保证输出尺度稳定；聚合时每个专家贡献多少，由 routing weight 决定。把这段想成“先重新分配投票权，再按投票权合成专家意见”。",
       exampleHtml: `
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先分清本 Mission 的两条线</strong>
-              <p>TODO 3 只要求你把 Top-K 权重重新归一化；后面的 SparseMoEBlock 聚合逻辑已经给好，主要让你读懂它。一个是“权重准备”，一个是“专家输出合成”，不要混成一件事。</p>
-              <div class="mini-table">
-                <span>你要补的</span><strong>routing_weights 重新除以每行 sum</strong>
-                <span>你要读懂的</span><strong>where 找 token → expert 计算 → 加权累加</strong>
-              </div>
-            </div>
-            <div class="story-arrow">先看为什么 Top-K 后的概率和不再是 1</div>
-            <div class="story-panel">
-              <strong>1. Top-K 权重为什么要重新除以 sum？</strong>
-              <p>假设某 token 的全局概率是 [0.60, 0.27, 0.10, 0.03]，Top-2 留下 [0.60, 0.27]，和是 0.87。如果直接拿它们混合专家输出，结果整体会被乘小。重归一化后变成 [0.60/0.87, 0.27/0.87]，两者重新加和为 1。</p>
-              <div class="ratio-board"><span>Top-2 原权重<br>.60 + .27 = .87</span><span>重归一化<br>.60/.87, .27/.87</span><strong>新权重<br>.69 + .31 = 1.00</strong></div>
-              <details class="think">
-                <summary>如果不重归一化，模型一定会崩吗？</summary>
-                <div class="think-body">
-                  <p>不一定立刻崩，但输出尺度会系统性变小：Top-K 丢掉的概率质量越多，专家混合结果越被压低。</p>
-                  <p>深层网络最怕每层尺度悄悄漂移。重归一化相当于告诉模型：既然只留下 K 个专家，那这 K 个专家内部重新按 100% 分配贡献。</p>
+          <div class="shape-story moe-story">
+            <div class="moe-concept-grid">
+              <div class="moe-card accent">
+                <strong>0. 本 Mission 分两层读</strong>
+                <p>你真正要补的是 TODO 3：把 Top-K 权重重新归一化。后面的专家聚合逻辑已经给好，目标是读懂它为什么这样写。</p>
+                <div class="moe-kv">
+                  <span>要补代码</span><strong>routing_weights / row_sum</strong>
+                  <span>要读懂</span><strong>where 找 token, expert 计算, 加权累加</strong>
                 </div>
-              </details>
-            </div>
-            <div class="story-arrow">keepdim=True 是为了让广播除法不丢轴</div>
-            <div class="story-panel">
-              <strong>2. 形状读法：sum 后还要保持 [tokens, 1]</strong>
-              <p><code>routing_weights</code> 是 [tokens, top_k]。如果 <code>sum(dim=-1)</code> 得到 [tokens]，再相除容易因为维度不对出错；<code>keepdim=True</code> 保持成 [tokens, 1]，就能自动广播到每个 Top-K 槽位。</p>
-              <div class="mini-flow"><span>weights<br>[8,2]</span><span>sum(..., keepdim=True)<br>[8,1]</span><strong>weights / sum<br>[8,2]</strong></div>
-              <p style="color:#657184">测试里的 <code>weights.sum(dim=-1)</code> 接近 1，就是专门检查这一行有没有写对。</p>
-            </div>
-            <div class="story-arrow">读懂 SparseMoEBlock：where 找人，weight 乘输出，再累加</div>
-            <div class="story-panel">
-              <strong>3. selected_experts 不是概率，是“这个 token 去哪几个专家”</strong>
-              <p>聚合代码遍历每个 expert_idx。<code>torch.where(selected_experts == expert_idx)</code> 会返回两列信息：哪些 token 选中了这个专家，以及它在 Top-K 的第几个槽位被选中。</p>
-              <div class="mini-table">
-                <span>selected_experts</span><span>[[2,0], [1,2], [3,1]]</span>
-                <span>expert_idx=2</span><strong>token_idx=[0,1]<br>kth_expert=[0,1]</strong>
               </div>
-              <p>然后用 <code>routing_weights[token_idx, kth_expert]</code> 拿到对应权重；<code>unsqueeze(-1)</code> 把 [n] 变成 [n,1]，才能乘到专家输出 [n, hidden] 的每个 hidden 维上。</p>
-              <div class="matrix-flow"><span>expert_output<br>[n, hidden]</span><span>current_weight<br>[n, 1]</span><strong>加权后累加到<br>final_hidden_states[token_idx]</strong></div>
-            </div>
-            <div class="story-arrow">为什么是 +=：一个 token 会收集多个专家的贡献</div>
-            <div class="story-panel">
-              <strong>4. top_k=2 时，同一个 token 会被写回两次</strong>
-              <p>如果 token 0 选了专家 2 和专家 0，那么遍历 expert_idx=2 时会给 token 0 加一次输出；遍历 expert_idx=0 时还会再给 token 0 加一次输出。最终结果是两个专家输出的加权和，所以这里必须是 <code>+=</code> 累加。</p>
-              <div class="sum-flow">
-                <b>token0 输出</b>
-                <em>expert2(x0) * w0,0</em>
-                <em>expert0(x0) * w0,1</em>
-                <strong>两份贡献相加</strong>
+              <div class="moe-card">
+                <strong>先看权重，再看专家输出</strong>
+                <p>不要一开始就盯着 for 循环。Router 先给出权重和专家编号；SparseMoEBlock 再按编号把 token 送到专家，并把结果加回来。</p>
+                <div class="moe-route">
+                  <span><b>Router</b>weights + experts</span>
+                  <strong><b>MoE Block</b>expert outputs weighted sum</strong>
+                </div>
               </div>
-              <p style="color:#bd6516"><strong>易错点</strong>：如果写成赋值覆盖，后一个专家会把前一个专家的贡献抹掉，top_k 就退化得很奇怪。</p>
             </div>
-            <div class="story-arrow">最后按测试反查三件事</div>
+
+            <div class="story-arrow">第一层：Top-K 留下来的概率要重新分成 100%</div>
+            <div class="moe-concept-grid">
+              <div class="moe-card">
+                <strong>1. 为什么要除以每行 sum</strong>
+                <p>全量概率一行加起来是 1，但只保留 Top-2 后可能只剩 0.87。直接混合专家输出会把整体尺度压小，所以要在留下的专家内部重新分配。</p>
+                <div class="moe-route">
+                  <span><b>Top-2</b>.60 + .27 = .87</span>
+                  <span><b>divide</b>.60/.87, .27/.87</span>
+                  <strong><b>renorm</b>.69 + .31 = 1.00</strong>
+                </div>
+              </div>
+              <div class="moe-card good">
+                <strong>2. <code>keepdim=True</code> 保住可广播维度</strong>
+                <p><code>routing_weights</code> 是 [tokens, top_k]。sum 后保留成 [tokens, 1]，才能自动广播除回每个 Top-K 槽位。</p>
+                <div class="moe-kv">
+                  <span>原权重</span><strong>routing_weights [8,2]</strong>
+                  <span>行和</span><strong>routing_weights.sum(dim=-1, keepdim=True) [8,1]</strong>
+                  <span>归一化后</span><strong>routing_weights [8,2], 每行和接近 1</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-arrow">第二层：SparseMoEBlock 逐专家找 token，再把加权输出累加回去</div>
             <div class="story-panel">
-              <strong>5. Router 测试其实在帮你做 code review</strong>
-              <p>本关测试不关心专家内容学得好不好，它只检查路由协议是否成立：shape 对、权重和为 1、专家 id 合法、MoE 输出回到原 shape。</p>
-              <div class="mini-table">
-                <span>weights / indices shape</span><strong>[batch_size * seq_len, top_k]</strong>
+              <div class="moe-route">
+                <span><b>selected_experts</b>专家编号表</span>
+                <span><b>torch.where</b>token_idx + kth_expert</span>
+                <span><b>routing_weights</b>取当前权重</span>
+                <span><b>unsqueeze</b>[n] 变 [n,1]</span>
+                <strong><b>+=</b>累加到 final_hidden_states</strong>
+              </div>
+              <p>这段的读法是“谁选了当前专家，就把谁拿出来跑当前专家；再按对应权重写回”。</p>
+            </div>
+
+            <div class="moe-concept-grid">
+              <div class="moe-card">
+                <strong>3. <code>where</code> 返回两个坐标</strong>
+                <p>第一个坐标告诉你第几个 token 选中了当前专家；第二个坐标告诉你它是在 Top-K 的第几个槽位选中的。</p>
+                <div class="moe-kv">
+                  <span>selected_experts</span><strong>[[2,0], [1,2], [3,1]]</strong>
+                  <span>expert_idx=2</span><strong>token_idx=[0,1], kth_expert=[0,1]</strong>
+                  <span>取权重</span><strong>routing_weights[token_idx, kth_expert]</strong>
+                </div>
+              </div>
+              <div class="moe-card warn">
+                <strong>4. 为什么必须是 <code>+=</code></strong>
+                <p>top_k=2 时，同一个 token 会从两个专家收集贡献。第一次写回不能覆盖第二次，第二次也不能抹掉第一次，所以这里是累加。</p>
+                <div class="moe-route">
+                  <span>expert2(x0) * w0,0</span>
+                  <span>expert0(x0) * w0,1</span>
+                  <strong>token0 = 两份贡献相加</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-panel">
+              <strong>5. 用测试反查三件事</strong>
+              <div class="moe-kv">
+                <span>weights / indices</span><strong>[batch_size * seq_len, top_k]</strong>
                 <span>weights.sum(dim=-1)</span><strong>每行接近 1</strong>
-                <span>final output</span><strong>回到 [batch_size, seq_len, hidden_size]</strong>
+                <span>MoE 输出</span><strong>回到 [batch_size, seq_len, hidden_size]</strong>
               </div>
             </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：玩具循环易懂，工业实现会先排队再批处理</div>
               <p>这里用 for 循环遍历专家，是为了让逻辑透明。真实推理框架会把同一个专家的 token 先排序聚到一起，一次性组成大 batch 喂给专家网络，减少小矩阵调用带来的 GPU 空转。</p>
-              <p>但无论实现多复杂，核心协议都没变：Router 给专家 id 和权重，专家产出向量，最后按权重加回对应 token。</p>
+              <p>但核心协议没变：Router 给专家 id 和权重，专家产出向量，最后按权重加回对应 token。</p>
             </div>
           </div>`,
-      syntaxHtml: code("先用一行权重练 keepdim=True", [
-        "toy_weights = torch.tensor([[0.60, 0.27], [0.40, 0.10]])  # [tokens=2, top_k=2]",
+      syntaxHtml: `<div class="moe-practice-grid">
+          ${code("先用一行权重练 keepdim=True", [
+        "toy_weights = torch.tensor([",
+        "    [0.60, 0.27],",
+        "    [0.40, 0.10],",
+        "])",
         "",
-        "# keepdim=True：sum 后保留成 [2, 1]，才能逐行广播除回 [2, 2]",
-        "row_sum = toy_weights.sum(dim=-1, keepdim=True)            # [[0.87], [0.50]]",
-        "toy_normed = toy_weights / row_sum                         # 每行和都变成 1",
-        "print(toy_normed.sum(dim=-1))                               # tensor([1., 1.])"
-      ]) + code("再用玩具 selected_experts 读懂 where 和 unsqueeze", [
-        "selected = torch.tensor([[2, 0], [1, 2], [3, 1]])  # [tokens=3, top_k=2]",
+        "# keepdim=True：sum 后保留成 [2, 1]",
+        "row_sum = toy_weights.sum(",
+        "    dim=-1, keepdim=True",
+        ")",
+        "toy_normed = toy_weights / row_sum",
+        "print(toy_normed.sum(dim=-1))"
+      ])}
+          ${code("再用玩具 selected_experts 读懂 where 和 unsqueeze", [
+        "selected = torch.tensor([",
+        "    [2, 0],",
+        "    [1, 2],",
+        "    [3, 1],",
+        "])",
         "expert_idx = 2",
         "",
         "# where 返回两个坐标：第几个 token、第几个 top-k 槽位",
@@ -259,20 +412,26 @@ module.exports = {
         "print(token_idx)  # tensor([0, 1])",
         "print(kth)        # tensor([0, 1])",
         "",
-        "weights = torch.tensor([[0.7, 0.3], [0.4, 0.6], [0.5, 0.5]])",
-        "w = weights[token_idx, kth].unsqueeze(-1)  # [2] -> [2, 1]，才能乘 [2, hidden]"
-      ]) + `
-        <div class="syntax-card">
+        "weights = torch.tensor([",
+        "    [0.7, 0.3],",
+        "    [0.4, 0.6],",
+        "    [0.5, 0.5],",
+        "])",
+        "w = weights[token_idx, kth]",
+        "w = w.unsqueeze(-1)  # [2] -> [2, 1]"
+      ])}
+          <div class="syntax-card">
           <h4>举一反三：把玩具写法搬回 notebook</h4>
           <p>TODO 3 只需要第一张卡的重归一化写法。第二张卡是为了读懂后面已经给出的专家聚合代码。</p>
-          <div class="mini-table">
+          <div class="moe-kv">
             <span>toy_weights</span><strong>routing_weights</strong>
             <span>selected</span><strong>selected_experts</strong>
             <span>expert_idx</span><strong>for 循环里的 expert_idx</strong>
             <span>w</span><strong>current_weight</strong>
           </div>
           <p class="syntax-tip">迁移口诀：归一化看最后一维 <code>top_k</code>，所以 <code>sum(dim=-1, keepdim=True)</code>；聚合时权重先从 [n] 变 [n,1]，才能广播乘到专家输出的 hidden 维。</p>
-        </div>`,
+        </div>
+      </div>`,
       predict: {
         hook: "Top-K 后，两个留下的概率可能是 0.60 和 0.27。它们已经是概率了，看起来可以直接用。",
         question: "先判断：为什么还要做 routing_weights / routing_weights.sum(..., keepdim=True)？",
@@ -300,118 +459,353 @@ module.exports = {
   "07": [
     lesson({
       id: "moe-balance-token-frequency",
-      title: "负载均衡先数人头",
+      title: "f_i：先学会“数人头”——每个专家实际接了多少活",
       todo: "TODO 2",
       prerequisite: [
-        "MoE 如果总选同一个专家，就会出现拥堵。",
-        "f_i 表示第 i 个专家在所有 Top-K 选择里出现的比例。",
-        "one_hot 可以把专家 id 转成按专家统计的计数表。"
+        "回忆 MoE：每个 token 不再走同一个 FFN，而是由一个 router 打分，挑出 Top-K 个“专家”（小 FFN）去处理它。",
+        "麻烦在于 router 会“偷懒”：训练早期它可能发现专家 0、1 还不错，就把几乎所有 token 都塞给这两个，剩下的专家从没被训练到——这叫路由崩塌 (Router Collapse)。",
+        "f_i = 第 i 个专家被选中的次数 ÷ 总的选择次数。它衡量“实际工作量”，是后面惩罚项的一半。",
+        "F.one_hot(ids, num_classes=E)：把每个专家 id 变成一个长度为 E 的向量，命中的那一位是 1、其余是 0。把它们加起来，就数出每个专家被点名几次。"
       ],
-      intuition: "像给多个窗口排队：只看 router 觉得谁好还不够，还要统计每个窗口真正排了多少人。",
-      exampleHtml: `<div class="mini-table"><span>选中专家</span><span>[0, 2, 2, 1]</span><span>one-hot 计数</span><strong>f=[1/4, 1/4, 2/4]</strong></div>`,
-      syntaxHtml: code("one_hot 计数", [
-        "ids = torch.tensor([0, 2, 2, 1])",
-        "hot = F.one_hot(ids, num_classes=3).float()",
-        "freq = hot.mean(dim=0)"
+      intuition: "把 E 个专家想成食堂的 E 个打饭窗口。router 是带位员，selected_experts 记录了每个 token 被带到了哪个窗口。f_i 就是“第 i 号窗口排了几个人 ÷ 总人次”。如果某个窗口排爆了、别的窗口空着，就说明负载不均——这一关只做一件事：把这张“人头统计表”用 one_hot 数出来。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清输入长什么样</strong>
+              <p>notebook 给你的 <code>selected_experts</code> 形状是 <code>[总token数, top_k]</code>：每行是一个 token，行里的 K 个数字是它选中的 K 个专家 id。我们要把它压成一张长度为 E 的“人头表” f。</p>
+              <table class="freq-table">
+                <tr><th>token</th><th>选中的专家 (top_k=2)</th></tr>
+                <tr><td>t0</td><td>[0, 2]</td></tr>
+                <tr><td>t1</td><td>[0, 1]</td></tr>
+                <tr><td>t2</td><td>[0, 2]</td></tr>
+              </table>
+              <p style="color:#657184">直觉上专家 0 被点了 3 次、专家 2 两次、专家 1 一次，专家 3+ 颗粒无收——这就是不均衡。</p>
+            </div>
+            <div class="story-arrow">怎么用张量数人头？→ one_hot 再求和</div>
+            <div class="story-panel">
+              <strong>1. one_hot：把“专家 id”变成“可以相加的计数”</strong>
+              <p>id 本身没法直接加（把 0 和 2 加起来没意义）。<code>F.one_hot</code> 把每个 id 摊成一行 0/1 指示向量，命中位为 1。这样“相加”就等于“计票”。</p>
+              <svg viewBox="0 0 460 150" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <text x="60" y="20" fill="#657184">id → one-hot (E=4)</text>
+                  <text x="300" y="20" fill="#657184">沿 token/top_k 求和 = 每个专家票数</text>
+                  <text x="20" y="52">[0,2]</text>
+                  <text x="20" y="82">[0,1]</text>
+                  <text x="20" y="112">[0,2]</text>
+                  <g font-family="ui-monospace, monospace">
+                    <text x="95" y="52">1 0 1 0</text>
+                    <text x="95" y="82">1 1 0 0</text>
+                    <text x="95" y="112">1 0 1 0</text>
+                  </g>
+                  <line x1="150" y1="82" x2="210" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <text x="180" y="72" fill="#12805c">Σ</text>
+                  <g font-family="ui-monospace, monospace" font-weight="700">
+                    <rect x="240" y="68" width="150" height="28" fill="#e7f6ee" stroke="#99d6bf"></rect>
+                    <text x="315" y="87" fill="#12805c">[3, 1, 2, 0]</text>
+                  </g>
+                  <text x="315" y="118" fill="#657184">专家0:3  专家1:1  专家2:2  专家3:0</text>
+                </g>
+              </svg>
+              <p>再除以总选择次数 <code>total_tokens * top_k</code>（这里 3×2=6），就得到比例 <code>f = [3,1,2,0]/6</code>。所有 f_i 加起来正好是 1。</p>
+              <details class="think">
+                <summary>想一想：为什么要除以 total_tokens × top_k，而不是只除以 token 数？</summary>
+                <div class="think-body">
+                  <p>因为每个 token 选了 K 个专家，总共投出的“票”是 token 数 × K，不是 token 数。分母要和“总票数”一致，f 才是真正的比例、加起来才等于 1。</p>
+                  <p>这是 Top-K MoE 最容易写错的地方：Top-1 时 K=1 看不出问题，一旦 K=2 还按 token 数除，f 的和就会变成 2，后面的 loss 全错。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：路由崩塌是真金白银的损失</div>
+              <p>Mixtral 8x7B、DeepSeek-MoE 这类模型，专家是分散在多张 GPU 上的。如果 router 把 token 都挤给少数专家，少数 GPU 会 OOM 或排长队，多数 GPU 在空转——你为整套集群付了钱，却只用上一小部分算力。</p>
+              <p>所以 f_i 不是学术指标，它直接对应“集群利用率”。数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("one_hot 计票 + 归一化", [
+        "ids = torch.tensor([[0, 2], [0, 1], [0, 2]])  # [tokens, top_k]",
+        "hot = F.one_hot(ids, num_classes=4)           # [tokens, top_k, 4]",
+        "counts = hot.sum(dim=(0, 1)).float()          # [4] -> [3,1,2,0]",
+        "f_i = counts / (ids.shape[0] * ids.shape[1])  # 除以总票数 3*2=6"
       ]),
+      predict: {
+        hook: "router 自己其实“知道”谁该被多选——它输出了每个专家的打分。可负载均衡损失偏偏还要我们再手动统计一遍 f_i（实际被选中的比例）。",
+        question: "先判断：为什么不能只用 router 的打分，而要额外统计 f_i？",
+        options: [
+          "因为打分是“连续偏好”，可微分可优化；f_i 是“离散计数”，由 argmax/Top-K 选出，本身不可导，但能真实反映拥堵",
+          "因为 router 的打分在反向传播时会被清零",
+          "因为 f_i 只是用来打印日志，对训练没有作用"
+        ],
+        answer: 0,
+        revealNote: "对：Top-K 这步“选谁”是不可导的，梯度传不回去。损失里用可导的 P_i 去“代表”这次分配，再乘上真实的 f_i 当权重——下一关就拼这个公式。"
+      },
       checkpoint: checkpoint(
-        "如果每个 token 只选 1 个专家，4 个 token 分给 [0,2,2,1]，专家 2 的 f_i 是多少？",
-        ["0.5", "0.25", "2.0"],
+        "动手算：top_k=2，4 个 token 选中 [[0,1],[0,2],[0,1],[0,3]]，专家 0 的 f_i 是多少？",
+        ["0.5", "0.25", "4.0"],
         0,
-        "专家 2 收到 2 个 token，占 4 个 token 的一半。"
+        "专家 0 被选 4 次，总票数 = 4 token × 2 = 8，f_0 = 4/8 = 0.5。"
       ),
       homework: [
-        "把 selected_experts 转成 one_hot。",
-        "沿 token 和 top_k 两个选择维统计每个专家出现次数。",
-        "检查所有 f_i 的和接近 1。"
+        "TODO 2：用 F.one_hot(selected_experts, num_classes=num_experts) 把专家 id 变成可计数的指示向量。",
+        "沿 token 维和 top_k 维一起 sum，得到每个专家的总票数 tokens_per_expert。",
+        "除以 (total_tokens * top_k) 得到 f_i；自检所有 f_i 之和≈1。"
       ]
     }),
     lesson({
       id: "moe-balance-prob-loss",
-      title: "P_i 看偏好，f_i 看实际分配",
+      title: "P_i × f_i：把“偏好”和“实际”相乘，逼出均匀分配",
       todo: "TODO 1 / TODO 3",
       prerequisite: [
-        "P_i 是 Top-K 路由权重按专家累加后的平均得分。",
-        "f_i 是第 i 个专家实际被选中的比例。",
-        "辅助损失会惩罚概率偏好和实际分配过于集中。"
+        "P_i = 第 i 个专家的“平均路由概率”——把所有 token 给它的 router 权重加起来再平均。它是“软偏好”，可导。",
+        "f_i = 上一关数出的“实际被选比例”——“硬计数”，反映真实拥堵，不可导。",
+        "scatter_add_(0, idx, src)：按 idx 给出的位置，把 src 的值累加到目标向量上——正好用来把每个 token 的权重加到它选中的专家槽位里。",
+        "最终公式：L_aux = α · E · Σ(f_i · P_i)。α 很小(如0.01)，E 是专家数。"
       ],
-      intuition: "P_i 像问卷里的偏好，f_i 像真实排队人数；两者都均匀，专家才不会冷热不均。",
-      exampleHtml: `<div class="ratio-board"><span>P=[.33, .34, .33]</span><span>f=[.25, .25, .50]</span><strong>loss 关注 P 和 f 的乘积和</strong></div>`,
-      syntaxHtml: code("scatter_add 按专家累加", [
-        "p_i = torch.zeros(num_experts, device=routing_weights.device)",
-        "p_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())",
-        "p_i = p_i / (total_tokens * top_k)",
-        "aux_loss = alpha * num_experts * (f_i * p_i).sum()"
+      intuition: "P_i 像“问卷调查的偏好分”，f_i 像“真实排队人数”。损失把两者逐专家相乘再求和：只要某个专家既被偏好(P高)又被挤爆(f高)，乘积就大、惩罚就重。优化器为了降低它，会主动把 token 往冷门专家赶。神奇之处：当大家都均匀(都=1/E)时，这个乘积和取到理论最小值。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 两个量、两种性格：一个能教模型，一个只会告状</strong>
+              <table class="freq-table">
+                <tr><th style="width:70px">量</th><th>怎么来</th><th>性格</th></tr>
+                <tr><td><strong>P_i</strong></td><td style="text-align:left">router 权重按专家累加再平均（scatter_add_）</td><td style="text-align:left">连续、<strong>可导</strong>——梯度能顺着它流回 router</td></tr>
+                <tr><td><strong>f_i</strong></td><td style="text-align:left">Top-K 选中次数的比例（one_hot 计数）</td><td style="text-align:left">离散、<strong>不可导</strong>——只能当“权重”，不能当被优化对象</td></tr>
+              </table>
+              <p>这就是为什么公式要把它俩<strong>相乘</strong>：用不可导的 f_i 标出“哪里堵”，用可导的 P_i 把惩罚的梯度送回 router 去改。</p>
+            </div>
+            <div class="story-arrow">第一步：用 scatter_add_ 把权重“倒进”各自专家的桶里（TODO 1）</div>
+            <div class="story-panel">
+              <strong>1. scatter_add_：按专家 id 归集 router 权重 → P_i</strong>
+              <p>开一个长度 E 的全零桶。遍历每个 token 的每个选择，把它的 routing_weight 加到“它选的那个专家”对应的桶里。最后除以总票数得到平均。</p>
+              <svg viewBox="0 0 460 140" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <text x="100" y="20" fill="#657184">(专家id, 权重)</text>
+                  <text x="60" y="48">(0, .6)</text>
+                  <text x="60" y="72">(2, .4)</text>
+                  <text x="60" y="96">(0, .5)</text>
+                  <line x1="120" y1="70" x2="190" y2="70" stroke="#657184" stroke-width="2" marker-end="url(#arrow07)"></line>
+                  <defs><marker id="arrow07" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
+                  <text x="155" y="60" fill="#12805c">scatter_add_</text>
+                  <g font-family="ui-monospace, monospace">
+                    <rect x="210" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="240" y="58">桶0: 1.1</text>
+                    <rect x="210" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="240" y="88">桶1: 0</text>
+                    <rect x="280" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="310" y="58">桶2: 0.4</text>
+                    <rect x="280" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="310" y="88">桶3: 0</text>
+                  </g>
+                  <text x="380" y="74" fill="#657184">÷ 总票数<br/>= P_i</text>
+                </g>
+              </svg>
+              <p>代码就三行：<code>P=torch.zeros(E)</code> → <code>P.scatter_add_(0, ids.flatten(), w.flatten())</code> → <code>P/=(total_tokens*top_k)</code>。</p>
+            </div>
+            <div class="story-arrow">第二步：组合成损失（TODO 3）</div>
+            <div class="story-panel">
+              <strong>2. L_aux = α · E · Σ(f_i · P_i)：为什么均匀时最小</strong>
+              <p>f 和 P 的各自总和都固定（都=1）。由均值不等式，两个“总和固定”的正向量逐项相乘再相加，当它们都被摊成平的(每项都=1/E)时，乘积和最小；越尖锐(集中在少数专家)，乘积和越大。</p>
+              <div class="formula"><span>集中: f=[.9,.05,.05,0]<br>Σf·P 大 → 重罚</span><strong>均匀: f=P=[¼,¼,¼,¼]<br>Σf·P 最小 → 不罚</strong></div>
+              <details class="think">
+                <summary>想一想：f_i 不可导，那这个 loss 到底是怎么把梯度传回 router 的？</summary>
+                <div class="think-body">
+                  <p>关键在于乘积里 <strong>f_i 被当成常数（detach 掉的系数）</strong>，真正带梯度的是 P_i。反向传播时，loss 对 P_i 求导，梯度顺着 router 权重流回去。</p>
+                  <p>效果上：某个专家 f_i 大（堵），它对应的 P_i 就被施加一个“往下压”的梯度，router 于是学会少给它发 token。f_i 只负责“指认谁堵”，P_i 负责“承接惩罚”。这正是上一关 predict 里那个“不可导怎么办”的答案落地。</p>
+                </div>
+              </details>
+              <details class="think">
+                <summary>想一想：完全均匀时 loss 等于多少？（提示：代入 f_i=1/E, P_i=1/(E·K)）</summary>
+                <div class="think-body">
+                  <p>均匀时每个专家 f_i = 1/E；而 P_i 是权重平均，均匀分到 E 个专家、每 token 投 K 票，P_i = 1/(E·K)。</p>
+                  <p>Σ(f_i·P_i) = E · (1/E)·(1/(E·K)) = 1/(E·K)。乘上 α·E 得 <strong>α/K</strong>。所以 notebook 测试里 α=0.01、K=2 时，均匀分配的理论最小 loss = 0.005。这就是测试断言的那个数。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：一个系数 α 的拿捏</div>
+              <p>α 太大，模型会为了“摊平负载”牺牲主任务效果（强行把不适合的 token 发给冷门专家）；α 太小，又压不住路由崩塌。Switch Transformer、Mixtral 这类工作里，α≈0.01 是反复试出来的折中。</p>
+              <p>这关你写的 aux_loss，在真实训练里是直接加到主 CrossEntropy 上的：<code>total = ce_loss + aux_loss</code>。理解它，你才能解释“为什么我的 MoE 训着训着专家就废了”。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("scatter_add 求 P_i，再组合损失", [
+        "P_i = torch.zeros(num_experts, device=routing_weights.device)",
+        "P_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())",
+        "P_i = P_i / (total_tokens * top_k)        # 平均路由概率",
+        "# f_i 来自上一关的 one_hot 计数",
+        "aux_loss = alpha * num_experts * (f_i * P_i).sum()"
       ]),
+      predict: {
+        hook: "损失是 α·E·Σ(f_i·P_i)——f 和 P 逐专家相乘再相加。优化器拼命想让它变小。",
+        question: "先判断：优化器为了最小化这个乘积和，会把 token 的分配推向什么状态？",
+        options: [
+          "推向均匀分配——所有专家 f_i、P_i 都趋近 1/E，乘积和取到理论最小",
+          "推向极端集中——把所有 token 都给一个专家",
+          "推向随机——每步都换不同的专家"
+        ],
+        answer: 0,
+        revealNote: "对。两个总和固定的正向量，逐项相乘求和在“都摊平”时最小、在“集中”时最大。所以最小化它 = 逼出均匀分配，正好对抗路由崩塌。"
+      },
       checkpoint: checkpoint(
-        "如果一个专家 P_i 很高且 f_i 也很高，辅助损失会如何看待它？",
-        ["说明负载集中，需要惩罚", "说明这个专家应被删除", "说明 softmax 失效"],
+        "理解：某专家 P_i 高（router 很偏爱）且 f_i 也高（实际接了很多 token），辅助损失会怎么对待它？",
+        ["乘积 f_i·P_i 很大，被重罚，逼 router 给它降温", "判定它是最优专家，给予奖励", "认为 softmax 失效并跳过它"],
         0,
-        "负载均衡希望专家被更平均地使用，高偏好和高占用同时出现会推高惩罚项。"
+        "负载均衡要的是雨露均沾。又偏爱又拥堵的专家乘积最大、惩罚最重，梯度会压低它的 P_i。"
       ),
       homework: [
-        "用 scatter_add_ 把 routing_weights 累加到对应专家，得到 P_i。",
-        "用 one_hot 统计 f_i。",
-        "按 notebook 公式组合 P_i、f_i 和专家数量得到辅助损失。"
+        "TODO 1：用 scatter_add_ 把 routing_weights 按 selected_experts 累加到 P_i，再除以 (total_tokens*top_k)。",
+        "TODO 3：按 aux_loss = alpha * num_experts * (f_i * P_i).sum() 组合（f_i 来自上一关）。",
+        "跑测试：不均衡的 loss 应明显大于均匀；均匀时应≈ alpha/top_k（0.01/2=0.005）。"
       ]
     })
   ],
   "08": [
     lesson({
       id: "gemma-rmsnorm-plus-one",
-      title: "Gemma 的 +1 缩放",
+      title: "Gemma 的 (1+w) 缩放：一个 +1 为何能稳住训练",
       todo: "TODO 1",
       prerequisite: [
-        "RMSNorm 输出会再乘一个可学习缩放向量。",
-        "普通写法直接学习 weight。",
-        "Gemma 写法学习的是 weight + 1。"
+        "回忆 RMSNorm：先把向量按它自己的均方根归一化到稳定尺度，再乘一个可学习的缩放向量 weight，让模型微调每一维的强弱。",
+        "PyTorch 里 weight 常初始化成 0（或极小值）。标准写法 y = x_norm · w，此时 w=0 → 输出被乘成 0，等于把这一层“掐断”了。",
+        "Gemma 改成 y = x_norm · (1 + w)。w=0 时 (1+0)=1，相当于“先什么都不缩放、原样通过”。",
+        "工程细节：统计量要在 FP32 下算，最后 type_as(x) 转回原精度，避免半精度数值不稳。"
       ],
-      intuition: "把默认缩放设为 1，参数只负责学“我要比默认多一点还是少一点”。",
-      exampleHtml: `<div class="scale-demo"><span>normalized x</span><span>weight=[0.1, -0.2]</span><strong>scale=1+weight=[1.1, 0.8]</strong></div>`,
-      syntaxHtml: code("参数和常数相加", [
-        "gain_delta = nn.Parameter(torch.zeros(4))",
-        "scale = 1.0 + gain_delta",
-        "y = x * scale"
+      intuition: "把缩放因子的“默认值”从 0 挪到 1。标准写法里参数学的是“我要把这维放大到多少”（从 0 起步很尴尬）；Gemma 写法里参数学的是“我要在默认 1 的基础上，多一点还是少一点”。训练刚开始 w≈0，整层就是一个老老实实的纯归一化，梯度平滑、不会一上来就把信号清零。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清坑在哪：w 初始化为 0 时，两种写法天差地别</strong>
+              <table class="freq-table">
+                <tr><th style="width:130px">写法</th><th>w=0 时的缩放</th><th>后果</th></tr>
+                <tr><td>标准 x_norm · w</td><td><strong style="color:#be3f5b">× 0</strong></td><td style="text-align:left">输出全被乘成 0，信号被掐断，早期梯度很差</td></tr>
+                <tr><td>Gemma x_norm · (1+w)</td><td><strong style="color:#12805c">× 1</strong></td><td style="text-align:left">原样通过，等价纯归一化，训练平滑启动</td></tr>
+              </table>
+            </div>
+            <div class="story-arrow">为什么“默认 1”这么关键？想象训练第 0 步</div>
+            <div class="story-panel">
+              <strong>1. 把“学绝对值”改成“学相对默认的偏移”</strong>
+              <p>参数从 0 开始更新是常态。标准写法逼着 w 从 0 慢慢爬到 ~1 才能让信号正常通过，这段时间整层都在“半掐断”状态；Gemma 让 w=0 就已经是“正常通过”，w 只需学习“相对 1 的微调量”，起点就健康。</p>
+              <div class="scale-demo"><span>x_norm</span><span>w=[0.1, -0.2]</span><strong>scale = 1+w = [1.1, 0.8]</strong></div>
+              <details class="think">
+                <summary>想一想：为什么不直接把 weight 初始化成 1，效果不就一样了吗？</summary>
+                <div class="think-body">
+                  <p>数值上确实可以——把 w 初始化成全 1、用标准 x_norm·w，起点也是“×1”。Gemma 选择“初始化成 0 + 写成 (1+w)”，好处是让“零初始化”这个通用、稳健的默认习惯继续适用，参数语义也更统一：所有可学习量都从 0 出发，代表“相对基准的偏移”。</p>
+                  <p>很多框架/优化器、权重衰减(weight decay)都默认把参数往 0 拉。如果你把基准烤进“初始化值=1”，weight decay 会一直想把它拽回 0（=掐断）；而写成 (1+w)、对 w 做 decay，拉向的是“w=0 即 ×1”的健康默认。这就是把基准写进公式、而非写进初始化的深层原因。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">写代码时别忘了精度</div>
+            <div class="story-panel">
+              <strong>2. 顺序：FP32 归一化 → ×(1+w) → type_as 转回</strong>
+              <p>notebook 已经帮你算好了 FP32 下的 <code>x_norm</code>。你的 TODO 只差最后一步：乘上 <code>(1 + self.weight)</code>，再 <code>.type_as(x)</code> 转回输入精度。一行就够。</p>
+              <div class="mini-flow"><span>x.float()</span><span>归一化得 x_norm</span><strong>x_norm * (1 + weight) → type_as(x)</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：训练稳定性是大模型的隐形成本</div>
+              <p>千亿参数模型训练一次要烧掉海量算力，一旦中途 loss 发散，重启的代价极高。Gemma 的 (1+w)、LLaMA 的 Pre-Norm、各种初始化技巧，目标都一样：让训练在最脆弱的早期稳稳启动。这些看似“一个 +1”的小改动，背后是“别让我几百万的训练任务崩在第一千步”的工程焦虑。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("把基准 1 写进公式，参数从 0 学偏移", [
+        "gain = nn.Parameter(torch.zeros(4))   # 默认 0",
+        "scale = 1.0 + gain                    # w=0 时 scale=1（原样通过）",
+        "y = x_norm * scale                    # 再 .type_as(x) 转回原精度"
       ]),
+      predict: {
+        hook: "Gemma 把 RMSNorm 的缩放从 x·w 改成 x·(1+w)，而且 weight 还是初始化成 0。看着只是个 +1。",
+        question: "先判断：这个 +1 最主要解决什么问题？",
+        options: [
+          "让 weight=0 的初始时刻等价于“纯归一化、原样通过”，使训练早期梯度平滑、不被清零",
+          "让 RMSNorm 的计算量翻倍，从而更精确",
+          "把输出强行限制在 0~1 之间"
+        ],
+        answer: 0,
+        revealNote: "对。w 初始为 0 时，标准写法 ×0 会掐断信号；(1+w) 让它 ×1 原样通过，参数转为“学相对默认的偏移”，早期训练稳得多。"
+      },
       checkpoint: checkpoint(
-        "Gemma RMSNorm 中，如果 weight 初始化为 0，实际缩放是多少？",
-        ["1", "0", "hidden_size"],
+        "判断：Gemma RMSNorm 中 weight 初始化为 0 时，实际作用在归一化结果上的缩放是多少？",
+        ["1（等价于不额外缩放，原样通过）", "0（输出被清零）", "hidden_size"],
         0,
-        "实际使用的是 1 + weight，所以初始化为 0 时等价于不改变尺度。"
+        "实际缩放是 1 + weight = 1 + 0 = 1，所以初始等价于纯归一化层。"
       ),
       homework: [
-        "实现归一化后的 (1 + weight) 缩放。",
-        "确认初始化时输出不会被缩放到 0。",
-        "用测试检查 Gemma 写法和预期输出一致。"
+        "TODO 1：在已算好的 x_norm 上实现 output = x_norm * (1 + self.weight)。",
+        "记得 .type_as(x) 把结果转回输入精度（前面是 FP32 计算的）。",
+        "跑测试：weight=0 时输出应与“无缩放纯归一化”结果一致。"
       ]
     }),
     lesson({
       id: "qwen-tie-embeddings",
-      title: "权重绑定：输入词表和输出词表共用一张表",
+      title: "权重绑定：输入查表和输出预测，共用同一张词表",
       todo: "TODO 2",
       prerequisite: [
-        "Embedding 权重把 token id 映射成向量。",
-        "lm_head 权重把 hidden 向量映射回 vocab logits。",
-        "权重绑定要求两个模块指向同一块 Parameter。"
+        "embed_tokens：把 token id 查成向量，权重形状 [vocab_size, hidden]。",
+        "lm_head：把 hidden 向量映射回每个词的分数(logits)，权重形状 [vocab_size, hidden]——和 embedding 一模一样！",
+        "正因为两者形状相同、语义相关（都是“词 ↔ 向量”的对应表），可以让它们共用同一块参数。",
+        "关键区分：相等(==，值一样) ≠ 共享(is，同一个对象)。绑定要的是“同一块内存”。"
       ],
-      intuition: "读词和猜词使用同一套词典坐标，既省参数，也让输入输出空间保持一致。",
-      exampleHtml: `<div class="lookup"><span>embed_tokens.weight</span><strong>同一块内存</strong><span>lm_head.weight</span></div>`,
-      syntaxHtml: code("让两个属性指向同一个权重", [
+      intuition: "模型开头“读词”（id→向量）和结尾“猜词”（向量→打分）其实在用同一套“词 ↔ 向量”的对应关系。与其各学一张大表，不如共用一张：参数省一半，而且训练时输入端和输出端的梯度都更新到同一张表，让词向量学得更充分。实现只有一行——让 lm_head.weight 直接指向 embed_tokens.weight。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 为什么这两张表能合并？先看形状</strong>
+              <p>词表常有 15 万+ 个词。embed_tokens 的权重是 [vocab, hidden]，lm_head（bias=False）的权重也是 [vocab, hidden]。形状完全一致，且都在描述“每个词对应哪个向量”——天然适合共用。</p>
+              <div class="lookup"><span>embed_tokens.weight<br>[vocab, hidden]</span><strong>同一块内存</strong><span>lm_head.weight<br>[vocab, hidden]</span></div>
+            </div>
+            <div class="story-arrow">怎么“共用”？不是复制，是让两个名字指向同一个对象</div>
+            <div class="story-panel">
+              <strong>1. 一行赋值：lm_head.weight = embed_tokens.weight</strong>
+              <p>这行不复制数据，而是让 lm_head 的 weight 属性指向 embedding 那块 Parameter。从此改一个，另一个自动同步——因为它们本就是同一块内存。</p>
+              <svg viewBox="0 0 420 120" width="100%" style="max-width:560px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="30" width="120" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="80" y="52">embed_tokens.weight</text>
+                  <rect x="20" y="74" width="120" height="34" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="80" y="96">lm_head.weight</text>
+                  <line x1="140" y1="47" x2="250" y2="64" stroke="#657184" stroke-width="2"></line>
+                  <line x1="140" y1="91" x2="250" y2="68" stroke="#657184" stroke-width="2"></line>
+                  <rect x="250" y="48" width="150" height="34" rx="8" fill="#f4f1ff" stroke="#c9bdf0"></rect><text x="325" y="70">同一个 Parameter</text>
+                </g>
+              </svg>
+              <details class="think">
+                <summary>想一想：怎么确认是“真共享”而不是“值刚好相等”？</summary>
+                <div class="think-body">
+                  <p>用 <code>is</code> 或 <code>data_ptr()</code>。<code>a is b</code> 检查两个引用是不是同一个对象；<code>a.data_ptr() == b.data_ptr()</code> 检查底层数据是不是同一块内存地址。</p>
+                  <p>注意 <code>shape 相同</code> 或 <code>值相等(==)</code> 都骗不过：复制一份权重，shape 和值都一样，但改了原表副本不会跟着变——那不是绑定。notebook 测试就是用更新 embedding 后看 lm_head 是否同步、以及 data_ptr 是否相等来验真的。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">省了多少？算一笔账</div>
+            <div class="story-panel">
+              <strong>2. 参数账：词表越大，省得越狠</strong>
+              <p>词表 V、隐藏维 H，一张表就是 V×H 个参数。绑定后两张变一张，直接省下 V×H。V=150k、H=4096 时，约 6.1 亿参数——单这一项就省下好几 GB 显存。</p>
+              <div class="ratio-board"><span>不绑定<br>2 × V×H</span><span>绑定<br>1 × V×H</span><strong>省下 V×H<br>(≈6.1亿 @150k×4096)</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：绑不绑，是容量与成本的权衡</div>
+              <p>Qwen、GPT-2 绑定权重，主打省参数、让词向量获得双倍监督信号——在中小模型上很划算。但到了 LLaMA-70B 这种超大模型，参数预算充足，<strong>解绑</strong>反而能让输入表征和输出预测各自特化，换来更好的效果。</p>
+              <p>所以这不是“哪个更对”，而是“在你的规模和预算下，省参数重要还是表达力重要”。能讲清这个权衡，面试里就比只会写一行赋值的人高一档。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("让两个属性指向同一块权重", [
         "emb = nn.Embedding(100, 16)",
         "head = nn.Linear(16, 100, bias=False)",
-        "head.weight = emb.weight",
-        "assert head.weight is emb.weight"
+        "head.weight = emb.weight              # 指针级共享，不是复制",
+        "assert head.weight is emb.weight      # is 检查：同一个对象",
+        "assert head.weight.data_ptr() == emb.weight.data_ptr()  # 同一块内存"
       ]),
+      predict: {
+        hook: "embed_tokens（读词）和 lm_head（猜词）的权重形状一模一样，都是 [vocab, hidden]。Qwen 干脆让它们共用同一块参数。",
+        question: "先判断：权重绑定（weight tying）带来的最直接收益是？",
+        options: [
+          "省掉一整张 [vocab, hidden] 的参数，词表越大省得越多；且输入/输出梯度共同更新词向量",
+          "让模型推理速度翻倍",
+          "把 vocab_size 自动缩小一半"
+        ],
+        answer: 0,
+        revealNote: "对。词表动辄十几万，一张表就是几亿参数。共用一张省一半参数、省显存，还让词向量同时接受“读”和“猜”两端的监督。"
+      },
       checkpoint: checkpoint(
-        "判断权重绑定是否真的共享内存，最直接的检查是？",
-        ["lm_head.weight is embed_tokens.weight", "lm_head.weight.shape == embed_tokens.weight.shape", "两个模块名字相同"],
+        "判断权重是否真的绑定（共享同一块内存），最可靠的检查是？",
+        ["lm_head.weight is embed_tokens.weight（或 data_ptr 相等）", "两者 .shape 相等", "两个模块的变量名相似"],
         0,
-        "shape 相同不代表共享；is 检查两个引用是否指向同一对象。"
+        "shape 相等只说明形状一样，复制品也满足；is / data_ptr 才能确认指向同一个对象、同一块内存。"
       ),
       homework: [
-        "把 lm_head.weight 直接绑定到 embed_tokens.weight。",
-        "用 is 检查是否同一块 Parameter。",
-        "确认 forward 的 vocab logits shape 没有改变。"
+        "TODO 2：在 __init__ 里写 self.lm_head.weight = self.embed_tokens.weight（直接赋值，不要 clone/copy）。",
+        "用 is 或 data_ptr() 验证两者共享内存；更新 embedding 后确认 lm_head 同步变化。",
+        "确认 forward 的 logits 形状仍是 [..., vocab_size]，没被绑定影响。"
       ]
     })
   ],
