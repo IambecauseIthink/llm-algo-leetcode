@@ -716,7 +716,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -726,7 +726,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 10 | 零基础导学关卡</p>
         <h1>LoRA Tutorial</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">10_LoRA_Tutorial.ipynb</span>
           <span class="pill">LoRA</span><span class="pill">PEFT</span><span class="pill">Low-rank</span>
@@ -735,9 +735,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">W' = W + (alpha / r) * B A</div>
       </div>
@@ -745,45 +745,120 @@
 
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="lora-low-rank-adapter">
+        <article class="lesson-card inquiry" data-lesson="lora-low-rank-adapter">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
-          <h2>LoRA：冻结大矩阵，只训练低秩旁路</h2>
+          <h2>LoRA：冻结大矩阵，旁边挂一条可训练的低秩小路</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>普通 Linear 的权重 shape 是 [out_features, in_features]。</li><li>LoRA 用两个小矩阵 A 和 B 近似一个大更新矩阵。</li><li>主权重通常冻结，只训练 A/B。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">LoRA 的两个小矩阵 A、B，A 用 kaiming 随机初始化，B 却被要求严格初始化成全 0。</p>
+            <p class="predict-q">先判断：为什么 B 一定要初始化为 0？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-low-rank-adapter" value="0">
+                <span>让初始 BA=0、ΔW=0，微调开始时模型输出与原预训练模型完全一致，训练从稳定起点出发</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-low-rank-adapter" value="1">
+                <span>为了让 B 的参数量减半</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-low-rank-adapter" value="2">
+                <span>因为全 0 矩阵计算更快</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="lora-low-rank-adapter">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>不直接改整面墙，只在旁边贴一张可训练的小补丁；补丁由 A 先降维、B 再升维组成。</p>
-            <div class="matrix-flow"><span>x</span><span>A: in to r</span><span>B: r to out</span><strong>加到 base linear</strong></div>
-            <div class="syntax-card"><h4>语法热身：定义可训练和不可训练参数</h4><pre><code>self.weight = nn.Parameter(torch.empty(out_features, in_features))
-self.weight.requires_grad = False
+          <div class="gated" data-gated="lora-low-rank-adapter">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>痛点：全参微调一个 7B 模型，光 AdamW 优化器就要存参数的动量+方差，显存约是参数量的十几倍，个人和中小团队根本扛不住。</li><li>LoRA 的想法：冻结原始大权重 W₀（不训练它），只在旁边挂两个很小的矩阵 A、B，用它们的乘积 BA 去近似“微调带来的改变量 ΔW”。</li><li>A 的形状 [r, in]（降维），B 的形状 [out, r]（升维），中间的 r 叫“秩”，通常很小（8/16）。只有 A、B 需要训练。</li><li>关键初始化：B 必须初始化为全 0，A 用随机（Kaiming）。这样一开始 BA=0 → ΔW=0 → 微调前的模型输出和原模型完全一致。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>别去改那面已经砌好的大墙（W₀ 冻结），而是在墙边搭一条细窄的旁路：输入先被 A 压缩到很低的维度 r（瓶颈），再被 B 放大回原来的宽度。这条旁路的参数量 r×(in+out) 远小于整面墙 in×out，所以又省显存又省优化器状态。这一关先把“冻结的墙 + 可训练的窄旁路”这套零件搭出来。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 为什么“低秩”能省这么多？先看参数量对比</strong>
+              <p>原始权重 W₀ 是 [out, in]，参数量 out×in。LoRA 旁路只有 A[r,in] + B[out,r]，参数量 r×(in+out)。当 r 远小于 in、out 时，差距是几个数量级。</p>
+              <table class="freq-table">
+                <tr><th>矩阵</th><th>形状</th><th>参数量（in=out=4096, r=8）</th></tr>
+                <tr><td>W₀（冻结）</td><td>[out, in]</td><td>约 1678 万</td></tr>
+                <tr><td>lora_A（训练）</td><td>[r, in]</td><td>32768</td></tr>
+                <tr><td>lora_B（训练）</td><td>[out, r]</td><td>32768</td></tr>
+                <tr><td><strong>可训练合计</strong></td><td></td><td><strong>约 6.5 万（≈原来的 0.4%）</strong></td></tr>
+              </table>
+            </div>
+            <div class="story-arrow">这条旁路长什么样？降维 → 升维的瓶颈结构</div>
+            <div class="story-panel">
+              <strong>1. A 先把 in 压到 r，B 再把 r 拉回 out</strong>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="20" y="46" width="70" height="38" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="55" y="69">x (in)</text>
+                  <line x1="90" y1="65" x2="140" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <defs><marker id="arrow10" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
+                  <rect x="140" y="50" width="70" height="30" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect><text x="175" y="69">A: →r</text>
+                  <rect x="235" y="54" width="30" height="22" rx="6" fill="#fde68a" stroke="#d9a15a"></rect><text x="250" y="69" font-size="11">r=8</text>
+                  <line x1="210" y1="65" x2="235" y2="65" stroke="#657184" stroke-width="2"></line>
+                  <line x1="265" y1="65" x2="290" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <rect x="290" y="50" width="70" height="30" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="325" y="69">B: →out</text>
+                  <line x1="360" y1="65" x2="400" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <text x="425" y="69" fill="#657184">ΔWx</text>
+                  <text x="230" y="30" fill="#8a4d0a" font-size="12">窄瓶颈 r 就是“低秩”的含义</text>
+                </g>
+              </svg>
+              <p>notebook 里主权重用 <code>nn.Linear(in,out,bias=False)</code> 承载，然后 <code>self.linear.weight.requires_grad = False</code> 冻结它；A、B 是单独的 <code>nn.Parameter</code>。</p>
+            </div>
+            <div class="story-arrow">TODO 2：初始化——B 为什么必须是 0</div>
+            <div class="story-panel">
+              <strong>2. B 初始化为 0：让微调“从原模型出发”</strong>
+              <p>A 用 kaiming 随机（给旁路一点初始的方向多样性），B 用 <code>zeros_</code> 全 0。于是训练第 0 步 BA=0，ΔW=0，LoRA 模型输出 == 原模型输出。微调是“在原模型基础上慢慢加东西”，而不是“一上来就把输出打乱”。</p>
+              <div class="scale-demo"><span>A: kaiming 随机</span><span>B: 全 0</span><strong>初始 BA = 0 → 不改变原输出</strong></div>
+              <details class="think">
+                <summary>想一想：为什么不能 A、B 都随机初始化？两个都 0 又会怎样？</summary>
+                <div class="think-body">
+                  <p>都随机 → 初始 ΔW≠0，微调还没开始就把预训练好的输出破坏了，等于丢掉了预训练的起点，训练不稳。</p>
+                  <p>都为 0 → BA=0 满足了，但更麻烦：A、B 全 0 时，反向传播里 A 的梯度依赖 B、B 的梯度依赖 A，两个都是 0 会让梯度也卡在 0，旁路永远学不动（对称性无法打破）。所以标准做法是“一个随机打破对称、一个置零保证起点”——A 随机、B 归零。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：LoRA 让“人人可微调”成为现实</div>
+              <p>7B 全参微调约需 112GB 显存（参数+梯度+优化器），LoRA(r=8) 只要约 14GB——一张消费级卡就能跑。更妙的是：一个冻结的基座模型，可以挂载多个不同任务训练出的 A/B 适配器，推理时按需切换，这就是“一基座 + N 适配器”的部署范式（QLoRA 更进一步把基座也量化了，本仓库后面会讲）。</p>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：冻结主权重，定义可训练的 A/B</h4><pre><code>self.linear = nn.Linear(in_features, out_features, bias=False)
+self.linear.weight.requires_grad = False       # 冻结主权重
 self.lora_A = nn.Parameter(torch.empty(r, in_features))
-self.lora_B = nn.Parameter(torch.empty(out_features, r))</code></pre></div>
-          </div>
+self.lora_B = nn.Parameter(torch.empty(out_features, r))
+# 初始化：A 随机打破对称，B 全 0 保证起点
+nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+nn.init.zeros_(self.lora_B)</code></pre></div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>LoRA 中 r 的主要作用是什么？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>理解：in_features=4096, out_features=4096, r=8 时，LoRA 可训练参数量约是原始权重的多少？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="0">
-                <span>控制 batch size</span>
+                <span>约 50%</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="1">
-                <span>控制低秩旁路的瓶颈大小</span>
+                <span>约 0.4%（6.5万 vs 1678万）</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-low-rank-adapter" value="2">
-                <span>控制 vocab size</span>
+                <span>和原始权重一样多</span>
               </label></div>
-            <div class="feedback" data-feedback="lora-low-rank-adapter"></div>
+              <div class="feedback" data-feedback="lora-low-rank-adapter"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -792,56 +867,130 @@ self.lora_B = nn.Parameter(torch.empty(out_features, r))</code></pre></div>
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-low-rank-adapter-0">
-                <span>在 __init__ 中创建主权重和 LoRA A/B。</span>
+                <span>TODO 1：self.linear = nn.Linear(in,out,bias=False) 并 requires_grad=False 冻结；A=[r,in]、B=[out,r] 两个 Parameter。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-low-rank-adapter-1">
-                <span>按 notebook 要求初始化权重。</span>
+                <span>TODO 2：kaiming_uniform_ 初始化 A，zeros_ 初始化 B。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-low-rank-adapter-2">
-                <span>确认只有 LoRA 旁路参数需要训练。</span>
+                <span>自检：初始 forward 输出应等于 self.linear(x)（因为 B=0）。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="lora-forward-merge">
+        <article class="lesson-card inquiry" data-lesson="lora-forward-merge">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 3 / TODO 4</span>
           </div>
-          <h2>前向时相加，推理时可以合并</h2>
+          <h2>前向两条路相加，部署时合并回一条路（零延迟）</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>LoRA 输出是 base_out + lora_out。</li><li>lora_out 通常要乘 alpha / r 的缩放。</li><li>合并权重就是把低秩更新加回主权重。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">LoRA 训练时走“主路 + 旁路”两条线。可它宣传的一大卖点是“推理零额外延迟”。</p>
+            <p class="predict-q">先判断：LoRA 是怎么做到推理时不比原模型慢的？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-forward-merge" value="0">
+                <span>把旁路更新 (α/r)·BA 直接加回主权重 W₀，合并成一个普通 Linear，推理时没有额外矩阵乘法</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-forward-merge" value="1">
+                <span>推理时把 batch size 调大来摊薄旁路开销</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-forward-merge" value="2">
+                <span>推理时直接丢弃旁路、不要那部分效果</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="lora-forward-merge">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>训练时走两条路方便只改小补丁；部署时把补丁贴回主权重，前向就不多绕路。</p>
-            <div class="branches"><span>base: xW</span><span>LoRA: x A^T B^T * scale</span><strong>输出相加</strong></div>
-            <div class="syntax-card"><h4>语法热身：线性层和权重合并</h4><pre><code>base = F.linear(x, self.weight, self.bias)
-update = F.linear(F.linear(x, self.lora_A), self.lora_B) * self.scaling
-merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></pre></div>
-          </div>
+          <div class="gated" data-gated="lora-forward-merge">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>前向公式：h = W₀x + ΔWx = W₀x + (α/r)·BAx。主路照常，旁路 (x→A→B) 乘缩放系数后加上去。</li><li>scaling = α/r（lora_alpha / r）：控制旁路影响强度。它让你换 r 时不用重调学习率。</li><li>计算顺序：x 先过 A（降到 r 维），再过 B（升回 out 维），最后乘 scaling。用矩阵写就是 (x @ A.T) @ B.T * scaling。</li><li>合并：因为 (W₀ + BA·scaling)x 恒等于 W₀x + BA·scaling·x，可以把 BA·scaling 直接加进 W₀，部署时只剩一个普通 Linear。</li></ul>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>合并 LoRA 权重后，推理时还需要单独计算 LoRA 旁路吗？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>训练时走两条路：主路是冻结的大矩阵，旁路是可训练的小补丁，输出相加。这样只有旁路在学。等训练完要部署了，把旁路的更新 (α/r)·BA 一次性加回主权重——两条路合成一条，推理时和原始 Linear 一模一样，没有任何额外计算，这就是 LoRA“零推理延迟”的杀手锏。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 前向：主路 + 旁路，两股汇合</strong>
+              <svg viewBox="0 0 460 150" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="18" y="58" width="56" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="46" y="80">x</text>
+                  <path d="M74 68 C120 30, 300 30, 350 58" fill="none" stroke="#2f7fc4" stroke-width="2.5" marker-end="url(#arrow10b)"></path>
+                  <defs><marker id="arrow10b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
+                  <text x="200" y="34" fill="#2f7fc4">主路 W₀x（冻结）</text>
+                  <line x1="74" y1="82" x2="120" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="120" y="66" width="46" height="30" rx="7" fill="#fff6e8" stroke="#e8b66f"></rect><text x="143" y="85">A</text>
+                  <line x1="166" y1="82" x2="196" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="196" y="66" width="46" height="30" rx="7" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="219" y="85">B</text>
+                  <line x1="242" y1="82" x2="272" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="272" y="66" width="70" height="30" rx="7" fill="#f4f1ff" stroke="#c9bdf0"></rect><text x="307" y="85" font-size="11">× α/r</text>
+                  <circle cx="372" cy="70" r="16" fill="#fff" stroke="#657184"></circle><text x="372" y="75" font-size="18">+</text>
+                  <line x1="342" y1="81" x2="357" y2="74" stroke="#657184" stroke-width="2"></line>
+                  <text x="410" y="74" fill="#657184">h</text>
+                  <text x="200" y="120" fill="#8a4d0a">旁路 (x→A→B)×scaling</text>
+                </g>
+              </svg>
+              <p>代码：<code>result = self.linear(x)</code>；<code>lora_out = (x @ A.T) @ B.T * scaling</code>；<code>result += lora_out</code>。</p>
+              <details class="think">
+                <summary>想一想：scaling = α/r 有什么用？为什么换 r 时它能帮你少调一个超参？</summary>
+                <div class="think-body">
+                  <p>r 越大，BA 这条旁路本身能表达的“改变量”越强、数值也倾向更大。如果不缩放，你每换一个 r 就得重新找合适的学习率。</p>
+                  <p>乘上 α/r 后，r 变大时缩放自动变小，把旁路的整体幅度拉回一个大致稳定的范围。于是你固定 α（比如 16），调 r 时更新幅度不会剧烈变化，学习率可以基本不动。这是个“解耦超参”的小工程技巧。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 4：部署时把旁路焊回主路</div>
+            <div class="story-panel">
+              <strong>1. 合并：(α/r)·BA 加进 W₀，两条路变一条</strong>
+              <p>因为 <code>W₀x + scaling·BAx = (W₀ + scaling·BA)x</code>，训练完直接把 <code>scaling·BA</code> 加到主权重上，之后推理就是一个普通 Linear——没有旁路、没有额外矩阵乘法、零延迟。</p>
+              <div class="mini-flow"><span>训练：两条路分开</span><strong>merge: W₀ += (α/r)·B@A</strong><span>推理：一条路，等价但更快</span></div>
+              <details class="think">
+                <summary>想一想：合并后输出和合并前应该完全一样吗？测试怎么验证？</summary>
+                <div class="think-body">
+                  <p>数学上完全等价，所以合并前后对同一个 x，输出应该在数值误差内相等（notebook 用 <code>torch.allclose(..., atol=1e-5)</code> 验证）。</p>
+                  <p>这也是 LoRA 相比 Adapter 类方法的核心优势：Adapter 在网络里插了额外的层，推理永远多花时间；LoRA 的更新是线性的、能被“焊”回原权重，所以可以做到部署零开销。需要换任务时，再把这份更新减回去、换上另一份即可。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：可合并性 = LoRA 的护城河</div>
+              <p>“训练时省显存”很多方法都能做到，但“推理时零额外延迟”是 LoRA 独有的甜点。生产环境里，你可以为不同客户/任务各训一个几十 MB 的 LoRA，共享同一个几十 GB 的基座；上线时合并进去跑得和原模型一样快，或者用支持多 LoRA 的推理框架动态切换。这套“基座只读、补丁热插拔”的模式，是当前大模型服务化的主流姿势之一。</p>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：前向相加 + 合并权重</h4><pre><code># forward：主路 + 旁路
+result = self.linear(x)                       # W0 x（冻结主路）
+lora_out = (x @ self.lora_A.T) @ self.lora_B.T * self.scaling
+result = result + lora_out
+
+# merge：把低秩更新焊回主权重（零延迟推理）
+self.linear.weight.data += (self.lora_B @ self.lora_A) * self.scaling</code></pre></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>理解：调用 merge_weights() 把更新合并进主权重后，推理时还需要单独走 A/B 旁路吗？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-forward-merge" value="0">
-                <span>需要，否则 shape 会变</span>
+                <span>需要，否则输出 shape 会变</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-forward-merge" value="1">
-                <span>只在 batch size 为 1 时需要</span>
+                <span>只有 batch_size=1 时才不需要</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-lora-forward-merge" value="2">
-                <span>不需要，更新已加进主权重</span>
+                <span>不需要，更新已加进主权重，走普通 Linear 即可</span>
               </label></div>
-            <div class="feedback" data-feedback="lora-forward-merge"></div>
+              <div class="feedback" data-feedback="lora-forward-merge"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -850,15 +999,15 @@ merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></p
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-forward-merge-0">
-                <span>实现 base linear 和 LoRA 旁路相加。</span>
+                <span>TODO 3：result = self.linear(x)；lora_out = (x @ lora_A.T) @ lora_B.T * scaling；两者相加。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-forward-merge-1">
-                <span>注意 LoRA 旁路的缩放系数。</span>
+                <span>TODO 4：self.linear.weight.data += (lora_B @ lora_A) * scaling。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-forward-merge-2">
-                <span>实现 merge 权重并验证合并前后输出接近。</span>
+                <span>跑测试：改动 B 后前向应变化；merge 后输出与 merge 前用 allclose(atol=1e-5) 应一致。</span>
               </label>
           </div>
         </article>
@@ -878,9 +1027,9 @@ merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling</code></p
 
   <script>
     const levelId = "10";
-    const checkpointData = {"lora-low-rank-adapter":{"answer":1,"explain":"r 越小，可训练参数越少；r 越大，旁路表达能力更强。"},"lora-forward-merge":{"answer":2,"explain":"合并后主权重已经包含低秩更新，推理可以只走普通 Linear。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const checkpointData = {"lora-low-rank-adapter":{"answer":1,"explain":"LoRA=r×(in+out)=8×8192≈6.5万；原始=in×out≈1678万，比值约 0.39%。这就是省显存的来源。"},"lora-forward-merge":{"answer":2,"explain":"合并后 W₀ 已包含 (α/r)·BA，前向只需一个 Linear，和原模型等价且零额外延迟。"}};
+    const predictData = {"lora-low-rank-adapter":{"answer":0,"revealNote":"对。B=0 → BA=0 → 初始等价原模型。A 则要随机（不能也为 0），否则梯度卡在 0、旁路学不动——一个置零定起点，一个随机破对称。"},"lora-forward-merge":{"answer":0,"revealNote":"对。因为 W₀x+scaling·BAx=(W₀+scaling·BA)x，更新是线性的、能焊回主权重。合并后结构与原始 Linear 完全相同，零额外开销——这正是 LoRA 胜过 Adapter 的地方。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";

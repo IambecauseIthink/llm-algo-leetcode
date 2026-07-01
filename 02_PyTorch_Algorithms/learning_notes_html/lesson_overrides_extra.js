@@ -812,183 +812,532 @@ module.exports = {
   "09": [
     lesson({
       id: "sft-label-mask",
-      title: "SFT labels：只让回答部分参与损失",
+      title: "Loss Masking：为什么只批改“答案”，不批改“题目”",
       todo: "TODO 1 / TODO 2",
       prerequisite: [
-        "SFT 数据通常由 prompt 和 answer 拼接而成。",
-        "prompt 是条件，不应该被当成要学习复述的答案。",
-        "CrossEntropyLoss 的 ignore_index 常用 -100。"
+        "回忆预训练 vs SFT：预训练时每个 token 都要预测、都算 loss（读一整本书）；SFT 给的是 [Prompt(问题)] + [Response(答案)]，我们只想让模型学会“答”，不想让它学“背题干”。",
+        "做法叫 Loss Masking：把 labels 里属于 prompt 和 padding 的位置全设成 -100。",
+        "-100 是 PyTorch CrossEntropyLoss 的默认 ignore_index：凡是 label=-100 的位置，既不算损失、也不回传梯度，等于“这题不批改”。",
+        "input_ids 和 labels 是两条等长的序列：input_ids 喂给模型看，labels 告诉损失函数“每个位置的正确答案是什么、要不要算分”。"
       ],
-      intuition: "题目部分像试卷题干，模型读它；答案部分才是要批改的作答。",
-      exampleHtml: `<div class="mini-table"><span>tokens</span><span>[题, 题, 答, 答]</span><span>labels</span><strong>[-100, -100, 答, 答]</strong></div>`,
-      syntaxHtml: code("列表拼接、截断和填充", [
-        "ids = prompt_ids + answer_ids",
-        "labels = [-100] * len(prompt_ids) + answer_ids",
-        "ids = ids[:max_len] + [pad_id] * max(0, max_len - len(ids))",
-        "labels = labels[:max_len] + [-100] * max(0, max_len - len(labels))"
+      intuition: "把一条 SFT 样本想成一张试卷：prompt 是印好的题干，response 是学生要写的作答。模型读整张卷子（input_ids 完整保留），但老师只批改作答区（labels 里只有 response 是真值，题干和空白都涂成 -100 表示不批改）。这一关就是构造这张“只在答案区留分”的 labels，再处理超长截断和不足填充。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清两条序列的关系</strong>
+              <p>input_ids = prompt_ids + response_ids，整条都保留给模型看。labels 长度一样，但只有 response 段是“真答案”，prompt 段和后面 padding 段都填 -100。</p>
+              <table class="freq-table">
+                <tr><th style="width:110px">位置含义</th><th>input_ids（模型看的）</th><th>labels（算分用的）</th></tr>
+                <tr><td>prompt 题干</td><td><code>[10, 20, 30]</code></td><td><code style="color:#be3f5b">[-100, -100, -100]</code></td></tr>
+                <tr><td>response 答案</td><td><code>[40, 50, 60, 70]</code></td><td><code style="color:#12805c">[40, 50, 60, 70]</code></td></tr>
+                <tr><td>padding 补位</td><td><code>[0]</code></td><td><code style="color:#be3f5b">[-100]</code></td></tr>
+              </table>
+              <p>这正是 notebook 测试期望的：<code>labels = [-100,-100,-100, 40,50,60,70, -100]</code>（max_len=8）。</p>
+            </div>
+            <div class="story-arrow">为什么题干要涂掉？想想“背题”和“答题”的区别</div>
+            <div class="story-panel">
+              <strong>1. 涂掉 prompt = 不让模型把“背题干”当成任务</strong>
+              <p>如果 prompt 也算 loss，模型会花容量去学“人类爱怎么提问”，而不是“怎么答得好”。把它设成 -100，梯度就只从答案区回传，模型的全部注意力都用在“给定这个问题，下一个词该答什么”。</p>
+              <div class="mini-table"><span>算 loss 的位置</span><strong>只有 response 段</strong><span>其余</span><span>-100 全部跳过</span></div>
+              <details class="think">
+                <summary>想一想：padding 位为什么也必须设成 -100，而不是随便填个 pad_id？</summary>
+                <div class="think-body">
+                  <p>padding 只是为了把一个 batch 里长短不一的样本对齐成矩形，它不是真实内容。如果 labels 里 padding 位留着 pad_id，模型就会被要求去“预测 padding”，白白浪费容量、还污染 loss。</p>
+                  <p>所以 input_ids 的 padding 填 pad_id（占位），但 labels 的 padding 必须填 -100（不批改）。两条序列在 padding 段的填法故意不同——这是最容易写错的地方。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 2：超长要截、不足要补</div>
+            <div class="story-panel">
+              <strong>2. 截断与填充：把每条样本对齐到 max_len</strong>
+              <p>拼完可能比 max_len 长（要从末尾截掉）或短（要在末尾补齐）。两条序列同步操作，只是填充值不同：input_ids 补 pad_id，labels 补 -100。</p>
+              <div class="mini-flow"><span>超长</span><span>input_ids[:max_len]<br>labels[:max_len]</span><strong>不足<br>input_ids+[pad_id]*n<br>labels+[-100]*n</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：SFT 数据构造是“脏活”，但决定成败</div>
+              <p>面试里“你怎么构造 input_ids 和 labels、为什么 mask 掉 prompt”几乎必问，因为它直接暴露你是不是真做过训练。现实中多轮对话、system prompt、工具调用的 mask 规则更复杂（比如只算最后一轮助手回复），但内核就是这关：<strong>用 -100 精确控制“哪些 token 要学、哪些只读”</strong>。</p>
+              <p>一个常见线上事故就是 mask 写错——模型把用户的问法也学了进去，微调完开始“复读”用户，而不是回答。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("拼接 → 造 labels → 截断/填充", [
+        "input_ids = prompt_ids + response_ids",
+        "labels = [-100] * len(prompt_ids) + response_ids   # 题干涂掉，答案保留",
+        "if len(input_ids) > max_len:                        # 超长：末尾截断",
+        "    input_ids, labels = input_ids[:max_len], labels[:max_len]",
+        "else:                                               # 不足：末尾填充",
+        "    pad = max_len - len(input_ids)",
+        "    input_ids += [pad_id] * pad                     # 占位",
+        "    labels    += [-100]   * pad                     # 不批改"
       ]),
+      predict: {
+        hook: "SFT 样本是 [Prompt] + [Response]。构造 labels 时，我们偏偏把 Prompt 那一段全设成 -100。",
+        question: "先判断：把 prompt 段的 label 设成 -100，最主要是为了？",
+        options: [
+          "让 prompt 段不算 loss、不回传梯度，逼模型学“回答”而不是“背题干”",
+          "为了让 input_ids 变短，加快训练",
+          "因为 -100 是 prompt 的特殊 token id"
+        ],
+        answer: 0,
+        revealNote: "对。-100 是 CrossEntropyLoss 的 ignore_index：这些位置被完全跳过。模型照样能“看到”prompt（input_ids 保留），但不会被要求去预测它。"
+      },
       checkpoint: checkpoint(
-        "在 SFT 中，prompt 对应的 label 通常设成什么？",
-        ["-100", "pad_id", "prompt token 自己"],
+        "动手算：prompt=[10,20,30]、response=[40,50,60,70]、max_len=8、pad_id=0，labels 应该是？",
+        ["[-100,-100,-100, 40,50,60,70, -100]", "[10,20,30, 40,50,60,70, 0]", "[-100,-100,-100, 40,50,60,70, 0]"],
         0,
-        "-100 会被 PyTorch 的交叉熵忽略，避免训练模型复述题干。"
+        "prompt 3 位涂 -100，response 4 位保留原值，最后 1 位 padding 也涂 -100。"
       ),
       homework: [
-        "构造 input_ids 时拼接 prompt 和 answer。",
-        "构造 labels 时把 prompt 位置设为 -100。",
-        "按 max_length 做截断和 padding。"
+        "TODO 1：input_ids = prompt_ids + response_ids；labels = [-100]*len(prompt_ids) + response_ids。",
+        "TODO 2：超长则两条都 [:max_len]；不足则 input_ids 补 pad_id、labels 补 -100，补到 max_len。",
+        "跑测试：labels 应等于 [-100,-100,-100,40,50,60,70,-100]。"
       ]
     }),
     lesson({
       id: "sft-shift-ce",
-      title: "Shift 对齐：当前位置预测下一个 token",
+      title: "Shift 对齐：位置 t 的输出，去预测位置 t+1 的词",
       todo: "TODO 3 / TODO 4",
       prerequisite: [
-        "自回归模型用前面的 token 预测下一个 token。",
-        "logits 的时间步 t 对应 label 的时间步 t+1。",
-        "交叉熵通常需要展平成 [N, vocab] 和 [N]。"
+        "自回归模型的本质：看着前面的词，预测下一个词。所以位置 t 的输出 logits，目标是“第 t+1 个 token”。",
+        "模型一次性输出所有位置的 logits：[batch, seq_len, vocab]。labels 是 [batch, seq_len]。它们没有天然对齐——需要错位一格。",
+        "错位做法：logits 砍掉最后一个位置（它没有“下一个词”可预测），labels 砍掉第一个位置（它没有“上一个词”来预测它）。",
+        "CrossEntropyLoss 要求 logits 形状 [N, vocab]、labels 形状 [N]，所以要先 flatten；ignore_index=-100 让上一关涂掉的位置自动不算分。"
       ],
-      intuition: "像遮住下一格让模型猜：第 0 个位置的输出，应该和第 1 个 token 对齐。",
-      exampleHtml: `<div class="timeline"><span>logits: 0 1 2</span><span>labels: 1 2 3</span><strong>最后一个 logits 没有下一个 label</strong></div>`,
-      syntaxHtml: code("切片和 reshape", [
-        "shift_logits = logits[:, :-1, :]",
-        "shift_labels = labels[:, 1:]",
-        "loss = F.cross_entropy(",
-        "    shift_logits.reshape(-1, vocab_size),",
-        "    shift_labels.reshape(-1),",
-        "    ignore_index=-100,",
+      intuition: "把序列想成一排格子，模型站在每个格子上猜“下一格是什么字”。第 0 格的猜测要和第 1 格的真值比、第 1 格的猜测和第 2 格比……最后一格没有下一格，它的猜测作废。于是 logits 去尾、labels 去头，两者就一一对齐了。对齐后拉平成一长条，交给交叉熵。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清“错位”从哪来</strong>
+              <p>模型在位置 t 看到的是 token[0..t]，它输出的 logits[t] 是在预测 token[t+1]。所以 logits[t] 的正确答案是 labels[t+1]——天生差一格。</p>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <text x="30" y="30" fill="#2563eb">logits</text>
+                  <rect x="70" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="92" y="34">t=0</text>
+                  <rect x="118" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="140" y="34">t=1</text>
+                  <rect x="166" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="188" y="34">t=2</text>
+                  <rect x="214" y="16" width="44" height="26" fill="#f3f4f6" stroke="#cbd5e1" stroke-dasharray="4 3"></rect><text x="236" y="34" fill="#94a3b8">t=3✂</text>
+                  <text x="30" y="96" fill="#12805c">labels</text>
+                  <rect x="70" y="82" width="44" height="26" fill="#f3f4f6" stroke="#cbd5e1" stroke-dasharray="4 3"></rect><text x="92" y="100" fill="#94a3b8">✂t=0</text>
+                  <rect x="118" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="140" y="100">t=1</text>
+                  <rect x="166" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="188" y="100">t=2</text>
+                  <rect x="214" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="236" y="100">t=3</text>
+                  <g stroke="#bd6516" stroke-width="1.5">
+                    <line x1="92" y1="44" x2="140" y2="80"></line>
+                    <line x1="140" y1="44" x2="188" y2="80"></line>
+                    <line x1="188" y1="44" x2="236" y2="80"></line>
+                  </g>
+                  <text x="360" y="62" fill="#bd6516">斜线：谁预测谁</text>
+                </g>
+              </svg>
+              <p>去掉两头灰色虚线格，剩下的就一一对上了：logits[0→2] 对 labels[1→3]。</p>
+            </div>
+            <div class="story-arrow">TODO 3：用切片实现错位</div>
+            <div class="story-panel">
+              <strong>1. logits 去尾、labels 去头</strong>
+              <div class="mini-flow"><span>shift_logits = logits[..., :-1, :]</span><strong>shift_labels = labels[..., 1:]</strong></div>
+              <p>notebook 里 logits 是 [2,5,10]，<code>logits[..., :-1, :]</code> 把 seq 从 5 砍到 4 → [2,4,10]；labels 同理去掉第一个 → [2,4]。数量对齐了。</p>
+              <details class="think">
+                <summary>想一想：为什么是 logits 去尾、labels 去头，而不是反过来？</summary>
+                <div class="think-body">
+                  <p>因为“预测方向”是往后看。最后一个位置的 logits 想预测的是“序列外的下一个词”，我们没有它的真值，只能丢掉——所以砍 logits 的尾。</p>
+                  <p>第一个 token 是模型的输入起点，没有“前文”来预测它，它不该作为被预测的目标——所以砍 labels 的头。反过来切会把对应关系彻底错乱，loss 变成噪声。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 4：展平 + 交叉熵</div>
+            <div class="story-panel">
+              <strong>2. 拉平成一长条，喂给 CrossEntropyLoss</strong>
+              <p>CrossEntropyLoss 要的是 [N, vocab] 和 [N]。把 [batch, seq, vocab] 拉成 [batch*seq, vocab]、labels 拉成 [batch*seq]。<code>ignore_index=-100</code> 会自动跳过上一关涂成 -100 的所有位置（prompt+padding）。</p>
+              <div class="mini-flow"><span>shift_logits.view(-1, vocab)</span><span>shift_labels.view(-1)</span><strong>CrossEntropyLoss(ignore_index=-100)</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：这就是所有 LLM 训练的心脏</div>
+              <p>不管是预训练、SFT 还是指令微调，最终的监督信号都归结到这一步：shift 一格、拉平、交叉熵。HuggingFace 的 <code>modeling_llama.py</code> 里 loss 段几乎和你写的一模一样。理解它，你就能读懂任何开源模型的训练代码。</p>
+              <p>上一关的 -100 mask + 这一关的 shift 对齐，合起来就是“只在答案区、只算下一个词预测”——SFT 的全部秘密。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("shift 对齐 + 展平 + 交叉熵", [
+        "shift_logits = logits[..., :-1, :].contiguous()   # 去掉最后一个位置",
+        "shift_labels = labels[..., 1:].contiguous()        # 去掉第一个位置",
+        "loss_fct = nn.CrossEntropyLoss(ignore_index=-100)  # -100 自动跳过",
+        "loss = loss_fct(",
+        "    shift_logits.view(-1, shift_logits.size(-1)),   # [N, vocab]",
+        "    shift_labels.view(-1),                          # [N]",
         ")"
       ]),
+      predict: {
+        hook: "模型一次输出 logits[batch, seq, vocab]，labels 是 [batch, seq]。算 loss 前，代码先把 logits 砍掉最后一个位置、labels 砍掉第一个位置。",
+        question: "先判断：为什么要这样错位切一刀？",
+        options: [
+          "因为位置 t 的 logits 预测的是第 t+1 个 token，错位一格才能让“预测”和“真值”对齐",
+          "为了让 logits 和 labels 的 vocab 维度相等",
+          "为了减少一半计算量"
+        ],
+        answer: 0,
+        revealNote: "对。自回归=用前文猜下一个词。logits[t] 的目标是 labels[t+1]，所以 logits 去尾、labels 去头，两者一一对上。"
+      },
       checkpoint: checkpoint(
-        "logits shape 是 [2,5,10]，shift_logits = logits[:, :-1, :] 后 shape 是？",
-        ["[2,4,10]", "[2,5,9]", "[1,5,10]"],
+        "动手算：logits 的 shape 是 [2,5,10]，shift_logits = logits[..., :-1, :] 之后 shape 是？",
+        ["[2, 4, 10]", "[2, 5, 9]", "[1, 5, 10]"],
         0,
-        "去掉最后一个时间步，序列长度从 5 变成 4。"
+        "去掉最后一个时间步，seq 从 5 变 4，batch 和 vocab 不变 → [2,4,10]。"
       ),
       homework: [
-        "把 logits 去掉最后一个时间步。",
-        "把 labels 去掉第一个时间步。",
-        "展平后调用 cross_entropy，并保留 ignore_index=-100。"
+        "TODO 3：shift_logits = logits[..., :-1, :]，shift_labels = labels[..., 1:]（加 .contiguous() 更稳）。",
+        "TODO 4：用 view 展平成 [N,vocab] 和 [N]，调用 nn.CrossEntropyLoss(ignore_index=-100)。",
+        "跑测试：只在 response 位置算 loss，正确预测时 loss 应接近 0。"
       ]
     })
   ],
   "10": [
     lesson({
       id: "lora-low-rank-adapter",
-      title: "LoRA：冻结大矩阵，只训练低秩旁路",
+      title: "LoRA：冻结大矩阵，旁边挂一条可训练的低秩小路",
       todo: "TODO 1 / TODO 2",
       prerequisite: [
-        "普通 Linear 的权重 shape 是 [out_features, in_features]。",
-        "LoRA 用两个小矩阵 A 和 B 近似一个大更新矩阵。",
-        "主权重通常冻结，只训练 A/B。"
+        "痛点：全参微调一个 7B 模型，光 AdamW 优化器就要存参数的动量+方差，显存约是参数量的十几倍，个人和中小团队根本扛不住。",
+        "LoRA 的想法：冻结原始大权重 W₀（不训练它），只在旁边挂两个很小的矩阵 A、B，用它们的乘积 BA 去近似“微调带来的改变量 ΔW”。",
+        "A 的形状 [r, in]（降维），B 的形状 [out, r]（升维），中间的 r 叫“秩”，通常很小（8/16）。只有 A、B 需要训练。",
+        "关键初始化：B 必须初始化为全 0，A 用随机（Kaiming）。这样一开始 BA=0 → ΔW=0 → 微调前的模型输出和原模型完全一致。"
       ],
-      intuition: "不直接改整面墙，只在旁边贴一张可训练的小补丁；补丁由 A 先降维、B 再升维组成。",
-      exampleHtml: `<div class="matrix-flow"><span>x</span><span>A: in to r</span><span>B: r to out</span><strong>加到 base linear</strong></div>`,
-      syntaxHtml: code("定义可训练和不可训练参数", [
-        "self.weight = nn.Parameter(torch.empty(out_features, in_features))",
-        "self.weight.requires_grad = False",
+      intuition: "别去改那面已经砌好的大墙（W₀ 冻结），而是在墙边搭一条细窄的旁路：输入先被 A 压缩到很低的维度 r（瓶颈），再被 B 放大回原来的宽度。这条旁路的参数量 r×(in+out) 远小于整面墙 in×out，所以又省显存又省优化器状态。这一关先把“冻结的墙 + 可训练的窄旁路”这套零件搭出来。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 为什么“低秩”能省这么多？先看参数量对比</strong>
+              <p>原始权重 W₀ 是 [out, in]，参数量 out×in。LoRA 旁路只有 A[r,in] + B[out,r]，参数量 r×(in+out)。当 r 远小于 in、out 时，差距是几个数量级。</p>
+              <table class="freq-table">
+                <tr><th>矩阵</th><th>形状</th><th>参数量（in=out=4096, r=8）</th></tr>
+                <tr><td>W₀（冻结）</td><td>[out, in]</td><td>约 1678 万</td></tr>
+                <tr><td>lora_A（训练）</td><td>[r, in]</td><td>32768</td></tr>
+                <tr><td>lora_B（训练）</td><td>[out, r]</td><td>32768</td></tr>
+                <tr><td><strong>可训练合计</strong></td><td></td><td><strong>约 6.5 万（≈原来的 0.4%）</strong></td></tr>
+              </table>
+            </div>
+            <div class="story-arrow">这条旁路长什么样？降维 → 升维的瓶颈结构</div>
+            <div class="story-panel">
+              <strong>1. A 先把 in 压到 r，B 再把 r 拉回 out</strong>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="20" y="46" width="70" height="38" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="55" y="69">x (in)</text>
+                  <line x1="90" y1="65" x2="140" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <defs><marker id="arrow10" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
+                  <rect x="140" y="50" width="70" height="30" rx="8" fill="#fff6e8" stroke="#e8b66f"></rect><text x="175" y="69">A: →r</text>
+                  <rect x="235" y="54" width="30" height="22" rx="6" fill="#fde68a" stroke="#d9a15a"></rect><text x="250" y="69" font-size="11">r=8</text>
+                  <line x1="210" y1="65" x2="235" y2="65" stroke="#657184" stroke-width="2"></line>
+                  <line x1="265" y1="65" x2="290" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <rect x="290" y="50" width="70" height="30" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="325" y="69">B: →out</text>
+                  <line x1="360" y1="65" x2="400" y2="65" stroke="#657184" stroke-width="2" marker-end="url(#arrow10)"></line>
+                  <text x="425" y="69" fill="#657184">ΔWx</text>
+                  <text x="230" y="30" fill="#8a4d0a" font-size="12">窄瓶颈 r 就是“低秩”的含义</text>
+                </g>
+              </svg>
+              <p>notebook 里主权重用 <code>nn.Linear(in,out,bias=False)</code> 承载，然后 <code>self.linear.weight.requires_grad = False</code> 冻结它；A、B 是单独的 <code>nn.Parameter</code>。</p>
+            </div>
+            <div class="story-arrow">TODO 2：初始化——B 为什么必须是 0</div>
+            <div class="story-panel">
+              <strong>2. B 初始化为 0：让微调“从原模型出发”</strong>
+              <p>A 用 kaiming 随机（给旁路一点初始的方向多样性），B 用 <code>zeros_</code> 全 0。于是训练第 0 步 BA=0，ΔW=0，LoRA 模型输出 == 原模型输出。微调是“在原模型基础上慢慢加东西”，而不是“一上来就把输出打乱”。</p>
+              <div class="scale-demo"><span>A: kaiming 随机</span><span>B: 全 0</span><strong>初始 BA = 0 → 不改变原输出</strong></div>
+              <details class="think">
+                <summary>想一想：为什么不能 A、B 都随机初始化？两个都 0 又会怎样？</summary>
+                <div class="think-body">
+                  <p>都随机 → 初始 ΔW≠0，微调还没开始就把预训练好的输出破坏了，等于丢掉了预训练的起点，训练不稳。</p>
+                  <p>都为 0 → BA=0 满足了，但更麻烦：A、B 全 0 时，反向传播里 A 的梯度依赖 B、B 的梯度依赖 A，两个都是 0 会让梯度也卡在 0，旁路永远学不动（对称性无法打破）。所以标准做法是“一个随机打破对称、一个置零保证起点”——A 随机、B 归零。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：LoRA 让“人人可微调”成为现实</div>
+              <p>7B 全参微调约需 112GB 显存（参数+梯度+优化器），LoRA(r=8) 只要约 14GB——一张消费级卡就能跑。更妙的是：一个冻结的基座模型，可以挂载多个不同任务训练出的 A/B 适配器，推理时按需切换，这就是“一基座 + N 适配器”的部署范式（QLoRA 更进一步把基座也量化了，本仓库后面会讲）。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("冻结主权重，定义可训练的 A/B", [
+        "self.linear = nn.Linear(in_features, out_features, bias=False)",
+        "self.linear.weight.requires_grad = False       # 冻结主权重",
         "self.lora_A = nn.Parameter(torch.empty(r, in_features))",
-        "self.lora_B = nn.Parameter(torch.empty(out_features, r))"
+        "self.lora_B = nn.Parameter(torch.empty(out_features, r))",
+        "# 初始化：A 随机打破对称，B 全 0 保证起点",
+        "nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))",
+        "nn.init.zeros_(self.lora_B)"
       ]),
+      predict: {
+        hook: "LoRA 的两个小矩阵 A、B，A 用 kaiming 随机初始化，B 却被要求严格初始化成全 0。",
+        question: "先判断：为什么 B 一定要初始化为 0？",
+        options: [
+          "让初始 BA=0、ΔW=0，微调开始时模型输出与原预训练模型完全一致，训练从稳定起点出发",
+          "为了让 B 的参数量减半",
+          "因为全 0 矩阵计算更快"
+        ],
+        answer: 0,
+        revealNote: "对。B=0 → BA=0 → 初始等价原模型。A 则要随机（不能也为 0），否则梯度卡在 0、旁路学不动——一个置零定起点，一个随机破对称。"
+      },
       checkpoint: checkpoint(
-        "LoRA 中 r 的主要作用是什么？",
-        ["控制低秩旁路的瓶颈大小", "控制 batch size", "控制 vocab size"],
+        "理解：in_features=4096, out_features=4096, r=8 时，LoRA 可训练参数量约是原始权重的多少？",
+        ["约 0.4%（6.5万 vs 1678万）", "约 50%", "和原始权重一样多"],
         0,
-        "r 越小，可训练参数越少；r 越大，旁路表达能力更强。"
+        "LoRA=r×(in+out)=8×8192≈6.5万；原始=in×out≈1678万，比值约 0.39%。这就是省显存的来源。"
       ),
       homework: [
-        "在 __init__ 中创建主权重和 LoRA A/B。",
-        "按 notebook 要求初始化权重。",
-        "确认只有 LoRA 旁路参数需要训练。"
+        "TODO 1：self.linear = nn.Linear(in,out,bias=False) 并 requires_grad=False 冻结；A=[r,in]、B=[out,r] 两个 Parameter。",
+        "TODO 2：kaiming_uniform_ 初始化 A，zeros_ 初始化 B。",
+        "自检：初始 forward 输出应等于 self.linear(x)（因为 B=0）。"
       ]
     }),
     lesson({
       id: "lora-forward-merge",
-      title: "前向时相加，推理时可以合并",
+      title: "前向两条路相加，部署时合并回一条路（零延迟）",
       todo: "TODO 3 / TODO 4",
       prerequisite: [
-        "LoRA 输出是 base_out + lora_out。",
-        "lora_out 通常要乘 alpha / r 的缩放。",
-        "合并权重就是把低秩更新加回主权重。"
+        "前向公式：h = W₀x + ΔWx = W₀x + (α/r)·BAx。主路照常，旁路 (x→A→B) 乘缩放系数后加上去。",
+        "scaling = α/r（lora_alpha / r）：控制旁路影响强度。它让你换 r 时不用重调学习率。",
+        "计算顺序：x 先过 A（降到 r 维），再过 B（升回 out 维），最后乘 scaling。用矩阵写就是 (x @ A.T) @ B.T * scaling。",
+        "合并：因为 (W₀ + BA·scaling)x 恒等于 W₀x + BA·scaling·x，可以把 BA·scaling 直接加进 W₀，部署时只剩一个普通 Linear。"
       ],
-      intuition: "训练时走两条路方便只改小补丁；部署时把补丁贴回主权重，前向就不多绕路。",
-      exampleHtml: `<div class="branches"><span>base: xW</span><span>LoRA: x A^T B^T * scale</span><strong>输出相加</strong></div>`,
-      syntaxHtml: code("线性层和权重合并", [
-        "base = F.linear(x, self.weight, self.bias)",
-        "update = F.linear(F.linear(x, self.lora_A), self.lora_B) * self.scaling",
-        "merged_weight = self.weight + self.lora_B @ self.lora_A * self.scaling"
+      intuition: "训练时走两条路：主路是冻结的大矩阵，旁路是可训练的小补丁，输出相加。这样只有旁路在学。等训练完要部署了，把旁路的更新 (α/r)·BA 一次性加回主权重——两条路合成一条，推理时和原始 Linear 一模一样，没有任何额外计算，这就是 LoRA“零推理延迟”的杀手锏。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 前向：主路 + 旁路，两股汇合</strong>
+              <svg viewBox="0 0 460 150" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <rect x="18" y="58" width="56" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="46" y="80">x</text>
+                  <path d="M74 68 C120 30, 300 30, 350 58" fill="none" stroke="#2f7fc4" stroke-width="2.5" marker-end="url(#arrow10b)"></path>
+                  <defs><marker id="arrow10b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
+                  <text x="200" y="34" fill="#2f7fc4">主路 W₀x（冻结）</text>
+                  <line x1="74" y1="82" x2="120" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="120" y="66" width="46" height="30" rx="7" fill="#fff6e8" stroke="#e8b66f"></rect><text x="143" y="85">A</text>
+                  <line x1="166" y1="82" x2="196" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="196" y="66" width="46" height="30" rx="7" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="219" y="85">B</text>
+                  <line x1="242" y1="82" x2="272" y2="82" stroke="#657184" stroke-width="2"></line>
+                  <rect x="272" y="66" width="70" height="30" rx="7" fill="#f4f1ff" stroke="#c9bdf0"></rect><text x="307" y="85" font-size="11">× α/r</text>
+                  <circle cx="372" cy="70" r="16" fill="#fff" stroke="#657184"></circle><text x="372" y="75" font-size="18">+</text>
+                  <line x1="342" y1="81" x2="357" y2="74" stroke="#657184" stroke-width="2"></line>
+                  <text x="410" y="74" fill="#657184">h</text>
+                  <text x="200" y="120" fill="#8a4d0a">旁路 (x→A→B)×scaling</text>
+                </g>
+              </svg>
+              <p>代码：<code>result = self.linear(x)</code>；<code>lora_out = (x @ A.T) @ B.T * scaling</code>；<code>result += lora_out</code>。</p>
+              <details class="think">
+                <summary>想一想：scaling = α/r 有什么用？为什么换 r 时它能帮你少调一个超参？</summary>
+                <div class="think-body">
+                  <p>r 越大，BA 这条旁路本身能表达的“改变量”越强、数值也倾向更大。如果不缩放，你每换一个 r 就得重新找合适的学习率。</p>
+                  <p>乘上 α/r 后，r 变大时缩放自动变小，把旁路的整体幅度拉回一个大致稳定的范围。于是你固定 α（比如 16），调 r 时更新幅度不会剧烈变化，学习率可以基本不动。这是个“解耦超参”的小工程技巧。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 4：部署时把旁路焊回主路</div>
+            <div class="story-panel">
+              <strong>1. 合并：(α/r)·BA 加进 W₀，两条路变一条</strong>
+              <p>因为 <code>W₀x + scaling·BAx = (W₀ + scaling·BA)x</code>，训练完直接把 <code>scaling·BA</code> 加到主权重上，之后推理就是一个普通 Linear——没有旁路、没有额外矩阵乘法、零延迟。</p>
+              <div class="mini-flow"><span>训练：两条路分开</span><strong>merge: W₀ += (α/r)·B@A</strong><span>推理：一条路，等价但更快</span></div>
+              <details class="think">
+                <summary>想一想：合并后输出和合并前应该完全一样吗？测试怎么验证？</summary>
+                <div class="think-body">
+                  <p>数学上完全等价，所以合并前后对同一个 x，输出应该在数值误差内相等（notebook 用 <code>torch.allclose(..., atol=1e-5)</code> 验证）。</p>
+                  <p>这也是 LoRA 相比 Adapter 类方法的核心优势：Adapter 在网络里插了额外的层，推理永远多花时间；LoRA 的更新是线性的、能被“焊”回原权重，所以可以做到部署零开销。需要换任务时，再把这份更新减回去、换上另一份即可。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：可合并性 = LoRA 的护城河</div>
+              <p>“训练时省显存”很多方法都能做到，但“推理时零额外延迟”是 LoRA 独有的甜点。生产环境里，你可以为不同客户/任务各训一个几十 MB 的 LoRA，共享同一个几十 GB 的基座；上线时合并进去跑得和原模型一样快，或者用支持多 LoRA 的推理框架动态切换。这套“基座只读、补丁热插拔”的模式，是当前大模型服务化的主流姿势之一。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("前向相加 + 合并权重", [
+        "# forward：主路 + 旁路",
+        "result = self.linear(x)                       # W0 x（冻结主路）",
+        "lora_out = (x @ self.lora_A.T) @ self.lora_B.T * self.scaling",
+        "result = result + lora_out",
+        "",
+        "# merge：把低秩更新焊回主权重（零延迟推理）",
+        "self.linear.weight.data += (self.lora_B @ self.lora_A) * self.scaling"
       ]),
+      predict: {
+        hook: "LoRA 训练时走“主路 + 旁路”两条线。可它宣传的一大卖点是“推理零额外延迟”。",
+        question: "先判断：LoRA 是怎么做到推理时不比原模型慢的？",
+        options: [
+          "把旁路更新 (α/r)·BA 直接加回主权重 W₀，合并成一个普通 Linear，推理时没有额外矩阵乘法",
+          "推理时把 batch size 调大来摊薄旁路开销",
+          "推理时直接丢弃旁路、不要那部分效果"
+        ],
+        answer: 0,
+        revealNote: "对。因为 W₀x+scaling·BAx=(W₀+scaling·BA)x，更新是线性的、能焊回主权重。合并后结构与原始 Linear 完全相同，零额外开销——这正是 LoRA 胜过 Adapter 的地方。"
+      },
       checkpoint: checkpoint(
-        "合并 LoRA 权重后，推理时还需要单独计算 LoRA 旁路吗？",
-        ["不需要，更新已加进主权重", "需要，否则 shape 会变", "只在 batch size 为 1 时需要"],
+        "理解：调用 merge_weights() 把更新合并进主权重后，推理时还需要单独走 A/B 旁路吗？",
+        ["不需要，更新已加进主权重，走普通 Linear 即可", "需要，否则输出 shape 会变", "只有 batch_size=1 时才不需要"],
         0,
-        "合并后主权重已经包含低秩更新，推理可以只走普通 Linear。"
+        "合并后 W₀ 已包含 (α/r)·BA，前向只需一个 Linear，和原模型等价且零额外延迟。"
       ),
       homework: [
-        "实现 base linear 和 LoRA 旁路相加。",
-        "注意 LoRA 旁路的缩放系数。",
-        "实现 merge 权重并验证合并前后输出接近。"
+        "TODO 3：result = self.linear(x)；lora_out = (x @ lora_A.T) @ lora_B.T * scaling；两者相加。",
+        "TODO 4：self.linear.weight.data += (lora_B @ lora_A) * scaling。",
+        "跑测试：改动 B 后前向应变化；merge 后输出与 merge 前用 allclose(atol=1e-5) 应一致。"
       ]
     })
   ],
   "11": [
     lesson({
       id: "wsd-warmup-stable",
-      title: "Warmup 和 Stable：先慢慢点火，再保持巡航",
+      title: "Warmup + Stable：先热车再巡航，别一脚油门冲飞",
       todo: "TODO 1 / TODO 2",
       prerequisite: [
-        "学习率决定每次参数更新步子有多大。",
-        "训练刚开始梯度不稳定，warmup 常从 0 线性升到 base_lr。",
-        "stable 阶段保持 base_lr 不变。"
+        "学习率(lr)控制每步参数更新的步长。步长太大，模型容易被冲飞(loss 变 NaN)；太小，学得慢。",
+        "为什么要 Warmup：① 模型刚随机初始化时梯度又大又乱，一上来就用大 lr 会瞬间崩；② AdamW 的分母(二阶动量/方差)开局还没攒够数据、非常小，除以它会让实际步长失控。Warmup 给优化器几千步时间“热身”。",
+        "Warmup 做法：lr 从 0 线性升到 base_lr。Stable 做法：保持 base_lr 不动，吃掉大部分训练数据。",
+        "本关继承 PyTorch 的 LRScheduler，实现 get_lr()，用 step 判断当前在哪个阶段。"
       ],
-      intuition: "开车先平稳起步，再进入匀速巡航；学习率也先从小到大，再保持一段时间。",
-      exampleHtml: `<div class="curve-legend"><span>step 0: 0</span><span>warmup end: base_lr</span><strong>stable: base_lr</strong></div>`,
-      syntaxHtml: code("用 if/elif 划阶段", [
-        "if step < warmup_steps:",
-        "    lr = base_lr * step / warmup_steps",
-        "elif step < stable_steps:",
-        "    lr = base_lr",
+      intuition: "把训练想成开长途车：Warmup 是低速热车（lr 从 0 慢慢升上来，别让冷引擎/乱梯度把车干坏），Stable 是上高速匀速巡航（保持最高 lr，高效吃数据）。这一关写前两段——线性升 + 恒定，都是很直白的分段函数。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看整条曲线的形状（本关做前两段）</strong>
+              <p>WSD = Warmup（爬坡）→ Stable（平台）→ Decay（下坡）。本关负责爬坡和平台，下一关负责下坡。</p>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12">
+                  <line x1="40" y1="100" x2="430" y2="100" stroke="#cbd5e1"></line>
+                  <line x1="40" y1="20" x2="40" y2="100" stroke="#cbd5e1"></line>
+                  <text x="20" y="30" fill="#657184">lr</text>
+                  <polyline points="40,100 110,30" fill="none" stroke="#2f7fc4" stroke-width="3"></polyline>
+                  <polyline points="110,30 300,30" fill="none" stroke="#12805c" stroke-width="3"></polyline>
+                  <path d="M300 30 Q 360 32, 400 88" fill="none" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5 4"></path>
+                  <text x="60" y="118" fill="#2f7fc4">Warmup</text>
+                  <text x="180" y="118" fill="#12805c">Stable</text>
+                  <text x="345" y="118" fill="#94a3b8">Decay(下关)</text>
+                  <text x="112" y="24" fill="#657184" font-size="11">base_lr</text>
+                </g>
+              </svg>
+            </div>
+            <div class="story-arrow">TODO 1：Warmup 段，从 0 线性升到 base_lr</div>
+            <div class="story-panel">
+              <strong>1. 线性爬坡：lr = base_lr × step / warmup_steps</strong>
+              <p>step=0 时 lr=0（引擎最冷、最保守），step 走到 warmup_steps 时正好等于 base_lr。中间按比例线性插值。</p>
+              <div class="curve-legend"><span>step 0 → 0</span><span>step 半程 → base_lr/2</span><strong>step=warmup → base_lr</strong></div>
+              <details class="think">
+                <summary>想一想：不要 warmup、一开始就用 base_lr，最坏会发生什么？</summary>
+                <div class="think-body">
+                  <p>随机初始化的模型梯度方向基本是噪声，幅度还大。直接用最大 lr，第一步就可能把权重推到极端区域，loss 直接飙成 NaN——这就是训练日志里最常见的“loss spike / 开局就崩”。</p>
+                  <p>再叠加 AdamW 的问题：它用梯度平方的移动平均当分母，开局这个值极小，<code>lr / (√小数)</code> 让实际步长爆炸。warmup 这几千步就是等这个分母把方差“攒稳”，同时让 lr 慢慢加上来，双保险。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 2：Stable 段，锁定 base_lr</div>
+            <div class="story-panel">
+              <strong>2. 平台巡航：lr = base_lr（一行）</strong>
+              <p>warmup 结束到 decay 开始之间，lr 恒等于 base_lr。这是训练时间最长、loss 下降最主力的阶段。</p>
+              <div class="mini-flow"><span>step < warmup</span><span>线性升</span><strong>warmup ≤ step < warmup+stable → base_lr</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：Warmup 不是玄学，是被 loss spike 教育出来的</div>
+              <p>GPT-3、LLaMA 系列全部带 warmup，典型是总步数的 1%~5%（比如训 10 万步、warmup 1000~5000 步）。它几乎不花额外成本，却能挡住“开局炸炉”这种最昂贵的事故——一次千卡训练崩了重启，烧的是真金白银。所以你看任何大模型训练配置，warmup_steps 都是必填项。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("get_lr 里用 if/elif 分段", [
+        "step = self._step_count - 1",
+        "if step < self.num_warmup_steps:                 # Warmup：线性升",
+        "    current_lr = base_lr * step / self.num_warmup_steps",
+        "elif step < self.num_warmup_steps + self.num_stable_steps:",
+        "    current_lr = base_lr                          # Stable：恒定",
         "else:",
-        "    lr = decay_lr"
+        "    ...                                           # Decay：下一关"
       ]),
+      predict: {
+        hook: "大模型训练一上来不敢用最大学习率，非要先花几千步把 lr 从 0 慢慢升上去（Warmup）。",
+        question: "先判断：Warmup 主要在防什么？",
+        options: [
+          "防开局崩：随机初始化梯度乱、AdamW 方差还没攒稳，直接用大 lr 会让 loss 直接 NaN",
+          "防止显存溢出",
+          "让 batch size 可以设更大"
+        ],
+        answer: 0,
+        revealNote: "对。两个原因叠加：初始梯度又大又乱 + AdamW 分母(方差)开局过小导致实际步长失控。Warmup 用几千步让 lr 缓升、让优化器攒够统计量。"
+      },
       checkpoint: checkpoint(
-        "base_lr=0.01，warmup_steps=100，step=50 时线性 warmup 学习率是多少？",
+        "动手算：base_lr=0.01、warmup_steps=100，走到 step=50 时线性 warmup 的 lr 是多少？",
         ["0.005", "0.01", "0.05"],
         0,
-        "走到 warmup 的一半，所以学习率是 base_lr 的一半。"
+        "lr = base_lr × step/warmup_steps = 0.01 × 50/100 = 0.005，正好是一半。"
       ),
       homework: [
-        "在 warmup 区间写出线性增长公式。",
-        "在 stable 区间直接返回 base_lr。",
-        "检查边界 step 是否落在正确阶段。"
+        "TODO 1：step < warmup_steps 时 current_lr = base_lr * step / num_warmup_steps（step=0 得 0）。",
+        "TODO 2：进入 stable 区间时 current_lr = base_lr。",
+        "跑测试：lrs[0]≈0，lrs[warmup] 应等于 max_lr，stable 段维持 max_lr。"
       ]
     }),
     lesson({
       id: "wsd-cosine-decay",
-      title: "Cosine Decay：最后平滑降落到 min_lr",
+      title: "Decay：最后一程用半条余弦曲线平滑降落",
       todo: "TODO 3",
       prerequisite: [
-        "decay 阶段要知道已经走过 decay 的比例 progress。",
-        "cos(pi * progress) 从 1 平滑变到 -1。",
-        "min_lr 是训练末尾保留的最低学习率。"
+        "Decay 是 WSD 的最后一段：在训练尾部把 lr 从 base_lr 平滑降到 min_lr，帮模型在最优解附近“精细收拢”。",
+        "先算已走过 decay 的比例 decay_ratio = (step − warmup − stable) / decay_steps，范围 0→1。",
+        "余弦因子 cosine = 0.5·(1 + cos(π·decay_ratio))：ratio=0 时=1，ratio=1 时=0，中间是平滑的 S 形下降。",
+        "最终 lr = min_lr + (base_lr − min_lr)·cosine：把 [0,1] 的因子映射到 [min_lr, base_lr]。"
       ],
-      intuition: "最后不是突然刹车，而是沿着半个余弦曲线平滑降速。",
-      exampleHtml: `<div class="timeline"><span>progress=0: base_lr</span><span>progress=.5: 中间值</span><span>progress=1: min_lr</span></div>`,
-      syntaxHtml: code("余弦衰减比例", [
-        "progress = (step - decay_start) / decay_steps",
-        "cosine = 0.5 * (1 + math.cos(math.pi * progress))",
-        "lr = min_lr + (base_lr - min_lr) * cosine"
+      intuition: "训练收尾不能急刹车（lr 突然归零会让模型抖动、丢掉刚学的东西），而是沿着半条余弦曲线平滑滑降。开头降得慢（还在高位多学一会），越接近终点降得越快，最后停在 min_lr。这一关就是把这个余弦公式写对。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 为什么用余弦而不是直线降？</strong>
+              <p>余弦下降在两端“平、中间陡”：起点附近 lr 还维持在高位，让模型多吃一会儿；临近终点快速压到 min_lr，帮助收敛。比直线更“先松后紧”，实践中收敛更稳。</p>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12">
+                  <line x1="40" y1="100" x2="430" y2="100" stroke="#cbd5e1"></line>
+                  <line x1="40" y1="20" x2="40" y2="100" stroke="#cbd5e1"></line>
+                  <path d="M40 25 Q 235 30, 250 60 Q 265 90, 420 95" fill="none" stroke="#2f7fc4" stroke-width="3"></path>
+                  <text x="46" y="20" fill="#657184" font-size="11">base_lr</text>
+                  <text x="390" y="90" fill="#657184" font-size="11">min_lr</text>
+                  <text x="150" y="120" fill="#2f7fc4">cosine decay（半条余弦）</text>
+                </g>
+              </svg>
+            </div>
+            <div class="story-arrow">TODO 3：先算进度，再套余弦</div>
+            <div class="story-panel">
+              <strong>1. 三步：进度 → 余弦因子 → 映射到 lr</strong>
+              <div class="mini-flow"><span>decay_ratio = (step−warmup−stable)/decay_steps</span><span>cosine = 0.5(1+cos(π·ratio))</span><strong>lr = min_lr + (base−min)·cosine</strong></div>
+              <p>验证端点：ratio=0 → cos(0)=1 → cosine=1 → lr=base_lr（decay 刚开始，接住 stable 的高位）；ratio=1 → cos(π)=−1 → cosine=0 → lr=min_lr（终点）。</p>
+              <details class="think">
+                <summary>想一想：为什么因子要写成 0.5·(1+cos(...))，而不是直接 cos(...)？</summary>
+                <div class="think-body">
+                  <p>cos(π·ratio) 本身的取值范围是 [1, −1]，直接拿它当因子会出现负数——lr 会被压到 min_lr 以下甚至变负，非法。</p>
+                  <p>+1 把范围抬到 [2, 0]，再 ×0.5 压成 [1, 0]。这样因子是干净的“从 1 平滑降到 0”，乘上 (base−min) 再加 min，就稳稳落在 [min_lr, base_lr] 区间。这个 0.5·(1+cos) 是余弦退火的标准写法，记下来。</p>
+                </div>
+              </details>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：WSD 为什么正在取代 Cosine（LLaMA-3 的选择）</div>
+              <p>传统 Cosine 退火必须一开始就定死总步数、从头到尾一路下降。麻烦在于：如果训练中途想“加数据继续训”(continued pre-training)，此时 lr 早已降到底，模型几乎学不动新知识了。</p>
+              <p>WSD 把“稳定期”和“退火期”解耦：想加数据就无限延长 Stable 段（lr 一直是高位），真正要收尾时才进入这最后 10%~20% 的 Decay。这种灵活性正是 LLaMA-3 等现代持续预训练采用 WSD 的原因——而 Decay 段的余弦公式，就是你这一关写的。</p>
+            </div>
+          </div>`,
+      syntaxHtml: code("Decay 段：余弦退火到 min_lr", [
+        "min_lr = base_lr * self.min_lr_ratio",
+        "decay_step = step - self.num_warmup_steps - self.num_stable_steps",
+        "decay_ratio = decay_step / self.num_decay_steps        # 0 → 1",
+        "cosine = 0.5 * (1 + math.cos(math.pi * decay_ratio))   # 1 → 0",
+        "current_lr = min_lr + (base_lr - min_lr) * cosine"
       ]),
+      predict: {
+        hook: "Decay 段的余弦因子写成 cosine = 0.5 × (1 + cos(π·ratio))，那个“0.5×(1+…)”看着有点多余。",
+        question: "先判断：为什么不直接用 cos(π·ratio) 当衰减因子？",
+        options: [
+          "因为 cos 的范围是 [1,−1]，直接用会让 lr 出现负数；0.5·(1+cos) 把它规整到干净的 [1,0]",
+          "因为 0.5 能让计算更快",
+          "因为 PyTorch 要求因子必须带系数"
+        ],
+        answer: 0,
+        revealNote: "对。cos(π·ratio) 从 1 降到 −1，负半段会把 lr 压到 min_lr 以下甚至为负。+1 变 [2,0]、×0.5 变 [1,0]，才是合法的“从满降到零”因子。"
+      },
       checkpoint: checkpoint(
-        "cosine decay 的 progress 应该限制在哪个范围内最安全？",
-        ["0 到 1", "-1 到 1", "任意大于 1"],
+        "理解：cosine = 0.5·(1+cos(π·ratio))，当 decay_ratio=1（decay 走完）时，lr 等于多少？",
+        ["min_lr（cos(π)=−1 → 因子=0）", "base_lr（因子=1）", "0（因子无意义）"],
         0,
-        "progress 表示 decay 阶段完成比例，通常夹在 0 到 1。"
+        "ratio=1 → cos(π)=−1 → 0.5·(1−1)=0 → lr=min_lr+(base−min)·0=min_lr，正好落到最低学习率。"
       ),
       homework: [
-        "计算 decay 阶段的 progress。",
-        "用 cosine 公式从 base_lr 平滑降到 min_lr。",
-        "处理超过总步数后的学习率下界。"
+        "TODO 3：decay_ratio =(step−warmup−stable)/decay_steps；cosine=0.5*(1+cos(π·ratio))；lr=min_lr+(base−min)*cosine。",
+        "端点自检：ratio=0 应得 base_lr，ratio=1 应得 min_lr(=base_lr*min_lr_ratio)。",
+        "跑测试并看曲线：应是“升—平—余弦降”三段，末端落在 max_lr*0.1。"
       ]
     })
   ],

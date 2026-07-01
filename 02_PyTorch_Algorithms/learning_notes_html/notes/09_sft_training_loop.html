@@ -716,7 +716,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -726,7 +726,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 09 | 零基础导学关卡</p>
         <h1>SFT Training Loop</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">09_SFT_Training_Loop.ipynb</span>
           <span class="pill">SFT</span><span class="pill">Loss</span><span class="pill">Optimizer</span>
@@ -735,9 +735,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">loss = CrossEntropy(logits[:, :-1], labels[:, 1:])</div>
       </div>
@@ -745,45 +745,108 @@
 
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="sft-label-mask">
+        <article class="lesson-card inquiry" data-lesson="sft-label-mask">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
-          <h2>SFT labels：只让回答部分参与损失</h2>
+          <h2>Loss Masking：为什么只批改“答案”，不批改“题目”</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>SFT 数据通常由 prompt 和 answer 拼接而成。</li><li>prompt 是条件，不应该被当成要学习复述的答案。</li><li>CrossEntropyLoss 的 ignore_index 常用 -100。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">SFT 样本是 [Prompt] + [Response]。构造 labels 时，我们偏偏把 Prompt 那一段全设成 -100。</p>
+            <p class="predict-q">先判断：把 prompt 段的 label 设成 -100，最主要是为了？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-label-mask" value="0">
+                <span>让 prompt 段不算 loss、不回传梯度，逼模型学“回答”而不是“背题干”</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-label-mask" value="1">
+                <span>为了让 input_ids 变短，加快训练</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-label-mask" value="2">
+                <span>因为 -100 是 prompt 的特殊 token id</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="sft-label-mask">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>题目部分像试卷题干，模型读它；答案部分才是要批改的作答。</p>
-            <div class="mini-table"><span>tokens</span><span>[题, 题, 答, 答]</span><span>labels</span><strong>[-100, -100, 答, 答]</strong></div>
-            <div class="syntax-card"><h4>语法热身：列表拼接、截断和填充</h4><pre><code>ids = prompt_ids + answer_ids
-labels = [-100] * len(prompt_ids) + answer_ids
-ids = ids[:max_len] + [pad_id] * max(0, max_len - len(ids))
-labels = labels[:max_len] + [-100] * max(0, max_len - len(labels))</code></pre></div>
-          </div>
+          <div class="gated" data-gated="sft-label-mask">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>回忆预训练 vs SFT：预训练时每个 token 都要预测、都算 loss（读一整本书）；SFT 给的是 [Prompt(问题)] + [Response(答案)]，我们只想让模型学会“答”，不想让它学“背题干”。</li><li>做法叫 Loss Masking：把 labels 里属于 prompt 和 padding 的位置全设成 -100。</li><li>-100 是 PyTorch CrossEntropyLoss 的默认 ignore_index：凡是 label=-100 的位置，既不算损失、也不回传梯度，等于“这题不批改”。</li><li>input_ids 和 labels 是两条等长的序列：input_ids 喂给模型看，labels 告诉损失函数“每个位置的正确答案是什么、要不要算分”。</li></ul>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>在 SFT 中，prompt 对应的 label 通常设成什么？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把一条 SFT 样本想成一张试卷：prompt 是印好的题干，response 是学生要写的作答。模型读整张卷子（input_ids 完整保留），但老师只批改作答区（labels 里只有 response 是真值，题干和空白都涂成 -100 表示不批改）。这一关就是构造这张“只在答案区留分”的 labels，再处理超长截断和不足填充。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清两条序列的关系</strong>
+              <p>input_ids = prompt_ids + response_ids，整条都保留给模型看。labels 长度一样，但只有 response 段是“真答案”，prompt 段和后面 padding 段都填 -100。</p>
+              <table class="freq-table">
+                <tr><th style="width:110px">位置含义</th><th>input_ids（模型看的）</th><th>labels（算分用的）</th></tr>
+                <tr><td>prompt 题干</td><td><code>[10, 20, 30]</code></td><td><code style="color:#be3f5b">[-100, -100, -100]</code></td></tr>
+                <tr><td>response 答案</td><td><code>[40, 50, 60, 70]</code></td><td><code style="color:#12805c">[40, 50, 60, 70]</code></td></tr>
+                <tr><td>padding 补位</td><td><code>[0]</code></td><td><code style="color:#be3f5b">[-100]</code></td></tr>
+              </table>
+              <p>这正是 notebook 测试期望的：<code>labels = [-100,-100,-100, 40,50,60,70, -100]</code>（max_len=8）。</p>
+            </div>
+            <div class="story-arrow">为什么题干要涂掉？想想“背题”和“答题”的区别</div>
+            <div class="story-panel">
+              <strong>1. 涂掉 prompt = 不让模型把“背题干”当成任务</strong>
+              <p>如果 prompt 也算 loss，模型会花容量去学“人类爱怎么提问”，而不是“怎么答得好”。把它设成 -100，梯度就只从答案区回传，模型的全部注意力都用在“给定这个问题，下一个词该答什么”。</p>
+              <div class="mini-table"><span>算 loss 的位置</span><strong>只有 response 段</strong><span>其余</span><span>-100 全部跳过</span></div>
+              <details class="think">
+                <summary>想一想：padding 位为什么也必须设成 -100，而不是随便填个 pad_id？</summary>
+                <div class="think-body">
+                  <p>padding 只是为了把一个 batch 里长短不一的样本对齐成矩形，它不是真实内容。如果 labels 里 padding 位留着 pad_id，模型就会被要求去“预测 padding”，白白浪费容量、还污染 loss。</p>
+                  <p>所以 input_ids 的 padding 填 pad_id（占位），但 labels 的 padding 必须填 -100（不批改）。两条序列在 padding 段的填法故意不同——这是最容易写错的地方。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 2：超长要截、不足要补</div>
+            <div class="story-panel">
+              <strong>2. 截断与填充：把每条样本对齐到 max_len</strong>
+              <p>拼完可能比 max_len 长（要从末尾截掉）或短（要在末尾补齐）。两条序列同步操作，只是填充值不同：input_ids 补 pad_id，labels 补 -100。</p>
+              <div class="mini-flow"><span>超长</span><span>input_ids[:max_len]<br>labels[:max_len]</span><strong>不足<br>input_ids+[pad_id]*n<br>labels+[-100]*n</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：SFT 数据构造是“脏活”，但决定成败</div>
+              <p>面试里“你怎么构造 input_ids 和 labels、为什么 mask 掉 prompt”几乎必问，因为它直接暴露你是不是真做过训练。现实中多轮对话、system prompt、工具调用的 mask 规则更复杂（比如只算最后一轮助手回复），但内核就是这关：<strong>用 -100 精确控制“哪些 token 要学、哪些只读”</strong>。</p>
+              <p>一个常见线上事故就是 mask 写错——模型把用户的问法也学了进去，微调完开始“复读”用户，而不是回答。</p>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：拼接 → 造 labels → 截断/填充</h4><pre><code>input_ids = prompt_ids + response_ids
+labels = [-100] * len(prompt_ids) + response_ids   # 题干涂掉，答案保留
+if len(input_ids) &gt; max_len:                        # 超长：末尾截断
+    input_ids, labels = input_ids[:max_len], labels[:max_len]
+else:                                               # 不足：末尾填充
+    pad = max_len - len(input_ids)
+    input_ids += [pad_id] * pad                     # 占位
+    labels    += [-100]   * pad                     # 不批改</code></pre></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>动手算：prompt=[10,20,30]、response=[40,50,60,70]、max_len=8、pad_id=0，labels 应该是？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-label-mask" value="0">
-                <span>-100</span>
+                <span>[-100,-100,-100, 40,50,60,70, -100]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-label-mask" value="1">
-                <span>prompt token 自己</span>
+                <span>[-100,-100,-100, 40,50,60,70, 0]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-label-mask" value="2">
-                <span>pad_id</span>
+                <span>[10,20,30, 40,50,60,70, 0]</span>
               </label></div>
-            <div class="feedback" data-feedback="sft-label-mask"></div>
+              <div class="feedback" data-feedback="sft-label-mask"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -792,60 +855,133 @@ labels = labels[:max_len] + [-100] * max(0, max_len - len(labels))</code></pre><
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-label-mask-0">
-                <span>构造 input_ids 时拼接 prompt 和 answer。</span>
+                <span>TODO 1：input_ids = prompt_ids + response_ids；labels = [-100]*len(prompt_ids) + response_ids。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-label-mask-1">
-                <span>构造 labels 时把 prompt 位置设为 -100。</span>
+                <span>TODO 2：超长则两条都 [:max_len]；不足则 input_ids 补 pad_id、labels 补 -100，补到 max_len。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-label-mask-2">
-                <span>按 max_length 做截断和 padding。</span>
+                <span>跑测试：labels 应等于 [-100,-100,-100,40,50,60,70,-100]。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="sft-shift-ce">
+        <article class="lesson-card inquiry" data-lesson="sft-shift-ce">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 3 / TODO 4</span>
           </div>
-          <h2>Shift 对齐：当前位置预测下一个 token</h2>
+          <h2>Shift 对齐：位置 t 的输出，去预测位置 t+1 的词</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>自回归模型用前面的 token 预测下一个 token。</li><li>logits 的时间步 t 对应 label 的时间步 t+1。</li><li>交叉熵通常需要展平成 [N, vocab] 和 [N]。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">模型一次输出 logits[batch, seq, vocab]，labels 是 [batch, seq]。算 loss 前，代码先把 logits 砍掉最后一个位置、labels 砍掉第一个位置。</p>
+            <p class="predict-q">先判断：为什么要这样错位切一刀？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-shift-ce" value="0">
+                <span>因为位置 t 的 logits 预测的是第 t+1 个 token，错位一格才能让“预测”和“真值”对齐</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-shift-ce" value="1">
+                <span>为了让 logits 和 labels 的 vocab 维度相等</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-sft-shift-ce" value="2">
+                <span>为了减少一半计算量</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="sft-shift-ce">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>像遮住下一格让模型猜：第 0 个位置的输出，应该和第 1 个 token 对齐。</p>
-            <div class="timeline"><span>logits: 0 1 2</span><span>labels: 1 2 3</span><strong>最后一个 logits 没有下一个 label</strong></div>
-            <div class="syntax-card"><h4>语法热身：切片和 reshape</h4><pre><code>shift_logits = logits[:, :-1, :]
-shift_labels = labels[:, 1:]
-loss = F.cross_entropy(
-    shift_logits.reshape(-1, vocab_size),
-    shift_labels.reshape(-1),
-    ignore_index=-100,
+          <div class="gated" data-gated="sft-shift-ce">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>自回归模型的本质：看着前面的词，预测下一个词。所以位置 t 的输出 logits，目标是“第 t+1 个 token”。</li><li>模型一次性输出所有位置的 logits：[batch, seq_len, vocab]。labels 是 [batch, seq_len]。它们没有天然对齐——需要错位一格。</li><li>错位做法：logits 砍掉最后一个位置（它没有“下一个词”可预测），labels 砍掉第一个位置（它没有“上一个词”来预测它）。</li><li>CrossEntropyLoss 要求 logits 形状 [N, vocab]、labels 形状 [N]，所以要先 flatten；ignore_index=-100 让上一关涂掉的位置自动不算分。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把序列想成一排格子，模型站在每个格子上猜“下一格是什么字”。第 0 格的猜测要和第 1 格的真值比、第 1 格的猜测和第 2 格比……最后一格没有下一格，它的猜测作废。于是 logits 去尾、labels 去头，两者就一一对齐了。对齐后拉平成一长条，交给交叉熵。</p>
+              
+          <div class="shape-story">
+            <div class="story-panel">
+              <strong>0. 先看清“错位”从哪来</strong>
+              <p>模型在位置 t 看到的是 token[0..t]，它输出的 logits[t] 是在预测 token[t+1]。所以 logits[t] 的正确答案是 labels[t+1]——天生差一格。</p>
+              <svg viewBox="0 0 460 130" width="100%" style="max-width:600px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
+                <g font-size="12" text-anchor="middle">
+                  <text x="30" y="30" fill="#2563eb">logits</text>
+                  <rect x="70" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="92" y="34">t=0</text>
+                  <rect x="118" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="140" y="34">t=1</text>
+                  <rect x="166" y="16" width="44" height="26" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="188" y="34">t=2</text>
+                  <rect x="214" y="16" width="44" height="26" fill="#f3f4f6" stroke="#cbd5e1" stroke-dasharray="4 3"></rect><text x="236" y="34" fill="#94a3b8">t=3✂</text>
+                  <text x="30" y="96" fill="#12805c">labels</text>
+                  <rect x="70" y="82" width="44" height="26" fill="#f3f4f6" stroke="#cbd5e1" stroke-dasharray="4 3"></rect><text x="92" y="100" fill="#94a3b8">✂t=0</text>
+                  <rect x="118" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="140" y="100">t=1</text>
+                  <rect x="166" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="188" y="100">t=2</text>
+                  <rect x="214" y="82" width="44" height="26" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="236" y="100">t=3</text>
+                  <g stroke="#bd6516" stroke-width="1.5">
+                    <line x1="92" y1="44" x2="140" y2="80"></line>
+                    <line x1="140" y1="44" x2="188" y2="80"></line>
+                    <line x1="188" y1="44" x2="236" y2="80"></line>
+                  </g>
+                  <text x="360" y="62" fill="#bd6516">斜线：谁预测谁</text>
+                </g>
+              </svg>
+              <p>去掉两头灰色虚线格，剩下的就一一对上了：logits[0→2] 对 labels[1→3]。</p>
+            </div>
+            <div class="story-arrow">TODO 3：用切片实现错位</div>
+            <div class="story-panel">
+              <strong>1. logits 去尾、labels 去头</strong>
+              <div class="mini-flow"><span>shift_logits = logits[..., :-1, :]</span><strong>shift_labels = labels[..., 1:]</strong></div>
+              <p>notebook 里 logits 是 [2,5,10]，<code>logits[..., :-1, :]</code> 把 seq 从 5 砍到 4 → [2,4,10]；labels 同理去掉第一个 → [2,4]。数量对齐了。</p>
+              <details class="think">
+                <summary>想一想：为什么是 logits 去尾、labels 去头，而不是反过来？</summary>
+                <div class="think-body">
+                  <p>因为“预测方向”是往后看。最后一个位置的 logits 想预测的是“序列外的下一个词”，我们没有它的真值，只能丢掉——所以砍 logits 的尾。</p>
+                  <p>第一个 token 是模型的输入起点，没有“前文”来预测它，它不该作为被预测的目标——所以砍 labels 的头。反过来切会把对应关系彻底错乱，loss 变成噪声。</p>
+                </div>
+              </details>
+            </div>
+            <div class="story-arrow">TODO 4：展平 + 交叉熵</div>
+            <div class="story-panel">
+              <strong>2. 拉平成一长条，喂给 CrossEntropyLoss</strong>
+              <p>CrossEntropyLoss 要的是 [N, vocab] 和 [N]。把 [batch, seq, vocab] 拉成 [batch*seq, vocab]、labels 拉成 [batch*seq]。<code>ignore_index=-100</code> 会自动跳过上一关涂成 -100 的所有位置（prompt+padding）。</p>
+              <div class="mini-flow"><span>shift_logits.view(-1, vocab)</span><span>shift_labels.view(-1)</span><strong>CrossEntropyLoss(ignore_index=-100)</strong></div>
+            </div>
+            <div class="field-note">
+              <div class="fn-title">行业视角：这就是所有 LLM 训练的心脏</div>
+              <p>不管是预训练、SFT 还是指令微调，最终的监督信号都归结到这一步：shift 一格、拉平、交叉熵。HuggingFace 的 <code>modeling_llama.py</code> 里 loss 段几乎和你写的一模一样。理解它，你就能读懂任何开源模型的训练代码。</p>
+              <p>上一关的 -100 mask + 这一关的 shift 对齐，合起来就是“只在答案区、只算下一个词预测”——SFT 的全部秘密。</p>
+            </div>
+          </div>
+              <div class="syntax-card"><h4>语法热身：shift 对齐 + 展平 + 交叉熵</h4><pre><code>shift_logits = logits[..., :-1, :].contiguous()   # 去掉最后一个位置
+shift_labels = labels[..., 1:].contiguous()        # 去掉第一个位置
+loss_fct = nn.CrossEntropyLoss(ignore_index=-100)  # -100 自动跳过
+loss = loss_fct(
+    shift_logits.view(-1, shift_logits.size(-1)),   # [N, vocab]
+    shift_labels.view(-1),                          # [N]
 )</code></pre></div>
-          </div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>logits shape 是 [2,5,10]，shift_logits = logits[:, :-1, :] 后 shape 是？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>动手算：logits 的 shape 是 [2,5,10]，shift_logits = logits[..., :-1, :] 之后 shape 是？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="0">
-                <span>[1,5,10]</span>
+                <span>[1, 5, 10]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="1">
-                <span>[2,4,10]</span>
+                <span>[2, 4, 10]</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-shift-ce" value="2">
-                <span>[2,5,9]</span>
+                <span>[2, 5, 9]</span>
               </label></div>
-            <div class="feedback" data-feedback="sft-shift-ce"></div>
+              <div class="feedback" data-feedback="sft-shift-ce"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -854,15 +990,15 @@ loss = F.cross_entropy(
             
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-shift-ce-0">
-                <span>把 logits 去掉最后一个时间步。</span>
+                <span>TODO 3：shift_logits = logits[..., :-1, :]，shift_labels = labels[..., 1:]（加 .contiguous() 更稳）。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-shift-ce-1">
-                <span>把 labels 去掉第一个时间步。</span>
+                <span>TODO 4：用 view 展平成 [N,vocab] 和 [N]，调用 nn.CrossEntropyLoss(ignore_index=-100)。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-shift-ce-2">
-                <span>展平后调用 cross_entropy，并保留 ignore_index=-100。</span>
+                <span>跑测试：只在 response 位置算 loss，正确预测时 loss 应接近 0。</span>
               </label>
           </div>
         </article>
@@ -882,9 +1018,9 @@ loss = F.cross_entropy(
 
   <script>
     const levelId = "09";
-    const checkpointData = {"sft-label-mask":{"answer":0,"explain":"-100 会被 PyTorch 的交叉熵忽略，避免训练模型复述题干。"},"sft-shift-ce":{"answer":1,"explain":"去掉最后一个时间步，序列长度从 5 变成 4。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const checkpointData = {"sft-label-mask":{"answer":0,"explain":"prompt 3 位涂 -100，response 4 位保留原值，最后 1 位 padding 也涂 -100。"},"sft-shift-ce":{"answer":1,"explain":"去掉最后一个时间步，seq 从 5 变 4，batch 和 vocab 不变 → [2,4,10]。"}};
+    const predictData = {"sft-label-mask":{"answer":0,"revealNote":"对。-100 是 CrossEntropyLoss 的 ignore_index：这些位置被完全跳过。模型照样能“看到”prompt（input_ids 保留），但不会被要求去预测它。"},"sft-shift-ce":{"answer":0,"revealNote":"对。自回归=用前文猜下一个词。logits[t] 的目标是 labels[t+1]，所以 logits 去尾、labels 去头，两者一一对上。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
