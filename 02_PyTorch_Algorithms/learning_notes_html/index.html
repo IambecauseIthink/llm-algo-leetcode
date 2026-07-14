@@ -157,7 +157,7 @@
         <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
-          <div class="stat"><strong>26</strong><span>Notebook 关卡</span></div>
+          <div class="stat"><strong>33</strong><span>Notebook 关卡</span></div>
           <div class="stat"><strong>3</strong><span>每关学习模块</span></div>
         </div>
       </div>
@@ -260,8 +260,8 @@
             <span class="status" data-status="07">待挑战</span>
           </div>
           <h2>MoE Load Balancing Loss</h2>
-          <p>让专家别扎堆：用辅助损失推动路由概率和实际分配更均衡。</p>
-          <div class="chips"><span class="chip">MoE</span><span class="chip">Loss</span><span class="chip">Balance</span></div>
+          <p>对照路由器“想分给谁”的 P_i 与实际“分给谁”的 f_i，用辅助损失阻止路由崩塌。</p>
+          <div class="chips"><span class="chip">MoE</span><span class="chip">Load Balancing</span><span class="chip">Auxiliary Loss</span></div>
           <a class="start" href="notes/07_moe_load_balancing_loss.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="08">
@@ -309,146 +309,221 @@
             <span class="badge">L12</span>
             <span class="status" data-status="12">待挑战</span>
           </div>
-          <h2>RLHF PPO Memory</h2>
-          <p>拆解 PPO 式 RLHF 中 policy、reference、reward、value 带来的显存压力。</p>
-          <div class="chips"><span class="chip">RLHF</span><span class="chip">PPO</span><span class="chip">Memory</span></div>
-          <a class="start" href="notes/12_rlhf_ppo_memory.html">进入关卡</a>
+          <h2>Gradient Accumulation</h2>
+          <p>把一个大 batch 拆成多个 micro-batch 累积梯度，用更多计算步骤换更低峰值显存。</p>
+          <div class="chips"><span class="chip">Gradient Accumulation</span><span class="chip">Micro-batch</span><span class="chip">Memory</span></div>
+          <a class="start" href="notes/12_gradient_accumulation.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="13">
           <div class="level-head">
             <span class="badge">L13</span>
             <span class="status" data-status="13">待挑战</span>
           </div>
-          <h2>DPO Loss Tutorial</h2>
-          <p>用 chosen/rejected 偏好对直接优化 policy，不显式训练 reward model。</p>
-          <div class="chips"><span class="chip">DPO</span><span class="chip">Preference</span><span class="chip">Alignment</span></div>
-          <a class="start" href="notes/13_dpo_loss_tutorial.html">进入关卡</a>
+          <h2>End-to-End Fine-Tuning Experiment</h2>
+          <p>把样本构造、next-token loss、梯度累积和参数更新串成一个最小但完整的微调闭环。</p>
+          <div class="chips"><span class="chip">SFT</span><span class="chip">Training Loop</span><span class="chip">Loss Mask</span></div>
+          <a class="start" href="notes/13_end_to_end_fine_tuning_experiment.html">进入关卡</a>
         </article>
-        <article class="level" data-category="architecture" data-id="14">
+        <article class="level" data-category="training" data-id="14">
           <div class="level-head">
             <span class="badge">L14</span>
             <span class="status" data-status="14">待挑战</span>
           </div>
-          <h2>Attention Backward Math</h2>
-          <p>沿着 O = softmax(QK^T)V 反向拆梯度，理解注意力 backward 的主路径。</p>
-          <div class="chips"><span class="chip">Attention</span><span class="chip">Backward</span><span class="chip">Matrix Grad</span></div>
-          <a class="start" href="notes/14_attention_backward_math.html">进入关卡</a>
+          <h2>RLHF PPO Memory</h2>
+          <p>从新旧策略概率比率出发，实现带 clip 护栏的 PPO actor loss。</p>
+          <div class="chips"><span class="chip">RLHF</span><span class="chip">PPO</span><span class="chip">Clipped Objective</span></div>
+          <a class="start" href="notes/14_rlhf_ppo_memory.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="15">
+        <article class="level" data-category="training" data-id="15">
           <div class="level-head">
             <span class="badge">L15</span>
             <span class="status" data-status="15">待挑战</span>
           </div>
-          <h2>FlashAttention Sim</h2>
-          <p>用分块和在线 softmax 理解 FlashAttention 如何避免 materialize NxN 注意力矩阵。</p>
-          <div class="chips"><span class="chip">FlashAttention</span><span class="chip">Tiling</span><span class="chip">Memory</span></div>
-          <a class="start" href="notes/15_flashattention_sim.html">进入关卡</a>
+          <h2>DPO Loss Tutorial</h2>
+          <p>用 chosen/rejected 偏好对和 reference policy，直接构造偏好优化损失。</p>
+          <div class="chips"><span class="chip">DPO</span><span class="chip">Preference</span><span class="chip">Alignment</span></div>
+          <a class="start" href="notes/15_dpo_loss_tutorial.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="16">
+        <article class="level" data-category="training" data-id="16">
           <div class="level-head">
             <span class="badge">L16</span>
             <span class="status" data-status="16">待挑战</span>
           </div>
-          <h2>Decoding Strategies</h2>
-          <p>比较 greedy、temperature、top-k、top-p、beam search 的生成行为。</p>
-          <div class="chips"><span class="chip">Decoding</span><span class="chip">Sampling</span><span class="chip">Beam</span></div>
-          <a class="start" href="notes/16_decoding_strategies.html">进入关卡</a>
+          <h2>GRPO Loss Tutorial</h2>
+          <p>在组内标准化奖励得到相对优势，再用 clipped surrogate 更新策略。</p>
+          <div class="chips"><span class="chip">GRPO</span><span class="chip">Group Advantage</span><span class="chip">Alignment</span></div>
+          <a class="start" href="notes/16_grpo_loss_tutorial.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="17">
+        <article class="level" data-category="architecture" data-id="17">
           <div class="level-head">
             <span class="badge">L17</span>
             <span class="status" data-status="17">待挑战</span>
           </div>
-          <h2>vLLM PagedAttention</h2>
-          <p>把 KV cache 看成分页内存，理解连续批处理下如何减少碎片并提升吞吐。</p>
-          <div class="chips"><span class="chip">vLLM</span><span class="chip">KV Cache</span><span class="chip">Serving</span></div>
-          <a class="start" href="notes/17_vllm_pagedattention.html">进入关卡</a>
+          <h2>Autograd Basics</h2>
+          <p>沿 O=softmax(QKᵀ)V 的计算图逆向推导 dV、dP、dS、dQ 与 dK。</p>
+          <div class="chips"><span class="chip">Autograd</span><span class="chip">Attention Backward</span><span class="chip">Chain Rule</span></div>
+          <a class="start" href="notes/17_autograd_basics.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="18">
+        <article class="level" data-category="foundation" data-id="18">
           <div class="level-head">
             <span class="badge">L18</span>
             <span class="status" data-status="18">待挑战</span>
           </div>
-          <h2>Speculative Decoding</h2>
-          <p>用小 draft model 一次提出多个 token，再由大模型并行验证以加速生成。</p>
-          <div class="chips"><span class="chip">Draft Model</span><span class="chip">Verify</span><span class="chip">Decoding</span></div>
-          <a class="start" href="notes/18_speculative_decoding.html">进入关卡</a>
+          <h2>Activation and Loss Backward</h2>
+          <p>从 ReLU 门控和交叉熵梯度入手，把常用激活与损失的反向传播写成可验证代码。</p>
+          <div class="chips"><span class="chip">ReLU Backward</span><span class="chip">Cross Entropy</span><span class="chip">Gradient Check</span></div>
+          <a class="start" href="notes/18_activation_and_loss_backward.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="19">
+        <article class="level" data-category="training" data-id="19">
           <div class="level-head">
             <span class="badge">L19</span>
             <span class="status" data-status="19">待挑战</span>
           </div>
-          <h2>SGLang RadixAttention</h2>
-          <p>利用前缀复用，把共享 prompt 的 KV cache 放进 radix tree 中管理。</p>
-          <div class="chips"><span class="chip">SGLang</span><span class="chip">Prefix Cache</span><span class="chip">Radix Tree</span></div>
-          <a class="start" href="notes/19_sglang_radixattention.html">进入关卡</a>
+          <h2>Activation Checkpointing and Activation Offload</h2>
+          <p>用反向重计算和激活卸载理解训练中的计算、显存与传输三方权衡。</p>
+          <div class="chips"><span class="chip">Checkpointing</span><span class="chip">Offload</span><span class="chip">Memory</span></div>
+          <a class="start" href="notes/19_activation_checkpointing_and_activation_offload.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="20">
           <div class="level-head">
             <span class="badge">L20</span>
             <span class="status" data-status="20">待挑战</span>
           </div>
-          <h2>Quantization W8A16</h2>
-          <p>理解权重 int8、激活 fp16 的推理量化路径和 scale/zero-point 的作用。</p>
-          <div class="chips"><span class="chip">Quantization</span><span class="chip">W8A16</span><span class="chip">Inference</span></div>
-          <a class="start" href="notes/20_quantization_w8a16.html">进入关卡</a>
+          <h2>FlashAttention Sim</h2>
+          <p>用分块 QKV 计算和在线 softmax，理解 FlashAttention 如何降低 HBM 读写。</p>
+          <div class="chips"><span class="chip">FlashAttention</span><span class="chip">Online Softmax</span><span class="chip">Tiling</span></div>
+          <a class="start" href="notes/20_flashattention_sim.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="21">
+        <article class="level" data-category="inference" data-id="21">
           <div class="level-head">
             <span class="badge">L21</span>
             <span class="status" data-status="21">待挑战</span>
           </div>
-          <h2>Gradient Checkpointing</h2>
-          <p>用反向时重算部分激活来换取训练显存下降。</p>
-          <div class="chips"><span class="chip">Memory</span><span class="chip">Recompute</span><span class="chip">Training</span></div>
-          <a class="start" href="notes/21_gradient_checkpointing.html">进入关卡</a>
+          <h2>Decoding Strategies</h2>
+          <p>比较温度缩放、Top-K 和 Top-P 如何改变候选集合与生成多样性。</p>
+          <div class="chips"><span class="chip">Temperature</span><span class="chip">Top-K</span><span class="chip">Top-P</span></div>
+          <a class="start" href="notes/21_decoding_strategies.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="22">
+        <article class="level" data-category="inference" data-id="22">
           <div class="level-head">
             <span class="badge">L22</span>
             <span class="status" data-status="22">待挑战</span>
           </div>
-          <h2>QLoRA and 4bit Quantization</h2>
-          <p>把冻结的 4-bit 基座模型和可训练 LoRA 适配器结合起来做低显存微调。</p>
-          <div class="chips"><span class="chip">QLoRA</span><span class="chip">4-bit</span><span class="chip">PEFT</span></div>
-          <a class="start" href="notes/22_qlora_and_4bit_quantization.html">进入关卡</a>
+          <h2>vLLM PagedAttention</h2>
+          <p>把 KV Cache 切成物理块并用 block table 映射，减少服务场景中的内存碎片。</p>
+          <div class="chips"><span class="chip">PagedAttention</span><span class="chip">KV Cache</span><span class="chip">Block Table</span></div>
+          <a class="start" href="notes/22_vllm_pagedattention.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="23">
+        <article class="level" data-category="inference" data-id="23">
           <div class="level-head">
             <span class="badge">L23</span>
             <span class="status" data-status="23">待挑战</span>
           </div>
-          <h2>ZeRO Optimizer Sim</h2>
-          <p>用切分参数、梯度和优化器状态理解 ZeRO 三个阶段的显存节省。</p>
-          <div class="chips"><span class="chip">ZeRO</span><span class="chip">Distributed</span><span class="chip">Optimizer</span></div>
-          <a class="start" href="notes/23_zero_optimizer_sim.html">进入关卡</a>
+          <h2>Speculative Decoding</h2>
+          <p>让小模型提出多个候选，再由目标模型并行验证，在保持目标分布的前提下加速生成。</p>
+          <div class="chips"><span class="chip">Draft Model</span><span class="chip">Verification</span><span class="chip">Acceptance</span></div>
+          <a class="start" href="notes/23_speculative_decoding.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="24">
+        <article class="level" data-category="inference" data-id="24">
           <div class="level-head">
             <span class="badge">L24</span>
             <span class="status" data-status="24">待挑战</span>
           </div>
-          <h2>Tensor Parallelism Sim</h2>
-          <p>把大矩阵乘法沿列或行切开，理解 tensor parallel 的通信位置。</p>
-          <div class="chips"><span class="chip">Tensor Parallel</span><span class="chip">MatMul</span><span class="chip">Distributed</span></div>
-          <a class="start" href="notes/24_tensor_parallelism_sim.html">进入关卡</a>
+          <h2>SGLang RadixAttention</h2>
+          <p>用基数树匹配共享 prompt 前缀，复用已经计算过的 KV Cache。</p>
+          <div class="chips"><span class="chip">RadixAttention</span><span class="chip">Prefix Cache</span><span class="chip">KV Reuse</span></div>
+          <a class="start" href="notes/24_sglang_radixattention.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="25">
+        <article class="level" data-category="inference" data-id="25">
           <div class="level-head">
             <span class="badge">L25</span>
             <span class="status" data-status="25">待挑战</span>
           </div>
+          <h2>Quantization W8A16</h2>
+          <p>把浮点权重量化到 INT8，再反量化参与 W8A16 线性计算。</p>
+          <div class="chips"><span class="chip">Quantization</span><span class="chip">W8A16</span><span class="chip">Absmax</span></div>
+          <a class="start" href="notes/25_quantization_w8a16.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="26">
+          <div class="level-head">
+            <span class="badge">L26</span>
+            <span class="status" data-status="26">待挑战</span>
+          </div>
+          <h2>QLoRA and 4bit Quantization</h2>
+          <p>冻结低精度基座权重，只训练高精度 LoRA 旁路，模拟 QLoRA 的低显存微调。</p>
+          <div class="chips"><span class="chip">QLoRA</span><span class="chip">NF4</span><span class="chip">PEFT</span></div>
+          <a class="start" href="notes/26_qlora_and_4bit_quantization.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="27">
+          <div class="level-head">
+            <span class="badge">L27</span>
+            <span class="status" data-status="27">待挑战</span>
+          </div>
+          <h2>ZeRO Optimizer Sim</h2>
+          <p>模拟把优化器状态分片到不同设备，理解 ZeRO-1 到 ZeRO-3 的逐级切分。</p>
+          <div class="chips"><span class="chip">ZeRO</span><span class="chip">Optimizer State</span><span class="chip">Sharding</span></div>
+          <a class="start" href="notes/27_zero_optimizer_sim.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="28">
+          <div class="level-head">
+            <span class="badge">L28</span>
+            <span class="status" data-status="28">待挑战</span>
+          </div>
           <h2>Pipeline Parallelism MicroBatch</h2>
-          <p>把模型层切成多个 stage，再用 microbatch 填满流水线，减少空泡。</p>
-          <div class="chips"><span class="chip">Pipeline Parallel</span><span class="chip">Microbatch</span><span class="chip">Bubble</span></div>
-          <a class="start" href="notes/25_pipeline_parallelism_microbatch.html">进入关卡</a>
+          <p>构造流水线时间轴并计算空泡比例，理解 micro-batch 如何提升 stage 利用率。</p>
+          <div class="chips"><span class="chip">Pipeline Parallelism</span><span class="chip">Micro-batch</span><span class="chip">Bubble</span></div>
+          <a class="start" href="notes/28_pipeline_parallelism_microbatch.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="29">
+          <div class="level-head">
+            <span class="badge">L29</span>
+            <span class="status" data-status="29">待挑战</span>
+          </div>
+          <h2>Tensor Parallelism Sim</h2>
+          <p>分别模拟 Column/Row Parallel Linear，理解切分维度与通信方式的配对。</p>
+          <div class="chips"><span class="chip">Tensor Parallelism</span><span class="chip">All-Gather</span><span class="chip">All-Reduce</span></div>
+          <a class="start" href="notes/29_tensor_parallelism_sim.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="30">
+          <div class="level-head">
+            <span class="badge">L30</span>
+            <span class="status" data-status="30">待挑战</span>
+          </div>
+          <h2>LoRA Fine-Tuning Project</h2>
+          <p>把 LoRA 放进可交付微调流程，用训练效果、参数量、显存和速度共同验证收益。</p>
+          <div class="chips"><span class="chip">LoRA</span><span class="chip">Fine-tuning</span><span class="chip">Experiment</span></div>
+          <a class="start" href="notes/30_lora_fine_tuning_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="31">
+          <div class="level-head">
+            <span class="badge">L31</span>
+            <span class="status" data-status="31">待挑战</span>
+          </div>
+          <h2>Inference Performance Comparison</h2>
+          <p>建立可重复的推理基准，对比不同实现的延迟、吞吐与数值一致性。</p>
+          <div class="chips"><span class="chip">Benchmark</span><span class="chip">Latency</span><span class="chip">Throughput</span></div>
+          <a class="start" href="notes/31_inference_performance_comparison.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="32">
+          <div class="level-head">
+            <span class="badge">L32</span>
+            <span class="status" data-status="32">待挑战</span>
+          </div>
+          <h2>Training Performance Analysis</h2>
+          <p>把训练 step 拆成数据、前向、反向和优化器阶段，定位真正的性能与显存瓶颈。</p>
+          <div class="chips"><span class="chip">Profiling</span><span class="chip">Training</span><span class="chip">Memory</span></div>
+          <a class="start" href="notes/32_training_performance_analysis.html">进入关卡</a>
         </article>
     </section>
   </main>
 
   <script>
-    const completed = new Set(JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]"));
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
+    const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
     const cards = [...document.querySelectorAll(".level")];
     const doneCount = document.querySelector("#done-count");
     const progressText = document.querySelector("#progress-text");

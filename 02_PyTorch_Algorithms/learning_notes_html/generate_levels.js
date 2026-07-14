@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const lessonOverrides = require("./lesson_overrides");
+const curriculumV2 = require("./curriculum_v2");
+const enhanceFoundationLessons = require("./foundation_enhancements");
 
 const root = __dirname;
 const notesDir = path.join(root, "notes");
@@ -395,9 +397,9 @@ y = SquareFunction.apply(x)</code></pre>
     title: "MoE Load Balancing Loss",
     file: "07_MoE_Load_Balancing_Loss.ipynb",
     category: "training",
-    difficulty: "Medium",
-    tags: ["MoE", "Loss", "Balance"],
-    summary: "让专家别扎堆：用辅助损失推动路由概率和实际分配更均衡。",
+    difficulty: "Hard",
+    tags: ["MoE", "Load Balancing", "Auxiliary Loss"],
+    summary: "对照路由器“想分给谁”的 P_i 与实际“分给谁”的 f_i，用辅助损失阻止路由崩塌。",
     concepts: [
       "没有约束时，router 可能总把 token 发给少数热门专家，造成容量浪费和训练不稳。",
       "负载均衡损失通常同时考虑专家被选择的频率和 router 分配概率。",
@@ -885,6 +887,10 @@ y = SquareFunction.apply(x)</code></pre>
     formula: "pipeline bubble ratio roughly decreases as microbatches increase"
   }
 ];
+
+// Upstream restructured everything after 11. Preserve the customized 00-11
+// metadata and replace the legacy tail with the canonical 12-32 curriculum.
+levels.splice(12, levels.length - 12, ...curriculumV2);
 
 const categoryLabel = {
   foundation: "基础",
@@ -1993,6 +1999,8 @@ function lessonLevelPage(level, prev, next) {
       </div>
     </section>
 
+${level.notebookGuide || ""}
+
     <section class="lessons">
       ${lessons}
     </section>
@@ -2016,10 +2024,15 @@ function lessonLevelPage(level, prev, next) {
     const predictTotal = ${predictTotal};
     const checkpointTotal = ${level.lessons.length};
     const homeworkTotal = ${homeworkCount};
-    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
-    const homeworkKey = "pytorch-level-" + levelId + "-homework";
-    const predictKey = "pytorch-level-" + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete";
+    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework";
+    const predictKey = statePrefix + levelId + "-predicts";
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -2048,7 +2061,11 @@ function lessonLevelPage(level, prev, next) {
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
           : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
-        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
         feedback.className = "predict-feedback" + (hit ? " hit" : "");
       }
     }
@@ -2147,8 +2164,10 @@ function lessonLevelPage(level, prev, next) {
 }
 
 function levelPage(level, prev, next) {
-  const lessons = level.lessons || lessonOverrides[level.id] || genericLessons(level);
-  return lessonLevelPage({ ...level, lessons }, prev, next);
+  const customLessons = level.lessons || lessonOverrides[level.id];
+  const lessons = enhanceFoundationLessons(level.id, customLessons || genericLessons(level));
+  const notebookGuide = customLessons ? "" : notebookGuideHtml(level);
+  return lessonLevelPage({ ...level, lessons, notebookGuide }, prev, next);
 }
 
 function indexPage() {
@@ -2354,7 +2373,12 @@ ${cards}
   </main>
 
   <script>
-    const completed = new Set(JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]"));
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
+    const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
     const cards = [...document.querySelectorAll(".level")];
     const doneCount = document.querySelector("#done-count");
     const progressText = document.querySelector("#progress-text");
@@ -2391,6 +2415,13 @@ levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
   fs.writeFileSync(filePath, levelPage(level, levels[index - 1], levels[index + 1]));
 });
+
+const expectedPages = new Set(levels.map(slug));
+for (const file of fs.readdirSync(notesDir)) {
+  if (file.endsWith(".html") && !expectedPages.has(file)) {
+    fs.unlinkSync(path.join(notesDir, file));
+  }
+}
 
 fs.writeFileSync(path.join(root, "index.html"), indexPage());
 

@@ -716,7 +716,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 3</span>
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -726,7 +726,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 00 | 零基础导学关卡</p>
         <h1>PyTorch Warmup</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 3 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">00_PyTorch_Warmup.ipynb</span>
           <span class="pill">Tensor</span><span class="pill">Embedding</span><span class="pill">Autograd</span>
@@ -735,33 +735,55 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">先学会看懂 shape、查表、梯度流，再回 notebook 写 PyTorch 代码</div>
       </div>
     </section>
 
+
+
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="tensor">
+        <article class="lesson-card inquiry" data-lesson="tensor">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1.1 / 1.2</span>
           </div>
           <h2>Tensor 变形：先学会读 shape，再写 reshape</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>Tensor 的 shape 不是一串数字，而是每个轴的语义。</li><li>图像特征常见布局是 [B, C, H, W]：B 是样本数，C 是通道，H/W 是空间网格。</li><li>Transformer 更喜欢序列布局：[B, S, C]，其中 S 可以是 H * W。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">把 [B,C,H,W] 变成 [B,H×W,C] 时，最危险的不是 API 名字，而是元素顺序。reshape 只会重新分组，不会自动把 C 挪到最后。</p>
+            <p class="predict-q">先判断：为什么通常要先 permute，再 reshape？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-tensor" value="0">
+                <span>先把轴排成 [B,H,W,C]，再合并 H/W，才能保证每个 token 的 C 个特征仍在一起</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-tensor" value="1">
+                <span>因为 reshape 只能处理二维张量</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-tensor" value="2">
+                <span>因为 permute 会自动复制数据</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="tensor">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>把一张 H×W 的小棋盘摊平成一条路线：每个格子变成一个 token，格子里带着 C 个通道特征。</p>
-            
-          <div class="shape-story">
+          <div class="gated" data-gated="tensor">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Tensor 的 shape 不是一串数字，而是每个轴的语义。</li><li>图像特征常见布局是 [B, C, H, W]：B 是样本数，C 是通道，H/W 是空间网格。</li><li>Transformer 更喜欢序列布局：[B, S, C]，其中 S 可以是 H * W。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把一张 H×W 的小棋盘摊平成一条路线：每个格子变成一个 token，格子里带着 C 个通道特征。</p>
+              <div class="shape-story">
             <div class="story-panel">
               <strong>1. 原始小图：[B=1, C=2, H=2, W=3]</strong>
               <p>同一张图有两个通道，像两张叠在一起的 2×3 透明胶片。</p>
@@ -802,8 +824,32 @@
             </div>
           </div>
           <p>你不需要先背 <code>permute(0, 2, 3, 1)</code>。先问自己：我要把 C 从第 2 个轴挪到最后，再把 H 和 W 合成序列长度。</p>
-            
-          <div class="syntax-card">
+        <div class="shape-story">
+          <div class="story-panel">
+            <strong>4. 从玩具 shape 迁移到 Notebook TODO</strong>
+            <table class="freq-table">
+              <tr><th style="width:150px">玩具例子</th><th>Notebook 变量</th><th>检查点</th></tr>
+              <tr><td><code>[b,t,f]</code></td><td><code>x: [B,C,H,W]</code></td><td>先说清每个轴代表什么</td></tr>
+              <tr><td><code>permute</code></td><td><code>[B,H,W,C]</code></td><td>C 必须来到最后</td></tr>
+              <tr><td><code>reshape</code></td><td><code>[B,H*W,C]</code></td><td>只合并 H 和 W</td></tr>
+            </table>
+          </div>
+          <div class="story-arrow">测试失败时，不要盲换 API</div>
+          <div class="story-panel">
+            <strong>5. 三类常见错法</strong>
+            <table class="freq-table">
+              <tr><th style="width:180px">现象</th><th>优先检查</th></tr>
+              <tr><td>shape 变成 [B,C,H×W]</td><td style="text-align:left">C 没有移动到最后，permute 顺序不对。</td></tr>
+              <tr><td>shape 正确但 allclose 失败</td><td style="text-align:left">元素顺序被打乱；重新画出第一个 token 应来自哪个像素。</td></tr>
+              <tr><td>reshape 报不连续</td><td style="text-align:left">理解 reshape/contiguous 的关系，或用 einops 明确表达轴语义。</td></tr>
+            </table>
+          </div>
+          <div class="field-note">
+            <div class="fn-title">行业视角：shape 语义是读模型代码的第一道门</div>
+            <p>ViT patch、图像 token、Attention head 拆分和 KV Cache 都在做同一类事情：重新组织轴，但不能破坏“哪个数属于哪个 token”的语义。</p>
+          </div>
+        </div>
+              <div class="syntax-card">
             <h4>语法热身：换轴和合并维度怎么写</h4>
             <p>下面用一个“时间序列”小例子练语法，不使用 notebook 里的图像 shape。</p>
             <pre><code># x: [batch, time, feature]
@@ -818,13 +864,18 @@ z = x.reshape(2 * 4, 3)
 # einops 写法：名字就是维度含义
 z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
             <p class="syntax-tip">读法：<code>permute</code> 是“重新排列轴”，<code>reshape</code> 是“重新分组元素”，<code>einops</code> 是“把变形规则写成句子”。</p>
-          </div>
-          </div>
+          </div><div class="syntax-card"><h4>举一反三：每次变形前写一行 shape 合同</h4><pre><code># 输入合同: x [B,C,H,W]
+# 目标合同: tokens [B,H*W,C]
+# 数量守恒: C*H*W == (H*W)*C
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>如果 x 的 shape 是 [2, 3, 4, 5]，转成图像 token 序列后 shape 应该是多少？</p>
-            <div class="checkpoint-options">
+tokens = x.permute(0, 2, 3, 1).reshape(B, H * W, C)
+assert tokens.shape == (B, H * W, C)</code></pre><p class="syntax-tip">shape 合同只能保证外形；最后仍要用一个小张量或 allclose 检查元素顺序。</p></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>如果 x 的 shape 是 [2, 3, 4, 5]，转成图像 token 序列后 shape 应该是多少？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-tensor" value="0">
                 <span>[2, 20, 3]</span>
@@ -837,7 +888,8 @@ z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
                 <input type="radio" name="checkpoint-tensor" value="2">
                 <span>[2, 3, 20]</span>
               </label></div>
-            <div class="feedback" data-feedback="tensor"></div>
+              <div class="feedback" data-feedback="tensor"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -856,25 +908,49 @@ z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
                 <input type="checkbox" data-homework="tensor-2">
                 <span>跑测试时重点看 shape 和 torch.allclose，两者同时通过才算真的理解。</span>
               </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-3">
+                <span>用 B=1、C=2、H=2、W=2 的连续整数张量手算第一个 token，确认不是只碰巧通过 shape 测试。</span>
+              </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="embedding">
+        <article class="lesson-card inquiry" data-lesson="embedding">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 2.1 / 2.2</span>
           </div>
           <h2>Embedding 查表：token id 是地址，不是连续数值</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>文本会先被 tokenizer 变成 token id，例如 [4, 1, 3]。</li><li>神经网络不能直接理解 id 的大小关系；id 只是查表地址。</li><li>Embedding 权重表的 shape 是 [vocab_size, hidden_dim]，第 i 行就是 token i 的向量。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">token id 看起来是整数，但 9 并不比 2 更‘大’或更‘重要’。它只是词表中的行号。</p>
+            <p class="predict-q">先判断：如果把 token id 直接当连续数值送进 Linear，最根本的问题是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-embedding" value="0">
+                <span>模型会误以为 id 之间存在大小和距离关系，而 id 本来只是离散地址</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-embedding" value="1">
+                <span>Linear 不支持整数以外的数据</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-embedding" value="2">
+                <span>Embedding 会自动删除重复 token</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="embedding">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>像在词典里按页码找词条：id 是页码，Embedding 表是词典，查出来的一整行向量才是模型真正使用的表示。</p>
-            
-          <div class="lookup-board">
+          <div class="gated" data-gated="embedding">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>文本会先被 tokenizer 变成 token id，例如 [4, 1, 3]。</li><li>神经网络不能直接理解 id 的大小关系；id 只是查表地址。</li><li>Embedding 权重表的 shape 是 [vocab_size, hidden_dim]，第 i 行就是 token i 的向量。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>像在词典里按页码找词条：id 是页码，Embedding 表是词典，查出来的一整行向量才是模型真正使用的表示。</p>
+              <div class="lookup-board">
             <div class="ids"><strong>input_ids</strong><span class="id-token">2</span><span class="id-token">0</span><span class="id-token">3</span></div>
             <div class="table">
               <span class="hit">ID 0</span><span class="hit">[0.1, 0.4]</span>
@@ -885,8 +961,32 @@ z2 = rearrange(x, "b t f -> (b t) f")</code></pre>
             <div class="ids"><strong>输出向量序列</strong><span>[0.5, 0.9]</span><span>[0.1, 0.4]</span><span>[0.3, 0.7]</span></div>
           </div>
           <p><code>nn.Embedding(input_ids)</code> 和 <code>weight[input_ids]</code> 做的是同一个核心动作：按 id 取行。</p>
-            
-          <div class="syntax-card">
+        <div class="shape-story">
+          <div class="story-panel">
+            <strong>4. 把查表动作映射回 Notebook</strong>
+            <table class="freq-table">
+              <tr><th style="width:160px">对象</th><th>含义</th><th>shape</th></tr>
+              <tr><td><code>input_ids</code></td><td style="text-align:left">每个位置的词表行号</td><td>[B,S]</td></tr>
+              <tr><td><code>emb_layer.weight</code></td><td style="text-align:left">整本可学习词典</td><td>[V,H]</td></tr>
+              <tr><td><code>output</code></td><td style="text-align:left">每个 id 查到的一行向量</td><td>[B,S,H]</td></tr>
+            </table>
+          </div>
+          <div class="story-arrow">错误通常发生在索引，不在矩阵乘法</div>
+          <div class="story-panel">
+            <strong>5. 测试排查表</strong>
+            <table class="freq-table">
+              <tr><th style="width:170px">报错/现象</th><th>优先检查</th></tr>
+              <tr><td>indices must be Long</td><td style="text-align:left"><code>input_ids.dtype</code> 应为整型索引。</td></tr>
+              <tr><td>index out of range</td><td style="text-align:left">所有 id 必须满足 <code>0 ≤ id &lt; vocab_size</code>。</td></tr>
+              <tr><td>shape 少了 hidden 维</td><td style="text-align:left">输出应在 input_ids 后追加 embedding_dim。</td></tr>
+            </table>
+          </div>
+          <div class="field-note">
+            <div class="fn-title">行业视角：Embedding 往往是大模型最大的单块参数之一</div>
+            <p>词表 V 很大时，[V,H] 权重会占据显著显存；词表扩容、权重共享和并行切分都从这张查找表出发。</p>
+          </div>
+        </div>
+              <div class="syntax-card">
             <h4>语法热身：Embedding 和高级索引</h4>
             <p>这里用“颜色编号查颜色向量”的例子，不使用 notebook 的 vocab/hidden 设置。</p>
             <pre><code># 4 种颜色，每种颜色用 3 个数字表示
@@ -906,13 +1006,17 @@ colors = palette[color_ids]  # shape: [2, 2, 3]
 emb = nn.Embedding(num_embeddings=4, embedding_dim=3)
 vectors = emb(color_ids)</code></pre>
             <p class="syntax-tip">读法：<code>weight[input_ids]</code> 会把 input_ids 的每个整数当成“行号”，输出 shape 会在 input_ids 后面追加 embedding_dim。</p>
-          </div>
-          </div>
+          </div><div class="syntax-card"><h4>举一反三：用高级索引验证 nn.Embedding</h4><pre><code>official = emb_layer(input_ids)
+manual = emb_layer.weight[input_ids]
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>给定 weight 有 10 行、hidden_dim=4，input_ids 的 shape 是 [2, 3]，Embedding 输出 shape 是什么？</p>
-            <div class="checkpoint-options">
+assert official.shape == (*input_ids.shape, emb_layer.embedding_dim)
+assert torch.allclose(official, manual)</code></pre><p class="syntax-tip">这组对照把“Embedding 是查表”从比喻变成了可运行证据。</p></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>给定 weight 有 10 行、hidden_dim=4，input_ids 的 shape 是 [2, 3]，Embedding 输出 shape 是什么？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-embedding" value="0">
                 <span>[2, 4]</span>
@@ -925,7 +1029,8 @@ vectors = emb(color_ids)</code></pre>
                 <input type="radio" name="checkpoint-embedding" value="2">
                 <span>[10, 2, 3]</span>
               </label></div>
-            <div class="feedback" data-feedback="embedding"></div>
+              <div class="feedback" data-feedback="embedding"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -944,25 +1049,49 @@ vectors = emb(color_ids)</code></pre>
                 <input type="checkbox" data-homework="embedding-2">
                 <span>用 torch.allclose 验证官方查表和手动查表完全一致。</span>
               </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-3">
+                <span>额外检查 input_ids 的最小值、最大值和 dtype，解释三者为什么共同决定查表是否合法。</span>
+              </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="backward">
+        <article class="lesson-card inquiry" data-lesson="backward">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
             <span class="todo-pill">TODO 3.1 / 3.2 / 3.3</span>
           </div>
           <h2>Linear + ReLU 反传：梯度像闯关一样倒着走</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>forward 不是只算输出，还要保存 backward 会用到的中间信息。</li><li>ReLU 的导数很简单：z &gt; 0 时梯度通过，z &lt;= 0 时梯度变 0。</li><li>Linear 的三个梯度要和三个输入形状对齐：x、weight、bias。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">Linear+ReLU 的 backward 必须逆着 forward 走。forward 最后经过 ReLU，所以传回来的梯度第一站不是 Linear，而是 ReLU mask。</p>
+            <p class="predict-q">先判断：grad_output 回来后，应该先计算什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-backward" value="0">
+                <span>先乘 (z&gt;0) 得到 grad_z，再由 grad_z 推出 x、weight、bias 的梯度</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-backward" value="1">
+                <span>先更新 weight，再计算 mask</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-backward" value="2">
+                <span>直接把 grad_output 原样返回给所有输入</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="backward">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>把前向看成三扇门：Linear 门、ReLU 门、Loss 门。反向时梯度从 Loss 倒着回来，ReLU 门先决定哪些位置能通行。</p>
-            
-          <div class="grad-lesson">
+          <div class="gated" data-gated="backward">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>forward 不是只算输出，还要保存 backward 会用到的中间信息。</li><li>ReLU 的导数很简单：z &gt; 0 时梯度通过，z &lt;= 0 时梯度变 0。</li><li>Linear 的三个梯度要和三个输入形状对齐：x、weight、bias。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把前向看成三扇门：Linear 门、ReLU 门、Loss 门。反向时梯度从 Loss 倒着回来，ReLU 门先决定哪些位置能通行。</p>
+              <div class="grad-lesson">
             <span>z<br><strong>[-1, 0, 2]</strong></span>
             <span class="shape-op">生成 mask</span>
             <span>z &gt; 0<br><strong>[0, 0, 1]</strong></span>
@@ -977,8 +1106,32 @@ vectors = emb(color_ids)</code></pre>
             <span>grad_weight = grad_z.T @ x</span>
           </div>
           <p>如果前向里某个 <code>z</code> 是负数，ReLU 把它压成 0；反向时这条路也会被 mask 关掉。</p>
-            
-          <div class="syntax-card">
+        <div class="shape-story">
+          <div class="story-panel">
+            <strong>4. 反向 shape 账本</strong>
+            <table class="freq-table">
+              <tr><th>梯度</th><th>公式</th><th>必须匹配</th></tr>
+              <tr><td><code>grad_x</code></td><td><code>grad_z @ weight</code></td><td><code>x.shape</code></td></tr>
+              <tr><td><code>grad_weight</code></td><td><code>grad_z.T @ x</code></td><td><code>weight.shape</code></td></tr>
+              <tr><td><code>grad_bias</code></td><td><code>grad_z.sum(dim=0)</code></td><td><code>bias.shape</code></td></tr>
+            </table>
+          </div>
+          <div class="story-arrow">数值对，不代表计算图一定对</div>
+          <div class="story-panel">
+            <strong>5. 测试失败时按顺序定位</strong>
+            <table class="freq-table">
+              <tr><th style="width:180px">现象</th><th>优先检查</th></tr>
+              <tr><td>负 z 位置仍有梯度</td><td style="text-align:left">是否先乘了 ReLU mask。</td></tr>
+              <tr><td>weight 梯度转置</td><td style="text-align:left">矩阵乘法顺序是否让结果 shape 等于 weight。</td></tr>
+              <tr><td>bias 梯度多一维</td><td style="text-align:left">是否沿 batch/token 维求和，只保留输出特征维。</td></tr>
+            </table>
+          </div>
+          <div class="field-note">
+            <div class="fn-title">行业视角：手写 backward 是理解 fused kernel 的入口</div>
+            <p>FlashAttention、融合激活和自定义 Triton 算子都需要明确“前向保存什么、反向重算什么、每个梯度是什么 shape”。这道小题就是最小版本。</p>
+          </div>
+        </div>
+              <div class="syntax-card">
             <h4>语法热身：自定义 autograd 函数长什么样</h4>
             <p>这里用“平方函数”的 backward 练结构，不直接写 notebook 的 Linear+ReLU。</p>
             <pre><code>class SquareFunction(torch.autograd.Function):
@@ -996,13 +1149,18 @@ vectors = emb(color_ids)</code></pre>
 # 调用自定义 Function 要用 .apply
 y = SquareFunction.apply(x)</code></pre>
             <p class="syntax-tip">读法：<code>ctx.save_for_backward</code> 像是在前向路上放书签；<code>backward</code> 里先取回书签，再按链式法则乘上传回来的 <code>grad_output</code>。</p>
-          </div>
-          </div>
+          </div><div class="syntax-card"><h4>举一反三：用 autograd 当裁判</h4><pre><code># custom 与 reference 使用同一份输入和参数
+loss_custom.backward()
+loss_reference.backward()
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>已知 grad_output = [5, 5, 5]，z = [-1, 0, 2]，经过 ReLU 反向后 grad_z 是什么？</p>
-            <div class="checkpoint-options">
+assert torch.allclose(custom_grad_x, reference_grad_x, atol=1e-5)
+assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p class="syntax-tip">不要只比 forward 输出；自定义 Function 的核心验收对象是每一个输入梯度。</p></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>已知 grad_output = [5, 5, 5]，z = [-1, 0, 2]，经过 ReLU 反向后 grad_z 是什么？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-backward" value="0">
                 <span>[-5, 0, 5]</span>
@@ -1015,7 +1173,8 @@ y = SquareFunction.apply(x)</code></pre>
                 <input type="radio" name="checkpoint-backward" value="2">
                 <span>[0, 0, 5]</span>
               </label></div>
-            <div class="feedback" data-feedback="backward"></div>
+              <div class="feedback" data-feedback="backward"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -1033,6 +1192,10 @@ y = SquareFunction.apply(x)</code></pre>
               <label class="homework-item">
                 <input type="checkbox" data-homework="backward-2">
                 <span>再补 Linear 的三个梯度：grad_x、grad_weight、grad_bias，并和官方 autograd 对齐。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-3">
+                <span>把 forward 顺序和 backward 顺序画成两条相反箭头，并逐项标出 ctx 需要保存的张量。</span>
               </label>
           </div>
         </article>
@@ -1053,14 +1216,19 @@ y = SquareFunction.apply(x)</code></pre>
   <script>
     const levelId = "00";
     const checkpointData = {"tensor":{"answer":0,"explain":"B 保持 2，H*W = 4*5 = 20，C 保持 3，所以是 [2, 20, 3]。"},"embedding":{"answer":1,"explain":"每个 id 会变成一个 hidden_dim=4 的向量，所以在 [2,3] 后面追加 4。"},"backward":{"answer":2,"explain":"ReLU 只有 z > 0 的位置导数为 1；-1 和 0 都不传梯度。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const predictData = {"tensor":{"answer":0,"revealNote":"对。先确定轴语义，再合并连续的空间轴；只看元素总数相等，可能得到 shape 对、语义错的结果。"},"embedding":{"answer":0,"revealNote":"对。Embedding 把离散地址变成可学习向量，让相似性由训练决定，而不是由 id 数字大小决定。"},"backward":{"answer":0,"revealNote":"对。链式法则就是按前向的逆序逐门通过；ReLU 先决定哪些位置的梯度还能继续流动。"}};
+    const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
-    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
-    const homeworkKey = "pytorch-level-" + levelId + "-homework";
-    const predictKey = "pytorch-level-" + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework";
+    const predictKey = statePrefix + levelId + "-predicts";
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -1089,7 +1257,11 @@ y = SquareFunction.apply(x)</code></pre>
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
           : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
-        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
         feedback.className = "predict-feedback" + (hit ? " hit" : "");
       }
     }

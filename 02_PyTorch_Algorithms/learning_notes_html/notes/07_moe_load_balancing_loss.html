@@ -729,7 +729,7 @@
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">07_MoE_Load_Balancing_Loss.ipynb</span>
-          <span class="pill">MoE</span><span class="pill">Loss</span><span class="pill">Balance</span>
+          <span class="pill">MoE</span><span class="pill">Load Balancing</span><span class="pill">Auxiliary Loss</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -742,6 +742,8 @@
         <div class="formula">balance_loss ∝ num_experts * sum(tokens_per_expert * prob_per_expert)</div>
       </div>
     </section>
+
+
 
     <section class="lessons">
       
@@ -1041,10 +1043,15 @@ aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
     const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
-    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
-    const homeworkKey = "pytorch-level-" + levelId + "-homework";
-    const predictKey = "pytorch-level-" + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete";
+    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework";
+    const predictKey = statePrefix + levelId + "-predicts";
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -1073,7 +1080,11 @@ aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
           : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
-        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
         feedback.className = "predict-feedback" + (hit ? " hit" : "");
       }
     }

@@ -716,7 +716,7 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -726,7 +726,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 01 | 零基础导学关卡</p>
         <h1>RMSNorm Tutorial</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">01_RMSNorm_Tutorial.ipynb</span>
           <span class="pill">Norm</span><span class="pill">LLM</span><span class="pill">Scale</span>
@@ -735,41 +735,92 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">RMSNorm(x) = x / sqrt(mean(x^2) + eps) * gamma</div>
       </div>
     </section>
 
+
+
     <section class="lessons">
       
-        <article class="lesson-card" data-lesson="rmsnorm-scale">
+        <article class="lesson-card inquiry" data-lesson="rmsnorm-scale">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
             <span class="todo-pill">TODO 1 / TODO 2</span>
           </div>
           <h2>RMS：用向量自己的大小做刻度尺</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>hidden_size 是最后一维特征数。</li><li>mean(dim=-1, keepdim=True) 会保留可广播维度。</li><li>eps 用来避免除以 0。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">RMSNorm 的名字已经给出线索：它使用 root mean square，而不是 LayerNorm 的 mean + variance。少做的那一步是什么？</p>
+            <p class="predict-q">先判断：RMSNorm 与 LayerNorm 最关键的区别是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-scale" value="0">
+                <span>RMSNorm 不减去均值，只按平方均值的平方根缩放</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-scale" value="1">
+                <span>RMSNorm 不包含任何可学习参数</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-scale" value="2">
+                <span>RMSNorm 只能处理二维输入</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="rmsnorm-scale">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>RMSNorm 不关心向量平均值是不是 0，只把每个 token 的 hidden 向量缩放到稳定尺度。</p>
-            <div class="scale-demo"><span>原向量: [3,4]</span><span>RMS≈3.54</span><span>缩放后: [0.85,1.13]</span></div>
-            <div class="syntax-card"><h4>语法热身：对最后一维求均值并保留维度</h4><pre><code>x = torch.randn(2, 3, 4)
+          <div class="gated" data-gated="rmsnorm-scale">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>hidden_size 是最后一维特征数。</li><li>mean(dim=-1, keepdim=True) 会保留可广播维度。</li><li>eps 用来避免除以 0。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>RMSNorm 不关心向量平均值是不是 0，只把每个 token 的 hidden 向量缩放到稳定尺度。</p>
+              <div class="scale-demo"><span>原向量: [3,4]</span><span>RMS≈3.54</span><span>缩放后: [0.85,1.13]</span></div>
+        <div class="shape-story">
+          <div class="story-panel">
+            <strong>3. 三个 TODO 对应三层职责</strong>
+            <table class="freq-table">
+              <tr><th style="width:110px">任务</th><th>要完成什么</th><th>检查点</th></tr>
+              <tr><td>TODO 1</td><td style="text-align:left">创建 <code>[hidden_size]</code> 的可学习缩放参数</td><td><code>nn.Parameter</code></td></tr>
+              <tr><td>TODO 2</td><td style="text-align:left">沿最后一维计算 mean square 与 rsqrt</td><td><code>keepdim=True</code></td></tr>
+              <tr><td>TODO 3</td><td style="text-align:left">归一化结果乘 weight，再恢复输入 dtype</td><td>shape/dtype 不变</td></tr>
+            </table>
+          </div>
+          <div class="story-arrow">公式短，广播最容易出错</div>
+          <div class="story-panel">
+            <strong>4. 常见错法</strong>
+            <table class="freq-table">
+              <tr><th style="width:170px">写法</th><th>为什么不对</th></tr>
+              <tr><td><code>mean()</code> 不写 dim</td><td style="text-align:left">会把 batch、sequence 一起平均，每个 token 不再独立归一化。</td></tr>
+              <tr><td><code>keepdim=False</code></td><td style="text-align:left">统计量 shape 难以和原输入按最后一维广播。</td></tr>
+              <tr><td>忘记 eps</td><td style="text-align:left">全零或极小向量可能产生 inf/NaN。</td></tr>
+            </table>
+          </div>
+          <div class="field-note">
+            <div class="fn-title">行业视角：RMSNorm 已成为现代 Decoder 的常见默认件</div>
+            <p>LLaMA 等模型选择 RMSNorm，是因为它保留核心尺度稳定作用，同时比完整 LayerNorm 更简洁。工程实现仍必须重视精度、广播和 dtype。</p>
+          </div>
+        </div>
+              <div class="syntax-card"><h4>语法热身：对最后一维求均值并保留维度</h4><pre><code>x = torch.randn(2, 3, 4)
 last_mean = x.mean(dim=-1, keepdim=True)  # [2,3,1]
-y = x / (last_mean.abs() + 1e-6)</code></pre></div>
-          </div>
+y = x / (last_mean.abs() + 1e-6)</code></pre></div><div class="syntax-card"><h4>举一反三：先写 shape 注释，再写公式</h4><pre><code># x: [B,S,H]
+variance = x.float().pow(2).mean(dim=-1, keepdim=True)  # [B,S,1]
+normalized = x.float() * torch.rsqrt(variance + eps)    # [B,S,H]
+output = normalized * weight                            # weight: [H]</code></pre><p class="syntax-tip">广播链路是 [B,S,1] → [B,S,H]，再让 [H] 对齐最后一维。</p></div>
+            </div>
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>x shape 为 [2,3,4]，x.pow(2).mean(dim=-1, keepdim=True) 的 shape 是？</p>
-            <div class="checkpoint-options">
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>x shape 为 [2,3,4]，x.pow(2).mean(dim=-1, keepdim=True) 的 shape 是？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-scale" value="0">
                 <span>[1,3,4]</span>
@@ -782,7 +833,8 @@ y = x / (last_mean.abs() + 1e-6)</code></pre></div>
                 <input type="radio" name="checkpoint-rmsnorm-scale" value="2">
                 <span>[2,4]</span>
               </label></div>
-            <div class="feedback" data-feedback="rmsnorm-scale"></div>
+              <div class="feedback" data-feedback="rmsnorm-scale"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -801,33 +853,85 @@ y = x / (last_mean.abs() + 1e-6)</code></pre></div>
                 <input type="checkbox" data-homework="rmsnorm-scale-2">
                 <span>检查输出 shape 与输入一致。</span>
               </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-3">
+                <span>用全零输入和放大 1000 倍的输入各测一次，观察 eps 与归一化尺度分别解决什么问题。</span>
+              </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="rmsnorm-precision">
+        <article class="lesson-card inquiry" data-lesson="rmsnorm-precision">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 2 / TODO 3</span>
           </div>
           <h2>先用 FP32 计算，再回到输入 dtype</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>float16 的可表示范围有限。</li><li>平方会放大数值。</li><li>.to(x.dtype) 可以恢复原始精度。</li></ul>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">半精度输入本身可能没溢出，但平方会迅速放大数值。归一化统计量正好包含 x²。</p>
+            <p class="predict-q">先判断：为什么应在平方之前转成 FP32，而不是平方之后再转？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-precision" value="0">
+                <span>如果 FP16 的平方已经溢出成 inf，之后转 FP32 也无法恢复原值</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-precision" value="1">
+                <span>因为 FP32 会自动减少 hidden_size</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-rmsnorm-precision" value="2">
+                <span>因为 weight 只能和 FP32 相乘</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="rmsnorm-precision">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>归一化里的平方像放大镜，半精度数值太大时容易溢出，所以先换到更稳的 FP32。</p>
-            <div class="dtype-demo"><span>FP16: 300² → overflow</span><span>FP32: 300² → 90000</span><span>输出再转回 FP16</span></div>
-            <div class="syntax-card"><h4>语法热身：临时升精度做统计量</h4><pre><code>scores = torch.tensor([1000, 2000], dtype=torch.float16)
+          <div class="gated" data-gated="rmsnorm-precision">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>float16 的可表示范围有限。</li><li>平方会放大数值。</li><li>.to(x.dtype) 可以恢复原始精度。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>归一化里的平方像放大镜，半精度数值太大时容易溢出，所以先换到更稳的 FP32。</p>
+              <div class="dtype-demo"><span>FP16: 300² → overflow</span><span>FP32: 300² → 90000</span><span>输出再转回 FP16</span></div>
+        <div class="shape-story">
+          <div class="story-panel">
+            <strong>3. dtype 数据流：只在危险区间升精度</strong>
+            <div class="mini-pipeline"><span>输入 FP16/BF16</span><span>统计量 FP32</span><span>缩放 FP32</span><span>输出回原 dtype</span></div>
+            <p>目标不是把整层永久改成 FP32，而是让平方、均值和 rsqrt 这段数值敏感计算更稳。</p>
+          </div>
+          <div class="story-arrow">测试要同时看数值、shape 和 dtype</div>
+          <div class="story-panel">
+            <strong>4. 三类测试信号</strong>
+            <table class="freq-table">
+              <tr><th style="width:150px">测试</th><th>它在防什么</th></tr>
+              <tr><td><code>isfinite</code></td><td style="text-align:left">平方溢出或除零产生 inf/NaN。</td></tr>
+              <tr><td><code>allclose</code></td><td style="text-align:left">公式、eps 或广播方向写错。</td></tr>
+              <tr><td><code>out.dtype==x.dtype</code></td><td style="text-align:left">忘记把结果还给后续混合精度计算图。</td></tr>
+            </table>
+          </div>
+          <div class="field-note">
+            <div class="fn-title">行业视角：混合精度不是“全都用半精度”</div>
+            <p>工业训练会把矩阵乘法放在 BF16/FP16，把归一化统计、loss reduction 等敏感环节保留更高精度。关键是知道哪一步会放大误差。</p>
+          </div>
+        </div>
+              <div class="syntax-card"><h4>语法热身：临时升精度做统计量</h4><pre><code>scores = torch.tensor([1000, 2000], dtype=torch.float16)
 mean32 = scores.float().mean()
-centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
-          </div>
+centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div><div class="syntax-card"><h4>举一反三：把 dtype 恢复写成显式合同</h4><pre><code>input_dtype = x.dtype
+x32 = x.float()
+variance = x32.pow(2).mean(dim=-1, keepdim=True)
+normalized = x32 * torch.rsqrt(variance + eps)
+output = (normalized * weight.float()).to(input_dtype)
 
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>为什么 RMSNorm 中常先把 x 转成 float32 再平方？</p>
-            <div class="checkpoint-options">
+assert output.dtype == input_dtype</code></pre></div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 RMSNorm 中常先把 x 转成 float32 再平方？</p>
+              <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-rmsnorm-precision" value="0">
                 <span>让 shape 自动变小</span>
@@ -840,7 +944,8 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
                 <input type="radio" name="checkpoint-rmsnorm-precision" value="2">
                 <span>避免 FP16 平方溢出</span>
               </label></div>
-            <div class="feedback" data-feedback="rmsnorm-precision"></div>
+              <div class="feedback" data-feedback="rmsnorm-precision"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -858,6 +963,10 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
               <label class="homework-item">
                 <input type="checkbox" data-homework="rmsnorm-precision-2">
                 <span>和参考实现比较 dtype、shape、数值误差。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-3">
+                <span>比较 x.float().pow(2) 与 x.pow(2).float() 在大数 FP16 输入上的差异，并解释为什么后者来不及补救。</span>
               </label>
           </div>
         </article>
@@ -878,14 +987,19 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
   <script>
     const levelId = "01";
     const checkpointData = {"rmsnorm-scale":{"answer":1,"explain":"沿最后一维 4 求均值，keepdim=True 会把最后一维保留为 1，方便和原张量广播。"},"rmsnorm-precision":{"answer":2,"explain":"平方会迅速放大数值；FP32 计算统计量更稳，最后再转回输入 dtype。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const predictData = {"rmsnorm-scale":{"answer":0,"revealNote":"对。它保留方向，只把最后一维 hidden vector 的整体尺度拉回稳定范围，再乘可学习 weight。"},"rmsnorm-precision":{"answer":0,"revealNote":"对。升精度必须发生在危险运算之前；先溢出再转换，只是把 FP16 的 inf 搬进 FP32。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
-    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
-    const homeworkKey = "pytorch-level-" + levelId + "-homework";
-    const predictKey = "pytorch-level-" + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete";
+    const homeworkTotal = 8;
+    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework";
+    const predictKey = statePrefix + levelId + "-predicts";
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -914,7 +1028,11 @@ centered = (scores.float() - mean32).to(scores.dtype)</code></pre></div>
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
           : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
-        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
         feedback.className = "predict-feedback" + (hit ? " hit" : "");
       }
     }

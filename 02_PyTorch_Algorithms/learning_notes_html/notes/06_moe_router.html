@@ -743,6 +743,8 @@
       </div>
     </section>
 
+
+
     <section class="lessons">
       
         <article class="lesson-card inquiry" data-lesson="moe-router-softmax-topk">
@@ -1280,10 +1282,15 @@ w = w.unsqueeze(-1)  # [2] -&gt; [2, 1]</code></pre></div>
     const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 7;
-    const checkpointKey = "pytorch-level-" + levelId + "-checkpoints";
-    const homeworkKey = "pytorch-level-" + levelId + "-homework";
-    const predictKey = "pytorch-level-" + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete";
+    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework";
+    const predictKey = statePrefix + levelId + "-predicts";
+    const completeKey = "pytorch-levels-complete-v2";
+    if (localStorage.getItem(completeKey) === null) {
+      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
+      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    }
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -1312,7 +1319,11 @@ w = w.unsqueeze(-1)  # [2] -&gt; [2, 1]</code></pre></div>
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
           : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
-        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + predictData[lessonId].revealNote + '</div>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
         feedback.className = "predict-feedback" + (hit ? " hit" : "");
       }
     }

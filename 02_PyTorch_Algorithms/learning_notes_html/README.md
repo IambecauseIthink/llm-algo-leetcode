@@ -8,7 +8,10 @@
 - `notes/`: 按 notebook 拆分的关卡页面。
 - `assets/`: 图片、样式、数据或小型可视化资源。
 - `generate_levels.js`: 关卡生成器，维护地图、页面模板和通用样式。
+- `curriculum_v2.js`: upstream 新版 12–32 课程的元数据与 Notebook 映射。
 - `lesson_overrides.js` / `lesson_overrides_extra.js`: 各关的零基础导学、图例、语法热身、闯关题和 notebook 作业数据。
+
+当前地图对应 upstream 新版 00–32，共 33 关。00–11 保留本地精讲内容；其中 00、01 通过 `foundation_enhancements.js` 叠加 05 同款的预测解锁、错法排查与行业视角。旧课程中仍适用的精讲会通过 `lesson_overrides_v2.js` 迁移到新编号，全新课程则以新版元数据和 Notebook 原文生成导学页。
 
 每个关卡页面包含：
 

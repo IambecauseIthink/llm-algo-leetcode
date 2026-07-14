@@ -950,5 +950,6 @@ x = prenorm_step(x, norm_b, mlp_like_block)</code></pre><p class="syntax-tip">è¯
       ]
     }
   ],
-  ...require("./lesson_overrides_extra")
+  ...require("./lesson_overrides_extra"),
+  ...require("./lesson_overrides_v2")
 };
