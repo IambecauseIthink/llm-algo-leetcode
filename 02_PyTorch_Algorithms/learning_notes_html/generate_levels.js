@@ -1122,6 +1122,7 @@ function shuffledCheckpoint(level, lesson, lessonIndex) {
 }
 
 function lessonLevelPage(level, prev, next) {
+  const lessonStyles = level.lessons.map((lesson) => lesson.styles || "").filter(Boolean).join("\n");
   const lessons = level.lessons.map((lesson, index) => {
     const checkpoint = shuffledCheckpoint(level, lesson, index);
     const prerequisite = lesson.prerequisite.map((item) => `<li>${esc(item)}</li>`).join("");
@@ -1959,7 +1960,10 @@ function lessonLevelPage(level, prev, next) {
       .top { display: grid; }
       .map-steps { grid-template-columns: 1fr; }
     }
-  </style>
+  </style>${lessonStyles ? `
+  <style>
+${lessonStyles}
+  </style>` : ""}
 </head>
 <body>
   <main class="shell">

@@ -2,6 +2,7 @@
 // Brand-new topics intentionally fall back to curriculum_v2 metadata + notebook guide.
 
 const legacy = require("./lesson_overrides_extra");
+const flashAttention = require("./lesson_overrides_20_flashattention");
 
 module.exports = {
   "12": null,         // New: Gradient Accumulation
@@ -12,7 +13,7 @@ module.exports = {
   "17": legacy["14"], // Attention backward, now introduced as Autograd Basics
   "18": null,         // New: Activation and Loss Backward
   "19": legacy["21"], // Activation checkpointing; notebook guide adds offload context
-  "20": legacy["15"], // FlashAttention
+  "20": flashAttention,
   "21": legacy["16"], // Decoding
   "22": legacy["17"], // PagedAttention
   "23": legacy["18"], // Speculative decoding
