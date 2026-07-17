@@ -756,16 +756,81 @@
 
           <div class="lesson-section">
             <h3>先补的知识</h3>
-            <ul><li>int8 的有效范围通常看作 [-127, 127]。</li><li>这里的 scale 表示整数刻度密度：127 / absmax。</li><li>round 后还要 clamp，防止越界。</li></ul>
+            <ul><li>int8 的有效范围通常看作 [-127, 127]，对称量化会尽量让正负两侧共用同一把刻度尺。</li><li>这里的 scale 表示整数刻度密度：scale = 127 / absmax。absmax 越大，每个浮点单位对应的 int8 刻度越少。</li><li>量化不是简单 to(torch.int8)：要先乘 scale，把浮点数放大到整数刻度，再 round 到最近整数。</li><li>round 后还要 clamp，防止极端值越界；最后才转成 torch.int8 存储。</li></ul>
           </div>
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>先找这组权重里最大的绝对值，再算出 1 个浮点单位对应多少个 int8 刻度。</p>
-            <div class="scale-demo"><span>absmax=3.0</span><span>scale=127/3.0</span><strong>w_int8=round(w * scale)</strong></div>
-            <div class="syntax-card"><h4>语法热身：量化三步</h4><pre><code>absmax = weight.abs().max()
+            <p>把浮点权重压成 int8，像把真实长度画到一把只有 127 格的尺子上。先找最大绝对值 absmax，决定“最远的点”应该贴到 int8 边界；再用同一把尺子把所有权重换算成整数刻度。</p>
+
+          <div class="shape-story">
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先读量化函数的合同</strong>
+                <p>输入是一块浮点权重，输出不是一个张量，而是两样东西：压缩后的 int8 权重，以及以后反量化要用的 scale。</p>
+                <div class="learn-kv">
+                  <span>输入</span><strong>weight float tensor</strong>
+                  <span>输出 1</span><strong>q_weight int8 tensor</strong>
+                  <span>输出 2</span><strong>scale = 127 / absmax</strong>
+                </div>
+              </div>
+              <div class="learn-card accent">
+                <strong>scale 是“刻度密度”</strong>
+                <p>量化时乘 scale，反量化时除 scale。这个 notebook 的 scale 不是每个整数代表多少浮点值，而是 1 个浮点单位对应多少 int8 格。</p>
+                <div class="learn-note">记忆：<code>q = round(w * scale)</code>，所以还原就是 <code>w ≈ q / scale</code>。</div>
+              </div>
+            </div>
+
+            <div class="story-arrow">主线：absmax 定尺子，乘 scale 上刻度，round/clamp 存 int8</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>absmax</b>weight.abs().max()</span>
+                <span><b>scale</b>127.0 / absmax</span>
+                <span><b>multiply</b>weight * scale</span>
+                <span><b>round</b>最近整数</span>
+                <strong><b>clamp + int8</b>[-128,127]</strong>
+              </div>
+              <p>这条线就是 TODO 1/2/3 的顺序。不要先转 int8，否则小数会直接被截断，量化误差会变得不可控。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 一个小数字例子</strong>
+                <div class="learn-kv">
+                  <span>absmax</span><strong>3.0</strong>
+                  <span>scale</span><strong>127 / 3.0 ≈ 42.33</strong>
+                  <span>w=1.5</span><strong>round(1.5 * 42.33) = 64</strong>
+                  <span>w=-3.0</span><strong>round(-3.0 * 42.33) = -127</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 最常见错误</strong>
+                <p>把 <code>scale</code> 写反、忘记 <code>round</code>、忘记 <code>clamp</code>，都会让测试里的误差或 dtype 检查失败。</p>
+                <div class="learn-mini">
+                  <span>先乘</span>
+                  <span>再 round</span>
+                  <span>再 clamp</span>
+                  <strong>最后 int8</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="practice-grid">
+          <div class="syntax-card"><h4>语法热身：量化三步</h4><pre><code>absmax = weight.abs().max()
 scale = 127.0 / absmax
-q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></div>
+q = torch.round(weight * scale)
+q = q.clamp(-128, 127)
+q = q.to(torch.int8)</code></pre></div>
+          <div class="syntax-card">
+            <h4>举一反三：对应 notebook TODO</h4>
+            <div class="learn-kv">
+              <span>TODO 1</span><strong>absmax = weight.abs().max()</strong>
+              <span>TODO 2</span><strong>scale = 127.0 / absmax</strong>
+              <span>TODO 3</span><strong>round → clamp → int8</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：量化乘 scale，反量化除 scale；scale 方向别写反。</p>
+          </div>
+        </div>
           </div>
 
           <div class="lesson-section checkpoint">
@@ -790,7 +855,7 @@ q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></di
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
                 <input type="checkbox" data-homework="quant-absmax-scale-0">
                 <span>计算权重绝对最大值。</span>
@@ -814,16 +879,71 @@ q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)</code></pre></di
 
           <div class="lesson-section">
             <h3>先补的知识</h3>
-            <ul><li>W8A16 表示 weight 用 int8 存，activation 用 fp16/bf16 算。</li><li>矩阵乘法前通常要把 int8 权重反量化回浮点。</li><li>本 notebook 的反量化公式是 q_weight / scale。</li></ul>
+            <ul><li>W8A16 表示 weight 用 int8 存储，activation 仍用 fp16/bf16 等 16-bit 浮点参与计算。</li><li>普通 PyTorch 的 F.linear 不能直接拿 int8 权重和 fp16 激活做这个玩具前向，所以先把 q_weight 反量化回浮点。</li><li>本 notebook 的量化公式是 q = round(w * scale)，因此反量化公式是 w ≈ q / scale。</li><li>反量化后的权重要转成 x.dtype，保证和激活 dtype 对齐。</li></ul>
           </div>
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>量化时把浮点数乘上刻度密度变成整数；反量化时再除以同一把刻度尺还原。</p>
-            <div class="matrix-flow"><span>int8 weight</span><span>除以 scale</span><span>fp weight</span><strong>F.linear(x, fp_weight)</strong></div>
-            <div class="syntax-card"><h4>语法热身：反量化后做线性层</h4><pre><code>dequant_weight = q_weight.float() / scale
+            <p>W8A16 的核心是“存的时候省，算的时候稳”：权重平时压成 int8 省显存；真正做线性层前，再用 scale 还原成和激活同 dtype 的浮点权重。你写的 TODO 4 就是这条恢复路径。</p>
+
+          <div class="shape-story">
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先看 W8A16 的两种 dtype</strong>
+                <div class="learn-kv">
+                  <span>W8</span><strong>q_weight 存成 torch.int8</strong>
+                  <span>A16</span><strong>x 保持 fp16/bf16 等浮点激活</strong>
+                  <span>计算前</span><strong>q_weight.float() / scale</strong>
+                </div>
+              </div>
+              <div class="learn-card accent">
+                <strong>TODO 4 不是重新量化</strong>
+                <p>前面已经把权重量化好了。这里要做的是反量化，再调用 <code>F.linear</code>，最后输出形状和普通 Linear 一样。</p>
+              </div>
+            </div>
+
+            <div class="story-arrow">主线：int8 权重除以 scale，还原成和激活同 dtype 的浮点权重</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>q_weight</b>int8</span>
+                <span><b>float()</b>避免整数除法/溢出</span>
+                <span><b>/ scale</b>反量化</span>
+                <span><b>to(x.dtype)</b>对齐激活</span>
+                <strong><b>F.linear</b>x, dequant_weight, bias</strong>
+              </div>
+              <p>量化时是乘 scale，反量化时必须除以同一个 scale。这里最容易写错方向。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 为什么要 <code>.float()</code></strong>
+                <p><code>q_weight</code> 是 int8 存储格式，先转浮点再除以 scale，才能得到近似原权重的浮点值。</p>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 为什么要 <code>.to(x.dtype)</code></strong>
+                <p>激活是 A16，权重反量化后对齐到 <code>x.dtype</code>，避免线性层里 dtype 不匹配，也更贴近 W8A16 的含义。</p>
+              </div>
+            </div>
+          </div>
+            <div class="practice-grid">
+          <div class="syntax-card"><h4>语法热身：反量化后做线性层</h4><pre><code>dequant_weight = q_weight.float() / scale
 dequant_weight = dequant_weight.to(x.dtype)
-out = F.linear(x, dequant_weight, bias)</code></pre></div>
+out = F.linear(
+    x,
+    dequant_weight,
+    bias,
+)</code></pre></div>
+          <div class="syntax-card">
+            <h4>举一反三：TODO 4 检查表</h4>
+            <div class="learn-kv">
+              <span>量化方向</span><strong>q = round(w * scale)</strong>
+              <span>反量化方向</span><strong>w = q.float() / scale</strong>
+              <span>dtype 对齐</span><strong>dequant_weight.to(x.dtype)</strong>
+              <span>前向</span><strong>F.linear(x, dequant_weight, bias)</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：W8 是存储格式，A16 是计算激活；做 Linear 前先把权重恢复成浮点。</p>
+          </div>
+        </div>
           </div>
 
           <div class="lesson-section checkpoint">

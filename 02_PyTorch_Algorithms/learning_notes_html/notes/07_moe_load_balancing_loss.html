@@ -785,61 +785,84 @@
               <p>把 E 个专家想成食堂的 E 个打饭窗口。router 是带位员，selected_experts 记录了每个 token 被带到了哪个窗口。f_i 就是“第 i 号窗口排了几个人 ÷ 总人次”。如果某个窗口排爆了、别的窗口空着，就说明负载不均——这一关只做一件事：把这张“人头统计表”用 one_hot 数出来。</p>
               
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先看清输入长什么样</strong>
-              <p>notebook 给你的 <code>selected_experts</code> 形状是 <code>[总token数, top_k]</code>：每行是一个 token，行里的 K 个数字是它选中的 K 个专家 id。我们要把它压成一张长度为 E 的“人头表” f。</p>
-              <table class="freq-table">
-                <tr><th>token</th><th>选中的专家 (top_k=2)</th></tr>
-                <tr><td>t0</td><td>[0, 2]</td></tr>
-                <tr><td>t1</td><td>[0, 1]</td></tr>
-                <tr><td>t2</td><td>[0, 2]</td></tr>
-              </table>
-              <p style="color:#657184">直觉上专家 0 被点了 3 次、专家 2 两次、专家 1 一次，专家 3+ 颗粒无收——这就是不均衡。</p>
-            </div>
-            <div class="story-arrow">怎么用张量数人头？→ one_hot 再求和</div>
-            <div class="story-panel">
-              <strong>1. one_hot：把“专家 id”变成“可以相加的计数”</strong>
-              <p>id 本身没法直接加（把 0 和 2 加起来没意义）。<code>F.one_hot</code> 把每个 id 摊成一行 0/1 指示向量，命中位为 1。这样“相加”就等于“计票”。</p>
-              <svg viewBox="0 0 460 150" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12" text-anchor="middle">
-                  <text x="60" y="20" fill="#657184">id → one-hot (E=4)</text>
-                  <text x="300" y="20" fill="#657184">沿 token/top_k 求和 = 每个专家票数</text>
-                  <text x="20" y="52">[0,2]</text>
-                  <text x="20" y="82">[0,1]</text>
-                  <text x="20" y="112">[0,2]</text>
-                  <g font-family="ui-monospace, monospace">
-                    <text x="95" y="52">1 0 1 0</text>
-                    <text x="95" y="82">1 1 0 0</text>
-                    <text x="95" y="112">1 0 1 0</text>
-                  </g>
-                  <line x1="150" y1="82" x2="210" y2="82" stroke="#657184" stroke-width="2"></line>
-                  <text x="180" y="72" fill="#12805c">Σ</text>
-                  <g font-family="ui-monospace, monospace" font-weight="700">
-                    <rect x="240" y="68" width="150" height="28" fill="#e7f6ee" stroke="#99d6bf"></rect>
-                    <text x="315" y="87" fill="#12805c">[3, 1, 2, 0]</text>
-                  </g>
-                  <text x="315" y="118" fill="#657184">专家0:3  专家1:1  专家2:2  专家3:0</text>
-                </g>
-              </svg>
-              <p>再除以总选择次数 <code>total_tokens * top_k</code>（这里 3×2=6），就得到比例 <code>f = [3,1,2,0]/6</code>。所有 f_i 加起来正好是 1。</p>
-              <details class="think">
-                <summary>想一想：为什么要除以 total_tokens × top_k，而不是只除以 token 数？</summary>
-                <div class="think-body">
-                  <p>因为每个 token 选了 K 个专家，总共投出的“票”是 token 数 × K，不是 token 数。分母要和“总票数”一致，f 才是真正的比例、加起来才等于 1。</p>
-                  <p>这是 Top-K MoE 最容易写错的地方：Top-1 时 K=1 看不出问题，一旦 K=2 还按 token 数除，f 的和就会变成 2，后面的 loss 全错。</p>
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先读输入输出合同</strong>
+                <p><code>selected_experts</code> 是 [tokens, top_k]。每一行是一枚 token，里面 K 个数字是它选中的专家编号。TODO 2 的目标，是把它统计成长度为 E 的 <code>f_i</code>。</p>
+                <div class="learn-kv">
+                  <span>输入</span><strong>selected_experts [T,K]</strong>
+                  <span>中间</span><strong>one_hot [T,K,E]</strong>
+                  <span>输出</span><strong>f_i [E], sum(f_i)=1</strong>
                 </div>
-              </details>
+              </div>
+              <div class="learn-card accent">
+                <strong>为什么先“数人头”</strong>
+                <p>Router 的概率只说明“偏好”，但真正拥不拥堵，要看 Top-K 之后每个专家实际被选了多少次。<code>f_i</code> 就是这张真实排队表。</p>
+                <div class="learn-mini">
+                  <span>专家0<br>3票</span>
+                  <span>专家1<br>1票</span>
+                  <span>专家2<br>2票</span>
+                  <strong>专家3<br>0票</strong>
+                </div>
+              </div>
             </div>
+
+            <div class="story-arrow">主线：专家 id 不能直接相加，先 one_hot 成可计数的票</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>selected</b>[[0,2],[0,1],[0,2]]</span>
+                <span><b>one_hot</b>[T,K,E]</span>
+                <span><b>sum</b>dim=(0,1)</span>
+                <span><b>counts</b>[3,1,2,0]</span>
+                <strong><b>divide</b>f_i = counts / (T*K)</strong>
+              </div>
+              <p>读法很简单：把每个专家编号变成一张投票单，再沿 token 维和 top_k 维一起求和。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. one_hot 的作用是“让 id 可以计票”</strong>
+                <p>专家 id 本身没有可加意义，<code>0 + 2</code> 不是“专家 0 和专家 2 各一票”。one_hot 后，每一位都对应一个专家，相加才变成计数。</p>
+                <div class="learn-kv">
+                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
+                  <span>[0,1]</span><strong>[1,1,0,0]</strong>
+                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 分母是总票数，不是 token 数</strong>
+                <p>top_k=2 时，每个 token 投 2 票。3 个 token 的总票数是 6，所以 <code>f=[3,1,2,0]/6</code>，不是除以 3。</p>
+                <div class="learn-note">自检口诀：所有 <code>f_i</code> 加起来必须接近 1；如果接近 top_k，分母就写错了。</div>
+              </div>
+            </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：路由崩塌是真金白银的损失</div>
-              <p>Mixtral 8x7B、DeepSeek-MoE 这类模型，专家是分散在多张 GPU 上的。如果 router 把 token 都挤给少数专家，少数 GPU 会 OOM 或排长队，多数 GPU 在空转——你为整套集群付了钱，却只用上一小部分算力。</p>
-              <p>所以 f_i 不是学术指标，它直接对应“集群利用率”。数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
+              <p>Mixtral、DeepSeek-MoE 这类模型的专家常分散在多张 GPU 上。如果 token 都挤给少数专家，少数 GPU 排长队甚至 OOM，多数 GPU 空转。<code>f_i</code> 不是学术装饰，它直接对应集群利用率。</p>
+              <p>数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
             </div>
           </div>
-              <div class="syntax-card"><h4>语法热身：one_hot 计票 + 归一化</h4><pre><code>ids = torch.tensor([[0, 2], [0, 1], [0, 2]])  # [tokens, top_k]
-hot = F.one_hot(ids, num_classes=4)           # [tokens, top_k, 4]
-counts = hot.sum(dim=(0, 1)).float()          # [4] -&gt; [3,1,2,0]
-f_i = counts / (ids.shape[0] * ids.shape[1])  # 除以总票数 3*2=6</code></pre></div>
+              <div class="practice-grid">
+          <div class="syntax-card"><h4>语法热身：one_hot 计票 + 归一化</h4><pre><code>ids = torch.tensor([
+    [0, 2],
+    [0, 1],
+    [0, 2],
+])
+hot = F.one_hot(ids, num_classes=4)
+counts = hot.sum(dim=(0, 1)).float()
+total_votes = ids.shape[0] * ids.shape[1]
+f_i = counts / total_votes</code></pre></div>
+          <div class="syntax-card">
+            <h4>举一反三：搬回 notebook</h4>
+            <div class="learn-kv">
+              <span>ids</span><strong>selected_experts</strong>
+              <span>num_classes=4</span><strong>num_experts</strong>
+              <span>dim=(0,1)</span><strong>沿 token 和 top_k 一起计票</strong>
+              <span>total_votes</span><strong>total_tokens * top_k</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：先 one_hot 让专家编号变成票，再对前两维求和，最后除以总票数。</p>
+          </div>
+        </div>
             </div>
 
             <div class="lesson-section checkpoint">
@@ -918,70 +941,77 @@ f_i = counts / (ids.shape[0] * ids.shape[1])  # 除以总票数 3*2=6</code></pr
               <p>P_i 像“问卷调查的偏好分”，f_i 像“真实排队人数”。损失把两者逐专家相乘再求和：只要某个专家既被偏好(P高)又被挤爆(f高)，乘积就大、惩罚就重。优化器为了降低它，会主动把 token 往冷门专家赶。神奇之处：当大家都均匀(都=1/E)时，这个乘积和取到理论最小值。</p>
               
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 两个量、两种性格：一个能教模型，一个只会告状</strong>
-              <table class="freq-table">
-                <tr><th style="width:70px">量</th><th>怎么来</th><th>性格</th></tr>
-                <tr><td><strong>P_i</strong></td><td style="text-align:left">router 权重按专家累加再平均（scatter_add_）</td><td style="text-align:left">连续、<strong>可导</strong>——梯度能顺着它流回 router</td></tr>
-                <tr><td><strong>f_i</strong></td><td style="text-align:left">Top-K 选中次数的比例（one_hot 计数）</td><td style="text-align:left">离散、<strong>不可导</strong>——只能当“权重”，不能当被优化对象</td></tr>
-              </table>
-              <p>这就是为什么公式要把它俩<strong>相乘</strong>：用不可导的 f_i 标出“哪里堵”，用可导的 P_i 把惩罚的梯度送回 router 去改。</p>
-            </div>
-            <div class="story-arrow">第一步：用 scatter_add_ 把权重“倒进”各自专家的桶里（TODO 1）</div>
-            <div class="story-panel">
-              <strong>1. scatter_add_：按专家 id 归集 router 权重 → P_i</strong>
-              <p>开一个长度 E 的全零桶。遍历每个 token 的每个选择，把它的 routing_weight 加到“它选的那个专家”对应的桶里。最后除以总票数得到平均。</p>
-              <svg viewBox="0 0 460 140" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12" text-anchor="middle">
-                  <text x="100" y="20" fill="#657184">(专家id, 权重)</text>
-                  <text x="60" y="48">(0, .6)</text>
-                  <text x="60" y="72">(2, .4)</text>
-                  <text x="60" y="96">(0, .5)</text>
-                  <line x1="120" y1="70" x2="190" y2="70" stroke="#657184" stroke-width="2" marker-end="url(#arrow07)"></line>
-                  <defs><marker id="arrow07" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
-                  <text x="155" y="60" fill="#12805c">scatter_add_</text>
-                  <g font-family="ui-monospace, monospace">
-                    <rect x="210" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="240" y="58">桶0: 1.1</text>
-                    <rect x="210" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="240" y="88">桶1: 0</text>
-                    <rect x="280" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="310" y="58">桶2: 0.4</text>
-                    <rect x="280" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="310" y="88">桶3: 0</text>
-                  </g>
-                  <text x="380" y="74" fill="#657184">÷ 总票数<br/>= P_i</text>
-                </g>
-              </svg>
-              <p>代码就三行：<code>P=torch.zeros(E)</code> → <code>P.scatter_add_(0, ids.flatten(), w.flatten())</code> → <code>P/=(total_tokens*top_k)</code>。</p>
-            </div>
-            <div class="story-arrow">第二步：组合成损失（TODO 3）</div>
-            <div class="story-panel">
-              <strong>2. L_aux = α · E · Σ(f_i · P_i)：为什么均匀时最小</strong>
-              <p>f 和 P 的各自总和都固定（都=1）。由均值不等式，两个“总和固定”的正向量逐项相乘再相加，当它们都被摊成平的(每项都=1/E)时，乘积和最小；越尖锐(集中在少数专家)，乘积和越大。</p>
-              <div class="formula"><span>集中: f=[.9,.05,.05,0]<br>Σf·P 大 → 重罚</span><strong>均匀: f=P=[¼,¼,¼,¼]<br>Σf·P 最小 → 不罚</strong></div>
-              <details class="think">
-                <summary>想一想：f_i 不可导，那这个 loss 到底是怎么把梯度传回 router 的？</summary>
-                <div class="think-body">
-                  <p>关键在于乘积里 <strong>f_i 被当成常数（detach 掉的系数）</strong>，真正带梯度的是 P_i。反向传播时，loss 对 P_i 求导，梯度顺着 router 权重流回去。</p>
-                  <p>效果上：某个专家 f_i 大（堵），它对应的 P_i 就被施加一个“往下压”的梯度，router 于是学会少给它发 token。f_i 只负责“指认谁堵”，P_i 负责“承接惩罚”。这正是上一关 predict 里那个“不可导怎么办”的答案落地。</p>
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先分清 P_i 和 f_i</strong>
+                <div class="learn-kv">
+                  <span>P_i</span><strong>router 权重按专家累加，可导，负责把梯度传回 router</strong>
+                  <span>f_i</span><strong>Top-K 真实计数，不可导，负责指出哪个专家拥堵</strong>
                 </div>
-              </details>
-              <details class="think">
-                <summary>想一想：完全均匀时 loss 等于多少？（提示：代入 f_i=1/E, P_i=1/(E·K)）</summary>
-                <div class="think-body">
-                  <p>均匀时每个专家 f_i = 1/E；而 P_i 是权重平均，均匀分到 E 个专家、每 token 投 K 票，P_i = 1/(E·K)。</p>
-                  <p>Σ(f_i·P_i) = E · (1/E)·(1/(E·K)) = 1/(E·K)。乘上 α·E 得 <strong>α/K</strong>。所以 notebook 测试里 α=0.01、K=2 时，均匀分配的理论最小 loss = 0.005。这就是测试断言的那个数。</p>
-                </div>
-              </details>
+              </div>
+              <div class="learn-card accent">
+                <strong>为什么要相乘</strong>
+                <p><code>f_i</code> 像“哪里堵”的标签，<code>P_i</code> 像“能被优化器调整的偏好”。乘起来后，拥堵专家对应的概率会被更重地压下去。</p>
+              </div>
             </div>
+
+            <div class="story-arrow">TODO 1：用 scatter_add_ 把每张票的权重倒进对应专家桶</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>zero bucket</b>P_i = zeros(E)</span>
+                <span><b>index</b>selected_experts.flatten()</span>
+                <span><b>source</b>routing_weights.flatten()</span>
+                <span><b>scatter_add</b>按专家 id 累加</span>
+                <strong><b>average</b>P_i / (T*K)</strong>
+              </div>
+              <p>读法：每个 Top-K 槽位都有一个“专家 id”和一个“概率权重”，把权重加到它对应专家的桶里。</p>
+            </div>
+
+            <div class="story-arrow">TODO 3：把偏好和真实拥堵组合成辅助损失</div>
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 公式只做一件事：惩罚“又热门又拥堵”</strong>
+                <div class="learn-kv">
+                  <span>核心</span><strong>aux_loss = alpha * E * sum(f_i * P_i)</strong>
+                  <span>集中</span><strong>某专家 f_i 高且 P_i 高，乘积大，被重罚</strong>
+                  <span>均匀</span><strong>各专家接近平均，乘积和最小</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. f_i 不可导也没关系</strong>
+                <p>反向传播真正走的是 <code>P_i</code>。<code>f_i</code> 只作为常数权重，告诉优化器“这个专家已经太忙了，压低它的概率”。</p>
+                <div class="learn-note">测试线索：均匀时理论最小值约为 <code>alpha / top_k</code>。</div>
+              </div>
+            </div>
+
             <div class="field-note">
-              <div class="fn-title">行业视角：一个系数 α 的拿捏</div>
-              <p>α 太大，模型会为了“摊平负载”牺牲主任务效果（强行把不适合的 token 发给冷门专家）；α 太小，又压不住路由崩塌。Switch Transformer、Mixtral 这类工作里，α≈0.01 是反复试出来的折中。</p>
-              <p>这关你写的 aux_loss，在真实训练里是直接加到主 CrossEntropy 上的：<code>total = ce_loss + aux_loss</code>。理解它，你才能解释“为什么我的 MoE 训着训着专家就废了”。</p>
+              <div class="fn-title">行业视角：一个系数 alpha 的拿捏</div>
+              <p>alpha 太大，模型会为了摊平负载牺牲主任务效果；alpha 太小，又压不住路由崩塌。真实训练会把这个 aux loss 加到主 CrossEntropy 上，目标是在效果和吞吐之间找平衡。</p>
             </div>
           </div>
-              <div class="syntax-card"><h4>语法热身：scatter_add 求 P_i，再组合损失</h4><pre><code>P_i = torch.zeros(num_experts, device=routing_weights.device)
-P_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())
-P_i = P_i / (total_tokens * top_k)        # 平均路由概率
-# f_i 来自上一关的 one_hot 计数
+              <div class="practice-grid">
+          <div class="syntax-card"><h4>语法热身：scatter_add 求 P_i，再组合损失</h4><pre><code>P_i = torch.zeros(
+    num_experts,
+    device=routing_weights.device,
+)
+P_i.scatter_add_(
+    0,
+    selected_experts.flatten(),
+    routing_weights.flatten(),
+)
+P_i = P_i / (total_tokens * top_k)
 aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
+          <div class="syntax-card">
+            <h4>举一反三：读 scatter_add 的三个位置</h4>
+            <div class="learn-kv">
+              <span>目标桶</span><strong>P_i, 长度是 num_experts</strong>
+              <span>index</span><strong>selected_experts.flatten()</strong>
+              <span>src</span><strong>routing_weights.flatten()</strong>
+              <span>除法分母</span><strong>total_tokens * top_k</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：上一关数“票数”得 f_i，这一关累加“票的权重”得 P_i；最后逐专家相乘再求和。</p>
+          </div>
+        </div>
             </div>
 
             <div class="lesson-section checkpoint">

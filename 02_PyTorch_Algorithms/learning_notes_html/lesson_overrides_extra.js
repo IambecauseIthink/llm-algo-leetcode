@@ -470,63 +470,86 @@ module.exports = {
       intuition: "把 E 个专家想成食堂的 E 个打饭窗口。router 是带位员，selected_experts 记录了每个 token 被带到了哪个窗口。f_i 就是“第 i 号窗口排了几个人 ÷ 总人次”。如果某个窗口排爆了、别的窗口空着，就说明负载不均——这一关只做一件事：把这张“人头统计表”用 one_hot 数出来。",
       exampleHtml: `
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先看清输入长什么样</strong>
-              <p>notebook 给你的 <code>selected_experts</code> 形状是 <code>[总token数, top_k]</code>：每行是一个 token，行里的 K 个数字是它选中的 K 个专家 id。我们要把它压成一张长度为 E 的“人头表” f。</p>
-              <table class="freq-table">
-                <tr><th>token</th><th>选中的专家 (top_k=2)</th></tr>
-                <tr><td>t0</td><td>[0, 2]</td></tr>
-                <tr><td>t1</td><td>[0, 1]</td></tr>
-                <tr><td>t2</td><td>[0, 2]</td></tr>
-              </table>
-              <p style="color:#657184">直觉上专家 0 被点了 3 次、专家 2 两次、专家 1 一次，专家 3+ 颗粒无收——这就是不均衡。</p>
-            </div>
-            <div class="story-arrow">怎么用张量数人头？→ one_hot 再求和</div>
-            <div class="story-panel">
-              <strong>1. one_hot：把“专家 id”变成“可以相加的计数”</strong>
-              <p>id 本身没法直接加（把 0 和 2 加起来没意义）。<code>F.one_hot</code> 把每个 id 摊成一行 0/1 指示向量，命中位为 1。这样“相加”就等于“计票”。</p>
-              <svg viewBox="0 0 460 150" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12" text-anchor="middle">
-                  <text x="60" y="20" fill="#657184">id → one-hot (E=4)</text>
-                  <text x="300" y="20" fill="#657184">沿 token/top_k 求和 = 每个专家票数</text>
-                  <text x="20" y="52">[0,2]</text>
-                  <text x="20" y="82">[0,1]</text>
-                  <text x="20" y="112">[0,2]</text>
-                  <g font-family="ui-monospace, monospace">
-                    <text x="95" y="52">1 0 1 0</text>
-                    <text x="95" y="82">1 1 0 0</text>
-                    <text x="95" y="112">1 0 1 0</text>
-                  </g>
-                  <line x1="150" y1="82" x2="210" y2="82" stroke="#657184" stroke-width="2"></line>
-                  <text x="180" y="72" fill="#12805c">Σ</text>
-                  <g font-family="ui-monospace, monospace" font-weight="700">
-                    <rect x="240" y="68" width="150" height="28" fill="#e7f6ee" stroke="#99d6bf"></rect>
-                    <text x="315" y="87" fill="#12805c">[3, 1, 2, 0]</text>
-                  </g>
-                  <text x="315" y="118" fill="#657184">专家0:3  专家1:1  专家2:2  专家3:0</text>
-                </g>
-              </svg>
-              <p>再除以总选择次数 <code>total_tokens * top_k</code>（这里 3×2=6），就得到比例 <code>f = [3,1,2,0]/6</code>。所有 f_i 加起来正好是 1。</p>
-              <details class="think">
-                <summary>想一想：为什么要除以 total_tokens × top_k，而不是只除以 token 数？</summary>
-                <div class="think-body">
-                  <p>因为每个 token 选了 K 个专家，总共投出的“票”是 token 数 × K，不是 token 数。分母要和“总票数”一致，f 才是真正的比例、加起来才等于 1。</p>
-                  <p>这是 Top-K MoE 最容易写错的地方：Top-1 时 K=1 看不出问题，一旦 K=2 还按 token 数除，f 的和就会变成 2，后面的 loss 全错。</p>
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先读输入输出合同</strong>
+                <p><code>selected_experts</code> 是 [tokens, top_k]。每一行是一枚 token，里面 K 个数字是它选中的专家编号。TODO 2 的目标，是把它统计成长度为 E 的 <code>f_i</code>。</p>
+                <div class="learn-kv">
+                  <span>输入</span><strong>selected_experts [T,K]</strong>
+                  <span>中间</span><strong>one_hot [T,K,E]</strong>
+                  <span>输出</span><strong>f_i [E], sum(f_i)=1</strong>
                 </div>
-              </details>
+              </div>
+              <div class="learn-card accent">
+                <strong>为什么先“数人头”</strong>
+                <p>Router 的概率只说明“偏好”，但真正拥不拥堵，要看 Top-K 之后每个专家实际被选了多少次。<code>f_i</code> 就是这张真实排队表。</p>
+                <div class="learn-mini">
+                  <span>专家0<br>3票</span>
+                  <span>专家1<br>1票</span>
+                  <span>专家2<br>2票</span>
+                  <strong>专家3<br>0票</strong>
+                </div>
+              </div>
             </div>
+
+            <div class="story-arrow">主线：专家 id 不能直接相加，先 one_hot 成可计数的票</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>selected</b>[[0,2],[0,1],[0,2]]</span>
+                <span><b>one_hot</b>[T,K,E]</span>
+                <span><b>sum</b>dim=(0,1)</span>
+                <span><b>counts</b>[3,1,2,0]</span>
+                <strong><b>divide</b>f_i = counts / (T*K)</strong>
+              </div>
+              <p>读法很简单：把每个专家编号变成一张投票单，再沿 token 维和 top_k 维一起求和。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. one_hot 的作用是“让 id 可以计票”</strong>
+                <p>专家 id 本身没有可加意义，<code>0 + 2</code> 不是“专家 0 和专家 2 各一票”。one_hot 后，每一位都对应一个专家，相加才变成计数。</p>
+                <div class="learn-kv">
+                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
+                  <span>[0,1]</span><strong>[1,1,0,0]</strong>
+                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 分母是总票数，不是 token 数</strong>
+                <p>top_k=2 时，每个 token 投 2 票。3 个 token 的总票数是 6，所以 <code>f=[3,1,2,0]/6</code>，不是除以 3。</p>
+                <div class="learn-note">自检口诀：所有 <code>f_i</code> 加起来必须接近 1；如果接近 top_k，分母就写错了。</div>
+              </div>
+            </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：路由崩塌是真金白银的损失</div>
-              <p>Mixtral 8x7B、DeepSeek-MoE 这类模型，专家是分散在多张 GPU 上的。如果 router 把 token 都挤给少数专家，少数 GPU 会 OOM 或排长队，多数 GPU 在空转——你为整套集群付了钱，却只用上一小部分算力。</p>
-              <p>所以 f_i 不是学术指标，它直接对应“集群利用率”。数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
+              <p>Mixtral、DeepSeek-MoE 这类模型的专家常分散在多张 GPU 上。如果 token 都挤给少数专家，少数 GPU 排长队甚至 OOM，多数 GPU 空转。<code>f_i</code> 不是学术装饰，它直接对应集群利用率。</p>
+              <p>数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
             </div>
           </div>`,
-      syntaxHtml: code("one_hot 计票 + 归一化", [
-        "ids = torch.tensor([[0, 2], [0, 1], [0, 2]])  # [tokens, top_k]",
-        "hot = F.one_hot(ids, num_classes=4)           # [tokens, top_k, 4]",
-        "counts = hot.sum(dim=(0, 1)).float()          # [4] -> [3,1,2,0]",
-        "f_i = counts / (ids.shape[0] * ids.shape[1])  # 除以总票数 3*2=6"
-      ]),
+      syntaxHtml: `<div class="practice-grid">
+          ${code("one_hot 计票 + 归一化", [
+        "ids = torch.tensor([",
+        "    [0, 2],",
+        "    [0, 1],",
+        "    [0, 2],",
+        "])",
+        "hot = F.one_hot(ids, num_classes=4)",
+        "counts = hot.sum(dim=(0, 1)).float()",
+        "total_votes = ids.shape[0] * ids.shape[1]",
+        "f_i = counts / total_votes"
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：搬回 notebook</h4>
+            <div class="learn-kv">
+              <span>ids</span><strong>selected_experts</strong>
+              <span>num_classes=4</span><strong>num_experts</strong>
+              <span>dim=(0,1)</span><strong>沿 token 和 top_k 一起计票</strong>
+              <span>total_votes</span><strong>total_tokens * top_k</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：先 one_hot 让专家编号变成票，再对前两维求和，最后除以总票数。</p>
+          </div>
+        </div>`,
       predict: {
         hook: "router 自己其实“知道”谁该被多选——它输出了每个专家的打分。可负载均衡损失偏偏还要我们再手动统计一遍 f_i（实际被选中的比例）。",
         question: "先判断：为什么不能只用 router 的打分，而要额外统计 f_i？",
@@ -563,72 +586,79 @@ module.exports = {
       intuition: "P_i 像“问卷调查的偏好分”，f_i 像“真实排队人数”。损失把两者逐专家相乘再求和：只要某个专家既被偏好(P高)又被挤爆(f高)，乘积就大、惩罚就重。优化器为了降低它，会主动把 token 往冷门专家赶。神奇之处：当大家都均匀(都=1/E)时，这个乘积和取到理论最小值。",
       exampleHtml: `
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 两个量、两种性格：一个能教模型，一个只会告状</strong>
-              <table class="freq-table">
-                <tr><th style="width:70px">量</th><th>怎么来</th><th>性格</th></tr>
-                <tr><td><strong>P_i</strong></td><td style="text-align:left">router 权重按专家累加再平均（scatter_add_）</td><td style="text-align:left">连续、<strong>可导</strong>——梯度能顺着它流回 router</td></tr>
-                <tr><td><strong>f_i</strong></td><td style="text-align:left">Top-K 选中次数的比例（one_hot 计数）</td><td style="text-align:left">离散、<strong>不可导</strong>——只能当“权重”，不能当被优化对象</td></tr>
-              </table>
-              <p>这就是为什么公式要把它俩<strong>相乘</strong>：用不可导的 f_i 标出“哪里堵”，用可导的 P_i 把惩罚的梯度送回 router 去改。</p>
-            </div>
-            <div class="story-arrow">第一步：用 scatter_add_ 把权重“倒进”各自专家的桶里（TODO 1）</div>
-            <div class="story-panel">
-              <strong>1. scatter_add_：按专家 id 归集 router 权重 → P_i</strong>
-              <p>开一个长度 E 的全零桶。遍历每个 token 的每个选择，把它的 routing_weight 加到“它选的那个专家”对应的桶里。最后除以总票数得到平均。</p>
-              <svg viewBox="0 0 460 140" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12" text-anchor="middle">
-                  <text x="100" y="20" fill="#657184">(专家id, 权重)</text>
-                  <text x="60" y="48">(0, .6)</text>
-                  <text x="60" y="72">(2, .4)</text>
-                  <text x="60" y="96">(0, .5)</text>
-                  <line x1="120" y1="70" x2="190" y2="70" stroke="#657184" stroke-width="2" marker-end="url(#arrow07)"></line>
-                  <defs><marker id="arrow07" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#657184"></path></marker></defs>
-                  <text x="155" y="60" fill="#12805c">scatter_add_</text>
-                  <g font-family="ui-monospace, monospace">
-                    <rect x="210" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="240" y="58">桶0: 1.1</text>
-                    <rect x="210" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="240" y="88">桶1: 0</text>
-                    <rect x="280" y="40" width="60" height="26" fill="#fff6e8" stroke="#e8b66f"></rect><text x="310" y="58">桶2: 0.4</text>
-                    <rect x="280" y="70" width="60" height="26" fill="#eef2f7" stroke="#cbd5e1"></rect><text x="310" y="88">桶3: 0</text>
-                  </g>
-                  <text x="380" y="74" fill="#657184">÷ 总票数<br/>= P_i</text>
-                </g>
-              </svg>
-              <p>代码就三行：<code>P=torch.zeros(E)</code> → <code>P.scatter_add_(0, ids.flatten(), w.flatten())</code> → <code>P/=(total_tokens*top_k)</code>。</p>
-            </div>
-            <div class="story-arrow">第二步：组合成损失（TODO 3）</div>
-            <div class="story-panel">
-              <strong>2. L_aux = α · E · Σ(f_i · P_i)：为什么均匀时最小</strong>
-              <p>f 和 P 的各自总和都固定（都=1）。由均值不等式，两个“总和固定”的正向量逐项相乘再相加，当它们都被摊成平的(每项都=1/E)时，乘积和最小；越尖锐(集中在少数专家)，乘积和越大。</p>
-              <div class="formula"><span>集中: f=[.9,.05,.05,0]<br>Σf·P 大 → 重罚</span><strong>均匀: f=P=[¼,¼,¼,¼]<br>Σf·P 最小 → 不罚</strong></div>
-              <details class="think">
-                <summary>想一想：f_i 不可导，那这个 loss 到底是怎么把梯度传回 router 的？</summary>
-                <div class="think-body">
-                  <p>关键在于乘积里 <strong>f_i 被当成常数（detach 掉的系数）</strong>，真正带梯度的是 P_i。反向传播时，loss 对 P_i 求导，梯度顺着 router 权重流回去。</p>
-                  <p>效果上：某个专家 f_i 大（堵），它对应的 P_i 就被施加一个“往下压”的梯度，router 于是学会少给它发 token。f_i 只负责“指认谁堵”，P_i 负责“承接惩罚”。这正是上一关 predict 里那个“不可导怎么办”的答案落地。</p>
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先分清 P_i 和 f_i</strong>
+                <div class="learn-kv">
+                  <span>P_i</span><strong>router 权重按专家累加，可导，负责把梯度传回 router</strong>
+                  <span>f_i</span><strong>Top-K 真实计数，不可导，负责指出哪个专家拥堵</strong>
                 </div>
-              </details>
-              <details class="think">
-                <summary>想一想：完全均匀时 loss 等于多少？（提示：代入 f_i=1/E, P_i=1/(E·K)）</summary>
-                <div class="think-body">
-                  <p>均匀时每个专家 f_i = 1/E；而 P_i 是权重平均，均匀分到 E 个专家、每 token 投 K 票，P_i = 1/(E·K)。</p>
-                  <p>Σ(f_i·P_i) = E · (1/E)·(1/(E·K)) = 1/(E·K)。乘上 α·E 得 <strong>α/K</strong>。所以 notebook 测试里 α=0.01、K=2 时，均匀分配的理论最小 loss = 0.005。这就是测试断言的那个数。</p>
-                </div>
-              </details>
+              </div>
+              <div class="learn-card accent">
+                <strong>为什么要相乘</strong>
+                <p><code>f_i</code> 像“哪里堵”的标签，<code>P_i</code> 像“能被优化器调整的偏好”。乘起来后，拥堵专家对应的概率会被更重地压下去。</p>
+              </div>
             </div>
+
+            <div class="story-arrow">TODO 1：用 scatter_add_ 把每张票的权重倒进对应专家桶</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>zero bucket</b>P_i = zeros(E)</span>
+                <span><b>index</b>selected_experts.flatten()</span>
+                <span><b>source</b>routing_weights.flatten()</span>
+                <span><b>scatter_add</b>按专家 id 累加</span>
+                <strong><b>average</b>P_i / (T*K)</strong>
+              </div>
+              <p>读法：每个 Top-K 槽位都有一个“专家 id”和一个“概率权重”，把权重加到它对应专家的桶里。</p>
+            </div>
+
+            <div class="story-arrow">TODO 3：把偏好和真实拥堵组合成辅助损失</div>
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 公式只做一件事：惩罚“又热门又拥堵”</strong>
+                <div class="learn-kv">
+                  <span>核心</span><strong>aux_loss = alpha * E * sum(f_i * P_i)</strong>
+                  <span>集中</span><strong>某专家 f_i 高且 P_i 高，乘积大，被重罚</strong>
+                  <span>均匀</span><strong>各专家接近平均，乘积和最小</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. f_i 不可导也没关系</strong>
+                <p>反向传播真正走的是 <code>P_i</code>。<code>f_i</code> 只作为常数权重，告诉优化器“这个专家已经太忙了，压低它的概率”。</p>
+                <div class="learn-note">测试线索：均匀时理论最小值约为 <code>alpha / top_k</code>。</div>
+              </div>
+            </div>
+
             <div class="field-note">
-              <div class="fn-title">行业视角：一个系数 α 的拿捏</div>
-              <p>α 太大，模型会为了“摊平负载”牺牲主任务效果（强行把不适合的 token 发给冷门专家）；α 太小，又压不住路由崩塌。Switch Transformer、Mixtral 这类工作里，α≈0.01 是反复试出来的折中。</p>
-              <p>这关你写的 aux_loss，在真实训练里是直接加到主 CrossEntropy 上的：<code>total = ce_loss + aux_loss</code>。理解它，你才能解释“为什么我的 MoE 训着训着专家就废了”。</p>
+              <div class="fn-title">行业视角：一个系数 alpha 的拿捏</div>
+              <p>alpha 太大，模型会为了摊平负载牺牲主任务效果；alpha 太小，又压不住路由崩塌。真实训练会把这个 aux loss 加到主 CrossEntropy 上，目标是在效果和吞吐之间找平衡。</p>
             </div>
           </div>`,
-      syntaxHtml: code("scatter_add 求 P_i，再组合损失", [
-        "P_i = torch.zeros(num_experts, device=routing_weights.device)",
-        "P_i.scatter_add_(0, selected_experts.flatten(), routing_weights.flatten())",
-        "P_i = P_i / (total_tokens * top_k)        # 平均路由概率",
-        "# f_i 来自上一关的 one_hot 计数",
+      syntaxHtml: `<div class="practice-grid">
+          ${code("scatter_add 求 P_i，再组合损失", [
+        "P_i = torch.zeros(",
+        "    num_experts,",
+        "    device=routing_weights.device,",
+        ")",
+        "P_i.scatter_add_(",
+        "    0,",
+        "    selected_experts.flatten(),",
+        "    routing_weights.flatten(),",
+        ")",
+        "P_i = P_i / (total_tokens * top_k)",
         "aux_loss = alpha * num_experts * (f_i * P_i).sum()"
-      ]),
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：读 scatter_add 的三个位置</h4>
+            <div class="learn-kv">
+              <span>目标桶</span><strong>P_i, 长度是 num_experts</strong>
+              <span>index</span><strong>selected_experts.flatten()</strong>
+              <span>src</span><strong>routing_weights.flatten()</strong>
+              <span>除法分母</span><strong>total_tokens * top_k</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：上一关数“票数”得 f_i，这一关累加“票的权重”得 P_i；最后逐专家相乘再求和。</p>
+          </div>
+        </div>`,
       predict: {
         hook: "损失是 α·E·Σ(f_i·P_i)——f 和 P 逐专家相乘再相加。优化器拼命想让它变小。",
         question: "先判断：优化器为了最小化这个乘积和，会把 token 的分配推向什么状态？",
@@ -667,43 +697,71 @@ module.exports = {
       intuition: "把缩放因子的“默认值”从 0 挪到 1。标准写法里参数学的是“我要把这维放大到多少”（从 0 起步很尴尬）；Gemma 写法里参数学的是“我要在默认 1 的基础上，多一点还是少一点”。训练刚开始 w≈0，整层就是一个老老实实的纯归一化，梯度平滑、不会一上来就把信号清零。",
       exampleHtml: `
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先看清坑在哪：w 初始化为 0 时，两种写法天差地别</strong>
-              <table class="freq-table">
-                <tr><th style="width:130px">写法</th><th>w=0 时的缩放</th><th>后果</th></tr>
-                <tr><td>标准 x_norm · w</td><td><strong style="color:#be3f5b">× 0</strong></td><td style="text-align:left">输出全被乘成 0，信号被掐断，早期梯度很差</td></tr>
-                <tr><td>Gemma x_norm · (1+w)</td><td><strong style="color:#12805c">× 1</strong></td><td style="text-align:left">原样通过，等价纯归一化，训练平滑启动</td></tr>
-              </table>
-            </div>
-            <div class="story-arrow">为什么“默认 1”这么关键？想象训练第 0 步</div>
-            <div class="story-panel">
-              <strong>1. 把“学绝对值”改成“学相对默认的偏移”</strong>
-              <p>参数从 0 开始更新是常态。标准写法逼着 w 从 0 慢慢爬到 ~1 才能让信号正常通过，这段时间整层都在“半掐断”状态；Gemma 让 w=0 就已经是“正常通过”，w 只需学习“相对 1 的微调量”，起点就健康。</p>
-              <div class="scale-demo"><span>x_norm</span><span>w=[0.1, -0.2]</span><strong>scale = 1+w = [1.1, 0.8]</strong></div>
-              <details class="think">
-                <summary>想一想：为什么不直接把 weight 初始化成 1，效果不就一样了吗？</summary>
-                <div class="think-body">
-                  <p>数值上确实可以——把 w 初始化成全 1、用标准 x_norm·w，起点也是“×1”。Gemma 选择“初始化成 0 + 写成 (1+w)”，好处是让“零初始化”这个通用、稳健的默认习惯继续适用，参数语义也更统一：所有可学习量都从 0 出发，代表“相对基准的偏移”。</p>
-                  <p>很多框架/优化器、权重衰减(weight decay)都默认把参数往 0 拉。如果你把基准烤进“初始化值=1”，weight decay 会一直想把它拽回 0（=掐断）；而写成 (1+w)、对 w 做 decay，拉向的是“w=0 即 ×1”的健康默认。这就是把基准写进公式、而非写进初始化的深层原因。</p>
+            <div class="learn-grid">
+              <div class="learn-card warn">
+                <strong>0. 先看坑点：标准写法会把信号清零</strong>
+                <div class="learn-kv">
+                  <span>x_norm * w</span><strong>w=0 时 scale=0，输出被掐断</strong>
+                  <span>x_norm * (1+w)</span><strong>w=0 时 scale=1，纯归一化原样通过</strong>
                 </div>
-              </details>
+              </div>
+              <div class="learn-card good">
+                <strong>Gemma 的参数语义</strong>
+                <p><code>weight</code> 不再表示“绝对缩放值”，而表示“相对默认 1 的偏移”。初始化为 0 时就是健康默认。</p>
+                <div class="learn-mini">
+                  <span>w=0</span>
+                  <span>scale=1</span>
+                  <strong>训练平滑启动</strong>
+                </div>
+              </div>
             </div>
-            <div class="story-arrow">写代码时别忘了精度</div>
+
+            <div class="story-arrow">TODO 主线：FP32 归一化已经算好，只补最后的 (1 + weight) 缩放</div>
             <div class="story-panel">
-              <strong>2. 顺序：FP32 归一化 → ×(1+w) → type_as 转回</strong>
-              <p>notebook 已经帮你算好了 FP32 下的 <code>x_norm</code>。你的 TODO 只差最后一步：乘上 <code>(1 + self.weight)</code>，再 <code>.type_as(x)</code> 转回输入精度。一行就够。</p>
-              <div class="mini-flow"><span>x.float()</span><span>归一化得 x_norm</span><strong>x_norm * (1 + weight) → type_as(x)</strong></div>
+              <div class="learn-flow">
+                <span><b>x</b>输入 dtype</span>
+                <span><b>x.float()</b>稳定算统计量</span>
+                <span><b>x_norm</b>RMS 归一化</span>
+                <span><b>scale</b>1 + self.weight</span>
+                <strong><b>output</b>type_as(x)</strong>
+              </div>
+              <p>notebook 里前面的归一化已经帮你铺好；TODO 只需要把缩放写对，并转回输入精度。</p>
             </div>
+
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>1. 为什么不直接初始化成 1</strong>
+                <p>写成 <code>1+w</code> 后，参数仍能从 0 开始学习偏移，weight decay 拉向 0 时也代表“回到默认 scale=1”，不会把层拉向清零。</p>
+              </div>
+              <div class="learn-card accent">
+                <strong>2. 测试应该怎么反查</strong>
+                <p>当 <code>self.weight=0</code>，输出应该等于纯 RMSNorm 结果；如果输出接近 0，说明你写成了 <code>x_norm * weight</code>。</p>
+              </div>
+            </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：训练稳定性是大模型的隐形成本</div>
-              <p>千亿参数模型训练一次要烧掉海量算力，一旦中途 loss 发散，重启的代价极高。Gemma 的 (1+w)、LLaMA 的 Pre-Norm、各种初始化技巧，目标都一样：让训练在最脆弱的早期稳稳启动。这些看似“一个 +1”的小改动，背后是“别让我几百万的训练任务崩在第一千步”的工程焦虑。</p>
+              <p>Gemma 的 <code>1+w</code>、LLaMA 的 Pre-Norm、各种初始化技巧，目标都一样：让训练早期别突然发散。一个小小的 +1，背后是大模型训练不要崩在前几千步的工程要求。</p>
             </div>
           </div>`,
-      syntaxHtml: code("把基准 1 写进公式，参数从 0 学偏移", [
-        "gain = nn.Parameter(torch.zeros(4))   # 默认 0",
-        "scale = 1.0 + gain                    # w=0 时 scale=1（原样通过）",
-        "y = x_norm * scale                    # 再 .type_as(x) 转回原精度"
-      ]),
+      syntaxHtml: `<div class="practice-grid">
+          ${code("把基准 1 写进公式", [
+        "gain = nn.Parameter(torch.zeros(4))",
+        "scale = 1.0 + gain",
+        "y = x_norm * scale",
+        "y = y.type_as(x)"
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：搬回 TODO 1</h4>
+            <div class="learn-kv">
+              <span>gain</span><strong>self.weight</strong>
+              <span>x_norm</span><strong>前面 FP32 算出的归一化结果</strong>
+              <span>scale</span><strong>1 + self.weight</strong>
+              <span>返回 dtype</span><strong>.type_as(x)</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：Gemma 不是乘 weight，而是乘 <code>1 + weight</code>；最后把 dtype 还给输入。</p>
+          </div>
+        </div>`,
       predict: {
         hook: "Gemma 把 RMSNorm 的缩放从 x·w 改成 x·(1+w)，而且 weight 还是初始化成 0。看着只是个 +1。",
         question: "先判断：这个 +1 最主要解决什么问题？",
@@ -740,51 +798,76 @@ module.exports = {
       intuition: "模型开头“读词”（id→向量）和结尾“猜词”（向量→打分）其实在用同一套“词 ↔ 向量”的对应关系。与其各学一张大表，不如共用一张：参数省一半，而且训练时输入端和输出端的梯度都更新到同一张表，让词向量学得更充分。实现只有一行——让 lm_head.weight 直接指向 embed_tokens.weight。",
       exampleHtml: `
           <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 为什么这两张表能合并？先看形状</strong>
-              <p>词表常有 15 万+ 个词。embed_tokens 的权重是 [vocab, hidden]，lm_head（bias=False）的权重也是 [vocab, hidden]。形状完全一致，且都在描述“每个词对应哪个向量”——天然适合共用。</p>
-              <div class="lookup"><span>embed_tokens.weight<br>[vocab, hidden]</span><strong>同一块内存</strong><span>lm_head.weight<br>[vocab, hidden]</span></div>
-            </div>
-            <div class="story-arrow">怎么“共用”？不是复制，是让两个名字指向同一个对象</div>
-            <div class="story-panel">
-              <strong>1. 一行赋值：lm_head.weight = embed_tokens.weight</strong>
-              <p>这行不复制数据，而是让 lm_head 的 weight 属性指向 embedding 那块 Parameter。从此改一个，另一个自动同步——因为它们本就是同一块内存。</p>
-              <svg viewBox="0 0 420 120" width="100%" style="max-width:560px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="13" text-anchor="middle">
-                  <rect x="20" y="30" width="120" height="34" rx="8" fill="#eaf2ff" stroke="#a9c2f6"></rect><text x="80" y="52">embed_tokens.weight</text>
-                  <rect x="20" y="74" width="120" height="34" rx="8" fill="#e7f6ee" stroke="#99d6bf"></rect><text x="80" y="96">lm_head.weight</text>
-                  <line x1="140" y1="47" x2="250" y2="64" stroke="#657184" stroke-width="2"></line>
-                  <line x1="140" y1="91" x2="250" y2="68" stroke="#657184" stroke-width="2"></line>
-                  <rect x="250" y="48" width="150" height="34" rx="8" fill="#f4f1ff" stroke="#c9bdf0"></rect><text x="325" y="70">同一个 Parameter</text>
-                </g>
-              </svg>
-              <details class="think">
-                <summary>想一想：怎么确认是“真共享”而不是“值刚好相等”？</summary>
-                <div class="think-body">
-                  <p>用 <code>is</code> 或 <code>data_ptr()</code>。<code>a is b</code> 检查两个引用是不是同一个对象；<code>a.data_ptr() == b.data_ptr()</code> 检查底层数据是不是同一块内存地址。</p>
-                  <p>注意 <code>shape 相同</code> 或 <code>值相等(==)</code> 都骗不过：复制一份权重，shape 和值都一样，但改了原表副本不会跟着变——那不是绑定。notebook 测试就是用更新 embedding 后看 lm_head 是否同步、以及 data_ptr 是否相等来验真的。</p>
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先看为什么能绑</strong>
+                <p><code>embed_tokens</code> 负责 id 到向量，<code>lm_head</code> 负责 hidden 到 vocab logits。两者的权重形状都是 [vocab, hidden]，都在描述“词和向量的对应关系”。</p>
+                <div class="learn-kv">
+                  <span>输入表</span><strong>embed_tokens.weight [vocab, hidden]</strong>
+                  <span>输出表</span><strong>lm_head.weight [vocab, hidden]</strong>
+                  <span>目标</span><strong>两者指向同一个 Parameter</strong>
                 </div>
-              </details>
+              </div>
+              <div class="learn-card accent">
+                <strong>绑定不是复制</strong>
+                <p>TODO 2 不是让两张表数值相等，而是让两个属性指向同一块内存。复制一份权重，测试仍会判错。</p>
+                <div class="learn-note">要写赋值，不要写 <code>clone()</code>、<code>copy_()</code> 或重新创建 Parameter。</div>
+              </div>
             </div>
-            <div class="story-arrow">省了多少？算一笔账</div>
+
+            <div class="story-arrow">主线：两个名字，指向同一个 Parameter</div>
             <div class="story-panel">
-              <strong>2. 参数账：词表越大，省得越狠</strong>
-              <p>词表 V、隐藏维 H，一张表就是 V×H 个参数。绑定后两张变一张，直接省下 V×H。V=150k、H=4096 时，约 6.1 亿参数——单这一项就省下好几 GB 显存。</p>
-              <div class="ratio-board"><span>不绑定<br>2 × V×H</span><span>绑定<br>1 × V×H</span><strong>省下 V×H<br>(≈6.1亿 @150k×4096)</strong></div>
+              <div class="learn-flow">
+                <span><b>before</b>两张独立表</span>
+                <span><b>assign</b>lm_head.weight = embed.weight</span>
+                <strong><b>after</b>同一块参数</strong>
+              </div>
+              <p>从此输入端和输出端的梯度都会更新同一张词表；词表越大，省下的参数越明显。</p>
             </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 怎么验真共享</strong>
+                <div class="learn-kv">
+                  <span>对象级</span><strong>lm_head.weight is embed_tokens.weight</strong>
+                  <span>内存级</span><strong>lm_head.weight.data_ptr() == embed_tokens.weight.data_ptr()</strong>
+                  <span>不可靠</span><strong>shape 相同或数值相等</strong>
+                </div>
+              </div>
+              <div class="learn-card">
+                <strong>2. 参数账</strong>
+                <p>词表 V、隐藏维 H，一张表就是 V*H 个参数。绑定后两张变一张，直接省下 V*H；大词表模型能省下好几 GB 显存。</p>
+                <div class="learn-mini">
+                  <span>不绑定<br>2*V*H</span>
+                  <strong>绑定<br>1*V*H</strong>
+                </div>
+              </div>
+            </div>
+
             <div class="field-note">
               <div class="fn-title">行业视角：绑不绑，是容量与成本的权衡</div>
-              <p>Qwen、GPT-2 绑定权重，主打省参数、让词向量获得双倍监督信号——在中小模型上很划算。但到了 LLaMA-70B 这种超大模型，参数预算充足，<strong>解绑</strong>反而能让输入表征和输出预测各自特化，换来更好的效果。</p>
-              <p>所以这不是“哪个更对”，而是“在你的规模和预算下，省参数重要还是表达力重要”。能讲清这个权衡，面试里就比只会写一行赋值的人高一档。</p>
+              <p>Qwen、GPT-2 绑定权重，省参数且让词向量获得输入/输出两端监督；超大模型有时解绑，让输入表征和输出预测各自特化。能讲清这个权衡，比只会写一行赋值更重要。</p>
             </div>
           </div>`,
-      syntaxHtml: code("让两个属性指向同一块权重", [
+      syntaxHtml: `<div class="practice-grid">
+          ${code("让两个属性指向同一块权重", [
         "emb = nn.Embedding(100, 16)",
         "head = nn.Linear(16, 100, bias=False)",
-        "head.weight = emb.weight              # 指针级共享，不是复制",
-        "assert head.weight is emb.weight      # is 检查：同一个对象",
-        "assert head.weight.data_ptr() == emb.weight.data_ptr()  # 同一块内存"
-      ]),
+        "head.weight = emb.weight",
+        "assert head.weight is emb.weight",
+        "assert head.weight.data_ptr() == emb.weight.data_ptr()"
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：搬回 TODO 2</h4>
+            <div class="learn-kv">
+              <span>emb</span><strong>self.embed_tokens</strong>
+              <span>head</span><strong>self.lm_head</strong>
+              <span>正确动作</span><strong>self.lm_head.weight = self.embed_tokens.weight</strong>
+              <span>检查</span><strong>is 或 data_ptr()</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：绑定是“同一块内存”，不是“复制一份一样的值”。</p>
+          </div>
+        </div>`,
       predict: {
         hook: "embed_tokens（读词）和 lm_head（猜词）的权重形状一模一样，都是 [vocab, hidden]。Qwen 干脆让它们共用同一块参数。",
         question: "先判断：权重绑定（weight tying）带来的最直接收益是？",
@@ -1836,17 +1919,83 @@ module.exports = {
       title: "W8 量化：用绝对最大值确定刻度尺",
       todo: "TODO 1 / TODO 2 / TODO 3",
       prerequisite: [
-        "int8 的有效范围通常看作 [-127, 127]。",
-        "这里的 scale 表示整数刻度密度：127 / absmax。",
-        "round 后还要 clamp，防止越界。"
+        "int8 的有效范围通常看作 [-127, 127]，对称量化会尽量让正负两侧共用同一把刻度尺。",
+        "这里的 scale 表示整数刻度密度：scale = 127 / absmax。absmax 越大，每个浮点单位对应的 int8 刻度越少。",
+        "量化不是简单 to(torch.int8)：要先乘 scale，把浮点数放大到整数刻度，再 round 到最近整数。",
+        "round 后还要 clamp，防止极端值越界；最后才转成 torch.int8 存储。"
       ],
-      intuition: "先找这组权重里最大的绝对值，再算出 1 个浮点单位对应多少个 int8 刻度。",
-      exampleHtml: `<div class="scale-demo"><span>absmax=3.0</span><span>scale=127/3.0</span><strong>w_int8=round(w * scale)</strong></div>`,
-      syntaxHtml: code("量化三步", [
+      intuition: "把浮点权重压成 int8，像把真实长度画到一把只有 127 格的尺子上。先找最大绝对值 absmax，决定“最远的点”应该贴到 int8 边界；再用同一把尺子把所有权重换算成整数刻度。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先读量化函数的合同</strong>
+                <p>输入是一块浮点权重，输出不是一个张量，而是两样东西：压缩后的 int8 权重，以及以后反量化要用的 scale。</p>
+                <div class="learn-kv">
+                  <span>输入</span><strong>weight float tensor</strong>
+                  <span>输出 1</span><strong>q_weight int8 tensor</strong>
+                  <span>输出 2</span><strong>scale = 127 / absmax</strong>
+                </div>
+              </div>
+              <div class="learn-card accent">
+                <strong>scale 是“刻度密度”</strong>
+                <p>量化时乘 scale，反量化时除 scale。这个 notebook 的 scale 不是每个整数代表多少浮点值，而是 1 个浮点单位对应多少 int8 格。</p>
+                <div class="learn-note">记忆：<code>q = round(w * scale)</code>，所以还原就是 <code>w ≈ q / scale</code>。</div>
+              </div>
+            </div>
+
+            <div class="story-arrow">主线：absmax 定尺子，乘 scale 上刻度，round/clamp 存 int8</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>absmax</b>weight.abs().max()</span>
+                <span><b>scale</b>127.0 / absmax</span>
+                <span><b>multiply</b>weight * scale</span>
+                <span><b>round</b>最近整数</span>
+                <strong><b>clamp + int8</b>[-128,127]</strong>
+              </div>
+              <p>这条线就是 TODO 1/2/3 的顺序。不要先转 int8，否则小数会直接被截断，量化误差会变得不可控。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 一个小数字例子</strong>
+                <div class="learn-kv">
+                  <span>absmax</span><strong>3.0</strong>
+                  <span>scale</span><strong>127 / 3.0 ≈ 42.33</strong>
+                  <span>w=1.5</span><strong>round(1.5 * 42.33) = 64</strong>
+                  <span>w=-3.0</span><strong>round(-3.0 * 42.33) = -127</strong>
+                </div>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 最常见错误</strong>
+                <p>把 <code>scale</code> 写反、忘记 <code>round</code>、忘记 <code>clamp</code>，都会让测试里的误差或 dtype 检查失败。</p>
+                <div class="learn-mini">
+                  <span>先乘</span>
+                  <span>再 round</span>
+                  <span>再 clamp</span>
+                  <strong>最后 int8</strong>
+                </div>
+              </div>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="practice-grid">
+          ${code("量化三步", [
         "absmax = weight.abs().max()",
         "scale = 127.0 / absmax",
-        "q = torch.round(weight * scale).clamp(-128, 127).to(torch.int8)"
-      ]),
+        "q = torch.round(weight * scale)",
+        "q = q.clamp(-128, 127)",
+        "q = q.to(torch.int8)"
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：对应 notebook TODO</h4>
+            <div class="learn-kv">
+              <span>TODO 1</span><strong>absmax = weight.abs().max()</strong>
+              <span>TODO 2</span><strong>scale = 127.0 / absmax</strong>
+              <span>TODO 3</span><strong>round → clamp → int8</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：量化乘 scale，反量化除 scale；scale 方向别写反。</p>
+          </div>
+        </div>`,
       checkpoint: checkpoint(
         "这个 notebook 中为什么 scale 常用 127 / absmax？",
         ["把最大绝对值映射到 int8 边界", "把所有数变成正数", "让矩阵转置"],
@@ -1864,17 +2013,73 @@ module.exports = {
       title: "W8A16 前向：权重反量化，激活保持半精度",
       todo: "TODO 4",
       prerequisite: [
-        "W8A16 表示 weight 用 int8 存，activation 用 fp16/bf16 算。",
-        "矩阵乘法前通常要把 int8 权重反量化回浮点。",
-        "本 notebook 的反量化公式是 q_weight / scale。"
+        "W8A16 表示 weight 用 int8 存储，activation 仍用 fp16/bf16 等 16-bit 浮点参与计算。",
+        "普通 PyTorch 的 F.linear 不能直接拿 int8 权重和 fp16 激活做这个玩具前向，所以先把 q_weight 反量化回浮点。",
+        "本 notebook 的量化公式是 q = round(w * scale)，因此反量化公式是 w ≈ q / scale。",
+        "反量化后的权重要转成 x.dtype，保证和激活 dtype 对齐。"
       ],
-      intuition: "量化时把浮点数乘上刻度密度变成整数；反量化时再除以同一把刻度尺还原。",
-      exampleHtml: `<div class="matrix-flow"><span>int8 weight</span><span>除以 scale</span><span>fp weight</span><strong>F.linear(x, fp_weight)</strong></div>`,
-      syntaxHtml: code("反量化后做线性层", [
+      intuition: "W8A16 的核心是“存的时候省，算的时候稳”：权重平时压成 int8 省显存；真正做线性层前，再用 scale 还原成和激活同 dtype 的浮点权重。你写的 TODO 4 就是这条恢复路径。",
+      exampleHtml: `
+          <div class="shape-story">
+            <div class="learn-grid">
+              <div class="learn-card">
+                <strong>0. 先看 W8A16 的两种 dtype</strong>
+                <div class="learn-kv">
+                  <span>W8</span><strong>q_weight 存成 torch.int8</strong>
+                  <span>A16</span><strong>x 保持 fp16/bf16 等浮点激活</strong>
+                  <span>计算前</span><strong>q_weight.float() / scale</strong>
+                </div>
+              </div>
+              <div class="learn-card accent">
+                <strong>TODO 4 不是重新量化</strong>
+                <p>前面已经把权重量化好了。这里要做的是反量化，再调用 <code>F.linear</code>，最后输出形状和普通 Linear 一样。</p>
+              </div>
+            </div>
+
+            <div class="story-arrow">主线：int8 权重除以 scale，还原成和激活同 dtype 的浮点权重</div>
+            <div class="story-panel">
+              <div class="learn-flow">
+                <span><b>q_weight</b>int8</span>
+                <span><b>float()</b>避免整数除法/溢出</span>
+                <span><b>/ scale</b>反量化</span>
+                <span><b>to(x.dtype)</b>对齐激活</span>
+                <strong><b>F.linear</b>x, dequant_weight, bias</strong>
+              </div>
+              <p>量化时是乘 scale，反量化时必须除以同一个 scale。这里最容易写错方向。</p>
+            </div>
+
+            <div class="learn-grid">
+              <div class="learn-card good">
+                <strong>1. 为什么要 <code>.float()</code></strong>
+                <p><code>q_weight</code> 是 int8 存储格式，先转浮点再除以 scale，才能得到近似原权重的浮点值。</p>
+              </div>
+              <div class="learn-card warn">
+                <strong>2. 为什么要 <code>.to(x.dtype)</code></strong>
+                <p>激活是 A16，权重反量化后对齐到 <code>x.dtype</code>，避免线性层里 dtype 不匹配，也更贴近 W8A16 的含义。</p>
+              </div>
+            </div>
+          </div>`,
+      syntaxHtml: `<div class="practice-grid">
+          ${code("反量化后做线性层", [
         "dequant_weight = q_weight.float() / scale",
         "dequant_weight = dequant_weight.to(x.dtype)",
-        "out = F.linear(x, dequant_weight, bias)"
-      ]),
+        "out = F.linear(",
+        "    x,",
+        "    dequant_weight,",
+        "    bias,",
+        ")"
+      ])}
+          <div class="syntax-card">
+            <h4>举一反三：TODO 4 检查表</h4>
+            <div class="learn-kv">
+              <span>量化方向</span><strong>q = round(w * scale)</strong>
+              <span>反量化方向</span><strong>w = q.float() / scale</strong>
+              <span>dtype 对齐</span><strong>dequant_weight.to(x.dtype)</strong>
+              <span>前向</span><strong>F.linear(x, dequant_weight, bias)</strong>
+            </div>
+            <p class="syntax-tip">迁移口诀：W8 是存储格式，A16 是计算激活；做 Linear 前先把权重恢复成浮点。</p>
+          </div>
+        </div>`,
       checkpoint: checkpoint(
         "W8A16 中 A16 指的是什么？",
         ["激活用 16-bit 浮点", "权重有 16 行", "batch size 必须是 16"],
