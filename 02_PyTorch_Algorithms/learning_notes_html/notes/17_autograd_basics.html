@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 17 | 零基础导学关卡</p>
         <h1>Autograd Basics</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">17_Autograd_Basics.ipynb</span>
           <span class="pill">Autograd</span><span class="pill">Attention Backward</span><span class="pill">Chain Rule</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">dS = P ⊙ (dP-sum(dP⊙P))</div>
       </div>
@@ -746,119 +997,383 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="attn-backward-pv">
+
+        <article class="lesson-card inquiry" data-lesson="attention-backward-output-branch">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 1 + TODO 2：由 out = P @ V 求 dV 与 dP</span>
           </div>
-          <h2>Attention 反传第一步：O = P @ V</h2>
+          <h2>从 dout 分叉：先求 dV，再求 dP</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>前向输出 O 由注意力概率 P 乘 value V 得到。</li><li>矩阵乘法反传时，左边和右边都会收到梯度。</li><li>dV 和 dP 的 shape 要分别对齐 V 和 P。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>先从最后的混合结果倒推：输出对 V 的依赖像加权求和，输出对 P 的依赖像每个 value 被选了多少。</p>
-            <div class="matrix-flow"><span>dO</span><span>dV = P^T @ dO</span><span>dP = dO @ V^T</span></div>
-            <div class="syntax-card"><h4>语法热身：矩阵乘法的转置位置</h4><pre><code>dV = P.transpose(-2, -1) @ dO
-dP = dO @ V.transpose(-2, -1)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>O = P @ V 的反传中，dV 应该使用哪个公式？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-backward-pv" value="0">
-                <span>V @ dO</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">dout 是 [B,N,d]，v.transpose(-2,-1) 是 [B,d,N]。</p>
+            <p class="predict-q">两者做批量矩阵乘法后，dp 的 shape 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-output-branch" value="0">
+                <span>[B,N,N]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-backward-pv" value="1">
-                <span>dO @ P</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-output-branch" value="1">
+                <span>[B,d,d]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-backward-pv" value="2">
-                <span>P.transpose(-2,-1) @ dO</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-output-branch" value="2">
+                <span>[N,B,N]</span>
               </label></div>
-            <div class="feedback" data-feedback="attn-backward-pv"></div>
+            <div class="predict-feedback" data-predict-feedback="attention-backward-output-branch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="attention-backward-output-branch">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>前向保存了 q、k、v、p；backward 收到的 dout 是损失对 out 的上游梯度。</li><li>Notebook 使用批量矩阵乘法，q、k、v、dout 都是 [B,N,d]，p 是 [B,N,N]。</li><li>transpose(-2, -1) 只交换最后两个维度，保留最前面的 batch 维。</li><li>矩阵乘法反向会沿两条支路传播：out 对 V 的支路产生 dV，out 对 P 的支路产生 dP。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>先别急着穿过 Softmax。把最后一步 out=P@V 单独看成一台混合器：P 决定每行取多少 V，dout 告诉我们输出要怎样改变。沿 V 插口倒推得到 dV，沿 P 插口倒推得到 dP。</p>
+              <div class="adv-course">
+        <div class="adv-flow">
+          <span>P [B,N,N]</span><span>V [B,N,d]</span><strong>out [B,N,d]</strong><span>dout [B,N,d]</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>回到 V 支路</h4>
+            <div class="adv-flow">
+              <span>P 转置 [B,N,N]</span><span>dout [B,N,d]</span><strong>dV [B,N,d]</strong>
+            </div>
+            <p>P 的最后两维交换，是因为每个 value 收集所有输出位置传回来的贡献。</p>
+          </section>
+          <section class="adv-panel blue">
+            <h4>回到 P 支路</h4>
+            <div class="adv-flow">
+              <span>dout [B,N,d]</span><span>V 转置 [B,d,N]</span><strong>dP [B,N,N]</strong>
+            </div>
+            <p>每个注意力概率都需要知道：改变它会怎样改变 d 个输出特征。</p>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>目标</th><th>左因子</th><th>右因子</th><th>结果</th></tr></thead>
+          <tbody>
+            <tr><td><code>dV</code></td><td><code>P^T [B,N,N]</code></td><td><code>dout [B,N,d]</code></td><td><code>[B,N,d]</code></td></tr>
+            <tr><td><code>dP</code></td><td><code>dout [B,N,d]</code></td><td><code>V^T [B,d,N]</code></td><td><code>[B,N,N]</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">这里的转置不是把整个三维张量倒序。使用 transpose(-2, -1) 才能固定 B，只交换参与矩阵乘法的两个轴。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用批量加权汇总练两条反向支路</h4><pre><code>weights = torch.randn(3, 4, 6)   # [batch, query, item]
+items = torch.randn(3, 6, 5)     # [batch, item, feature]
+upstream = torch.randn(3, 4, 5)  # 与输出同 shape
+
+grad_items = torch.matmul(weights.transpose(-2, -1), upstream)
+grad_weights = torch.matmul(upstream, items.transpose(-2, -1))
+print(grad_items.shape)    # [3, 6, 5]
+print(grad_weights.shape)  # [3, 4, 6]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>weights</code> -&gt; <code>p</code>，都是归一化后的混合权重。</li>
+            <li><code>items</code> -&gt; <code>v</code>，都是被加权汇总的特征。</li>
+            <li><code>upstream</code> -&gt; <code>dout</code>。</li>
+            <li><code>grad_items</code> -&gt; TODO 1 的 <code>dv</code>；<code>grad_weights</code> -&gt; TODO 2 的 <code>dp</code>。</li>
+            <li>例子 query 数与 item 数不同，能更清楚看出转置究竟发生在哪个轴。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为了得到与 v 同 shape 的 dv，应该转置哪个张量的最后两维？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-output-branch" value="0">
+                <span>v</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-output-branch" value="1">
+                <span>dout</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-output-branch" value="2">
+                <span>p</span>
+              </label></div>
+              <div class="feedback" data-feedback="attention-backward-output-branch"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-backward-pv-0">
-                <span>从 ctx.saved_tensors 取出 P 和 V。</span>
+                <input type="checkbox" data-homework="attention-backward-output-branch-0">
+                <span>完成 TODO 1/2：dv 为 [B,N,d]，dp 为 [B,N,N]；dtype/device 必须与 float64 的 q、k、v、dout 一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-backward-pv-1">
-                <span>写出 dV 和 dP 的矩阵乘法。</span>
+                <input type="checkbox" data-homework="attention-backward-output-branch-1">
+                <span>每个 matmul 前写出最后两维，确认只用 transpose(-2,-1) 交换矩阵轴，没有打乱 batch 维。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-backward-pv-2">
-                <span>检查 dV shape 与 V 一致。</span>
+                <input type="checkbox" data-homework="attention-backward-output-branch-2">
+                <span>Notebook 先用 allclose 检查固定的 forward，随后 gradcheck 才检查你的 backward；若 shape 报错，先分别打印 p、v、dout、dv、dp 的 shape。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="attn-softmax-qk">
+        <article class="lesson-card inquiry" data-lesson="attention-backward-softmax">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3 / TODO 4</span>
+            <span class="todo-pill">TODO 3：由 dP 求 dp_mul_p、row_sum 与 dS</span>
           </div>
-          <h2>穿过 Softmax，再回到 Q 和 K</h2>
+          <h2>穿过 Softmax：用逐行修正代替巨大雅可比</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>P = softmax(S)，softmax 反传不是简单逐元素乘。</li><li>S = Q @ K^T * scale。</li><li>dQ 和 dK 都要乘回 scale。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>梯度先穿过概率归一化层，再穿过打分矩阵；打分来自 Q 和 K 的相似度。</p>
-            <div class="softmax-row"><span>dP</span><span>softmax backward</span><span>dS</span><strong>dQ, dK</strong></div>
-            <div class="syntax-card"><h4>语法热身：softmax backward 的常见写法</h4><pre><code>dS = P * (dP - (dP * P).sum(dim=-1, keepdim=True))
-dQ = (dS @ K) * scale
-dK = (dS.transpose(-2, -1) @ Q) * scale</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>softmax 反传里为什么要用 keepdim=True 求和？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-softmax-qk" value="0">
-                <span>保持可广播维度</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">如果某一行 dp 的三个值完全相同，例如 [5,5,5]，改变任一 score 只是在概率间重新分配，但所有位置收到同样的收益信号。</p>
+            <p class="predict-q">这时该行 ds 应是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-softmax" value="0">
+                <span>全 0</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-softmax-qk" value="1">
-                <span>删除 batch 维</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-softmax" value="1">
+                <span>等于 p</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attn-softmax-qk" value="2">
-                <span>让梯度停止传播</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-softmax" value="2">
+                <span>全 5</span>
               </label></div>
-            <div class="feedback" data-feedback="attn-softmax-qk"></div>
+            <div class="predict-feedback" data-predict-feedback="attention-backward-softmax">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="attention-backward-softmax">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>p 的每一行都是 scores 对最后一维做 Softmax 得到的概率，行内元素和为 1。</li><li>dp 是损失对这些概率的梯度，shape 与 p 都是 [B,N,N]。</li><li>逐元素乘法 dp*p 不会收缩维度；sum(dim=-1) 才会聚合每一行。</li><li>keepdim=True 把行统计量保留成 [B,N,1]，这样它能沿最后一维广播回 [B,N,N]。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>Softmax 的一行概率彼此牵连：抬高一个 score 会挤压同一行的其他概率。所以不能只做 dp*p，还要减掉这整行共同承担的加权平均影响。row_sum 就是这条“行内联动”的修正量。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>dp_mul_p</code><span>每个概率先乘自己收到的上游信号</span></div>
+          <div><b>2</b><code>row_sum</code><span>最后一维求和，得到每一行的共同修正</span></div>
+          <div><b>3</b><code>ds</code><span>每个位置减去行修正，再乘回自己的概率</span></div>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>广播契约</h4>
+            <div class="adv-contract">
+              <span><code>dp, p</code></span><strong><code>[B,N,N]</code></strong>
+              <span><code>row_sum</code></span><strong><code>[B,N,1]</code></strong>
+              <span><code>dp-row_sum</code></span><strong><code>[B,N,N]</code></strong>
+              <span><code>ds</code></span><strong><code>[B,N,N]</code></strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>一个重要自检</h4>
+            <p>Softmax 对整行同时加同一个常数不会变化，因此正确的 dS 每一行求和应接近 0。</p>
+            <div class="adv-flow">
+              <span>dS 一行</span><span>沿最后维求和</span><strong>约等于 0</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-callout">最常见错误是 row_sum 得到 [B,N]。它没有保留最后的单例维，与 [B,N,N] 对齐时可能广播失败，或者在某些恰好相等的维度上悄悄沿错方向。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用一组分类权重练 Softmax 的向量-雅可比积</h4><pre><code>scores = torch.tensor([[0.4, -0.1, 1.2]], dtype=torch.float64)
+weights = torch.softmax(scores, dim=-1)
+grad_weights = torch.tensor([[2.0, -1.0, 0.5]], dtype=torch.float64)
+
+weighted = grad_weights * weights
+baseline = weighted.sum(dim=-1, keepdim=True)
+grad_scores = weights * (grad_weights - baseline)
+print(grad_scores.sum(dim=-1))  # 接近 0</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>weights</code> -&gt; 前向保存的 <code>p</code>。</li>
+            <li><code>grad_weights</code> -&gt; TODO 2 得到的 <code>dp</code>。</li>
+            <li><code>weighted</code> -&gt; <code>dp_mul_p</code>。</li>
+            <li><code>baseline</code> -&gt; <code>row_sum</code>，必须沿 dim=-1 且 keepdim=True。</li>
+            <li><code>grad_scores</code> -&gt; <code>ds</code>，shape 不变。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>p 和 dp 是 [2,8,8] 时，正确的 row_sum shape 是什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-softmax" value="0">
+                <span>[2,8,1]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-softmax" value="1">
+                <span>[2,1,8]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-softmax" value="2">
+                <span>[2,8]</span>
+              </label></div>
+              <div class="feedback" data-feedback="attention-backward-softmax"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-softmax-qk-0">
-                <span>用 P * (dP - sum(dP*P)) 写 dS。</span>
+                <input type="checkbox" data-homework="attention-backward-softmax-0">
+                <span>完成 TODO 3：dp_mul_p、ds 是 [B,N,N]，row_sum 是 [B,N,1]；全部保持 float64 和原 device，不要新建 CPU 常量张量。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-softmax-qk-1">
-                <span>用 dS @ K 写 dQ。</span>
+                <input type="checkbox" data-homework="attention-backward-softmax-1">
+                <span>严格沿 dim=-1 聚合并使用 keepdim=True；可临时检查 ds.sum(dim=-1) 是否在浮点误差内接近 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attn-softmax-qk-2">
-                <span>用 dS^T @ Q 写 dK，并乘以 scale。</span>
+                <input type="checkbox" data-homework="attention-backward-softmax-2">
+                <span>若 gradcheck 报 Softmax 相关梯度不一致，排查是否漏乘 p、row_sum 是否来自 dp*p，以及减法括号是否是 p*(dp-row_sum)。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="attention-backward-qk-and-gradcheck">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 4：由 dS 求 dQ、dK，并按顺序返回梯度</span>
+          </div>
+          <h2>回到 Q 和 K：补上 scale，交给 gradcheck 验收</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">前向 score 除以 sqrt(d)，但 backward 里的 dq、dk 都忘了乘 scale。</p>
+            <p class="predict-q">forward allclose 与 gradcheck 最可能分别怎样？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="0">
+                <span>forward 通过，gradcheck 失败</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="1">
+                <span>两者都通过</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="2">
+                <span>forward 失败，gradcheck 通过</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="attention-backward-qk-and-gradcheck">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="attention-backward-qk-and-gradcheck">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>前向 scores=(q @ k^T)*scale，其中 scale=1/sqrt(d)，所以这条常数因子也必须出现在反向。</li><li>ds 是 [B,N,N]，q 和 k 都是 [B,N,d]。</li><li>对 q 支路使用 ds @ k；对 k 支路要先交换 ds 的最后两维，再乘 q。</li><li>自定义 Function 的 backward 返回值必须与 forward 输入顺序一一对应：q、k、v。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>现在 dS 已经表示每个 query-key 分数应该怎样变化。固定 K 看，dS 把变化汇回每个 query 得到 dQ；固定 Q 看，需要把 query-key 方向反过来，才能汇回每个 key 得到 dK。最后别把前向的缩放因子落在路上。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>Q 支路</h4>
+            <div class="adv-flow">
+              <span>dS [B,N,N]</span><span>K [B,N,d]</span><strong>dQ [B,N,d]</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>K 支路</h4>
+            <div class="adv-flow">
+              <span>dS^T [B,N,N]</span><span>Q [B,N,d]</span><strong>dK [B,N,d]</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span>前向常数</span><strong><code>scale = 1 / sqrt(d)</code></strong>
+          <span>影响范围</span><strong>dQ 与 dK 都乘 scale；dV 不经过 scores，不乘 scale</strong>
+          <span>返回顺序</span><strong><code>dq, dk, dv</code> 对齐 <code>q, k, v</code></strong>
+        </div>
+
+        <div class="adv-checks">
+          <span><strong>forward allclose</strong><br>固定前向等于原生实现</span>
+          <span><strong>float64</strong><br>数值差分更精确</span>
+          <span><strong>eps=1e-6</strong><br>用微小扰动估计导数</span>
+          <span><strong>atol=1e-4</strong><br>比较解析与数值梯度</span>
+        </div>
+
+        <div class="adv-callout">gradcheck 不只看“有没有梯度”，而是逐个输入比较你的解析反向与有限差分。漏 scale、转置错轴或返回顺序错，通常都会被它抓住。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用非方形双线性打分练左右输入梯度</h4><pre><code>left = torch.randn(2, 3, 5, dtype=torch.float64)
+right = torch.randn(2, 7, 5, dtype=torch.float64)
+grad_score = torch.randn(2, 3, 7, dtype=torch.float64)
+factor = 0.25
+
+grad_left = torch.matmul(grad_score, right) * factor
+grad_right = torch.matmul(grad_score.transpose(-2, -1), left) * factor
+print(grad_left.shape, grad_right.shape)  # [2,3,5], [2,7,5]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>left</code> / <code>right</code> -&gt; <code>q</code> / <code>k</code>。</li>
+            <li><code>grad_score</code> -&gt; TODO 3 得到的 <code>ds</code>。</li>
+            <li><code>grad_left</code> / <code>grad_right</code> -&gt; <code>dq</code> / <code>dk</code>。</li>
+            <li><code>factor</code> -&gt; ctx 中保存的 <code>scale</code>；Notebook 的具体数值由 d 决定。</li>
+            <li>非方形例子显示：K 支路转置的是 grad_score，不是把 q 或 k 的 batch 轴移动。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>CustomAttention.forward(ctx, q, k, v) 对应的 backward 正确返回顺序是什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="0">
+                <span>dv, dk, dq</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="1">
+                <span>dq, dk, dv</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="2">
+                <span>ds, dp, dout</span>
+              </label></div>
+              <div class="feedback" data-feedback="attention-backward-qk-and-gradcheck"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-0">
+                <span>完成 TODO 4：dq、dk 都是 [B,N,d]、float64、与输入同 device，并各自乘一次 ctx.scale；dv 不乘该 scale。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-1">
+                <span>确认 backward 最后按 q、k、v 的输入顺序返回 dq、dk、dv，然后运行 forward allclose 与完整 gradcheck。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-2">
+                <span>gradcheck 失败时按顺序查：TODO 1/2 的转置、TODO 3 的 keepdim 与括号、TODO 4 的 scale 和返回顺序；不要通过放宽 atol 掩盖公式错误。</span>
               </label>
           </div>
         </article>
@@ -866,7 +1381,7 @@ dK = (dS.transpose(-2, -1) @ Q) * scale</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -878,11 +1393,11 @@ dK = (dS.transpose(-2, -1) @ Q) * scale</code></pre></div>
 
   <script>
     const levelId = "17";
-    const checkpointData = {"attn-backward-pv":{"answer":2,"explain":"对右矩阵 V 的梯度等于左矩阵 P 的转置乘输出梯度。"},"attn-softmax-qk":{"answer":0,"explain":"最后一维求和后保留维度，才能和 P、dP 按元素广播运算。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"attention-backward-output-branch":{"answer":2,"explain":"P^T @ dout 把输出位置的梯度收集回每个 value；dout 或 v 的转置无法得到所需乘法契约。"},"attention-backward-softmax":{"answer":0,"explain":"沿最后一维归约并保留维度，才能把每个 query 行的修正量广播到该行所有 key。"},"attention-backward-qk-and-gradcheck":{"answer":1,"explain":"Autograd 按 forward 的输入位置接收梯度，返回顺序错会把数值正确的梯度交给错误变量。"}};
+    const predictData = {"attention-backward-output-branch":{"answer":0,"revealNote":"中间的 d 被消去，两个 N 分别来自输出位置和 value 位置。"},"attention-backward-softmax":{"answer":0,"revealNote":"row_sum 等于 5×sum(p)=5，所以 dp-row_sum 全为 0；共同平移式信号不会改变 Softmax 前的 score。"},"attention-backward-qk-and-gradcheck":{"answer":0,"revealNote":"forward 代码本来就包含 scale，不受 TODO 4 影响；gradcheck 会发现解析梯度比真实梯度大 sqrt(d) 倍。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

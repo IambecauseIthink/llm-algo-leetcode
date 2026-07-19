@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="predict-count">预判 0 / 2</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 18 | 零基础导学关卡</p>
         <h1>Activation and Loss Backward</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">18_Activation_and_Loss_Backward.ipynb</span>
           <span class="pill">ReLU Backward</span><span class="pill">Cross Entropy</span><span class="pill">Gradient Check</span>
@@ -735,172 +986,270 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">dReLU/dx = 1[x&gt;0]; dCE/dlogits = p-one_hot(y)</div>
       </div>
     </section>
 
 
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 18_Activation_and_Loss_Backward.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>18. Activation and Loss Backward | 激活与损失反向</h2>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>Backward</code>, <code>Activation</code>, <code>Loss</code> | <strong>目标人群：</strong> 反向传播与数值推导入门者</p>
-<p>这页把激活函数和损失函数的反向推导串成一条线：先看梯度如何穿过中间非线性，再看损失如何把训练信号送回前面层。</p>
-<p><strong>关键词：</strong> <code>activation</code>, <code>loss</code>, <code>gradients</code></p>
-<h3>前置阅读</h3>
-<p><strong>导语：</strong> 先把 Autograd 和训练闭环的基础补齐，再看激活函数和损失函数的反向推导会更顺。</p>
-<ul>
-<li>[P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播](../00_Prerequisites/07_PyTorch_Autograd_and_Backward.md)</li>
-<li>[P0: 13. Simple Neural Network Training | 简单神经网络训练循环](../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb)</li>
-<li>[P0: 20. Profiling and Memory Ledger | 性能分析与显存账本](../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb)</li>
-</ul>
-<h3>相关阅读</h3>
-<p><strong>导语：</strong> 完成反向推导后，建议继续看激活检查点和 FlashAttention 模拟。</p>
-<ul>
-<li>[P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb)</li>
-<li>[19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](../02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload.md)</li>
-<li>[20. FlashAttention Sim | FlashAttention 模拟](../02_PyTorch_Algorithms/20_FlashAttention_Sim.ipynb)</li>
-</ul>
-<h4>Step 1: 激活函数的反向传播</h4>
-<p>激活函数的反向传播通常不是大矩阵运算，而是一个<strong>逐元素门控</strong>过程。以 ReLU 为例，前向是 <code>y = max(0, x)</code>，反向时只要把上游梯度乘上一个布尔掩码即可：</p>
-<ul>
-<li>当 <code>x &gt; 0</code>，梯度保留；</li>
-<li>当 <code>x &lt;= 0</code>，梯度直接置零。</li>
-</ul>
-<p>这也是为什么激活函数会影响梯度流动：它不只是改变了数值，还决定了梯度能否顺利穿过这一层。</p>
-<h4>Step 2: 损失函数如何把信号送回前面</h4>
-<p>损失函数负责把任务目标转成训练信号。对于分类任务里最常见的交叉熵，它的反向通常会简化成 <code>softmax(prob) - one_hot(target)</code> 的形式，所以你经常会看到：</p>
-<ul>
-<li><strong>前向</strong>：先把 logits 转成概率，再计算负对数似然；</li>
-<li><strong>反向</strong>：梯度直接回到 logits，不需要再手工展开一整条复杂公式。</li>
-</ul>
-<p>理解这一点很重要，因为很多训练问题并不出在模型主体，而是出在 loss 的定义、归一化方式或 label 处理上。</p>
-<h4>Step 3: 最小代码实现</h4>
-<p>下面用两个最小函数把上面的直觉跑出来：一个演示 ReLU 的逐元素反向，一个演示交叉熵的梯度如何回到 logits。</p>
-<p>这一页的实现顺序就是先做 ReLU backward，再核对交叉熵梯度，最后和 PyTorch 自动求导对比。</p>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>解析</h4>
-<p><strong>1. TODO 1: 构造 ReLU 的反向门控掩码</strong></p>
-<ul>
-<li><strong>实现方式</strong>：<code>mask = (x &gt; 0).to(grad_out.dtype)</code></li>
-<li><strong>数学含义</strong>：ReLU 的导数在正半轴为 1，在非正半轴为 0。</li>
-<li><strong>工程意义</strong>：这一步展示了激活函数如何通过逐元素门控影响梯度流动。</li>
-</ul>
-<p><strong>2. TODO 2: 计算 softmax、one_hot、loss 和梯度</strong></p>
-<ul>
-<li><strong>实现方式</strong>：先算 <code>probs = softmax(logits)</code>，再构造 <code>one_hot</code>，然后得到 <code>loss</code> 和 <code>grad</code>。</li>
-<li><strong>数学含义</strong>：交叉熵的梯度会化成 <code>softmax(prob) - one_hot(target)</code> 这一类形式。</li>
-<li><strong>工程意义</strong>：理解这条链路，能更快定位训练里和 label / 归一化相关的问题。</li>
-</ul>
-<p><strong>进阶思考</strong></p>
-<ul>
-<li>为什么 ReLU 的反向可以只靠一个布尔掩码？</li>
-<li>为什么交叉熵的梯度可以直接写成 <code>prob - one_hot</code>？</li>
-<li>如果 label 处理错了，训练曲线会发生什么？</li>
-</ul>
-      </div>
-    </section>
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="core">
+
+        <article class="lesson-card inquiry" data-lesson="relu-backward-gate">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">本关 TODO</span>
+            <span class="todo-pill">TODO 1：构造 ReLU 反向门控 mask</span>
           </div>
-          <h2>Activation and Loss Backward：先建立本关直觉</h2>
+          <h2>ReLU 反向是一扇门：正数放行，其余归零</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>ReLU backward 用 x&gt;0 的 mask 控制梯度通路。</li><li>softmax-cross-entropy 梯度可化简为 probability-one_hot。</li><li>手写梯度应与 autograd 做数值对比。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>先不要背实现。把本关拆成输入、核心操作、输出三段，写代码时就不容易迷路。</p>
-            
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>1. 先认出本关的核心对象</strong>
-              <p>从 ReLU 门控和交叉熵梯度入手，把常用激活与损失的反向传播写成可验证代码。</p>
-              <div class="concept-badges">
-                <span>ReLU Backward</span><span>Cross Entropy</span><span>Gradient Check</span>
-              </div>
-            </div>
-            <div class="story-arrow">把名词翻译成张量、函数或训练步骤</div>
-            <div class="story-panel">
-              <strong>2. 再看输入输出关系</strong>
-              <p>每个 notebook 的 TODO 都在训练一种固定动作：先确认输入是什么，再确认输出应该长什么样，最后用测试检查数值或 shape。</p>
-              <div class="mini-pipeline">
-                <span>输入</span><span>核心操作</span><span>输出/测试</span>
-              </div>
-            </div>
-          </div>
-            
-          <div class="syntax-card">
-            <h4>语法热身：读 PyTorch 练习时先抓这三件事</h4>
-            <p>下面是通用读法，不直接等同于本关 notebook 答案。</p>
-            <pre><code># 1. 先看 shape，别急着写公式
-print(x.shape)
-
-# 2. 写模块时，参数通常放在 __init__
-class TinyModule(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.proj = nn.Linear(4, 4, bias=False)
-
-    def forward(self, x):
-        return self.proj(x)
-
-# 3. 测试通常会检查 shape 或数值接近
-assert out.shape[0] == x.shape[0]
-torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
-            <p class="syntax-tip">读法：先找 TODO 附近的输入变量和期望输出，再回到课程区确认这个操作在数学上想做什么。</p>
-          </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>ReLU 输入小于等于 0 的位置，反向梯度通常是多少？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="0">
-                <span>0</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">x=[2,-1]，grad_out=[-4,7]。第一个上游梯度虽然是负数，但对应 x 是正数。</p>
+            <p class="predict-q">relu_backward 应返回什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-relu-backward-gate" value="0">
+                <span>[-4,0]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="1">
-                <span>1</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-relu-backward-gate" value="1">
+                <span>[0,7]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="2">
-                <span>等于输入</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-relu-backward-gate" value="2">
+                <span>[4,0]</span>
               </label></div>
-            <div class="feedback" data-feedback="core"></div>
+            <div class="predict-feedback" data-predict-feedback="relu-backward-gate">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="relu-backward-gate">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>grad_out 是后续计算传回来的上游梯度，x 是 ReLU 前的输入；二者在 Notebook 中 shape 都是 [5]。</li><li>比较 x&gt;0 会得到布尔 Tensor：正输入位置是 True，0 和负输入位置是 False。</li><li>PyTorch 在 x=0 处采用导数 0，因此判断条件必须是严格大于 0。</li><li>乘法前把布尔 mask 转成 grad_out.dtype，可让返回梯度保持期望的浮点类型和 device。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>前向 ReLU 把非正数挡住。反向时不需要再算一次复杂函数，只要回看原输入 x：当时通过门的正数位置保留 grad_out，没通过的位置把梯度变成 0。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>看原输入 x</b>不是看 grad_out 的正负</span>
+          <span><b>生成布尔门</b>x 正数位置为 True</span>
+          <span><b>对齐 dtype</b>布尔门转成浮点门</span>
+          <span><b>逐元素相乘</b>输出 shape 不变</span>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>x</th><th>ReLU 前向</th><th>局部导数</th><th>grad_out=3 时 grad_in</th></tr></thead>
+          <tbody>
+            <tr><td><code>-2</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr>
+            <tr><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr>
+            <tr><td><code>4</code></td><td><code>4</code></td><td><code>1</code></td><td><code>3</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>正确的数据流</h4>
+            <div class="adv-flow">
+              <span>x [5]</span><span>mask [5]</span><span>grad_out [5]</span><strong>grad_in [5]</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>两个常见误会</h4>
+            <p>门由 x 决定，不由 grad_out 决定；上游梯度可以是负数，正输入位置仍应原样放行它。</p>
+            <p>使用 x&gt;=0 会让 x=0 的梯度变成 1，与 Notebook 中 F.relu 的自动求导不一致。</p>
+          </section>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用传感器阈值门练逐元素反向</h4><pre><code>preactivation = torch.tensor([-1.5, 0.0, 2.5])
+flow = torch.tensor([4.0, -3.0, 0.5])
+
+gate = (preactivation &gt; 0).to(flow.dtype)
+grad_input = flow * gate
+print(grad_input)  # [0.0, -0.0, 0.5]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>preactivation</code> -&gt; <code>x</code>，门的开关只由它决定。</li>
+            <li><code>flow</code> -&gt; <code>grad_out</code>，它是从后面传来的梯度。</li>
+            <li><code>gate</code> -&gt; TODO 1 的 <code>mask</code>。</li>
+            <li><code>grad_input</code> -&gt; 函数当前 return 表达式的结果。</li>
+            <li>例子故意在正输入处放了 0.5，说明门只决定放行或阻断，不把梯度强行改成 1。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 mask 使用 x&gt;0 而不是 x&gt;=0？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-relu-backward-gate" value="0">
+                <span>要与 PyTorch 在 x=0 处选择导数 0 的约定一致</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-relu-backward-gate" value="1">
+                <span>因为 &gt;= 不能用于 Tensor</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-relu-backward-gate" value="2">
+                <span>为了把 mask 变成 float64</span>
+              </label></div>
+              <div class="feedback" data-feedback="relu-backward-gate"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-0">
-                <span>构造 ReLU backward mask。</span>
+                <input type="checkbox" data-homework="relu-backward-gate-0">
+                <span>完成 TODO 1：mask 与 x/grad_out 都是 [5]，转成 grad_out.dtype，并保持原 device；返回梯度也应是 [5] 浮点 Tensor。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-1">
-                <span>推导并实现交叉熵梯度。</span>
+                <input type="checkbox" data-homework="relu-backward-gate-1">
+                <span>运行测试中包含 -2、-0.5、0、1、3 的边界样本，确认手写结果与 F.relu 自动求导 allclose。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-2">
-                <span>与 PyTorch autograd 的结果比较。</span>
+                <input type="checkbox" data-homework="relu-backward-gate-2">
+                <span>若 x=0 位置不一致，检查是否误写 &gt;=；若 dtype 异常，检查是否忘了 .to(grad_out.dtype)；若负上游梯度被抹掉，检查是否错误地用 grad_out 构造 mask。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="softmax-cross-entropy-backward">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">TODO 2：计算 probs、one_hot、loss 与 grad</span>
+          </div>
+          <h2>分类损失反向：概率减 one-hot，再除 batch</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">某个样本的预测概率是 [0.7,0.2,0.1]，正确类别是第 0 类，batch size=2。</p>
+            <p class="predict-q">这个样本对 logits 的批量平均梯度行是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-softmax-cross-entropy-backward" value="0">
+                <span>[-0.15,0.10,0.05]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-softmax-cross-entropy-backward" value="1">
+                <span>[-0.30,0.20,0.10]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-softmax-cross-entropy-backward" value="2">
+                <span>[0.35,0.10,0.05]</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="softmax-cross-entropy-backward">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="softmax-cross-entropy-backward">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>logits 是 [B,C] 浮点分数，B 是样本数、C 是类别数；labels 是 [B] 的整数类别下标。</li><li>Softmax 必须沿类别维 dim=-1，使每个样本一行的概率和为 1。</li><li>scatter_ 需要 labels.unsqueeze(1) 把索引从 [B] 变成 [B,1]，再沿 dim=1 写入 one-hot。</li><li>Notebook 的 loss 对 batch 使用 mean，所以 logits 梯度不仅是 probs-one_hot，还要除以 B。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>每个样本先得到一行类别概率。one-hot 在正确类别放 1，其他位置放 0；probs-one_hot 就是在说“预测比目标多出来多少”。因为最终 loss 是 B 个样本的平均，每个样本对总 loss 只贡献 1/B。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>probs</code><span>每行 logits 沿类别维变成概率</span></div>
+          <div><b>2</b><code>one_hot</code><span>把 labels 转成与 probs 同 shape 的目标表</span></div>
+          <div><b>3</b><code>loss</code><span>取正确类别负对数，先按类求和再按 batch 求均值</span></div>
+          <div><b>4</b><code>grad</code><span>probs 减 one_hot，并除以 batch size</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>Notebook shape</th><th>dtype</th><th>语义</th></tr></thead>
+          <tbody>
+            <tr><td><code>logits</code></td><td><code>[2,3]</code></td><td>float</td><td>两个样本、三个类别的原始分数</td></tr>
+            <tr><td><code>labels</code></td><td><code>[2]</code></td><td>long</td><td>每个样本的正确类别下标</td></tr>
+            <tr><td><code>probs, one_hot, grad</code></td><td><code>[2,3]</code></td><td>跟随 logits</td><td>逐类别概率、目标和梯度</td></tr>
+            <tr><td><code>loss</code></td><td><code>[]</code></td><td>跟随 logits</td><td>批量平均标量</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>每行梯度和应接近 0</h4>
+            <p>probs 一行和为 1，one_hot 一行和也为 1，所以两者相减后行和为 0；再除 B 仍为 0。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>测试覆盖与盲点</h4>
+            <p>Notebook 直接把 manual_grad 与 F.cross_entropy 的自动梯度比较，但只打印手写 loss，没有断言它等于 ce。loss 仍要按给定公式正确实现。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">log 里的小常数只用于避免概率极小时出现 log(0)。它加在 probs 上，不加在 logits 上；grad 仍使用化简后的 (probs-one_hot)/B。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用三条天气样本练四分类交叉熵</h4><pre><code>scores = torch.tensor([[1.2, 0.1, -0.4, 0.7],
+                       [0.0, 0.5, 1.4, -0.2],
+                       [-0.5, 1.1, 0.3, 0.2]])
+targets = torch.tensor([3, 2, 1])
+
+dist = torch.softmax(scores, dim=-1)
+indicator = torch.zeros_like(dist)
+indicator.scatter_(1, targets.unsqueeze(1), 1.0)
+per_item = -(indicator * torch.log(dist + 1e-12)).sum(dim=1)
+objective = per_item.mean()
+dscore = (dist - indicator) / scores.size(0)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>scores</code> / <code>targets</code> -&gt; <code>logits</code> / <code>labels</code>。</li>
+            <li><code>dist</code> -&gt; <code>probs</code>，Softmax 沿类别维。</li>
+            <li><code>indicator</code> -&gt; <code>one_hot</code>，先 zeros_like 再 scatter_。</li>
+            <li><code>objective</code> -&gt; <code>loss</code>；<code>dscore</code> -&gt; <code>grad</code>。</li>
+            <li>例子 batch=3、类别数=4；Notebook 改成 batch=2、类别数=3，写法不依赖固定数字。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>labels 是 [B] 时，为什么 scatter_ 前要 labels.unsqueeze(1)？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="0">
+                <span>把标签转成浮点概率</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="1">
+                <span>把索引变成 [B,1]，让每一行沿类别维写入一个 1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="2">
+                <span>把 batch size 翻倍</span>
+              </label></div>
+              <div class="feedback" data-feedback="softmax-cross-entropy-backward"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-cross-entropy-backward-0">
+                <span>完成 TODO 2：probs、one_hot、grad 都是 [B,C]，loss 是 shape []；labels 保持 long，其他张量跟随 logits 的浮点 dtype 与 device。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-cross-entropy-backward-1">
+                <span>按顺序实现 Softmax、zeros_like+scatter_、逐样本负对数后 mean、以及除以 logits.size(0) 的梯度；不要把 batch 大小写死成 2。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-cross-entropy-backward-2">
+                <span>运行 Notebook 测试，让 manual_grad 与 F.cross_entropy 自动梯度做 atol=1e-6 比较；若差固定为 B 倍，检查是否漏除 batch，若类别错位，检查 dim 和 unsqueeze，若 loss 为 Inf，检查 log 的小常数。</span>
               </label>
           </div>
         </article>
@@ -908,7 +1257,7 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -920,11 +1269,11 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
   <script>
     const levelId = "18";
-    const checkpointData = {"core":{"answer":0,"explain":"这些位置在前向被截断，局部导数为 0。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
+    const checkpointData = {"relu-backward-gate":{"answer":0,"explain":"两种比较都能用于 Tensor，但边界导数约定不同；测试中的 x 包含 0，会检查出这个差别。"},"softmax-cross-entropy-backward":{"answer":1,"explain":"scatter_ 沿 dim=1 写类别位置，需要每行提供一个二维列索引；unsqueeze 不改变标签值或 dtype。"}};
+    const predictData = {"relu-backward-gate":{"answer":0,"revealNote":"门看 x：第一个位置放行原值 -4，第二个位置阻断为 0。"},"softmax-cross-entropy-backward":{"answer":0,"revealNote":"先做 probs-one_hot 得 [-0.3,0.2,0.1]，再除以 B=2。"}};
+    const predictTotal = 2;
+    const checkpointTotal = 2;
+    const homeworkTotal = 6;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 25 | 零基础导学关卡</p>
         <h1>Quantization W8A16</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">25_Quantization_W8A16.ipynb</span>
           <span class="pill">Quantization</span><span class="pill">W8A16</span><span class="pill">Absmax</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">q=clamp(round(x·127/absmax),-128,127)</div>
       </div>
@@ -746,110 +997,123 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="quant-absmax-scale">
+
+        <article class="lesson-card inquiry" data-lesson="w8a16-range-and-scale">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2 / TODO 3</span>
+            <span class="todo-pill">TODO 1 / TODO 2：absmax、零值保护与 scale</span>
           </div>
-          <h2>W8 量化：用绝对最大值确定刻度尺</h2>
+          <h2>先定标尺：用 absmax 把浮点范围对齐到 INT8</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>int8 的有效范围通常看作 [-127, 127]，对称量化会尽量让正负两侧共用同一把刻度尺。</li><li>这里的 scale 表示整数刻度密度：scale = 127 / absmax。absmax 越大，每个浮点单位对应的 int8 刻度越少。</li><li>量化不是简单 to(torch.int8)：要先乘 scale，把浮点数放大到整数刻度，再 round 到最近整数。</li><li>round 后还要 clamp，防止极端值越界；最后才转成 torch.int8 存储。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>把浮点权重压成 int8，像把真实长度画到一把只有 127 格的尺子上。先找最大绝对值 absmax，决定“最远的点”应该贴到 int8 边界；再用同一把尺子把所有权重换算成整数刻度。</p>
-
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>0. 先读量化函数的合同</strong>
-                <p>输入是一块浮点权重，输出不是一个张量，而是两样东西：压缩后的 int8 权重，以及以后反量化要用的 scale。</p>
-                <div class="learn-kv">
-                  <span>输入</span><strong>weight float tensor</strong>
-                  <span>输出 1</span><strong>q_weight int8 tensor</strong>
-                  <span>输出 2</span><strong>scale = 127 / absmax</strong>
-                </div>
-              </div>
-              <div class="learn-card accent">
-                <strong>scale 是“刻度密度”</strong>
-                <p>量化时乘 scale，反量化时除 scale。这个 notebook 的 scale 不是每个整数代表多少浮点值，而是 1 个浮点单位对应多少 int8 格。</p>
-                <div class="learn-note">记忆：<code>q = round(w * scale)</code>，所以还原就是 <code>w ≈ q / scale</code>。</div>
-              </div>
-            </div>
-
-            <div class="story-arrow">主线：absmax 定尺子，乘 scale 上刻度，round/clamp 存 int8</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>absmax</b>weight.abs().max()</span>
-                <span><b>scale</b>127.0 / absmax</span>
-                <span><b>multiply</b>weight * scale</span>
-                <span><b>round</b>最近整数</span>
-                <strong><b>clamp + int8</b>[-128,127]</strong>
-              </div>
-              <p>这条线就是 TODO 1/2/3 的顺序。不要先转 int8，否则小数会直接被截断，量化误差会变得不可控。</p>
-            </div>
-
-            <div class="learn-grid">
-              <div class="learn-card good">
-                <strong>1. 一个小数字例子</strong>
-                <div class="learn-kv">
-                  <span>absmax</span><strong>3.0</strong>
-                  <span>scale</span><strong>127 / 3.0 ≈ 42.33</strong>
-                  <span>w=1.5</span><strong>round(1.5 * 42.33) = 64</strong>
-                  <span>w=-3.0</span><strong>round(-3.0 * 42.33) = -127</strong>
-                </div>
-              </div>
-              <div class="learn-card warn">
-                <strong>2. 最常见错误</strong>
-                <p>把 <code>scale</code> 写反、忘记 <code>round</code>、忘记 <code>clamp</code>，都会让测试里的误差或 dtype 检查失败。</p>
-                <div class="learn-mini">
-                  <span>先乘</span>
-                  <span>再 round</span>
-                  <span>再 clamp</span>
-                  <strong>最后 int8</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-            <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：量化三步</h4><pre><code>absmax = weight.abs().max()
-scale = 127.0 / absmax
-q = torch.round(weight * scale)
-q = q.clamp(-128, 127)
-q = q.to(torch.int8)</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：对应 notebook TODO</h4>
-            <div class="learn-kv">
-              <span>TODO 1</span><strong>absmax = weight.abs().max()</strong>
-              <span>TODO 2</span><strong>scale = 127.0 / absmax</strong>
-              <span>TODO 3</span><strong>round → clamp → int8</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：量化乘 scale，反量化除 scale；scale 方向别写反。</p>
-          </div>
-        </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>这个 notebook 中为什么 scale 常用 127 / absmax？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-absmax-scale" value="0">
-                <span>把所有数变成正数</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">输入 x 是一个全 0 张量，此时 torch.abs(x).max() 也是 0。</p>
+            <p class="predict-q">如果不做保护就计算 127.0 / absmax，最可能发生什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-range-and-scale" value="0">
+                <span>scale 变成 Inf，测试中的有限性断言失败</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-absmax-scale" value="1">
-                <span>把最大绝对值映射到 int8 边界</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-range-and-scale" value="1">
+                <span>scale 自动变成 1</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-absmax-scale" value="2">
-                <span>让矩阵转置</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-range-and-scale" value="2">
+                <span>x 自动改成 int8</span>
               </label></div>
-            <div class="feedback" data-feedback="quant-absmax-scale"></div>
+            <div class="predict-feedback" data-predict-feedback="w8a16-range-and-scale">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="w8a16-range-and-scale">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>张量中的每个权重原本是浮点数；量化不是直接改类型，而是先决定浮点数与整数之间的换算比例。</li><li>本页采用 per-tensor 对称量化：整个 x 共享一个标量 scale，正负两侧都围绕 0。</li><li>torch.abs(x) 逐元素取绝对值，torch.max(...) 再从所有元素中找出最大的幅度。</li><li>如果 x 全为 0，absmax 也是 0；直接计算 127 / absmax 会产生 Inf，所以必须先做除零保护。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把 INT8 的 -127 到 127 想成一把只有 255 个刻度的尺子。absmax 告诉我们原张量最远离 0 的位置，scale 则说明每 1 个浮点单位要放大成多少个整数刻度。先把尺子定好，后面才能舍入和存储。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>读范围</b>找到 x 中最大的绝对值 absmax</span>
+          <span><b>防除零</b>全 0 时换成很小的正数</span>
+          <span><b>定标尺</b>scale = 127 / absmax</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>变量先翻译成人话</h4>
+            <div class="adv-contract">
+              <span><code>x</code></span><strong>任意 shape 的浮点权重张量</strong>
+              <span><code>absmax</code></span><strong>标量张量，表示最大绝对幅度</strong>
+              <span><code>scale</code></span><strong>标量张量，表示浮点值到整数刻度的放大倍数</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>一个只算标尺的小例子</h4>
+            <p>若权重是 [-2.0, 0.5, 1.0]，最大的绝对值是 2.0。</p>
+            <div class="adv-flow">
+              <span>abs(x)<br>[2.0, 0.5, 1.0]</span>
+              <span>absmax<br>2.0</span>
+              <strong>scale<br>127 / 2</strong>
+            </div>
+            <p>最大幅度 2.0 会被放大到 127；其他数按同一比例缩放，所以相对大小仍被保留。</p>
+          </section>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>全 0 是测试里的明确边界</h4>
+            <p>全 0 张量没有可用范围。把 absmax 临时替换成很小的正数后，scale 保持有限，0 乘任何有限 scale 仍是 0。</p>
+          </section>
+          <section class="adv-panel blue">
+            <h4>为什么使用 127</h4>
+            <p>Notebook 要做对称量化，让最大正幅度落在 127。虽然 int8 还能表示 -128，但这里的正负有效刻度围绕 0 对称。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">先确认语义再写公式：scale 是“量化时乘上去”的放大倍数，因此后面的反量化要除以同一个 scale。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用温度读数练习 absmax、标量判断和安全 scale</h4><pre><code>readings = torch.tensor([-1.2, 0.0, 0.8])
+largest = torch.abs(readings).max()
+
+if largest == 0:
+    largest = torch.tensor(1e-8, device=readings.device)
+
+gain = 31.0 / largest  # 练习映射到另一套整数刻度
+print(largest.shape)   # torch.Size([])，标量张量</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>readings</code> -&gt; <code>x</code>：输入数据不同，但都先保留原 shape。</li>
+            <li><code>largest</code> -&gt; <code>absmax</code>：先逐元素取绝对值，再做全局最大值归约。</li>
+            <li><code>31.0</code> -&gt; Notebook 的 INT8 正上界 <code>127.0</code>。</li>
+            <li><code>gain</code> -&gt; <code>scale</code>：都是“整数上界 / 最大绝对值”。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>对张量 [-0.8, 1.5, -3.0, 2.5, 0.0] 做本页对称量化时，absmax 应是多少？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-range-and-scale" value="0">
+                <span>2.5</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-range-and-scale" value="1">
+                <span>3.0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-range-and-scale" value="2">
+                <span>0.0</span>
+              </label></div>
+              <div class="feedback" data-feedback="w8a16-range-and-scale"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
@@ -857,129 +1121,270 @@ q = q.to(torch.int8)</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-absmax-scale-0">
-                <span>计算权重绝对最大值。</span>
+                <input type="checkbox" data-homework="w8a16-range-and-scale-0">
+                <span>完成 Notebook TODO 1 和 TODO 2：让 absmax 与 scale 都是标量，并保留与 x 兼容的 dtype/device 语义。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-absmax-scale-1">
-                <span>用 127.0 / absmax 得到 scale。</span>
+                <input type="checkbox" data-homework="w8a16-range-and-scale-1">
+                <span>先单独运行全 0 输入；检查量化结果未来仍能保持原 shape、最终 dtype 为 torch.int8，并确认 scale 不是 NaN/Inf。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-absmax-scale-2">
-                <span>先乘 scale，再 round、clamp、转 int8 完成量化。</span>
+                <input type="checkbox" data-homework="w8a16-range-and-scale-2">
+                <span>若有限性测试失败，优先打印 absmax 和 scale；常见错误是先做除法、后做零值保护，顺序反了。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="quant-w8a16-linear">
+        <article class="lesson-card inquiry" data-lesson="w8a16-round-clamp-cast">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 4</span>
+            <span class="todo-pill">TODO 3：x_scaled 与 x_quant</span>
           </div>
-          <h2>W8A16 前向：权重反量化，激活保持半精度</h2>
+          <h2>再离散化：乘、舍入、截断、转 int8 一个都不能乱</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>W8A16 表示 weight 用 int8 存储，activation 仍用 fp16/bf16 等 16-bit 浮点参与计算。</li><li>普通 PyTorch 的 F.linear 不能直接拿 int8 权重和 fp16 激活做这个玩具前向，所以先把 q_weight 反量化回浮点。</li><li>本 notebook 的量化公式是 q = round(w * scale)，因此反量化公式是 w ≈ q / scale。</li><li>反量化后的权重要转成 x.dtype，保证和激活 dtype 对齐。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>W8A16 的核心是“存的时候省，算的时候稳”：权重平时压成 int8 省显存；真正做线性层前，再用 scale 还原成和激活同 dtype 的浮点权重。你写的 TODO 4 就是这条恢复路径。</p>
-
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>0. 先看 W8A16 的两种 dtype</strong>
-                <div class="learn-kv">
-                  <span>W8</span><strong>q_weight 存成 torch.int8</strong>
-                  <span>A16</span><strong>x 保持 fp16/bf16 等浮点激活</strong>
-                  <span>计算前</span><strong>q_weight.float() / scale</strong>
-                </div>
-              </div>
-              <div class="learn-card accent">
-                <strong>TODO 4 不是重新量化</strong>
-                <p>前面已经把权重量化好了。这里要做的是反量化，再调用 <code>F.linear</code>，最后输出形状和普通 Linear 一样。</p>
-              </div>
-            </div>
-
-            <div class="story-arrow">主线：int8 权重除以 scale，还原成和激活同 dtype 的浮点权重</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>q_weight</b>int8</span>
-                <span><b>float()</b>避免整数除法/溢出</span>
-                <span><b>/ scale</b>反量化</span>
-                <span><b>to(x.dtype)</b>对齐激活</span>
-                <strong><b>F.linear</b>x, dequant_weight, bias</strong>
-              </div>
-              <p>量化时是乘 scale，反量化时必须除以同一个 scale。这里最容易写错方向。</p>
-            </div>
-
-            <div class="learn-grid">
-              <div class="learn-card good">
-                <strong>1. 为什么要 <code>.float()</code></strong>
-                <p><code>q_weight</code> 是 int8 存储格式，先转浮点再除以 scale，才能得到近似原权重的浮点值。</p>
-              </div>
-              <div class="learn-card warn">
-                <strong>2. 为什么要 <code>.to(x.dtype)</code></strong>
-                <p>激活是 A16，权重反量化后对齐到 <code>x.dtype</code>，避免线性层里 dtype 不匹配，也更贴近 W8A16 的含义。</p>
-              </div>
-            </div>
-          </div>
-            <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：反量化后做线性层</h4><pre><code>dequant_weight = q_weight.float() / scale
-dequant_weight = dequant_weight.to(x.dtype)
-out = F.linear(
-    x,
-    dequant_weight,
-    bias,
-)</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：TODO 4 检查表</h4>
-            <div class="learn-kv">
-              <span>量化方向</span><strong>q = round(w * scale)</strong>
-              <span>反量化方向</span><strong>w = q.float() / scale</strong>
-              <span>dtype 对齐</span><strong>dequant_weight.to(x.dtype)</strong>
-              <span>前向</span><strong>F.linear(x, dequant_weight, bias)</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：W8 是存储格式，A16 是计算激活；做 Linear 前先把权重恢复成浮点。</p>
-          </div>
-        </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>W8A16 中 A16 指的是什么？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-w8a16-linear" value="0">
-                <span>权重有 16 行</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">torch.round(torch.tensor(105.8)) 的数值已经是 106。</p>
+            <p class="predict-q">只调用 torch.round 后，是否已经保证结果 dtype 是 torch.int8？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-round-clamp-cast" value="0">
+                <span>没有，还需要显式转换为 torch.int8</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-w8a16-linear" value="1">
-                <span>batch size 必须是 16</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-round-clamp-cast" value="1">
+                <span>是，round 总会返回 int8</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quant-w8a16-linear" value="2">
-                <span>激活用 16-bit 浮点</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-round-clamp-cast" value="2">
+                <span>是，但 shape 会变成标量</span>
               </label></div>
-            <div class="feedback" data-feedback="quant-w8a16-linear"></div>
+            <div class="predict-feedback" data-predict-feedback="w8a16-round-clamp-cast">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="w8a16-round-clamp-cast">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>scale 只是浮点标尺；x * scale 的结果仍是浮点张量，还不能获得 INT8 的存储收益。</li><li>torch.round 负责把连续值落到最近的整数刻度，但返回 dtype 通常仍是浮点类型。</li><li>torch.clamp 把异常值限制到允许范围；最后的 .to(torch.int8) 才改变存储类型。</li><li>这些操作都是逐元素的，因此 x_quant 的 shape 必须与 x 完全相同。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>量化像把连续的刻度读数抄到只能写整数的表格：先按 scale 放大，再四舍五入；为了不写出表格范围之外的数，再做截断；最后才把整张表换成 int8 存储。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>x_scaled = x * scale</code><span>浮点值对齐到 INT8 刻度</span></div>
+          <div><b>2</b><code>rounded = round(x_scaled)</code><span>把连续值变成整数数值，但尚未改 dtype</span></div>
+          <div><b>3</b><code>bounded = clamp(...)</code><span>保证数值落在 Notebook 指定区间</span></div>
+          <div><b>4</b><code>x_quant = ...to(int8)</code><span>shape 不变，存储类型变成 1 字节整数</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>阶段</th><th>示例值</th><th>shape</th><th>dtype 关注点</th></tr></thead>
+          <tbody>
+            <tr><td>原值</td><td><code>2.5</code></td><td>与 x 相同</td><td>浮点</td></tr>
+            <tr><td>乘 scale</td><td><code>105.833...</code></td><td>与 x 相同</td><td>仍是浮点</td></tr>
+            <tr><td>round</td><td><code>106</code></td><td>与 x 相同</td><td>数值像整数，dtype 未必是 int8</td></tr>
+            <tr><td>cast</td><td><code>106</code></td><td>与 x 相同</td><td><code>torch.int8</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>顺序错误会改变答案</h4>
+            <p>若在 round 之前就转 int8，小数部分会直接丢失；若完全不 clamp，超范围转换可能产生错误的整数表示。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>测试中的确定值</h4>
+            <p>absmax=3.0 时，scale=127/3。样本 2.5 被放大为约 105.83，四舍五入后应为 106。</p>
+          </section>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：把音频幅度映射到较小的整数区间</h4><pre><code>audio = torch.tensor([-1.0, -0.26, 0.24, 1.2])
+gain = 15.0 / audio.abs().max()
+scaled = audio * gain
+rounded = torch.round(scaled)
+codes = torch.clamp(rounded, -16, 15).to(torch.int8)
+
+assert codes.shape == audio.shape
+assert codes.dtype == torch.int8</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>audio</code> -&gt; <code>x</code>：都按元素量化，shape 不变。</li>
+            <li><code>gain</code> -&gt; <code>scale</code>：Notebook 使用 127 对齐 INT8 范围。</li>
+            <li><code>scaled</code> -&gt; <code>x_scaled</code>：保持浮点，交给 round。</li>
+            <li><code>codes</code> -&gt; <code>x_quant</code>：Notebook 的 clamp 边界按 TODO 提示设置，并最终转成 torch.int8。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>TODO 3 中哪一种顺序符合 Notebook 的量化链路？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-round-clamp-cast" value="0">
+                <span>转 int8 → 乘 scale → round</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-round-clamp-cast" value="1">
+                <span>clamp → 除以 scale → 转 float</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-round-clamp-cast" value="2">
+                <span>乘 scale → round → clamp → 转 int8</span>
+              </label></div>
+              <div class="feedback" data-feedback="w8a16-round-clamp-cast"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-w8a16-linear-0">
-                <span>用 q_weight.float() / scale 反量化。</span>
+                <input type="checkbox" data-homework="w8a16-round-clamp-cast-0">
+                <span>完成 TODO 3，并逐行检查 x_scaled 与 x_quant 的 shape 都等于 x.shape、device 不变，最终 x_quant.dtype 必须是 torch.int8。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-w8a16-linear-1">
-                <span>把反量化权重转成输入 dtype。</span>
+                <input type="checkbox" data-homework="w8a16-round-clamp-cast-1">
+                <span>运行带符号样本测试，确认 scale 等于 127/3，索引 3 的量化值等于 106；全 0 输入量化后非零元素数应为 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="quant-w8a16-linear-2">
-                <span>调用 F.linear 完成前向并比较误差。</span>
+                <input type="checkbox" data-homework="w8a16-round-clamp-cast-2">
+                <span>若 106 断言失败，按“是否乘 scale、是否先 round、clamp 边界、是否过早 cast”四步排查。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="w8a16-dequant-linear">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 4：weight_int8 反量化与 F.linear</span>
+          </div>
+          <h2>最后做前向：INT8 负责存，输入 dtype 负责算</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">weight_int8 的 shape 是 [64, 128]，x 的 shape 是 [2, 10, 128]。</p>
+            <p class="predict-q">F.linear(x, w_dequant, bias) 的输出 shape 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-dequant-linear" value="0">
+                <span>[2, 10, 64]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-dequant-linear" value="1">
+                <span>[64, 128]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-w8a16-dequant-linear" value="2">
+                <span>[2, 128, 10]</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="w8a16-dequant-linear">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="w8a16-dequant-linear">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>W8A16 中 W8 表示权重以 INT8 存储；本 Notebook 的激活 x 保持浮点，测试实际会传入 float32。</li><li>nn.Linear 的权重 shape 是 [out_features, in_features]；F.linear 会用 x 的最后一维与 in_features 对齐。</li><li>量化时做的是 x * scale，所以反量化必须先转回浮点，再除以同一个 scale。</li><li>register_buffer 创建的 weight_int8 与 scale 不参与梯度更新，但会跟随模块移动 device；bias 仍是 Parameter。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>这个模拟层把权重长期放在紧凑的 INT8 仓库里。每次 forward 时，先按输入 x 的计算类型取出一份近似浮点权重，再调用普通线性层。这样展示的是“存储省内存、计算前恢复”的链路。</p>
+              <div class="adv-course">
+        <div class="adv-flow">
+          <span><code>weight_int8</code><br>[out, in] / int8</span>
+          <span>转成 x.dtype<br>[out, in]</span>
+          <span>除以 scale<br>近似浮点权重</span>
+          <strong>F.linear(x, w, bias)<br>[batch, seq, out]</strong>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>Notebook shape</th><th>dtype/device 契约</th></tr></thead>
+          <tbody>
+            <tr><td><code>x</code></td><td><code>[batch, seq, in_features]</code></td><td>激活的浮点 dtype；应与层位于同一 device</td></tr>
+            <tr><td><code>weight_int8</code></td><td><code>[out_features, in_features]</code></td><td>存储时固定为 torch.int8</td></tr>
+            <tr><td><code>w_dequant</code></td><td><code>[out_features, in_features]</code></td><td>计算时跟随 x.dtype</td></tr>
+            <tr><td><code>out</code></td><td><code>[batch, seq, out_features]</code></td><td>浮点输出</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid three">
+          <section class="adv-panel good">
+            <h4>存储测试</h4>
+            <p>同样数量的 FP32 权重每个 4 字节，INT8 每个 1 字节，所以 weight_int8 字节数应为四分之一。</p>
+          </section>
+          <section class="adv-panel blue">
+            <h4>近似测试</h4>
+            <p>随机层比较原输出与量化层输出的余弦相似度，要求大于 0.99，而不是逐元素完全相等。</p>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>公式测试</h4>
+            <p>确定性小矩阵会用同一份反量化权重调用 F.linear，要求你的 forward 与参考结果在 1e-6 内一致。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">不要把 scale 再乘回去：本 Notebook 保存的是量化时的放大倍数，恢复数值范围使用除法。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用压缩库存权重练习恢复后做线性计算</h4><pre><code>packed_weight = torch.tensor([[6, -3, 9], [2, 4, -8]], dtype=torch.int8)
+restore_factor = torch.tensor(3.0)
+features = torch.randn(5, 3, dtype=torch.float32)
+offset = torch.zeros(2, dtype=features.dtype)
+
+weight_for_compute = packed_weight.to(features.dtype) / restore_factor
+scores = F.linear(features, weight_for_compute, offset)
+assert scores.shape == (5, 2)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>packed_weight</code> -&gt; <code>self.weight_int8</code>：都是 [out, in] 的整数存储。</li>
+            <li><code>features.dtype</code> -&gt; <code>x.dtype</code>：反量化权重先跟随输入的计算类型。</li>
+            <li><code>restore_factor</code> -&gt; <code>self.scale</code>：恢复时使用除法。</li>
+            <li><code>scores</code> -&gt; <code>out</code>：使用 F.linear，并带上 Notebook 的 <code>self.bias</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>量化时使用 x_quant ≈ round(x * scale)，反量化权重应采用哪种操作？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-dequant-linear" value="0">
+                <span>weight_int8.to(x.dtype) / scale</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-dequant-linear" value="1">
+                <span>只调用 weight_int8.long()</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-w8a16-dequant-linear" value="2">
+                <span>weight_int8 * scale 后保持 int8</span>
+              </label></div>
+              <div class="feedback" data-feedback="w8a16-dequant-linear"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="w8a16-dequant-linear-0">
+                <span>完成 TODO 4：w_fp、w_dequant 和 out 的 shape 依次保持 [out_features, in_features]、[out_features, in_features]、[..., out_features]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="w8a16-dequant-linear-1">
+                <span>检查 dtype/device：w_fp 跟随 x.dtype，weight_int8 与 scale 作为 buffer 应和模块同 device，x 与层也必须位于同一 device。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="w8a16-dequant-linear-2">
+                <span>运行全部测试；若小矩阵失败先核对除法与 bias，若余弦低再核对量化顺序，若内存断言失败则确认 weight_int8 真的是 torch.int8。</span>
               </label>
           </div>
         </article>
@@ -987,7 +1392,7 @@ out = F.linear(
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -999,11 +1404,11 @@ out = F.linear(
 
   <script>
     const levelId = "25";
-    const checkpointData = {"quant-absmax-scale":{"answer":1,"explain":"对称 int8 量化希望最大幅度刚好落在可表示边界附近。"},"quant-w8a16-linear":{"answer":2,"explain":"A 是 activation，16 表示激活通常保留 fp16/bf16 精度。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"w8a16-range-and-scale":{"answer":1,"explain":"先取绝对值得到 [0.8, 1.5, 3.0, 2.5, 0.0]，其中最大值是 3.0。"},"w8a16-round-clamp-cast":{"answer":2,"explain":"先在浮点域完成缩放、舍入和边界限制，最后再切换到紧凑的整数存储。"},"w8a16-dequant-linear":{"answer":0,"explain":"先回到输入的浮点计算类型，再除以量化放大倍数，才能近似恢复原权重范围。"}};
+    const predictData = {"w8a16-range-and-scale":{"answer":0,"revealNote":"除以 0 不会得到可用标尺。Notebook 首个边界测试明确要求 zero_scale 是有限值。"},"w8a16-round-clamp-cast":{"answer":0,"revealNote":"round 改的是数值，不等于改存储类型。Notebook 会直接断言 x_q.dtype == torch.int8。"},"w8a16-dequant-linear":{"answer":0,"revealNote":"F.linear 只替换输入的最后一维：in_features=128 被 out_features=64 替换，前面的 batch 与 seq 保留。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

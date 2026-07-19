@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 22 | 零基础导学关卡</p>
         <h1>vLLM PagedAttention</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">22_vLLM_PagedAttention.ipynb</span>
           <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">logical block → block table → physical KV block</div>
       </div>
@@ -746,124 +997,383 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="paged-block-table">
+
+        <article class="lesson-card inquiry" data-lesson="paged-prefill-allocation">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">当前练习 TODO 1 + TODO 2：向上取整并分配块；物理池初始化已给出</span>
           </div>
-          <h2>PagedAttention：逻辑连续，物理可以不连续</h2>
+          <h2>Prefill：先算要几块，再一次性检查够不够</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>KV Cache 会随序列长度增长。</li><li>直接连续分配容易产生显存碎片。</li><li>PagedAttention 用固定大小 block 管理缓存。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>像操作系统分页：请求看到的是连续的 token 序列，底层实际由一块块物理页拼起来。</p>
-            <div class="tile-grid"><span>逻辑 token 0-3</span><span>block 7</span><span>逻辑 token 4-7</span><span>block 2</span></div>
-            <div class="syntax-card"><h4>语法热身：向上取整算 block 数</h4><pre><code>needed = (seq_len + block_size - 1) // block_size
-for _ in range(needed):
-    block_id = free_blocks.pop(0)
-    block_table.append(block_id)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>seq_len=17，block_size=8，需要多少个 block？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-block-table" value="0">
-                <span>17</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">prompt 长度是 6，每个物理块能放 4 个 token。</p>
+            <p class="predict-q">Prefill 必须分配多少个块？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-prefill-allocation" value="0">
+                <span>2 个</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-block-table" value="1">
-                <span>3</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-prefill-allocation" value="1">
+                <span>1 个</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-block-table" value="2">
-                <span>2</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-prefill-allocation" value="2">
+                <span>3 个</span>
               </label></div>
-            <div class="feedback" data-feedback="paged-block-table"></div>
+            <div class="predict-feedback" data-predict-feedback="paged-prefill-allocation">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="paged-prefill-allocation">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>physical_kv_cache 已由 Notebook 初始化为 [num_blocks, block_size, head_dim]，当前练习不需要重写这行。</li><li>req.seq_len 是当前请求已有的 token 数；req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是仍可分配的物理块编号列表。pop 会同时返回编号并把它从空闲列表移除。</li><li>Prefill 要容纳全部 prompt，所以块数是 seq_len / block_size 的向上取整，而不是向下取整。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把物理池想成固定规格的仓位。一个仓位能放 block_size 个 token，哪怕最后只多 1 个 token，也必须再占一个完整仓位。分配前先检查空闲块总数，避免分到一半才发现不够，留下半更新状态。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>物理池</b>[num_blocks, block_size, head_dim]</span>
+          <span><b>需求量</b>ceil(seq_len / block_size)</span>
+          <span><b>容量检查</b>free 数量必须不小于需求</span>
+          <span><b>块表</b>按逻辑先后追加物理 ID</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>长度 6、每块 4 个 token</h4>
+            <div class="adv-flow">
+              <strong>逻辑 token 0..3</strong><strong>逻辑 token 4..5</strong>
+            </div>
+            <p>第一块装满 4 个，第二块装 2 个，因此 needed_blocks 是 2。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>块表只存地址，不存 KV 数值</h4>
+            <div class="adv-flow">
+              <span>逻辑块 0</span><strong>物理块 ID 0</strong><span>逻辑块 1</span><strong>物理块 ID 1</strong>
+            </div>
+            <p>真实物理 ID 可以不连续；逻辑顺序由 block_table 的列表顺序表达。</p>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span><code>needed_blocks</code></span><strong>Python int；必须覆盖 req.seq_len 个 token</strong>
+          <span><code>free_blocks</code></span><strong>List[int]；分配后长度减少</strong>
+          <span><code>req.block_table</code></span><strong>List[int]；分配后按顺序增加物理 ID</strong>
+          <span>OOM 契约</span><strong>不足时抛 RuntimeError，且异常文本包含 OOM</strong>
+        </div>
+
+        <div class="adv-callout">当前 Notebook 的练习 TODO 编号跳过了 4：Prefill 是 TODO 1、2，Decode 是 TODO 3，缓存拼装标为 TODO 5。请以练习单元本身为准。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
+box_capacity = 5
+boxes_needed = (item_count + box_capacity - 1) // box_capacity
+available_boxes = [20, 7, 31, 9]
+assigned_boxes = []
+
+if len(available_boxes) &lt; boxes_needed:
+    raise RuntimeError('FULL')
+for _ in range(boxes_needed):
+    assigned_boxes.append(available_boxes.pop(0))</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>item_count</code> -> <code>req.seq_len</code>，表示必须容纳的逻辑元素数。</li>
+            <li><code>box_capacity</code> -> <code>self.block_size</code>，表示每个固定块能容纳多少 token。</li>
+            <li><code>boxes_needed</code> -> TODO 1 的 <code>needed_blocks</code>，使用整数向上取整。</li>
+            <li><code>available_boxes</code> 与 <code>assigned_boxes</code> -> TODO 2 的 <code>self.free_blocks</code> 与 <code>req.block_table</code>；异常文本按 Notebook 要求改为 OOM。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么应在 pop 空闲块之前检查 free_blocks 是否足够？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-prefill-allocation" value="0">
+                <span>为了让 seq_len 自动归零</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-prefill-allocation" value="1">
+                <span>避免 OOM 时只完成了一部分分配，留下半更新状态</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-prefill-allocation" value="2">
+                <span>为了把 block_id 变成浮点数</span>
+              </label></div>
+              <div class="feedback" data-feedback="paged-prefill-allocation"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-block-table-0">
-                <span>用向上取整计算 prefill 需要的 block 数。</span>
+                <input type="checkbox" data-homework="paged-prefill-allocation-0">
+                <span>完成当前练习 TODO 1 与 TODO 2：算 needed_blocks，先做容量检查，再把相应数量的 block_id 从 free_blocks 移入 req.block_table。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-block-table-1">
-                <span>检查 free_blocks 是否足够，不够时抛出 OOM。</span>
+                <input type="checkbox" data-homework="paged-prefill-allocation-1">
+                <span>类型账本：needed_blocks 和 block_id 是 Python int，两个表是 List[int]；physical_kv_cache 已是 [num_blocks, block_size, head_dim] 浮点张量，本 TODO 不改变其 dtype/device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-block-table-2">
-                <span>从 free_blocks 分配 block_id 到 req.block_table。</span>
+                <input type="checkbox" data-homework="paged-prefill-allocation-2">
+                <span>运行 Prefill 与 OOM 测试：长度 6 应拿 2 块并剩 8 块；只有 1 块却要容纳 5 个 token 时必须抛 RuntimeError，消息含 OOM。常见错误是用向下取整或边分配边检查。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="paged-decode-growth">
+        <article class="lesson-card inquiry" data-lesson="paged-decode-boundary">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3 / TODO 4</span>
+            <span class="todo-pill">当前练习 TODO 3：判断跨块并按需追加一个物理块</span>
           </div>
-          <h2>Decode 阶段：只有跨入新 block 才分配</h2>
+          <h2>Decode：长度先加一，只在新块第一个位置补块</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>自回归 decode 每次只新增 1 个 token。</li><li>最后一个 block 没满时可以继续写入。</li><li>根据 block_table 才能把物理块拼回逻辑序列。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>不要每来一个 token 就搬家；只有当前页写满，才申请下一页。</p>
-            <div class="timeline"><span>len=8: block 满</span><span>len=9: 进入新 block</span><strong>此时分配 1 块</strong></div>
-            <div class="syntax-card"><h4>语法热身：取模判断边界</h4><pre><code>req.seq_len += 1
-need_new = (req.seq_len % block_size) == 1
-if need_new:
-    req.block_table.append(free_blocks.pop(0))
-blocks = [cache[i] for i in req.block_table]
-logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>block_size=4，decode 后 seq_len=9，是否刚进入新 block？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode-growth" value="0">
-                <span>否，因为 9 不是 4 的倍数</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">block_size=4，调用 allocate_for_decode 前 req.seq_len=8；函数开头会先加 1。</p>
+            <p class="predict-q">本次是否需要新物理块？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-decode-boundary" value="0">
+                <span>需要，新增后的长度 9 是新块第一个位置</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode-growth" value="1">
-                <span>只和 request_id 有关</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-decode-boundary" value="1">
+                <span>不需要，因为 8 能被 4 整除</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode-growth" value="2">
-                <span>是，因为 9 % 4 == 1</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-decode-boundary" value="2">
+                <span>需要一次分配两个块</span>
               </label></div>
-            <div class="feedback" data-feedback="paged-decode-growth"></div>
+            <div class="predict-feedback" data-predict-feedback="paged-decode-boundary">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="paged-decode-boundary">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>allocate_for_decode 开头已经执行 req.seq_len += 1，TODO 3 看到的是加入新 token 之后的长度。</li><li>一个 block 的逻辑位置可以看成 1 到 block_size；新块的第一个位置对应新长度除以 block_size 余 1。</li><li>Decode 每次只生成一个 token，因此最多新增一个物理块，不需要 Prefill 那样一次循环分配多块。</li><li>跨块时仍要处理空闲列表为空的 OOM 分支，并把新 block_id 追加到原 block_table 末尾。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>先盯状态变化，不要先背取模公式。block_size=4 时，长度 4 的最后一个位置还在第一块；加入新 token 后长度变成 5，它正好落在第二块第一个位置，此时才需要补块。长度 6、7、8 都继续使用第二块，长度 9 再补第三块。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>旧 seq_len</code><span>表示调用前已经缓存的 token 数</span></div>
+          <div><b>2</b><code>seq_len += 1</code><span>Notebook 已经完成：把本轮新 token 计入长度</span></div>
+          <div><b>3</b><code>判断新位置</code><span>是否刚进入一个新块的第一个槽位</span></div>
+          <div><b>4</b><code>必要时 append</code><span>只取一个空闲物理块，接到块表末尾</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>加一后的 seq_len</th><th>block_size=4 时所在位置</th><th>是否新分配</th></tr></thead>
+          <tbody>
+            <tr><td>5</td><td>第 2 块的第 1 个槽位</td><td>是</td></tr>
+            <tr><td>6</td><td>第 2 块的第 2 个槽位</td><td>否</td></tr>
+            <tr><td>8</td><td>第 2 块的第 4 个槽位</td><td>否</td></tr>
+            <tr><td>9</td><td>第 3 块的第 1 个槽位</td><td>是</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>容易写反的时刻</h4>
+            <p>余数为 0 表示刚填满一块，不是已经进入下一块。因为本函数先加一，所以需要识别的是新块第一个位置。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>测试中的两条边界</h4>
+            <p>长度 6 变 7 不分块；之后变 8 仍不分，变 9 才新增。另一组测试直接检查 4 变 5 必须新增。</p>
+          </section>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：向固定座位排中加入一位新观众</h4><pre><code>people = 8
+seats_per_row = 4
+free_rows = [12, 18]
+used_rows = [3, 9]
+
+people += 1
+starts_new_row = ((people - 1) % seats_per_row) == 0
+if starts_new_row:
+    if not free_rows:
+        raise RuntimeError('NO_ROW')
+    used_rows.append(free_rows.pop(0))</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>people</code> -> <code>req.seq_len</code>，都先增加 1，再判断新元素落在哪里。</li>
+            <li><code>seats_per_row</code> -> <code>self.block_size</code>，是固定块容量。</li>
+            <li><code>starts_new_row</code> -> TODO 3 的 <code>is_new_block_needed</code>；可等价改写为检查新长度对块大小的余数。</li>
+            <li><code>free_rows</code>、<code>used_rows</code> -> <code>self.free_blocks</code>、<code>req.block_table</code>；Notebook 的耗尽异常要求为 OOM。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>block_size=4，加一后的 seq_len=8 时应怎样？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-decode-boundary" value="0">
+                <span>清空 block_table</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-decode-boundary" value="1">
+                <span>新增一块</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-decode-boundary" value="2">
+                <span>继续使用当前块，不新增</span>
+              </label></div>
+              <div class="feedback" data-feedback="paged-decode-boundary"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-growth-0">
-                <span>decode 时先让 seq_len 加 1。</span>
+                <input type="checkbox" data-homework="paged-decode-boundary-0">
+                <span>完成当前练习 TODO 3：基于已经加一后的 req.seq_len 判断是否进入新块；只有需要时才检查 OOM、取一个 ID 并 append。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-growth-1">
-                <span>用取模判断是否需要新 block。</span>
+                <input type="checkbox" data-homework="paged-decode-boundary-1">
+                <span>这里没有新张量：seq_len、block_id 是 Python int，block_table/free_blocks 是 List[int]；不要改 physical_kv_cache 的 [num_blocks, block_size, head_dim]、dtype 或 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-growth-2">
-                <span>按 block_table 取块并 cat，最后截断到真实 seq_len。</span>
+                <input type="checkbox" data-homework="paged-decode-boundary-2">
+                <span>运行 Decode 两组边界测试：6-&gt;7 不新增，8-&gt;9 新增；4-&gt;5 立即新增。若失败，先查是否在加一前判断、是否把余数 0 当成新块，或每步都错误分配。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="paged-cache-reassembly">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">当前练习 TODO 5：索引物理块、沿 token 维拼接并截断</span>
+          </div>
+          <h2>按块表取数：物理地址离散，逻辑 token 仍连续</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">block_size=4、head_dim=8，块表中有 2 个物理块，真实 seq_len=5。</p>
+            <p class="predict-q">先拼接再截断后的返回 shape 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-cache-reassembly" value="0">
+                <span>[5,8]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-cache-reassembly" value="1">
+                <span>[8,8]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-paged-cache-reassembly" value="2">
+                <span>[2,4,8]</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="paged-cache-reassembly">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="paged-cache-reassembly">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]。用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 的列表顺序就是逻辑块顺序，不能按物理 block_id 数值重新排序。</li><li>torch.cat(..., dim=0) 会连接 token 槽位，得到 [已分配块数 * block_size, head_dim]。</li><li>最后一块可能只使用了一部分，因此返回前必须按 req.seq_len 截去未使用槽位。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>块表像一张路线单：逻辑第 0 块可能在物理 7 号，逻辑第 1 块可能在物理 2 号。恢复时按路线单依次取出完整块，沿 token 维首尾相接，再把最后一块尚未使用的尾巴裁掉。</p>
+              <div class="adv-course">
+        <div class="adv-flow">
+          <span>block_table<br>[7, 2, 9]</span><span>物理块 7<br>[B,D]</span><span>物理块 2<br>[B,D]</span><span>物理块 9<br>[B,D]</span><strong>逻辑缓存<br>[seq_len,D]</strong>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>阶段</th><th>shape</th><th>block_size=4、head_dim=64、3 块、seq_len=9</th></tr></thead>
+          <tbody>
+            <tr><td>物理池</td><td>[N,B,D]</td><td>[10,4,64]</td></tr>
+            <tr><td>单个选中块</td><td>[B,D]</td><td>[4,64]</td></tr>
+            <tr><td>拼接后</td><td>[3B,D]</td><td>[12,64]</td></tr>
+            <tr><td>按真实长度截断</td><td>[S,D]</td><td>[9,64]</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>测试怎样识别顺序</h4>
+            <p>三个块分别填入 1.0、2.0、3.0；结果的 0:4、4:8、8:9 必须依次看到这些值。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>测试怎样识别截断</h4>
+            <p>第三块虽然有 4 行槽位，seq_len=9 时只允许返回其中第 1 行；否则 shape 会错误地变成 [12,64]。</p>
+          </section>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：按仓位清单恢复连续货物记录</h4><pre><code>warehouse = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
+route = [3, 1]
+true_items = 5
+
+picked_shelves = [warehouse[shelf_id] for shelf_id in route]
+joined_items = torch.cat(picked_shelves, dim=0)
+visible_items = joined_items[:true_items]
+print(joined_items.shape, visible_items.shape)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>warehouse</code> -> <code>self.physical_kv_cache</code>，第一维是物理块编号。</li>
+            <li><code>route</code> -> <code>req.block_table</code>，必须按列表顺序逐块索引。</li>
+            <li><code>picked_shelves</code> -> TODO 5 的 <code>blocks</code>，每项 shape 为 [block_size, head_dim]。</li>
+            <li><code>joined_items</code> -> <code>cat_blocks</code>；<code>true_items</code> -> <code>req.seq_len</code>，最后只返回真实长度。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>恢复逻辑缓存时，为什么不能先对 req.block_table 的物理 ID 排序？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-cache-reassembly" value="0">
+                <span>列表顺序表示逻辑 token 的先后，排序会打乱序列</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-cache-reassembly" value="1">
+                <span>排序会自动释放物理块</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-paged-cache-reassembly" value="2">
+                <span>排序会把浮点张量变成布尔张量</span>
+              </label></div>
+              <div class="feedback" data-feedback="paged-cache-reassembly"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-cache-reassembly-0">
+                <span>完成当前练习 TODO 5：按 req.block_table 逐块索引，沿 dim=0 拼接；保留函数最后已有的 [:req.seq_len] 截断。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-cache-reassembly-1">
+                <span>shape 账本必须能说清：池 [N,B,D] -&gt; 单块 [B,D] -&gt; 拼接 [块数*B,D] -&gt; 返回 [seq_len,D]；dtype/device 全程继承 physical_kv_cache。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-cache-reassembly-2">
+                <span>运行两组拼装断言：分别得到 [9,64] 与 [5,8]，并核对每段填充值。若失败，检查 cat 是否用了 dim=0、块表顺序是否保留、是否漏掉真实长度截断。</span>
               </label>
           </div>
         </article>
@@ -871,7 +1381,7 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -883,11 +1393,11 @@ logical = torch.cat(blocks, dim=0)[:req.seq_len]</code></pre></div>
 
   <script>
     const levelId = "22";
-    const checkpointData = {"paged-block-table":{"answer":1,"explain":"17 个 token 需要覆盖 0-7、8-15、16 这三段。"},"paged-decode-growth":{"answer":2,"explain":"长度从 8 到 9 时跨入第三个 block 的第一个位置。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"paged-prefill-allocation":{"answer":1,"explain":"先完整检查容量，失败时可以直接抛错，不会先从池里拿走若干块再中断。"},"paged-decode-boundary":{"answer":2,"explain":"长度 8 恰好填满第二块，但还没有 token 进入第三块；下一次变成 9 时才新增。"},"paged-cache-reassembly":{"answer":0,"explain":"物理编号只表示存放地址，编号大小不表示 token 时间顺序；逻辑顺序由块表本身记录。"}};
+    const predictData = {"paged-prefill-allocation":{"answer":0,"revealNote":"6 // 4 虽然等于 1，但剩余 2 个 token 仍需要第二块，所以必须向上取整为 2。"},"paged-decode-boundary":{"answer":0,"revealNote":"判断使用的是加一后的长度 9。逻辑位置 1..4、5..8、9..12 分属三块，因此 9 需要第三块。"},"paged-cache-reassembly":{"answer":0,"revealNote":"两个块先沿 token 维拼成 [8,8]，再按真实序列长度取前 5 行，得到 [5,8]。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

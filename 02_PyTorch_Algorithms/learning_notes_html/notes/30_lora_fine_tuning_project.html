@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 30 | 零基础导学关卡</p>
         <h1>LoRA Fine-Tuning Project</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">30_LoRA_Fine_Tuning_Project.ipynb</span>
           <span class="pill">LoRA</span><span class="pill">Fine-tuning</span><span class="pill">Experiment</span>
@@ -735,174 +986,424 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">quality + trainable params + memory + throughput</div>
       </div>
     </section>
 
 
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 30_LoRA_Fine_Tuning_Project.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>30. LoRA Fine-Tuning Project | LoRA 微调项目</h2>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first</p>
-<p><strong>标签：</strong> <code>项目实战</code>, <code>LoRA</code>, <code>Finetuning</code> | <strong>目标人群：</strong> 模型微调与工程部署</p>
-<p><strong>关键词：</strong> <code>LoRA</code>, <code>training</code>, <code>project</code>, <code>profiling</code></p>
-<h3>前置阅读</h3>
-<p><strong>导语：</strong> 先把训练、对齐和显存优化主线看完，再做 LoRA 项目更能体现跨模块联动。</p>
-<ul>
-<li>[10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)</li>
-<li>[12. Gradient Accumulation | 梯度累积](./12_Gradient_Accumulation.md)</li>
-<li>[27. ZeRO Optimizer Sim | ZeRO 优化器模拟](./27_ZeRO_Optimizer_Sim.md)</li>
-</ul>
-<h3>相关阅读</h3>
-<p><strong>导语：</strong> 项目页之后，建议继续看推理性能和训练性能分析。</p>
-<ul>
-<li>[31. Inference Performance Comparison | 推理性能对比实验](./31_Inference_Performance_Comparison.md)</li>
-<li>[32. Training Performance Analysis | 训练性能分析](./32_Training_Performance_Analysis.md)</li>
-</ul>
-<h3>项目目标</h3>
-<p>这个项目的目标不是再讲一遍 LoRA 原理，而是把它放进一个可交付的微调流程里：先冻结骨干模型，再插入低秩适配器，最后通过训练、显存和速度三条线验证它到底省了什么、换来了什么。</p>
-<ul>
-<li>先把 LoRA 接到一个最小可训练模型上。</li>
-<li>再比较全参数微调和 LoRA 微调在训练参数量、显存占用和训练速度上的差别。</li>
-<li>最后把这些结果和 <code>Part 1</code> 的 profiling 方法串起来，形成一个最小闭环。</li>
-</ul>
-<h3>实验对象</h3>
-<p>这页建议使用一个足够小、但结构完整的语言模型作为骨架，例如一个两层 MLP / GRU 风格的 toy causal LM，或者一个简化的 Transformer block。重点不在模型多大，而在于能不能稳定复现下面三个动作：</p>
-<ul>
-<li>冻结 base model 的大部分参数。</li>
-<li>只为少数线性层注入 LoRA adapter。</li>
-<li>在同一批样本上跑出可比较的 loss 曲线。</li>
-</ul>
-<h3>实现步骤</h3>
-<ul>
-<li><strong>搭建基线</strong>：先得到一个可以正常前向和反向的小模型，记录全参数微调时的训练参数量。</li>
-<li><strong>插入 LoRA</strong>：把 LoRA 加到注意力投影或 MLP 线性层上，明确哪些权重冻结、哪些权重可训练。</li>
-<li><strong>跑训练闭环</strong>：在一小批样本上训练若干步，确认 loss 可以下降。</li>
-<li><strong>记录性能指标</strong>：至少记录 <code>trainable params</code>、<code>peak memory</code>、<code>step time</code> 和 <code>loss curve</code>。</li>
-<li><strong>做对照复盘</strong>：把 LoRA 结果和全参数微调做对照，说明它省了什么、代价是什么。</li>
-</ul>
-<h3>需要记录的指标</h3>
-<p>这个项目至少要留下四类结果，后续才方便和 <code>31 / 32</code> 串起来：</p>
-<ul>
-<li><strong>参数侧</strong>：可训练参数占比、LoRA rank、插入层数。</li>
-<li><strong>资源侧</strong>：峰值显存、激活占用、是否触发明显的 offload 或 checkpointing 变化。</li>
-<li><strong>时间侧</strong>：单步耗时、吞吐、是否出现明显的同步开销。</li>
-<li><strong>效果侧</strong>：loss 是否下降、训练是否稳定、对比 baseline 是否有可见收益。</li>
-</ul>
-<p>如果后面要把这个项目和 profiling 线合起来，最关键的是把 <code>参数侧</code> 和 <code>资源侧</code> 写清楚，因为它们最容易解释 LoRA 到底“轻”在哪里。</p>
-<h3>复盘问题</h3>
-<ul>
-<li>LoRA 省下来的主要是哪些参数和哪一类显存？</li>
-<li>如果把 rank 提高，训练参数和收益会怎么变？</li>
-<li>LoRA 什么时候适合和 gradient accumulation、checkpointing 一起看？</li>
-<li>这个项目的结论，如何接到 <code>Part 1</code> 的 profiling 方法和 <code>Part 2</code> 的训练分析？</li>
-</ul>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>测试</h4>
-      </div>
-    </section>
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="core">
+
+        <article class="lesson-card inquiry" data-lesson="lora-parameter-meaning">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">本关 TODO</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 lora_trainable_params 与 full_linear_params</span>
           </div>
-          <h2>LoRA Fine-Tuning Project：先建立本关直觉</h2>
+          <h2>先认清 LoRA 的两块小矩阵，再数可训练参数</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先冻结 backbone，再插入低秩 A/B 参数。</li><li>项目评价不能只看 loss，还要记录效率指标。</li><li>对比实验必须保持数据和训练设置一致。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>先不要背实现。把本关拆成输入、核心操作、输出三段，写代码时就不容易迷路。</p>
-            
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>1. 先认出本关的核心对象</strong>
-              <p>把 LoRA 放进可交付微调流程，用训练效果、参数量、显存和速度共同验证收益。</p>
-              <div class="concept-badges">
-                <span>LoRA</span><span>Fine-tuning</span><span>Experiment</span>
-              </div>
-            </div>
-            <div class="story-arrow">把名词翻译成张量、函数或训练步骤</div>
-            <div class="story-panel">
-              <strong>2. 再看输入输出关系</strong>
-              <p>每个 notebook 的 TODO 都在训练一种固定动作：先确认输入是什么，再确认输出应该长什么样，最后用测试检查数值或 shape。</p>
-              <div class="mini-pipeline">
-                <span>输入</span><span>核心操作</span><span>输出/测试</span>
-              </div>
-            </div>
-          </div>
-            
-          <div class="syntax-card">
-            <h4>语法热身：读 PyTorch 练习时先抓这三件事</h4>
-            <p>下面是通用读法，不直接等同于本关 notebook 答案。</p>
-            <pre><code># 1. 先看 shape，别急着写公式
-print(x.shape)
-
-# 2. 写模块时，参数通常放在 __init__
-class TinyModule(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.proj = nn.Linear(4, 4, bias=False)
-
-    def forward(self, x):
-        return self.proj(x)
-
-# 3. 测试通常会检查 shape 或数值接近
-assert out.shape[0] == x.shape[0]
-torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
-            <p class="syntax-tip">读法：先找 TODO 附近的输入变量和期望输出，再回到课程区确认这个操作在数学上想做什么。</p>
-          </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>LoRA 项目中最公平的对比方式是什么？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="0">
-                <span>固定数据与训练设置，对比可训练参数、效果和效率</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">一个线性层 in_dim=12、out_dim=20，LoRA rank=3，只统计两块适配器矩阵。</p>
+            <p class="predict-q">LoRA 可训练参数量是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-parameter-meaning" value="0">
+                <span>96</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="1">
-                <span>只比较文件大小</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-parameter-meaning" value="1">
+                <span>240</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="2">
-                <span>每次更换数据集</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-parameter-meaning" value="2">
+                <span>720</span>
               </label></div>
-            <div class="feedback" data-feedback="core"></div>
+            <div class="predict-feedback" data-predict-feedback="lora-parameter-meaning">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="lora-parameter-meaning">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>普通线性权重把 in_dim 个输入特征映射到 out_dim 个输出特征，因此权重表有 in_dim * out_dim 个元素。</li><li>LoRA 不直接训练这张大表，而是训练两个低秩因子：一个把 in_dim 压到 rank，另一个把 rank 展开到 out_dim。</li><li>参数量统计只数矩阵元素，不乘 batch size，也不乘训练样本数。</li><li>本 Notebook 的三个函数输入是 Python 整数，返回 int 或 float；这里还没有创建真实 torch.Tensor。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>先把 rank 理解成一条窄通道。原权重直接从 in_dim 连到 out_dim；LoRA 先经过 rank 个中间方向。两块小矩阵分别有 rank * in_dim 和 out_dim * rank 个参数，相加就是 LoRA 可训练参数量。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>全参数线性层</h4>
+            <div class="adv-flow">
+              <span>输入<br>in_dim</span>
+              <strong>W<br>[out_dim,in_dim]</strong>
+              <span>输出<br>out_dim</span>
+            </div>
+            <p>若只统计权重，不含 bias，参数量是 in_dim * out_dim。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>LoRA 的低秩路径</h4>
+            <div class="adv-flow">
+              <span>输入<br>in_dim</span>
+              <span>A<br>[rank,in_dim]</span>
+              <span>B<br>[out_dim,rank]</span>
+              <strong>增量输出<br>out_dim</strong>
+            </div>
+            <p>两个因子的元素总数是 rank * in_dim + out_dim * rank。</p>
+          </section>
+        </div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>in_dim</code><span>一条输入样本含多少特征</span></div>
+          <div><b>2</b><code>out_dim</code><span>线性层要产生多少输出特征</span></div>
+          <div><b>3</b><code>rank</code><span>LoRA 中间窄通道的宽度</span></div>
+          <div><b>4</b><code>rank * (in_dim + out_dim)</code><span>把两块低秩因子的参数数目相加</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>对象</th><th>概念 shape</th><th>参数量</th><th>是否在模板中创建张量</th></tr></thead>
+          <tbody>
+            <tr><td>完整权重</td><td><code>[out_dim,in_dim]</code></td><td><code>out_dim * in_dim</code></td><td>否，只做整数估算</td></tr>
+            <tr><td>LoRA 因子 A</td><td><code>[rank,in_dim]</code></td><td><code>rank * in_dim</code></td><td>否</td></tr>
+            <tr><td>LoRA 因子 B</td><td><code>[out_dim,rank]</code></td><td><code>out_dim * rank</code></td><td>否</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">当前 Notebook 是“项目参数估算模板”，没有要求真正注入 nn.Linear，也没有编号 TODO。先准确复写三个标量函数并通过断言，再把公式迁移到真实模型。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用图像投影层练习参数计数</h4><pre><code>input_width = 12
+output_width = 20
+bottleneck = 3
+
+factor_down = bottleneck * input_width
+factor_up = output_width * bottleneck
+adapter_count = factor_down + factor_up
+dense_count = input_width * output_width
+
+print(adapter_count, dense_count)  # 96, 240</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；学习目标是能独立复写项目模板函数。</li>
+            <li><code>input_width/output_width/bottleneck</code> -&gt; <code>in_dim/out_dim/rank</code>。</li>
+            <li><code>adapter_count</code> -&gt; <code>lora_trainable_params</code> 的返回语义。</li>
+            <li><code>dense_count</code> -&gt; <code>full_linear_params</code> 的返回语义；不要额外加入 batch 或样本数。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 lora_trainable_params 的公式中 in_dim 和 out_dim 都只乘一次 rank？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-parameter-meaning" value="0">
+                <span>LoRA 有两个因子，分别连接 in_dim - rank 和 rank - out_dim</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-parameter-meaning" value="1">
+                <span>因为 batch size 永远等于 1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-parameter-meaning" value="2">
+                <span>因为完整权重已经被冻结后自动变成 rank 个元素</span>
+              </label></div>
+              <div class="feedback" data-feedback="lora-parameter-meaning"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-0">
-                <span>验证只有 LoRA 参数可训练。</span>
+                <input type="checkbox" data-homework="lora-parameter-meaning-0">
+                <span>当前 Notebook 无 TODO 占位：遮住参考区，独立写出 lora_trainable_params 和 full_linear_params，并用另一组尺寸手算核对。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-1">
-                <span>跑通训练并记录 loss。</span>
+                <input type="checkbox" data-homework="lora-parameter-meaning-1">
+                <span>shape/dtype/device：模板只接收 Python int 并返回 int，没有 tensor shape/dtype/device；迁移到真实 PyTorch 时，LoRA A/B 概念 shape 分别是 [rank,in_dim]、[out_dim,rank]，并应跟随 base weight 的 dtype/device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-2">
-                <span>汇总参数量、耗时和显存结果。</span>
+                <input type="checkbox" data-homework="lora-parameter-meaning-2">
+                <span>测试：用 Notebook 的 in_dim=8、out_dim=8、rank=2，确认 trainable 精确等于 32、full 精确等于 64。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-parameter-meaning-3">
+                <span>常见错误排查：结果偏小检查是否漏掉一个因子；偏大检查是否误乘 in_dim*out_dim*rank；类型异常检查是否把维度写成字符串。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="lora-ratio-and-project-boundary">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 lora_param_ratio，并读懂项目指标与基础断言边界</span>
+          </div>
+          <h2>把参数量变成比例：知道 LoRA 省了什么，也知道测试没证明什么</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">保持 in_dim 与 out_dim 不变，把 LoRA rank 从 8 提高到 16。</p>
+            <p class="predict-q">只看 Notebook 的参数公式，trainable 参数量与 ratio 会怎样变化？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-ratio-and-project-boundary" value="0">
+                <span>两者都变为原来的 2 倍</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-ratio-and-project-boundary" value="1">
+                <span>trainable 不变，ratio 减半</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-ratio-and-project-boundary" value="2">
+                <span>两者都变为原来的 4 倍</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="lora-ratio-and-project-boundary">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="lora-ratio-and-project-boundary">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>比例的分子是 LoRA 可训练参数量，分母是完整线性权重参数量；两者必须描述同一个 in_dim/out_dim 层。</li><li>Python 的 / 返回浮点数；例如 32/64 得 0.5，格式化为百分比才显示 50%。</li><li>rank 增大时，LoRA 参数量线性增大；完整权重参数量不随 rank 改变。</li><li>参数更少通常会减少参数、梯度和优化器状态开销，但当前模板没有实际测 peak memory、step time 或 loss。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>绝对参数量回答“要训练多少个数”，比例回答“相对完整权重只训练多少”。比例越小，参数侧越轻；但训练效果、激活显存和速度必须另外测，不能从一个比例函数直接推出。</p>
+              <div class="adv-course">
+        <div class="adv-contract">
+          <span>分子</span><strong>LoRA trainable = rank * (in_dim + out_dim)</strong>
+          <span>分母</span><strong>full linear = in_dim * out_dim</strong>
+          <span>比例</span><strong>trainable / full，返回 float</strong>
+          <span>rank 趋势</span><strong>rank 翻倍时分子与比例都翻倍</strong>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>基础测试真正证明的事</h4>
+            <div class="adv-checks">
+              <span>trainable 公式<br>8,8,2 -&gt; 32</span>
+              <span>full 公式<br>8,8 -&gt; 64</span>
+              <span>ratio 数值<br>接近 0.5</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>基础测试尚未证明的事</h4>
+            <div class="adv-checks">
+              <span>base model 是否冻结</span>
+              <span>loss 是否下降</span>
+              <span>peak memory 是否减少</span>
+              <span>step time 是否更快</span>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>参数侧</b>rank、插入层数、trainable ratio</span>
+          <span><b>资源侧</b>peak memory、激活与优化器状态</span>
+          <span><b>时间侧</b>step time、吞吐与同步</span>
+          <span><b>效果侧</b>loss 曲线与稳定性</span>
+        </div>
+
+        <div class="adv-callout">项目结论要分层写：参数公式是确定的；显存、速度和效果是实验结果。不要把“可训练参数少”直接写成“训练一定更快、总显存一定按同比例下降”。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用多个适配层汇总参数比例</h4><pre><code>layers = [
+    {'in': 24, 'out': 32, 'rank': 4},
+    {'in': 32, 'out': 16, 'rank': 2},
+]
+
+adapter_total = sum(x['rank'] * (x['in'] + x['out']) for x in layers)
+dense_total = sum(x['in'] * x['out'] for x in layers)
+trainable_share = adapter_total / dense_total
+print(f'{trainable_share:.2%}')</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；<code>trainable_share</code> -&gt; <code>lora_param_ratio</code> 的单层返回值。</li>
+            <li><code>adapter_total</code> 的单层项 -&gt; <code>lora_trainable_params</code>。</li>
+            <li><code>dense_total</code> 的单层项 -&gt; <code>full_linear_params</code>。</li>
+            <li>多层汇总是独立扩展场景；Notebook 基础断言只校验单层 8x8、rank=2。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>Notebook 的 ratio=0.5 基础断言能够直接证明哪件事？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-ratio-and-project-boundary" value="0">
+                <span>LoRA 的 loss 一定优于全参数微调</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-ratio-and-project-boundary" value="1">
+                <span>在 8x8、rank=2 的参数公式下，LoRA 参数数是完整权重的一半</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-ratio-and-project-boundary" value="2">
+                <span>真实训练峰值显存一定减少一半</span>
+              </label></div>
+              <div class="feedback" data-feedback="lora-ratio-and-project-boundary"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-ratio-and-project-boundary-0">
+                <span>当前 Notebook 无 TODO 占位：独立实现 lora_param_ratio，必须复用同一组 in_dim/out_dim/rank 的分子与分母语义。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-ratio-and-project-boundary-1">
+                <span>shape/dtype/device：模板返回 Python float，无 tensor shape/device；真实 LoRA 指标记录时另行核对 A/B shape、参数 dtype/device 与冻结状态，不能从 ratio 推断。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-ratio-and-project-boundary-2">
+                <span>测试：运行 test_lora_project_template，确认 abs(ratio - 0.5) &amp;lt; 1e-12；再用 rank 翻倍的自测验证比例线性变化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-ratio-and-project-boundary-3">
+                <span>常见错误排查：比例大于预期时检查分子分母是否颠倒、是否把百分数再乘 100；项目结论过度时检查是否把未测的显存/速度/loss 当成断言结果。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="lora-project-measurement-contract">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：把参数模板迁移为 LoRA 项目的可比实验记录</span>
+          </div>
+          <h2>从公式走向可交付实验：四类指标必须在同一配置下记录</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">某次 LoRA 实验的 trainable ratio 很低，但没有记录 batch、step time 或 loss。</p>
+            <p class="predict-q">下面哪条结论最严谨？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-project-measurement-contract" value="0">
+                <span>只能确认参数侧较轻，速度与效果仍需在公平配置下测量</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-project-measurement-contract" value="1">
+                <span>已经证明训练一定更快且 loss 更低</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-lora-project-measurement-contract" value="2">
+                <span>已经证明激活显存也按同比例下降</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="lora-project-measurement-contract">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="lora-project-measurement-contract">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Notebook Markdown 要求比较全参数微调与 LoRA，但代码单元目前只提供三个参数估算函数。</li><li>公平对照意味着模型骨架、样本、训练步数、batch、学习率与计时口径尽量一致，只改变微调方式。</li><li>trainable params 是参数侧指标；peak memory、step time 与 loss curve 分属资源、时间和效果侧。</li><li>LoRA 主要直接减少可训练参数、梯度和优化器状态；激活仍由前向图产生，未必按参数比例下降。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>一个可交付结论不是“LoRA 很省”，而是一行有上下文的数据：在相同模型和样本下，rank 是多少、插了几层、可训练比例多少、峰值显存和单步时间多少、loss 是否稳定下降。</p>
+              <div class="adv-course">
+        <div class="adv-map">
+          <h4>同一实验行应回答的四类问题</h4>
+          <div class="adv-grid two">
+            <section class="adv-panel blue"><h4>参数侧</h4><p>trainable params、ratio、rank、adapter 插入层数。</p></section>
+            <section class="adv-panel neutral"><h4>资源侧</h4><p>peak memory、激活、是否使用 checkpointing/offload。</p></section>
+            <section class="adv-panel good"><h4>时间侧</h4><p>step time、吞吐、warmup 与测量步数。</p></section>
+            <section class="adv-panel warn"><h4>效果侧</h4><p>loss 曲线、最终 loss、是否出现不稳定。</p></section>
+          </div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>对照项</th><th>必须保持一致</th><th>允许改变</th><th>结论范围</th></tr></thead>
+          <tbody>
+            <tr><td>全参数 baseline</td><td>模型、数据、batch、步数、计时口径</td><td>全部参数 requires_grad</td><td>完整训练成本</td></tr>
+            <tr><td>LoRA</td><td>同上</td><td>冻结 base、rank、插入层</td><td>适配器训练成本</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-flow">
+          <span>冻结 base</span>
+          <span>注入少数 adapter</span>
+          <span>同批样本训练</span>
+          <span>记录四类指标</span>
+          <strong>写“收益 + 代价”</strong>
+        </div>
+
+        <div class="adv-callout">基础测试通过只代表参数估算函数正确。完整项目还需要真实训练、显存和计时数据；这部分在当前 Notebook 中是实验延伸，不是隐藏的代码断言。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用统一字典记录另一组微调实验</h4><pre><code>run = {
+    'method': 'adapter',
+    'rank': 4,
+    'inserted_layers': 3,
+    'trainable_params': 720,
+    'peak_mem_mb': 384.0,
+    'step_time_ms': 21.6,
+    'losses': [1.8, 1.5, 1.3],
+}
+assert run['losses'][-1] &lt;= run['losses'][0]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；<code>trainable_params</code> -&gt; 参数估算函数输出及“参数侧”记录。</li>
+            <li><code>rank/inserted_layers</code> -&gt; Markdown 要求写清的 LoRA 配置。</li>
+            <li><code>peak_mem_mb/step_time_ms/losses</code> -&gt; 资源、时间、效果三条实验线。</li>
+            <li>这个字典是独立记录支架，不替代 Notebook 的三个基础函数和断言。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>比较全参数微调与 LoRA 时，哪一种做法能让结论最可信？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-project-measurement-contract" value="0">
+                <span>两边使用不同模型，再直接比较总耗时</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-project-measurement-contract" value="1">
+                <span>LoRA 用更短数据并只报告最好一次</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-lora-project-measurement-contract" value="2">
+                <span>固定模型、样本、batch、训练步数和测量口径，只改变微调方式</span>
+              </label></div>
+              <div class="feedback" data-feedback="lora-project-measurement-contract"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-project-measurement-contract-0">
+                <span>当前 Notebook 无 TODO 占位：先跑通三个参数函数，再按 Markdown 的四类指标为 full/LoRA 各设计一条同字段记录。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-project-measurement-contract-1">
+                <span>shape/dtype/device：模板标量无 tensor shape/device；真实实验需记录输入 shape/batch、LoRA A/B dtype/device，并确认 base 参数被冻结、adapter 参数可训练。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-project-measurement-contract-2">
+                <span>测试：保留 test_lora_project_template 的 32、64、0.5 三个断言；新增实验记录时不要声称这些断言覆盖 peak memory、step time 或 loss。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="lora-project-measurement-contract-3">
+                <span>常见错误排查：对照不可比时检查数据与配置是否一致；显存不降时区分参数状态与激活；loss 不降时检查 requires_grad、adapter 插入层和学习率。</span>
               </label>
           </div>
         </article>
@@ -910,7 +1411,7 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -922,11 +1423,11 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
   <script>
     const levelId = "30";
-    const checkpointData = {"core":{"answer":0,"explain":"控制变量后，指标差异才可归因于微调方案。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
+    const checkpointData = {"lora-parameter-meaning":{"answer":0,"explain":"两个低秩矩阵分别含 rank*in_dim 与 out_dim*rank 个元素，相加即可。"},"lora-ratio-and-project-boundary":{"answer":1,"explain":"该断言只检查参数算术；训练显存、速度和效果都需要额外实验。"},"lora-project-measurement-contract":{"answer":2,"explain":"单变量对照能把观察到的差异尽量归因于微调方式，而不是数据或配置变化。"}};
+    const predictData = {"lora-parameter-meaning":{"answer":0,"revealNote":"3 * 12 + 20 * 3 = 36 + 60 = 96；240 是完整线性权重参数量。"},"lora-ratio-and-project-boundary":{"answer":0,"revealNote":"LoRA 参数量对 rank 是一次函数；完整权重参数量不变，因此比例也随 rank 线性翻倍。"},"lora-project-measurement-contract":{"answer":0,"revealNote":"参数比例只覆盖参数侧；资源、时间和效果需要各自的观测值与一致实验条件。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

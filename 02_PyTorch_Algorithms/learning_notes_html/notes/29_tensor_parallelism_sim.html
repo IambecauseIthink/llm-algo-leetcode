@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 29 | 零基础导学关卡</p>
         <h1>Tensor Parallelism Sim</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">29_Tensor_Parallelism_Sim.ipynb</span>
           <span class="pill">Tensor Parallelism</span><span class="pill">All-Gather</span><span class="pill">All-Reduce</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">column: concat(XW_i); row: sum(X_iW_i)</div>
       </div>
@@ -746,120 +997,431 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="tp-column">
+
+        <article class="lesson-card inquiry" data-lesson="tp-column-slice-compute-gather">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 1-3：Column Parallel 的权重分片、局部矩阵乘法与 All-Gather</span>
           </div>
-          <h2>Tensor Parallel 列切分：每张卡算一部分输出特征</h2>
+          <h2>Column Parallel：切输出列，每张卡只产出一段特征</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>Linear 可写成 X @ A。</li><li>沿 A 的列切分，相当于把输出特征切给不同 GPU。</li><li>每张卡得到部分输出，最后沿特征维拼接。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>一张大表的列太多，就分给多个人各算几列，最后把列并回去。</p>
-            <div class="matrix-flow"><span>X</span><span>A 列切成 A0/A1</span><span>X@A0, X@A1</span><strong>cat dim=1</strong></div>
-            <div class="syntax-card"><h4>语法热身：按列 chunk 再拼接</h4><pre><code>shards = torch.chunk(A, world_size, dim=1)
-partials = [X @ shard for shard in shards]
-out = torch.cat(partials, dim=1)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>列切分 A 后，每张 GPU 拿到的是哪一部分权重？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-column" value="0">
-                <span>一部分 batch 样本</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">设 X 是 [4,16]，A 是 [16,32]，两张卡平均切 A 的输出列。</p>
+            <p class="predict-q">第 1 张卡完成局部矩阵乘法后，y_local 的 shape 应该是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-column-slice-compute-gather" value="0">
+                <span>[4,16]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-column" value="1">
-                <span>完整 A 的副本</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-column-slice-compute-gather" value="1">
+                <span>[2,32]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-column" value="2">
-                <span>一部分输出列</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-column-slice-compute-gather" value="2">
+                <span>[4,32]</span>
               </label></div>
-            <div class="feedback" data-feedback="tp-column"></div>
+            <div class="predict-feedback" data-predict-feedback="tp-column-slice-compute-gather">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="tp-column-slice-compute-gather">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>先给维度起名字：X 是 [batch, in_features]，A 是 [in_features, out_features]，完整结果 Y 是 [batch, out_features]。</li><li>Column Parallel 中的 column 指 A 的列，也就是输出特征。输入 X 不切，它会交给每张卡。</li><li>二维切片 A[:, start:end] 保留全部输入行，只取一段输出列；矩阵乘法的中间维必须同为 in_features。</li><li>torch.cat 是拼接，不做数值相加。沿 dim=1 拼接后，输出特征数才会恢复为 out_features。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把线性层想成同时计算很多个输出栏目。每张卡负责其中一组栏目：它们都读取同一份 X，但只保存 A 的一部分列。局部结果本来就是最终 Y 的不同列，所以最后按列排回去，不需要把数值相加。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>先读契约</b>X [B,I]，A [I,O]</span>
+          <span><b>按列切 A</b>每片 [I,O/G]</span>
+          <span><b>各卡局部算</b>X @ A_g 得 [B,O/G]</span>
+          <span><b>All-Gather</b>沿输出维拼成 [B,O]</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>变量先有语义，再看下标</h4>
+            <div class="adv-contract">
+              <span><code>chunk_size</code></span><strong>每张卡负责的输出特征数 O/G</strong>
+              <span><code>start_idx:end_idx</code></span><strong>第 i 张卡在 A 的列区间</strong>
+              <span><code>a_chunk</code></span><strong>局部权重 [I,O/G]</strong>
+              <span><code>y_local</code></span><strong>局部输出 [B,O/G]</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>两张卡的真实数据流</h4>
+            <div class="adv-flow">
+              <span>X [B,I]<br>两卡共享</span>
+              <span>A0 [I,O/2]<br>A1 [I,O/2]</span>
+              <span>Y0 [B,O/2]<br>Y1 [B,O/2]</span>
+              <strong>cat dim=1<br>Y [B,O]</strong>
+            </div>
+            <p>Y0 与 Y1 覆盖不同的输出列，拼接顺序必须与权重切片顺序一致。</p>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>动作</th><th>输入 shape</th><th>输出 shape</th><th>不变量</th></tr></thead>
+          <tbody>
+            <tr><td>TODO 1 切权重列</td><td><code>A [I,O]</code></td><td><code>a_chunk [I,O/G]</code></td><td>输入维 I 不变</td></tr>
+            <tr><td>TODO 2 局部乘法</td><td><code>X [B,I] @ a_chunk [I,O/G]</code></td><td><code>y_local [B,O/G]</code></td><td>中间维 I 对齐</td></tr>
+            <tr><td>TODO 3 拼接</td><td>G 个 <code>[B,O/G]</code></td><td><code>Y_tp [B,O]</code></td><td>batch B 不变</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">Notebook 已在函数入口断言 O 能被 G 整除。不要把 Column Parallel 误解成切 X：这一页的 TODO 1 只切 A 的列，TODO 2 的每张卡仍使用完整 X。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用商品特征练习按输出列分片</h4><pre><code>samples = torch.randn(3, 6)       # [B=3, I=6]
+projection = torch.randn(6, 12)  # [I=6, O=12]
+workers = 3
+width = projection.shape[1] // workers
+
+local_outputs = []
+for worker in range(workers):
+    left = worker * width
+    right = left + width
+    local_weight = projection[:, left:right]  # [6, 4]
+    local_outputs.append(samples @ local_weight)
+
+joined = torch.cat(local_outputs, dim=1)       # [3, 12]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>projection</code> -&gt; <code>A</code>；<code>workers</code> -&gt; <code>num_gpus</code>。</li>
+            <li><code>left/right</code> -&gt; <code>start_idx/end_idx</code>；列切片语法支撑 TODO 1。</li>
+            <li><code>samples @ local_weight</code> -&gt; TODO 2 的 X 与本地权重相乘。</li>
+            <li><code>torch.cat(..., dim=1)</code> -&gt; TODO 3 的输出特征拼接；不要改成 sum。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>Column Parallel 的多个 y_local 为什么要沿 dim=1 拼接？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column-slice-compute-gather" value="0">
+                <span>它们是不同 batch，必须沿 dim=0 拼接</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column-slice-compute-gather" value="1">
+                <span>它们是同一输出的部分和，必须先求和</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-column-slice-compute-gather" value="2">
+                <span>它们是同一批样本的不同输出特征列</span>
+              </label></div>
+              <div class="feedback" data-feedback="tp-column-slice-compute-gather"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-column-0">
-                <span>沿列方向切分权重 A。</span>
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-0">
+                <span>完成 TODO 1-3：先写出每行代码前后的 shape，再依次实现列切片、局部矩阵乘法和按特征维拼接。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-column-1">
-                <span>每张 GPU 用本地权重分片做矩阵乘法。</span>
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-1">
+                <span>shape/dtype/device：a_chunk 应为 [in_features,out_features/num_gpus]，y_local 为 [batch,out_features/num_gpus]；切片和矩阵乘法会保持 X/A 原有 dtype 与 device，不要另造 CPU 张量。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-column-2">
-                <span>确认每个 local_out 的 batch 维不变、输出特征变少。</span>
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-2">
+                <span>测试：运行 test_tensor_parallel，重点核对 Y_col.shape == Y_ref.shape 且最大绝对误差小于 1e-5。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-3">
+                <span>常见错误排查：若 shape 少一半，检查是否漏了 cat；若乘法报错，检查是否切了 A 的 dim=0；若列顺序错，检查分片 append 顺序。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="tp-allgather">
+        <article class="lesson-card inquiry" data-lesson="tp-row-slice-compute-reduce">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3</span>
+            <span class="todo-pill">TODO 4-6：Row Parallel 的输入/权重同步分片、局部乘法与 All-Reduce</span>
           </div>
-          <h2>All-Gather：把列切分结果拼回完整输出</h2>
+          <h2>Row Parallel：同步切输入维，每张卡算完整输出的部分和</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>列切分后，每张卡得到的是不同输出特征列。</li><li>这些 partial outputs 的 batch 维相同。</li><li>All-Gather 在这个模拟里就是沿特征维拼接。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>每张卡像各自算出一摞列，最后按原来的列顺序横向贴回去，得到完整 Y。</p>
-            <div class="sum-flow"><span>Y0: [batch, out/2]</span><span>Y1: [batch, out/2]</span><strong>cat dim=1 -> [batch, out]</strong></div>
-            <div class="syntax-card"><h4>语法热身：沿特征维拼接 partial outputs</h4><pre><code>gpu_outputs = [X @ shard for shard in weight_shards]
-Y_gathered = torch.cat(gpu_outputs, dim=1)
-assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>Column Parallel 的 partial outputs 应该如何合并？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-allgather" value="0">
-                <span>沿特征维拼接</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">X 是 [4,16]，A 是 [16,32]，两张卡沿输入维切分。</p>
+            <p class="predict-q">每张卡的 x_chunk、a_chunk、y_local shape 依次是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-row-slice-compute-reduce" value="0">
+                <span>[4,8]、[8,32]、[4,32]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-allgather" value="1">
-                <span>沿 batch 维拼接</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-row-slice-compute-reduce" value="1">
+                <span>[2,16]、[16,16]、[2,16]</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-tp-allgather" value="2">
-                <span>逐元素相加</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-row-slice-compute-reduce" value="2">
+                <span>[4,16]、[8,32]、[4,32]</span>
               </label></div>
-            <div class="feedback" data-feedback="tp-allgather"></div>
+            <div class="predict-feedback" data-predict-feedback="tp-row-slice-compute-reduce">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="tp-row-slice-compute-reduce">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Row Parallel 中的 row 指 A 的行，也就是输入特征。A 按 dim=0 切时，X 必须按自己的 dim=1 切同一段特征。</li><li>局部 X 是 [batch, in_features/G]，局部 A 是 [in_features/G, out_features]，两者仍可做矩阵乘法。</li><li>每张卡的 y_local 都是 [batch, out_features]；它只包含一部分输入特征带来的贡献。</li><li>torch.stack 会新增 GPU 维得到 [G,batch,out_features]，再沿 dim=0 求和才模拟 All-Reduce Sum。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>完整点积本来就是把每个输入特征的乘积加起来。Row Parallel 只是把这串加法分给多张卡：每张卡用相同的一段输入特征和对应的权重行算一个部分和，最后逐元素相加。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>不能只切权重</h4>
+            <div class="adv-flow">
+              <span>X [B,I]</span>
+              <span>A_g [I/G,O]</span>
+              <strong>中间维不相等<br>无法相乘</strong>
+            </div>
+            <p>A 的行缩短后，X 的特征列也必须取完全相同的 start:end 区间。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>同步切片后的局部乘法</h4>
+            <div class="adv-flow">
+              <span>X_g [B,I/G]</span>
+              <span>A_g [I/G,O]</span>
+              <strong>Y_g [B,O]</strong>
+            </div>
+            <p>每张卡都产出完整输出 shape，但数值上只是部分贡献。</p>
+          </section>
+        </div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>x_chunk = X[:, start:end]</code><span>切 X 的特征列，保留所有样本</span></div>
+          <div><b>2</b><code>a_chunk = A[start:end, :]</code><span>切 A 的输入行，保留所有输出列</span></div>
+          <div><b>3</b><code>y_local = x_chunk @ a_chunk</code><span>得到 [B,O] 的部分和</span></div>
+          <div><b>4</b><code>stack then sum dim=0</code><span>新增卡维后逐元素归约</span></div>
+        </div>
+
+        <div class="adv-contract">
+          <span>代数拆分</span><strong>X @ A = X0 @ A0 + X1 @ A1 + ...</strong>
+          <span>切片配对</span><strong>X 的第 g 段特征必须对应 A 的第 g 段输入行</strong>
+          <span>通信语义</span><strong>All-Reduce Sum 合并数值贡献，不是拼接 shape</strong>
+        </div>
+
+        <div class="adv-callout">看到多个局部结果 shape 都是 [B,O] 时，要问“它们是不同区域，还是同一区域的部分值？”Row Parallel 属于后者，所以 TODO 6 是求和。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用传感器分组练习同步切输入和权重</h4><pre><code>readings = torch.randn(5, 8)    # [B=5, I=8]
+decoder = torch.randn(8, 3)    # [I=8, O=3]
+workers = 4
+span = readings.shape[1] // workers
+
+partial_sums = []
+for worker in range(workers):
+    lo = worker * span
+    hi = lo + span
+    local_x = readings[:, lo:hi]
+    local_w = decoder[lo:hi, :]
+    partial_sums.append(local_x @ local_w)
+
+merged = torch.stack(partial_sums, dim=0).sum(dim=0)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>readings/decoder</code> -&gt; <code>X/A</code>；两处使用同一个 <code>lo:hi</code> 支撑 TODO 4。</li>
+            <li><code>local_x @ local_w</code> -&gt; TODO 5 的本地部分和。</li>
+            <li><code>partial_sums</code> -&gt; Notebook 的 <code>y_outputs</code>；列表名不同不改变语义。</li>
+            <li><code>stack(...).sum(dim=0)</code> -&gt; TODO 6 的 All-Reduce Sum 模拟。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>Row Parallel 中，为什么不能用 torch.cat(y_outputs, dim=1) 恢复结果？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row-slice-compute-reduce" value="0">
+                <span>每个 y_local 已覆盖相同的 [batch,out_features] 区域，应该逐元素求和</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row-slice-compute-reduce" value="1">
+                <span>cat 只能处理整数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-row-slice-compute-reduce" value="2">
+                <span>因为 y_outputs 中只能有一个张量</span>
+              </label></div>
+              <div class="feedback" data-feedback="tp-row-slice-compute-reduce"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-allgather-0">
-                <span>收集每张 GPU 的 local_out。</span>
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-0">
+                <span>完成 TODO 4-6：用同一 start_idx:end_idx 同步切 X 的 dim=1 与 A 的 dim=0，再完成局部乘法和按卡维求和。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-allgather-1">
-                <span>用 torch.cat(gpu_outputs, dim=1) 模拟 All-Gather。</span>
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-1">
+                <span>shape/dtype/device：x_chunk 为 [batch,in_features/num_gpus]，a_chunk 为 [in_features/num_gpus,out_features]，每个 y_local 为 [batch,out_features]；切片保持原 dtype/device，stack 要求各结果一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="tp-allgather-2">
-                <span>和单卡 X @ A 的输出做数值比较。</span>
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-2">
+                <span>测试：运行 test_tensor_parallel，核对 Y_row.shape 与 Y_ref 相同，且 diff_row 小于 1e-5。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-3">
+                <span>常见错误排查：矩阵维不匹配时检查两处切片区间；输出宽度变大时检查是否误用 cat；数值偏差大时检查 sum 是否沿新加的 dim=0。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="tp-contract-tests-and-composition">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 1-6 收口：对照 Y_ref、理解整除约束与 Column -&amp;gt; Row 组合</span>
+          </div>
+          <h2>从两种通信回到测试：shape 对了，还要证明数值等价</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">某个 Row Parallel 实现返回 [4,64]，而 Y_ref 是 [4,32]。</p>
+            <p class="predict-q">最可能发生了什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-contract-tests-and-composition" value="0">
+                <span>把两个 [4,32] 部分和沿 dim=1 拼接了</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-contract-tests-and-composition" value="1">
+                <span>A 的输出列被正确拼接</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-tp-contract-tests-and-composition" value="2">
+                <span>最大绝对误差恰好为 0</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="tp-contract-tests-and-composition">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="tp-contract-tests-and-composition">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Y_ref = X @ A 是单卡基准；并行模拟的目标不是得到相近 shape，而是得到同一个矩阵。</li><li>torch.max(torch.abs(Y_ref - Y_tp)) 给出最大绝对误差，测试要求 Column 和 Row 都小于 1e-5。</li><li>Column 的局部输出分占不同列，通信是拼接；Row 的局部输出重叠在同一 shape，通信是求和。</li><li>两种函数都要求被切维度能被 num_gpus 整除：Column 检查 out_features，Row 检查 in_features。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>判断通信方式只需要追踪局部结果在最终 Y 中的位置。位置互不重叠就拼接；位置相同但各自只有部分数值就求和。测试用 shape 保护位置，用误差保护数值。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>Column：区域不同</h4>
+            <div class="adv-contract">
+              <span>切分轴</span><strong>A dim=1，输出特征轴</strong>
+              <span>局部 shape</span><strong>[B,O/G]</strong>
+              <span>合并动作</span><strong>cat dim=1</strong>
+              <span>通信类比</span><strong>All-Gather</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>Row：区域相同</h4>
+            <div class="adv-contract">
+              <span>切分轴</span><strong>A dim=0 与 X dim=1</strong>
+              <span>局部 shape</span><strong>[B,O]</strong>
+              <span>合并动作</span><strong>stack 后 sum dim=0</strong>
+              <span>通信类比</span><strong>All-Reduce Sum</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-checks">
+          <span><strong>shape 检查</strong><br>Y_tp 与 Y_ref 完全一致</span>
+          <span><strong>数值检查</strong><br>max abs diff &lt; 1e-5</span>
+          <span><strong>Column 约束</strong><br>O % G == 0</span>
+          <span><strong>Row 约束</strong><br>I % G == 0</span>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>W1 按列切</b>各卡得到一段隐藏特征</span>
+          <span><b>中间不急着聚合</b>局部隐藏特征直接进入下一层</span>
+          <span><b>W2 按行切</b>各卡计算输出部分和</span>
+          <span><b>末尾归约</b>一次 All-Reduce 得完整输出</span>
+        </div>
+
+        <div class="adv-callout">Notebook 的两段“维度约束检查”都用 try/except 捕获 AssertionError，也会捕获块内手工抛出的同类异常。它们不能单独证明函数一定拒绝非法维度；真正的约束来自两个函数入口已经写好的 assert。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用独立分片函数做 shape 与数值双检查</h4><pre><code>features = torch.randn(2, 10)
+weight = torch.randn(10, 6)
+reference = features @ weight
+
+left = features @ weight[:, :3]
+right = features @ weight[:, 3:]
+candidate = torch.cat([left, right], dim=1)
+
+assert candidate.shape == reference.shape
+error = (candidate - reference).abs().max()
+assert error &lt; 1e-5</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>reference</code> -&gt; 测试里的 <code>Y_ref</code>。</li>
+            <li><code>left/right</code> -&gt; Column TODO 2 产生的各个 <code>y_local</code>。</li>
+            <li><code>candidate</code> -&gt; TODO 3 或 TODO 6 返回的 <code>Y_tp</code>。</li>
+            <li><code>shape</code> 与 <code>error</code> 两道检查 -&gt; Notebook 对 Y_col/Y_row 的断言顺序。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>以下哪组“切分维度 -&amp;gt; 合并动作”与 Notebook 完全一致？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-contract-tests-and-composition" value="0">
+                <span>Column: X dim=0 -&amp;gt; sum；Row: A dim=1 -&amp;gt; cat</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-contract-tests-and-composition" value="1">
+                <span>Column: A dim=1 -&amp;gt; cat dim=1；Row: X dim=1 与 A dim=0 -&amp;gt; sum</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-tp-contract-tests-and-composition" value="2">
+                <span>Column 与 Row 都沿 batch 切分并取平均</span>
+              </label></div>
+              <div class="feedback" data-feedback="tp-contract-tests-and-composition"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-0">
+                <span>收口 TODO 1-6：在每个 append 和最终 return 前打印一次 shape，确认 Column 是分列后拼接，Row 是同 shape 部分和后归约。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-1">
+                <span>shape/dtype/device：最终 Y_col/Y_row 都应与 Y_ref 的 [batch,out_features]、dtype、device 一致；本 CPU-first Notebook 不应主动迁移设备或改精度。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-2">
+                <span>测试：完整运行 test_tensor_parallel，记录 diff_col 与 diff_row；同时手工调用一次非法 Column 输出维度和非法 Row 输入维度，确认入口 assert 真正触发。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-3">
+                <span>常见错误排查：shape 错先查切分/合并轴，shape 对但误差大再查分片顺序、X/A 区间配对和求和维度。</span>
               </label>
           </div>
         </article>
@@ -867,7 +1429,7 @@ assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -879,11 +1441,11 @@ assert Y_gathered.shape[1] == A.shape[1]</code></pre></div>
 
   <script>
     const levelId = "29";
-    const checkpointData = {"tp-column":{"answer":2,"explain":"A 的 dim=1 是 out_features，切列就是把不同输出特征分给不同 GPU。"},"tp-allgather":{"answer":0,"explain":"列切分得到的是不同输出列，所以要沿 dim=1 拼接回完整输出。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"tp-column-slice-compute-gather":{"answer":2,"explain":"局部权重按 A 的列切开，局部输出自然对应 Y 的不同列；dim=1 正是输出特征维。"},"tp-row-slice-compute-reduce":{"answer":0,"explain":"这些输出是同一结果的部分和，不是互不重叠的输出列；拼接会错误地把 out_features 扩大 G 倍。"},"tp-contract-tests-and-composition":{"answer":1,"explain":"Column 拆输出列，所以拼接；Row 拆点积的输入项，所以同步切 X/A 后求和。"}};
+    const predictData = {"tp-column-slice-compute-gather":{"answer":0,"revealNote":"每张卡保留全部 4 个样本，只负责 32/2=16 个输出特征，因此是 [4,16]。"},"tp-row-slice-compute-reduce":{"answer":0,"revealNote":"输入特征 16 被平分为 8；局部乘法的输出特征仍是完整的 32。"},"tp-contract-tests-and-composition":{"answer":0,"revealNote":"Row 的每个局部输出本来就是 [4,32]；cat 会把宽度错误地扩大到 64，正确动作是逐元素求和。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

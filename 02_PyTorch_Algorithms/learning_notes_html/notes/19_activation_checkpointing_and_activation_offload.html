@@ -710,13 +710,264 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
+        <span class="pill" id="predict-count">预判 0 / 2</span>
         <span class="pill" id="status">闯关题：0 / 2</span>
         <span class="pill" id="xp">XP 0 / 200</span>
       </div>
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 19 | 零基础导学关卡</p>
         <h1>Activation Checkpointing and Activation Offload</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">19_Activation_Checkpointing_and_Activation_Offload.ipynb</span>
           <span class="pill">Checkpointing</span><span class="pill">Offload</span><span class="pill">Memory</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">less activation memory ↔ recompute / transfer overhead</div>
       </div>
@@ -746,123 +997,281 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="gc-activation-memory">
+
+        <article class="lesson-card inquiry" data-lesson="checkpoint-recompute-state-flow">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念准备</span>
+            <span class="todo-pill">核心机制：理解 run_with_checkpointing 要改变什么</span>
           </div>
-          <h2>Gradient Checkpointing：少存激活，多算一次</h2>
+          <h2>先看显存账本：少保存激活，反向时再重算</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>反向传播需要用到前向保存的中间激活。</li><li>深层网络保存所有激活会占很多显存。</li><li>checkpoint 会丢掉部分激活，反向时重算。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>像不保存每一步草稿，只保存关键页码；需要复查时再把中间步骤重新算一遍。</p>
-            <div class="flow"><span>普通: 保存 a1,a2,a3</span><span>checkpoint: 保存输入</span><strong>反向时重算 a1,a2,a3</strong></div>
-            <div class="syntax-card"><h4>语法热身：包装一个函数</h4><pre><code>from torch.utils.checkpoint import checkpoint
-def block_forward(x):
-    return block(x)
-y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>Gradient Checkpointing 用什么换显存？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-activation-memory" value="0">
-                <span>更大的 batch size 自动出现</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">同一个 block 的参数、输入和随机状态都不变，只把普通前向换成 checkpoint 管理。</p>
+            <p class="predict-q">最终 block 输出的 shape 应怎样变化？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="0">
+                <span>不变，仍与该 block 原输出一致</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-activation-memory" value="1">
-                <span>更多计算时间</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="1">
+                <span>隐藏维度自动减半</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-activation-memory" value="2">
-                <span>更少模型参数</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="2">
+                <span>输出被搬到 CPU</span>
               </label></div>
-            <div class="feedback" data-feedback="gc-activation-memory"></div>
+            <div class="predict-feedback" data-predict-feedback="checkpoint-recompute-state-flow">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="checkpoint-recompute-state-flow">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>训练前向不仅产生最终输出，还会为 backward 保存中间激活；层数、batch、序列长度和隐藏维度都会放大这部分显存。</li><li>checkpoint 不删除模型参数，也不关闭梯度；它主要减少被长期保存的中间激活。</li><li>反向走到被 checkpoint 包裹的区域时，会从保存的输入重新执行该区域前向，恢复求梯度需要的值。</li><li>Activation Offload 是把激活搬到 CPU 等存储层，checkpointing 是丢掉后重算；本 Notebook 的唯一 TODO 实现的是后者。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>普通训练像把每一步草稿都留在 GPU 上，反向直接查草稿。Checkpoint 只留下某段的入口 x，段内草稿前向后可以不长期保留；反向需要时，用入口再算一遍。省下的是空间，付出的是重复计算时间。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>普通执行的状态流</h4>
+            <div class="adv-flow">
+              <span>block 输入</span><span>Norm 激活</span><span>FFN 扩张激活</span><strong>block 输出</strong>
+            </div>
+            <p>为了反向，段内多个中间值会在前向结束后继续占据显存。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>Checkpoint 的状态流</h4>
+            <div class="adv-flow">
+              <strong>保留 block 输入</strong><span>段内值不长期保留</span><span>反向时重算</span><strong>计算参数梯度</strong>
+            </div>
+            <p>函数输出数值和梯度目标不变，变化的是保存与重算策略。</p>
+          </section>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>Checkpointing</h4>
+            <div class="adv-contract">
+              <span>动作</span><strong>丢弃部分中间激活</strong>
+              <span>取回方式</span><strong>反向时重新计算</strong>
+              <span>主要代价</span><strong>额外计算时间</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>Activation Offload</h4>
+            <div class="adv-contract">
+              <span>动作</span><strong>把激活搬离 GPU</strong>
+              <span>取回方式</span><strong>需要时再传回 GPU</strong>
+              <span>主要代价</span><strong>设备间传输时间</strong>
+            </div>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>Notebook 对象</th><th>shape</th><th>设备</th><th>checkpoint 后是否改变</th></tr></thead>
+          <tbody>
+            <tr><td><code>x_input</code></td><td><code>[2,2048,2048]</code></td><td>CUDA</td><td>输出接口不改变</td></tr>
+            <tr><td>FFN 中间激活</td><td><code>[2,2048,8192]</code></td><td>CUDA</td><td>不再全部长期保存</td></tr>
+            <tr><td>block 输出</td><td><code>[2,2048,2048]</code></td><td>CUDA</td><td>继续传给下一 block</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">本题以 Transformer Block 为 checkpoint 单位。不要把它误解成每个 Linear、ReLU 都要单独包裹，也不要在 TODO 中实现 CPU offload。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用手工重算理解为何只需保留段入口</h4><pre><code>def expensive_segment(seed):
+    hidden = torch.sin(seed) * 3
+    return hidden.square() + seed
+
+checkpoint_input = torch.tensor([0.2, 0.8], requires_grad=True)
+first_output = expensive_segment(checkpoint_input)
+# 概念上丢掉段内 hidden；反向需要时从 checkpoint_input 重算
+restored_output = expensive_segment(checkpoint_input)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>expensive_segment</code> -&gt; 一个 <code>block</code> 的前向函数。</li>
+            <li><code>checkpoint_input</code> -&gt; 当前循环中的 <code>x</code>。</li>
+            <li><code>hidden</code> -&gt; block 内 Norm、ReLU、FFN 产生的中间激活。</li>
+            <li>手工第二次调用 -&gt; checkpoint 在 backward 期间自动完成的 recomputation。</li>
+            <li>Notebook TODO 不手工写第二次前向，而是交给 PyTorch 的 checkpoint API 管理。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>哪一句最准确地区分 checkpointing 与 activation offload？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="0">
+                <span>两者都会停止参数求梯度</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="1">
+                <span>前者用重计算换显存，后者用设备间搬运换 GPU 显存</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="2">
+                <span>两者都要求把模型权重移到 CPU</span>
+              </label></div>
+              <div class="feedback" data-feedback="checkpoint-recompute-state-flow"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-activation-memory-0">
-                <span>先确认需要包裹的是哪段前向计算。</span>
+                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-0">
+                <span>先在 TODO 旁标注：循环进入和离开每个 block 的 x 都是 [B,S,D]，dtype 不变、device 仍是 CUDA，requires_grad 路径必须保留。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-activation-memory-1">
-                <span>理解 checkpoint 不改变数学结果，只改变保存策略。</span>
+                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-1">
+                <span>用一句话解释为什么 checkpoint 后输出数值不应改变，以及为什么 backward 会增加计算；确认没有把 offload 或 detach 混入实现。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-activation-memory-2">
-                <span>注意输入通常需要参与梯度。</span>
+                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-2">
+                <span>Notebook 的显存测试仅在 CUDA 可用时执行；若被跳过，先做 CPU 小模型的输出/梯度自检。若参数梯度为空，检查是否用了 no_grad/detach；若输出 device 变成 CPU，说明误做了 offload。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="gc-recompute">
+        <article class="lesson-card inquiry" data-lesson="checkpoint-api-loop-and-gpu-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO</span>
+            <span class="todo-pill">TODO：在循环内调用 checkpoint，关注 use_reentrant=False</span>
           </div>
-          <h2>用 checkpoint 包裹 forward：接口很小，含义很重要</h2>
+          <h2>把每个 block 交给 checkpoint，并读懂 GPU 测试</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>checkpoint 接收一个可调用函数和它的输入张量。</li><li>被包裹函数的输出会参与后续计算。</li><li>反向时 PyTorch 会重新调用这段函数。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>把一段计算交给 checkpoint 管家：前向先不保存全部细节，反向需要时再现场复现。</p>
-            <div class="mini-flow"><span>x</span><span>checkpoint(block, x)</span><span>y</span><strong>backward 时重算 block(x)</strong></div>
-            <div class="syntax-card"><h4>语法热身：lambda 包住额外参数</h4><pre><code>out = checkpoint(
-    lambda hidden: layer(hidden, attention_mask=mask),
-    x,
-    use_reentrant=False,
-)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>checkpoint 包裹的函数在什么时候会被重新执行？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-recompute" value="0">
-                <span>导入 torch 时</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">循环里调用 checkpoint 得到了新输出，却没有把它重新赋给 x。</p>
+            <p class="predict-q">下一轮 block 会收到什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="0">
+                <span>旧 x，网络状态没有向前推进</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-recompute" value="1">
-                <span>保存模型时</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="1">
+                <span>自动收到 checkpoint 的返回值</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gc-recompute" value="2">
-                <span>反向传播时</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="2">
+                <span>一个 CPU Tensor</span>
               </label></div>
-            <div class="feedback" data-feedback="gc-recompute"></div>
+            <div class="predict-feedback" data-predict-feedback="checkpoint-api-loop-and-gpu-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="checkpoint-api-loop-and-gpu-test">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>checkpoint 的第一个位置参数是要执行的函数或 nn.Module，后面的位置参数是传给它的输入。</li><li>一个 SimpleTransformerBlock 接收 x 并返回新的 x，所以包装后的返回值必须重新赋给循环状态。</li><li>Notebook 已从 torch.utils.checkpoint 导入 checkpoint，不需要改 import，也不需要自己写 autograd.Function。</li><li>use_reentrant=False 是当前 Notebook 明确要求的调用模式；应作为关键字参数传入，不能误传给 block.forward。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>循环仍然是一条 block 接 block 的流水线。唯一变化是每次不直接调用 block(x)，而是让 checkpoint 代为调用，然后把结果继续交给下一个 block。赋值不能漏，否则后面的层拿到的仍是旧状态。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>取当前 block</b>来自 ModuleList 循环</span>
+          <span><b>包装调用</b>函数是 block，输入是 x</span>
+          <span><b>选择模式</b>use_reentrant=False</span>
+          <span><b>更新流水状态</b>返回值重新赋给 x</span>
+        </div>
+
+        <div class="adv-contract">
+          <span>函数位置</span><strong>当前 <code>block</code>，可直接调用的 nn.Module</strong>
+          <span>输入位置</span><strong>当前 <code>x [B,S,D]</code></strong>
+          <span>关键字</span><strong><code>use_reentrant=False</code></strong>
+          <span>返回值</span><strong>下一轮循环使用的新 <code>x [B,S,D]</code></strong>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>GPU 测试真正测了什么</h4>
+            <div class="adv-checks">
+              <span>普通路径 forward + backward</span>
+              <span>记录 mem_normal 峰值</span>
+              <span>checkpoint 路径 forward + backward</span>
+              <span>比较 mem_ckpt 与 mem_normal</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>测试有两个盲点</h4>
+            <p>没有 CUDA 时函数直接 return，“忽略测试”不代表 TODO 正确。</p>
+            <p>显存比较使用 if 打印而非 assert；空循环甚至可能因少做计算而显示更省显存，所以还必须核对输出和参数梯度。</p>
+          </section>
+        </div>
+
+        <div class="adv-flow">
+          <span>x0</span><strong>checkpoint(block0, x0)</strong><span>x1</span><strong>checkpoint(block1, x1)</strong><span>x2</span>
+        </div>
+
+        <div class="adv-callout">完成 TODO 后要删掉 pass。保留 pass 本身不会执行 block，返回的只是原始输入；这不是 checkpointing，而是跳过了整个模型。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用图像处理 stage 练 checkpoint 调用签名</h4><pre><code>stage = nn.Sequential(nn.Linear(6, 12), nn.ReLU(), nn.Linear(12, 6))
+stage_input = torch.randn(4, 6, requires_grad=True)
+
+wrapped_output = checkpoint(stage, stage_input, use_reentrant=False)
+loss = wrapped_output.square().mean()
+loss.backward()
+print(wrapped_output.shape)  # [4, 6]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>stage</code> -&gt; for 循环当前的 <code>block</code>。</li>
+            <li><code>stage_input</code> -&gt; 当前的 <code>x</code>。</li>
+            <li><code>wrapped_output</code> -&gt; 更新后的 <code>x</code>，要继续传给下一层。</li>
+            <li><code>use_reentrant=False</code> -&gt; Notebook 提示要求关注的关键字参数。</li>
+            <li>例子只演示一个 stage；TODO 要把同一调用模式放在已有 blocks 循环内部。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>Notebook 的 TODO 中，use_reentrant=False 应传给谁？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="0">
+                <span>SimpleTransformerBlock.forward，作为位置参数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="1">
+                <span>torch.cuda.max_memory_allocated</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="2">
+                <span>checkpoint 函数，作为关键字参数</span>
+              </label></div>
+              <div class="feedback" data-feedback="checkpoint-api-loop-and-gpu-test"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-recompute-0">
-                <span>导入 torch.utils.checkpoint.checkpoint。</span>
+                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-0">
+                <span>完成唯一 TODO：在已有 for block in blocks 循环中包装当前 block 与 x，使用 use_reentrant=False，并把返回的 [B,S,D] CUDA 浮点 Tensor 重新赋给 x；删除 pass。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-recompute-1">
-                <span>用 checkpoint 包裹 notebook 指定的前向块。</span>
+                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-1">
+                <span>有 NVIDIA GPU 时运行 Notebook：两条路径都要完成 forward、sum().backward()，并人工确认 mem_ckpt &lt;= mem_normal 的成功分支；无 GPU 的跳过信息不算验证通过。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gc-recompute-2">
-                <span>执行 notebook 检查，确认输出和梯度仍然正确。</span>
+                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-2">
+                <span>额外自检同一小模型的普通输出与 checkpoint 输出 allclose，并确认各 block 参数 grad 非空；若显存看似极低但输出等于原始输入，检查是否仍保留 pass 或忘了调用 block。</span>
               </label>
           </div>
         </article>
@@ -882,9 +1291,9 @@ y = checkpoint(block_forward, x, use_reentrant=False)</code></pre></div>
 
   <script>
     const levelId = "19";
-    const checkpointData = {"gc-activation-memory":{"answer":1,"explain":"它通过反向重算前向片段来减少激活保存。"},"gc-recompute":{"answer":2,"explain":"反向需要中间激活时，会重放 forward 片段来恢复它们。"}};
-    const predictData = {};
-    const predictTotal = 0;
+    const checkpointData = {"checkpoint-recompute-state-flow":{"answer":1,"explain":"本 Notebook 实现的是重计算；offload 只作为工程对比出现，没有对应 TODO。"},"checkpoint-api-loop-and-gpu-test":{"answer":2,"explain":"它控制 checkpoint 的实现模式，不是 block 业务输入，也与显存统计函数无关。"}};
+    const predictData = {"checkpoint-recompute-state-flow":{"answer":0,"revealNote":"checkpoint 改的是 Autograd 保存中间值的策略，不改 block 的数学函数、shape 或输出设备。"},"checkpoint-api-loop-and-gpu-test":{"answer":0,"revealNote":"Python 不会自动替换变量。checkpoint 返回普通 Tensor，必须显式更新循环状态。"}};
+    const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";

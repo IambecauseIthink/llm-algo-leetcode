@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 14 | 零基础导学关卡</p>
         <h1>RLHF PPO Memory</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">14_RLHF_PPO_Memory.ipynb</span>
           <span class="pill">RLHF</span><span class="pill">PPO</span><span class="pill">Clipped Objective</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">loss = -mean(min(ratio·A, clip(ratio)·A))</div>
       </div>
@@ -746,121 +997,416 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="ppo-ratio">
+
+        <article class="lesson-card inquiry" data-lesson="ppo-log-ratio">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1</span>
+            <span class="todo-pill">TODO 1：计算重要性采样比率 ratio</span>
           </div>
-          <h2>PPO Ratio：新策略相对旧策略变了多少</h2>
+          <h2>先读概率变化：对数相减，再还原成 ratio</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>log_prob 是概率取 log 后的值。</li><li>log(a) - log(b) 等于 log(a/b)。</li><li>exp(new_logprob - old_logprob) 得到概率比率。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>ratio 像“新方案相对旧方案的加码倍数”：大于 1 表示新策略更愿意选这个动作。</p>
-            <div class="ratio-board"><span>old prob=.20</span><span>new prob=.30</span><strong>ratio=1.5</strong></div>
-            <div class="syntax-card"><h4>语法热身：从 log 概率还原比率</h4><pre><code>old_logp = torch.log(torch.tensor([0.2]))
-new_logp = torch.log(torch.tensor([0.3]))
-ratio = torch.exp(new_logp - old_logp)</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>new_prob=0.1，old_prob=0.2，ratio 是多少？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-ratio" value="0">
-                <span>2.0</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">某 token 的 new log prob 与 old log prob 完全相同。</p>
+            <p class="predict-q">这个 token 的 ratio 是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-log-ratio" value="0">
+                <span>1</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-ratio" value="1">
-                <span>0.1</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-log-ratio" value="1">
+                <span>0</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-ratio" value="2">
-                <span>0.5</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-log-ratio" value="2">
+                <span>无法从 log prob 得到</span>
               </label></div>
-            <div class="feedback" data-feedback="ppo-ratio"></div>
+            <div class="predict-feedback" data-predict-feedback="ppo-log-ratio">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="ppo-log-ratio">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>log_probs_new 与 log_probs_old 都是 [batch_size, seq_len]，每个元素对应同一个已采样 token 在新旧 Actor 下的对数概率。</li><li>对数概率通常是非正数；数值越接近 0，原概率越大。不能直接用两个 log 值相除来得到概率比。</li><li>log(a/b) = log(a) - log(b)，所以概率比可由对数概率之差再取 exp 得到。</li><li>ratio 是无单位的浮点张量，shape、dtype、device 都与输入逐元素运算保持一致。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>ratio 是“新 Actor 比旧 Actor 更愿意生成这个 token 多少倍”。ratio=1 表示态度没变；大于 1 表示新模型更偏爱；小于 1 表示更不偏爱。先在 log 空间做减法，比先还原两个很小的概率再相除更稳。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>旧 Actor 采样</b>记录每个 token 的 old log prob</span>
+          <span><b>当前 Actor 重算</b>得到对应 token 的 new log prob</span>
+          <span><b>逐元素相减</b>new log prob - old log prob</span>
+          <span><b>exp</b>还原成概率倍数 ratio</span>
+        </div>
+
+        <div class="adv-grid three">
+          <section class="adv-panel good">
+            <h4>ratio &gt; 1</h4>
+            <p>新策略给该 token 更高概率。</p>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>ratio = 1</h4>
+            <p>新旧策略对该 token 的概率相同。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>ratio &lt; 1</h4>
+            <p>新策略降低了该 token 的概率。</p>
+          </section>
+        </div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>delta_logp = log_probs_new - log_probs_old</code><span>[B,S]，记录对数概率改变了多少</span></div>
+          <div><b>2</b><code>ratio = exp(delta_logp)</code><span>[B,S]，把加法尺度还原成概率倍数</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>Notebook 测试首行</th><th>log 差</th><th>ratio 含义</th></tr></thead>
+          <tbody>
+            <tr><td>new=-2.0，old=-2.1</td><td>0.1</td><td>exp(0.1)&gt;1，新策略略微提高概率</td></tr>
+            <tr><td>new=-1.5，old=-1.4</td><td>-0.1</td><td>exp(-0.1)&lt;1，新策略略微降低概率</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">不要写 <code>log_probs_new / log_probs_old</code>。那是两个对数值的比，不是两个概率的比。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：比较新版推荐器与旧版的点击概率</h4><pre><code>new_log_click = torch.tensor([[-0.7, -1.1, -0.4]])
+old_log_click = torch.tensor([[-0.9, -1.1, -0.2]])
+log_change = new_log_click - old_log_click
+probability_ratio = torch.exp(log_change)
+print(probability_ratio.shape)  # [1, 3]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>new_log_click / old_log_click</code> -&gt; <code>log_probs_new / log_probs_old</code>。</li>
+            <li><code>log_change</code> -&gt; 新旧 Actor 对同一 token 的 log probability 差。</li>
+            <li><code>probability_ratio</code> -&gt; TODO 1 的 <code>ratio</code>。</li>
+            <li>例子的 [1,3] -&gt; Notebook 的 [batch_size,seq_len]；所有运算都逐元素进行。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>哪条计算表达了 new probability / old probability？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-log-ratio" value="0">
+                <span>log_probs_new / log_probs_old</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-log-ratio" value="1">
+                <span>exp(log_probs_old + log_probs_new)</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-log-ratio" value="2">
+                <span>exp(log_probs_new - log_probs_old)</span>
+              </label></div>
+              <div class="feedback" data-feedback="ppo-log-ratio"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-ratio-0">
-                <span>用 exp(new_log_probs - old_log_probs) 计算 ratio。</span>
+                <input type="checkbox" data-homework="ppo-log-ratio-0">
+                <span>完成 TODO 1：根据对数比恒等式构造 ratio，先不要提前做 mean 或改变 shape。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-ratio-1">
-                <span>确认 ratio 和 advantages 可以逐元素相乘。</span>
+                <input type="checkbox" data-homework="ppo-log-ratio-1">
+                <span>shape/dtype/device 自检：三个输入测试张量都是 [2,2]；ratio 也必须是 [2,2] 浮点 Tensor，并跟随 log_probs_new 的 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-ratio-2">
-                <span>用简单数值检查 ratio 方向是否正确。</span>
+                <input type="checkbox" data-homework="ppo-log-ratio-2">
+                <span>用测试中的第一个位置手算 exp(-2.0-(-2.1))，并与函数中 ratio 对应元素核对。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-log-ratio-3">
+                <span>常见错误排查：ratio 出现负数说明公式错误；shape 变成标量说明过早归约；全为 1 时检查是否误做同一变量相减。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="ppo-clip-loss">
+        <article class="lesson-card inquiry" data-lesson="ppo-surrogates-and-clip">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2 / TODO 3 / TODO 4</span>
+            <span class="todo-pill">TODO 2 + TODO 3：无截断与截断 surrogate</span>
           </div>
-          <h2>Clip：限制策略一步别迈太大</h2>
+          <h2>再看好坏方向：advantage 决定该鼓励还是抑制</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>advantage 为正时，想提高这个动作概率。</li><li>advantage 为负时，想降低这个动作概率。</li><li>clip 把 ratio 限制在 [1-eps, 1+eps]。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>PPO 像给更新装护栏：允许改进，但不允许新策略突然偏离旧策略太远。</p>
-            <div class="clip-box"><span>ratio=1.8</span><span>eps=.2</span><strong>clipped=1.2</strong></div>
-            <div class="syntax-card"><h4>语法热身：clamp 和 min</h4><pre><code>raw = ratio * advantages
-clipped = torch.clamp(ratio, 1 - eps, 1 + eps) * advantages
-objective = torch.min(raw, clipped)
-loss = -objective.mean()</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>eps=0.2 时，ratio 会被限制在什么区间？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-clip-loss" value="0">
-                <span>[0.8, 1.2]</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">clip_range=0.2，某位置 ratio=1.35、advantage=0.5。</p>
+            <p class="predict-q">该位置 surr2 使用的 ratio 是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-surrogates-and-clip" value="0">
+                <span>1.2</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-clip-loss" value="1">
-                <span>[-0.2, 0.2]</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-surrogates-and-clip" value="1">
+                <span>1.35</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-ppo-clip-loss" value="2">
-                <span>[0.2, 1.0]</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-surrogates-and-clip" value="2">
+                <span>0.5</span>
               </label></div>
-            <div class="feedback" data-feedback="ppo-clip-loss"></div>
+            <div class="predict-feedback" data-predict-feedback="ppo-surrogates-and-clip">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="ppo-surrogates-and-clip">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>advantages 与 ratio 同为 [batch_size, seq_len]；每个 token 都有一个优势值。正值表示这个动作比基线好，负值表示比基线差。</li><li>surrogate 不是最终 loss，而是一个希望最大化的代理目标。无截断版本是 ratio 与 advantage 的逐元素乘积。</li><li>clip_range=0.2 时，允许的 ratio 区间是 [0.8,1.2]；torch.clamp 会逐元素限制 ratio。</li><li>截断的是 ratio，不是 advantage，也不是 log probability。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>advantage 像方向牌：正数说“这个 token 值得更常出现”，负数说“这个 token 应该少出现”。ratio 记录新策略已经走了多远。PPO 同时算原始方案和限速方案，下一课再挑更保守的结果。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>advantage 为正</h4>
+            <div class="adv-flow">
+              <span>token 比基线好</span><span>希望提高概率</span><strong>但 ratio 不应无限上涨</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>advantage 为负</h4>
+            <div class="adv-flow">
+              <span>token 比基线差</span><span>希望降低概率</span><strong>但 ratio 不应无限下跌</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>surr1 = ratio × advantages</code><span>按新旧概率变化修正每个 token 的优势</span></div>
+          <div><b>2</b><code>bounded_ratio = clamp(ratio, 1-ε, 1+ε)</code><span>把概率变化限制在信赖区间</span></div>
+          <div><b>3</b><code>surr2 = bounded_ratio × advantages</code><span>得到限速后的代理目标</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>shape</th><th>数值角色</th></tr></thead>
+          <tbody>
+            <tr><td><code>ratio</code></td><td><code>[B,S]</code></td><td>新概率 / 旧概率</td></tr>
+            <tr><td><code>advantages</code></td><td><code>[B,S]</code></td><td>每个 token 的好坏方向和强度</td></tr>
+            <tr><td><code>surr1</code></td><td><code>[B,S]</code></td><td>未经限制的目标</td></tr>
+            <tr><td><code>surr2</code></td><td><code>[B,S]</code></td><td>ratio 被限制后的目标</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-contract">
+          <span>默认 ε</span><strong>0.2</strong>
+          <span>ratio 下界</span><strong>1.0 - ε = 0.8</strong>
+          <span>ratio 上界</span><strong>1.0 + ε = 1.2</strong>
+          <span>advantage</span><strong>原值保留，不做 clamp</strong>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：给价格调整设置上下浮动边界</h4><pre><code>change_ratio = torch.tensor([[1.35, 0.72, 1.05]])
+benefit = torch.tensor([[0.8, -0.4, 0.2]])
+limit = 0.15
+
+free_score = change_ratio * benefit
+safe_ratio = torch.clamp(
+    change_ratio,
+    1.0 - limit,
+    1.0 + limit,
+)
+safe_score = safe_ratio * benefit</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>change_ratio / benefit</code> -&gt; <code>ratio / advantages</code>。</li>
+            <li><code>free_score</code> -&gt; TODO 2 的 <code>surr1</code>。</li>
+            <li><code>limit</code> -&gt; <code>clip_range</code>；上下界都围绕 1.0。</li>
+            <li><code>safe_score</code> -&gt; TODO 3 的 <code>surr2</code>，shape 不因 clamp 改变。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>PPO 的 TODO 3 应该 clamp 哪个量？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-surrogates-and-clip" value="0">
+                <span>ratio，范围为 [1-clip_range, 1+clip_range]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-surrogates-and-clip" value="1">
+                <span>surr1，范围为 [0,1]</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-surrogates-and-clip" value="2">
+                <span>advantages，范围为 [-clip_range, clip_range]</span>
+              </label></div>
+              <div class="feedback" data-feedback="ppo-surrogates-and-clip"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clip-loss-0">
-                <span>计算未截断 surrogate。</span>
+                <input type="checkbox" data-homework="ppo-surrogates-and-clip-0">
+                <span>完成 TODO 2/3：保持逐元素运算，分别构造未截断 surr1 与 ratio 截断后的 surr2，不要在此阶段 mean。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clip-loss-1">
-                <span>计算 clamp 后的 surrogate。</span>
+                <input type="checkbox" data-homework="ppo-surrogates-and-clip-1">
+                <span>shape/dtype/device 自检：ratio、advantages、surr1、surr2 在测试中都应为 [2,2] 浮点 Tensor，device 一致；clip_range 是 Python float，可直接参与张量运算。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clip-loss-2">
-                <span>取二者 min 后加负号作为 loss。</span>
+                <input type="checkbox" data-homework="ppo-surrogates-and-clip-2">
+                <span>拿 ratio=[1.35,0.72]、clip_range=0.2 手算 clamp 结果 [1.2,0.8]，再核对正负 advantage 下的乘积符号。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-surrogates-and-clip-3">
+                <span>常见错误排查：上下界写反会报错；结果完全未截断时查是否 clamp 了错误变量；shape 变小查是否误用了 sum/mean。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="ppo-pessimistic-loss-memory">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 4：PPO Actor Loss；串联四模型流转与测试</span>
+          </div>
+          <h2>最后取保守目标：逐 token 取 min，再变成标量 loss</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">surr1 与 surr2 都是 [2,2]。先逐元素 min，再 mean。</p>
+            <p class="predict-q">最终 loss 的 shape 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-pessimistic-loss-memory" value="0">
+                <span>[]，0 维标量</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-pessimistic-loss-memory" value="1">
+                <span>[2,2]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-ppo-pessimistic-loss-memory" value="2">
+                <span>[2]</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="ppo-pessimistic-loss-memory">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="ppo-pessimistic-loss-memory">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>surr1 与 surr2 都是 [batch_size, seq_len]；torch.min(surr1, surr2) 在这里需要逐元素比较，而不是一次性求全局最小值。</li><li>PPO 想最大化代理目标，但 PyTorch 优化器默认最小化 loss，因此最终要加负号。</li><li>mean 会把 batch 和 seq_len 上所有 token 汇总成 0 维标量，正好可用于 backward。</li><li>本 Notebook 只实现 Actor Clip Loss；真实 RLHF 还会让 Actor、Reference、Reward、Critic 在采样与训练阶段传递 log prob、reward、value 和 advantage。这里的 old policy 是 PPO 更新前的 Actor 快照，不等同于专门计算 KL 约束的 Reference。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>对每个 token，PPO 在“原始目标”和“限速目标”之间挑较小的一个，相当于不提前兑现过于乐观的收益。随后对所有 token 求平均得到整批分数；因为代码要最小化，所以再取负号。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>token_objective = minimum(surr1, surr2)</code><span>[B,S]，每个 token 单独选择更保守的值</span></div>
+          <div><b>2</b><code>batch_objective = mean(token_objective)</code><span>把全部 token 汇总为 0 维标量</span></div>
+          <div><b>3</b><code>actor_loss = -batch_objective</code><span>把最大化目标改写成优化器可最小化的 loss</span></div>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>本函数的数据流</h4>
+            <div class="adv-flow">
+              <span>new/old log probs</span><span>ratio</span><span>surr1 与 surr2</span><strong>标量 actor loss</strong>
+            </div>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>真实 RLHF 四个角色</h4>
+            <div class="adv-contract">
+              <span>Actor</span><strong>生成 token，并作为当前策略接受梯度</strong>
+              <span>Reference</span><strong>提供 KL 对照，通常冻结；它不是 ratio 中的 old policy 快照</strong>
+              <span>Reward Model</span><strong>给整段回复提供奖励信号</strong>
+              <span>Critic</span><strong>估计 value，帮助得到 advantage</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>Actor 生成</b>token 与采样时 old log prob</span>
+          <span><b>Reward 打分</b>回复得到 reward</span>
+          <span><b>Critic 估值</b>组合出 advantages</span>
+          <span><b>Actor 更新</b>本页 clip loss 约束步幅</span>
+        </div>
+
+        <div class="adv-checks">
+          <span>ratio 解析式与测试一致</span>
+          <span>min 是逐元素比较</span>
+          <span>mean 后 loss 是标量</span>
+          <span>负号放在最终目标外</span>
+        </div>
+
+        <div class="adv-callout">ratio 中的 old log prob 来自采样时的旧 Actor；Reference 则是限制策略长期偏离的冻结锚点。显存压力来自多个模型及其激活、参数和优化器状态。本 TODO 不要求估算显存，也不要额外实现 Critic 或 KL 项。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：从两套限额方案中逐项选保守收益</h4><pre><code>open_plan = torch.tensor([[0.9, -0.6], [0.4, -0.2]])
+limited_plan = torch.tensor([[0.7, -0.4], [0.4, -0.3]])
+conservative = torch.minimum(open_plan, limited_plan)
+objective = conservative.mean()
+cost_to_minimize = -objective</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>open_plan / limited_plan</code> -&gt; <code>surr1 / surr2</code>。</li>
+            <li><code>torch.minimum</code> -&gt; TODO 4 的逐元素保守选择；也可使用能返回逐元素最小值的等价 PyTorch 写法。</li>
+            <li><code>objective.mean()</code> -&gt; 对 batch 与 seq_len 中所有 token 求平均。</li>
+            <li><code>cost_to_minimize</code> -&gt; 函数最终返回的标量 <code>loss</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>最终为什么是 -torch.min(surr1, surr2).mean() 这一类结构？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-pessimistic-loss-memory" value="0">
+                <span>先找整个 batch 唯一最小 token，再复制到全部位置</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-pessimistic-loss-memory" value="1">
+                <span>逐 token 取保守目标并求平均，再用负号把最大化改成最小化</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-ppo-pessimistic-loss-memory" value="2">
+                <span>让 loss 保持 [batch,seq] 方便打印</span>
+              </label></div>
+              <div class="feedback" data-feedback="ppo-pessimistic-loss-memory"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-pessimistic-loss-memory-0">
+                <span>完成 TODO 4：对 surr1/surr2 做逐元素最小选择，聚合全部 token，并加上正确优化方向的符号；不要扩展 Notebook 未要求的 KL 或 Critic loss。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-pessimistic-loss-memory-1">
+                <span>shape/dtype/device 自检：min 前两项为 [2,2]，最终 loss 必须是 0 维浮点 Tensor，且仍连接 log_probs_new 的梯度图与 device。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-pessimistic-loss-memory-2">
+                <span>运行 test_ppo_actor_loss：测试会独立重算 ratio、s1、s2、expected_loss，并用 torch.allclose 对照你的返回值。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="ppo-pessimistic-loss-memory-3">
+                <span>常见错误排查：数值仅差一个负号就查优化方向；得到单个极端元素查是否误用全局 min；loss 无梯度查是否 detach/item；不匹配再查 clamp 区间。</span>
               </label>
           </div>
         </article>
@@ -868,7 +1414,7 @@ loss = -objective.mean()</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -880,11 +1426,11 @@ loss = -objective.mean()</code></pre></div>
 
   <script>
     const levelId = "14";
-    const checkpointData = {"ppo-ratio":{"answer":2,"explain":"ratio = 0.1 / 0.2 = 0.5。"},"ppo-clip-loss":{"answer":0,"explain":"clip 区间是 [1-eps, 1+eps]。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"ppo-log-ratio":{"answer":2,"explain":"概率之比在 log 空间对应相减，再用 exp 返回概率尺度。"},"ppo-surrogates-and-clip":{"answer":0,"explain":"PPO Clip 限制的是新旧策略概率比的变化幅度。"},"ppo-pessimistic-loss-memory":{"answer":1,"explain":"min 的逐元素结果仍为 [B,S]，mean 汇总为标量，负号转换优化方向。"}};
+    const predictData = {"ppo-log-ratio":{"answer":0,"revealNote":"两者之差为 0，而 exp(0)=1，表示概率没有变化。"},"ppo-surrogates-and-clip":{"answer":0,"revealNote":"ratio 被限制到上界 1+0.2=1.2，advantage 仍保持 0.5。"},"ppo-pessimistic-loss-memory":{"answer":0,"revealNote":"不指定 dim 的 mean 会聚合张量全部四个元素，负号不会改变 shape。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

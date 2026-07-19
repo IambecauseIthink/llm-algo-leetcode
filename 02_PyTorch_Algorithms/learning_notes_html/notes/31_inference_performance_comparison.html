@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 31 | 零基础导学关卡</p>
         <h1>Inference Performance Comparison</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">31_Inference_Performance_Comparison.ipynb</span>
           <span class="pill">Benchmark</span><span class="pill">Latency</span><span class="pill">Throughput</span>
@@ -735,158 +986,421 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">throughput = processed tokens / elapsed time</div>
       </div>
     </section>
 
 
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 31_Inference_Performance_Comparison.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>31. Inference Performance Comparison | 推理性能对比实验</h2>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理</code>, <code>benchmark</code>, <code>profiling</code> | <strong>目标人群：</strong> 推理工程与性能分析</p>
-<p>这个项目围绕同一个模型、同一批输入，把不同推理策略的延迟、吞吐和显存占用拉到一张表里比较。它的作用是把 <code>2.6</code>、<code>2.7</code> 和 <code>2.8</code> 的内容落到一个可复现的工程判断上。</p>
-<p><strong>关键词：</strong> <code>benchmark</code>, <code>latency</code>, <code>throughput</code>, <code>memory</code></p>
-<h3>前置阅读</h3>
-<p><strong>导语：</strong> 先把核心推理优化、量化和分布式并行看完，再做推理性能对比会更有意义。</p>
-<ul>
-<li>[20. FlashAttention Sim | FlashAttention 模拟](./20_FlashAttention_Sim.md)</li>
-<li>[22. vLLM PagedAttention | vLLM 分页注意力](./22_vLLM_PagedAttention.md)</li>
-<li>[25. Quantization W8A16 | W8A16 量化](./25_Quantization_W8A16.md)</li>
-</ul>
-<h3>相关阅读</h3>
-<p><strong>导语：</strong> 推理性能对比之后，建议继续看训练性能分析。</p>
-<ul>
-<li>[32. Training Performance Analysis | 训练性能分析](./32_Training_Performance_Analysis.md)</li>
-<li>[13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)</li>
-</ul>
-<h3>项目目标</h3>
-<p>这个项目不是单纯跑一个推理 demo，而是围绕同一个模型、同一批输入，把不同推理策略的延迟、吞吐和显存占用拉到一张表里比较。它的作用是把 <code>2.6</code>、<code>2.7</code> 和 <code>2.8</code> 的内容落到一个可复现的工程判断上。</p>
-<ul>
-<li>对比预填充阶段和解码阶段的耗时差异。</li>
-<li>比较不同 batch size、不同上下文长度、不同 cache 策略下的吞吐变化。</li>
-<li>把推理上的性能结论和 <code>Part 1</code> 的 profiling 入口接起来。</li>
-</ul>
-<h3>实验对象</h3>
-<p>建议固定一个小型因果语言模型或已经训练好的微型检查点，避免模型本身变化掩盖策略差异。输入也尽量固定成一组短、中、长三档 prompt，以便比较：</p>
-<ul>
-<li><strong>短输入</strong>：看启动开销和 prefill 的基础代价。</li>
-<li><strong>中等输入</strong>：看缓存是否开始发挥作用。</li>
-<li><strong>长输入</strong>：看 KV cache、分页和推理调度是否成为主要瓶颈。</li>
-</ul>
-<h3>实现步骤</h3>
-<ul>
-<li><strong>建立基线</strong>：先跑一个最简单的 greedy decoding 或 teacher-forcing 风格推理，记录基础 latency 和 throughput。</li>
-<li><strong>逐项替换</strong>：在同一模型上比较 <code>FlashAttention / PagedAttention / 量化 / batch</code> 等不同策略对性能的影响。</li>
-<li><strong>拆分阶段</strong>：把 prefill 和 decode 分开统计，避免只看总耗时而丢掉阶段差异。</li>
-<li><strong>记录资源</strong>：至少记录 <code>token/s</code>、<code>latency</code>、<code>peak memory</code> 和 <code>decode stability</code>。</li>
-<li><strong>做结论表</strong>：输出一张“策略 -&gt; 代价 -&gt; 收益”的对照表，给后面的训练性能分析做参照。</li>
-</ul>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>测试</h4>
-      </div>
-    </section>
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="core">
+
+        <article class="lesson-card inquiry" data-lesson="inference-benchmark-loop">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">本关 TODO</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 benchmark_fn 的调用次数与平均耗时契约</span>
           </div>
-          <h2>Inference Performance Comparison：先建立本关直觉</h2>
+          <h2>先把计时器写可信：预热不计入，正式迭代取平均</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>benchmark 前要 warmup。</li><li>延迟与吞吐需要分开测量。</li><li>优化后仍需检查输出误差或任务质量。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>先不要背实现。把本关拆成输入、核心操作、输出三段，写代码时就不容易迷路。</p>
-            
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>1. 先认出本关的核心对象</strong>
-              <p>建立可重复的推理基准，对比不同实现的延迟、吞吐与数值一致性。</p>
-              <div class="concept-badges">
-                <span>Benchmark</span><span>Latency</span><span>Throughput</span>
-              </div>
-            </div>
-            <div class="story-arrow">把名词翻译成张量、函数或训练步骤</div>
-            <div class="story-panel">
-              <strong>2. 再看输入输出关系</strong>
-              <p>每个 notebook 的 TODO 都在训练一种固定动作：先确认输入是什么，再确认输出应该长什么样，最后用测试检查数值或 shape。</p>
-              <div class="mini-pipeline">
-                <span>输入</span><span>核心操作</span><span>输出/测试</span>
-              </div>
-            </div>
-          </div>
-            
-          <div class="syntax-card">
-            <h4>语法热身：读 PyTorch 练习时先抓这三件事</h4>
-            <p>下面是通用读法，不直接等同于本关 notebook 答案。</p>
-            <pre><code># 1. 先看 shape，别急着写公式
-print(x.shape)
-
-# 2. 写模块时，参数通常放在 __init__
-class TinyModule(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.proj = nn.Linear(4, 4, bias=False)
-
-    def forward(self, x):
-        return self.proj(x)
-
-# 3. 测试通常会检查 shape 或数值接近
-assert out.shape[0] == x.shape[0]
-torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
-            <p class="syntax-tip">读法：先找 TODO 附近的输入变量和期望输出，再回到课程区确认这个操作在数学上想做什么。</p>
-          </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>为什么正式计时前通常要 warmup？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="0">
-                <span>让参数数量变少</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">调用 benchmark_fn(fn, warmup=3, iters=10)。</p>
+            <p class="predict-q">fn 总共会执行多少次，其中多少次进入正式计时？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-benchmark-loop" value="0">
+                <span>13 次，总计时 10 次</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="1">
-                <span>排除初始化、缓存和编译开销的干扰</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-benchmark-loop" value="1">
+                <span>10 次，总计时 10 次</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="2">
-                <span>清空输入</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-benchmark-loop" value="2">
+                <span>13 次，总计时 13 次</span>
               </label></div>
-            <div class="feedback" data-feedback="core"></div>
+            <div class="predict-feedback" data-predict-feedback="inference-benchmark-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="inference-benchmark-loop">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>fn 是一个不需要参数的可调用对象；benchmark_fn 负责重复调用它，不关心 fn 内部具体做哪种推理。</li><li>warmup 次调用用于让缓存、运行时和模型进入稳定状态，不应计入 start 到 total 的正式时间。</li><li>time.perf_counter() 适合测经过时间；两次读数相减得到秒。</li><li>total / iters 是单次平均秒数。Notebook 的测试用 warmup=0、iters=3，要求 fn 恰好被调用 3 次。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>计时像测跑步：先让系统热身，再在同一条起终线之间跑固定轮数，最后除以轮数。预热若放进计时区，启动成本会混入平均值；少调用或多调用一次，测试计数器都会暴露。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>warmup loop</b>调用 fn，但不计时</span>
+          <span><b>start</b>读取 perf_counter</span>
+          <span><b>timed loop</b>恰好调用 iters 次</span>
+          <span><b>end - start</b>得到 total 秒</span>
+          <span><b>total / iters</b>返回平均秒数</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>Notebook 基础调用契约</h4>
+            <div class="adv-contract">
+              <span><code>warmup=0</code></span><strong>预热阶段调用 0 次</strong>
+              <span><code>iters=3</code></span><strong>正式阶段调用 3 次</strong>
+              <span><code>counter['n']</code></span><strong>测试后必须精确等于 3</strong>
+              <span><code>avg</code></span><strong>经过时间不能小于 0</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>计时值不是吞吐</h4>
+            <p><code>benchmark_fn</code> 返回单次平均秒数，并不知道每次处理了几个 token。</p>
+            <p>若要得到 token/s，还需要用一次调用处理的 token 数除以平均秒数。</p>
+          </section>
+        </div>
+
+        <div class="adv-checks">
+          <span>相同模型与权重</span>
+          <span>相同输入与生成长度</span>
+          <span>相同 batch/context</span>
+          <span>相同 warmup/iters</span>
+        </div>
+
+        <div class="adv-callout">当前函数是 CPU-first 的最小模板。若 fn 在 CUDA 上异步执行，严谨计时通常还需在边界同步；Notebook 当前代码与基础测试没有加入这一步，不要悄悄改变其调用次数契约。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用文本清洗函数练习预热与正式计时</h4><pre><code>import time
+
+calls = {'count': 0}
+def normalize_text():
+    calls['count'] += 1
+    return '  hello  '.strip().upper()
+
+for _ in range(2):
+    normalize_text()
+
+begin = time.perf_counter()
+for _ in range(5):
+    normalize_text()
+average_seconds = (time.perf_counter() - begin) / 5
+assert calls['count'] == 7</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；目标是独立复写 <code>benchmark_fn</code>。</li>
+            <li><code>normalize_text</code> -&gt; 参数 <code>fn</code>；<code>2/5</code> -&gt; <code>warmup/iters</code>。</li>
+            <li><code>begin</code> -&gt; Notebook 的 <code>start</code>；<code>average_seconds</code> -&gt; 返回值。</li>
+            <li><code>calls</code> -&gt; 测试里的 <code>counter</code>，用于验证没有漏调或多调。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>benchmark_fn 为什么返回 total / iters，而不是直接返回 total？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-benchmark-loop" value="0">
+                <span>为了让 warmup 也进入计时</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-benchmark-loop" value="1">
+                <span>为了得到一次 fn 调用的平均耗时，便于用统一口径比较</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-benchmark-loop" value="2">
+                <span>为了把秒自动转换成 MB</span>
+              </label></div>
+              <div class="feedback" data-feedback="inference-benchmark-loop"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-0">
-                <span>固定输入与随机种子。</span>
+                <input type="checkbox" data-homework="inference-benchmark-loop-0">
+                <span>当前 Notebook 无 TODO 占位：遮住参考代码，独立复写 benchmark_fn，保持预热循环在 start 之前、正式循环恰好 iters 次。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-1">
-                <span>执行 warmup 和多轮计时。</span>
+                <input type="checkbox" data-homework="inference-benchmark-loop-1">
+                <span>shape/dtype/device：benchmark_fn 本身只接 callable 与 Python int，没有张量 shape/dtype/device；比较真实推理时必须让各策略使用相同输入 shape、dtype 与 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-2">
-                <span>报告 P50/平均延迟、吞吐与误差。</span>
+                <input type="checkbox" data-homework="inference-benchmark-loop-2">
+                <span>测试：运行 warmup=0、iters=3 的 counter 断言，确认 counter['n']==3 且 avg&gt;=0.0；再自测 warmup=2 时总调用数为 iters+2。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-benchmark-loop-3">
+                <span>常见错误排查：counter 过大检查是否在计时后又调用 fn；平均值异常检查 start 位置和除数；GPU 数字虚低时检查异步执行与同步边界。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="inference-phase-summary">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 summarize_inference_result 的五字段返回契约</span>
+          </div>
+          <h2>拆开 prefill 与 decode：先求总时间，再解释 decode 占比</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">prefill_ms=10.0，decode_ms=5.0。</p>
+            <p class="predict-q">按 Notebook 的三位小数约定，decode_share 是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-phase-summary" value="0">
+                <span>0.333</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-phase-summary" value="1">
+                <span>0.5</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-phase-summary" value="2">
+                <span>33.333</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="inference-phase-summary">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="inference-phase-summary">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>prefill_ms 是处理输入 prompt 的阶段耗时，decode_ms 是逐步生成输出 token 的阶段耗时；两者单位都必须是毫秒。</li><li>total_ms 是两阶段相加；decode_share 是 decode_ms / total，不是百分数字符串。</li><li>当 total 为 0 时不能做除法，模板约定 decode_share 返回 0.0。</li><li>返回字典有五个固定键；耗时与显存保留 2 位小数，占比保留 3 位小数。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>总耗时只告诉你“整次有多慢”，阶段占比告诉你“时间主要花在哪里”。先保证两个阶段使用同一单位，再用 decode 除以总时间；这样短 prompt 与长生成任务可以得到不同的瓶颈画像。</p>
+              <div class="adv-course">
+        <div class="adv-flow">
+          <span>prefill_ms<br>读完整 prompt</span>
+          <span>decode_ms<br>逐 token 生成</span>
+          <strong>total_ms<br>两者相加</strong>
+          <strong>decode_share<br>decode / total</strong>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>返回字典的字段合同</h4>
+            <div class="adv-contract">
+              <span><code>prefill_ms</code></span><strong>round(..., 2)</strong>
+              <span><code>decode_ms</code></span><strong>round(..., 2)</strong>
+              <span><code>total_ms</code></span><strong>round(prefill + decode, 2)</strong>
+              <span><code>decode_share</code></span><strong>round(decode / total, 3)</strong>
+              <span><code>peak_mem_mb</code></span><strong>round(..., 2)</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>零耗时保护</h4>
+            <p>如果 prefill_ms 和 decode_ms 都是 0，total 也是 0。</p>
+            <p>此时模板返回 decode_share=0.0，避免 ZeroDivisionError。这个分支表达“没有可分配的总时间”。</p>
+          </section>
+        </div>
+
+        <div class="adv-checks">
+          <span><strong>10 + 5</strong><br>total_ms = 15.0</span>
+          <span><strong>5 / 15</strong><br>decode_share = 0.333</span>
+          <span><strong>256.0</strong><br>peak_mem_mb 原值保留</span>
+        </div>
+
+        <div class="adv-callout">先相加未舍入的输入，再对结果 round。不要先把阶段占比乘 100；Notebook 测试期待 0.333，而不是 33.3。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用音频流水线练习阶段汇总</h4><pre><code>load_ms = 7.25
+process_ms = 2.75
+memory_mb = 96.126
+
+combined_ms = load_ms + process_ms
+process_share = process_ms / combined_ms if combined_ms else 0.0
+report = {
+    'load_ms': round(load_ms, 2),
+    'process_ms': round(process_ms, 2),
+    'combined_ms': round(combined_ms, 2),
+    'process_share': round(process_share, 3),
+    'memory_mb': round(memory_mb, 2),
+}</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；目标是独立复写 <code>summarize_inference_result</code>。</li>
+            <li><code>load_ms/process_ms</code> -&gt; <code>prefill_ms/decode_ms</code>。</li>
+            <li><code>combined_ms/process_share</code> -&gt; <code>total_ms/decode_share</code>。</li>
+            <li><code>memory_mb</code> -&gt; <code>peak_mem_mb</code>；返回键必须使用 Notebook 规定的名字。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>当 prefill_ms=0 且 decode_ms=0 时，模板应返回什么 decode_share？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-phase-summary" value="0">
+                <span>抛出除零异常</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-phase-summary" value="1">
+                <span>1.0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-phase-summary" value="2">
+                <span>0.0</span>
+              </label></div>
+              <div class="feedback" data-feedback="inference-phase-summary"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-phase-summary-0">
+                <span>当前 Notebook 无 TODO 占位：独立复写 summarize_inference_result，逐一写齐五个固定键、零总时间分支和 round 位数。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-phase-summary-1">
+                <span>shape/dtype/device：三个输入与返回值都是 Python 数值，没有 tensor shape/device；实际采集时要保证 prefill/decode 使用同一输入 shape、dtype、device 与毫秒单位。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-phase-summary-2">
+                <span>测试：运行 10.0、5.0、256.0 用例，确认 total_ms==15.0、decode_share==0.333、peak_mem_mb==256.0；另测全零输入。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-phase-summary-3">
+                <span>常见错误排查：占比为 33.3 时检查是否误乘 100；KeyError 时检查字典键拼写；除零时检查条件分支；总时间偏差时检查单位是否混用秒与毫秒。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="inference-fair-comparison">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：用 benchmark 与 summary 支撑策略 -&amp;gt; 代价 -&amp;gt; 收益对照</span>
+          </div>
+          <h2>把数字放进公平对照：一次只改变一个推理策略</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">策略 A 用 batch=1、context=64，策略 B 用 batch=8、context=1024，B 的 token/s 更高。</p>
+            <p class="predict-q">可以直接断言 B 的 cache 策略更好吗？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-fair-comparison" value="0">
+                <span>不可以，工作量与 batch/context 同时变化，无法只归因于 cache</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-fair-comparison" value="1">
+                <span>可以，只要 token/s 更高就足够</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-inference-fair-comparison" value="2">
+                <span>可以，因为 context 越长必然越公平</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="inference-fair-comparison">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="inference-fair-comparison">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Notebook Markdown 要求固定同一模型与同一批输入，再比较 FlashAttention、PagedAttention、量化或 batch 策略。</li><li>prefill 与 decode 的工作量不同，必须分阶段报告，不能只看 total_ms。</li><li>延迟、吞吐、峰值显存是不同指标；较低延迟不自动意味着较高批量吞吐。</li><li>短、中、长 prompt 会改变瓶颈，实验记录必须包含 batch、context length、生成 token 数与 cache 策略。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>性能表的每一行都像一次受控实验：其余条件冻结，只换一个策略。这样看到 total、decode_share 或 memory 变化时，才知道变化来自哪里，而不是输入长度或 batch 偷偷变了。</p>
+              <div class="adv-course">
+        <table class="adv-shapes">
+          <thead><tr><th>必须记录</th><th>为什么</th><th>比较时如何固定</th></tr></thead>
+          <tbody>
+            <tr><td>batch / context / output tokens</td><td>决定实际工作量</td><td>同一组输入与生成长度</td></tr>
+            <tr><td>prefill_ms / decode_ms</td><td>定位阶段瓶颈</td><td>使用相同阶段边界</td></tr>
+            <tr><td>token/s</td><td>表示吞吐</td><td>相同 token 计数口径</td></tr>
+            <tr><td>peak_mem_mb</td><td>表示资源上限</td><td>相同 device 与重置方式</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid three">
+          <section class="adv-panel neutral"><h4>短输入</h4><p>启动与基础 prefill 成本更显眼。</p></section>
+          <section class="adv-panel blue"><h4>中输入</h4><p>cache 策略开始影响复用收益。</p></section>
+          <section class="adv-panel warn"><h4>长输入</h4><p>KV cache、分页和调度更可能成为瓶颈。</p></section>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>baseline</b>最简单 greedy/teacher-forcing</span>
+          <span><b>替换一项</b>attention、cache、量化或 batch</span>
+          <span><b>同口径测量</b>warmup、iters、阶段边界一致</span>
+          <span><b>写结论</b>收益、代价、适用输入档位</span>
+        </div>
+
+        <div class="adv-callout">当前基础测试只验证两个 helper 的算术和调用次数，并未真正运行模型或比较四种策略。最终对照表需要你额外采集真实数据。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用独立结果表比较两种缓存设置</h4><pre><code>rows = [
+    {'cache': 'none', 'batch': 2, 'context': 128, 'total_ms': 30.0, 'tokens': 40},
+    {'cache': 'reuse', 'batch': 2, 'context': 128, 'total_ms': 24.0, 'tokens': 40},
+]
+
+for row in rows:
+    row['tokens_per_s'] = row['tokens'] / (row['total_ms'] / 1000)
+
+assert rows[0]['batch'] == rows[1]['batch']
+assert rows[0]['context'] == rows[1]['context']</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；<code>total_ms</code> -&gt; summary helper 的阶段总时间。</li>
+            <li><code>tokens_per_s</code> -&gt; Markdown 要求记录的吞吐指标，需由 token 数和秒换算。</li>
+            <li><code>batch/context</code> -&gt; 策略对照中必须固定的工作量变量。</li>
+            <li><code>cache</code> -&gt; 逐项替换的推理策略；一次只改变这一项。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为了比较量化前后推理性能，哪组条件最应该保持一致？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-fair-comparison" value="0">
+                <span>模型、输入、batch、生成长度、warmup/iters 与测量边界</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-fair-comparison" value="1">
+                <span>量化版使用更短 prompt 与更少输出 token</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-inference-fair-comparison" value="2">
+                <span>只保持字典键名字一致</span>
+              </label></div>
+              <div class="feedback" data-feedback="inference-fair-comparison"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-fair-comparison-0">
+                <span>当前 Notebook 无 TODO 占位：先跑通 benchmark_fn 与 summarize_inference_result，再为一种 baseline 和一种替换策略设计同字段结果行。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-fair-comparison-1">
+                <span>shape/dtype/device：helper 本身处理标量；真实对照必须记录并固定输入 tensor shape、模型/输入 dtype 与 device，量化实验若 dtype 改变要把它列为策略差异。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-fair-comparison-2">
+                <span>测试：保留模板对 total、decode_share、peak_mem、counter 和 avg 的全部断言；额外检查两行实验的 batch/context/output tokens 相同。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="inference-fair-comparison-3">
+                <span>常见错误排查：结果不可比先查工作量；token/s 异常查毫秒到秒换算；GPU 延迟虚低查同步；内存波动查峰值统计是否在每个策略前重置。</span>
               </label>
           </div>
         </article>
@@ -894,7 +1408,7 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -906,11 +1420,11 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
   <script>
     const levelId = "31";
-    const checkpointData = {"core":{"answer":1,"explain":"预热后测量更接近稳定运行状态。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
+    const checkpointData = {"inference-benchmark-loop":{"answer":1,"explain":"总时间会随迭代次数增长；除以 iters 才得到可比较的单次平均时间。"},"inference-phase-summary":{"answer":2,"explain":"模板用条件表达式保护 total=0 的情况，约定占比为 0.0。"},"inference-fair-comparison":{"answer":0,"explain":"固定工作量和测量口径，才能把观察到的变化主要归因于量化策略。"}};
+    const predictData = {"inference-benchmark-loop":{"answer":0,"revealNote":"先执行 3 次预热，再执行 10 次正式迭代；计时区只包住后 10 次。"},"inference-phase-summary":{"answer":0,"revealNote":"总时间是 15.0，decode 占 5/15=0.333...，保留三位后为 0.333。"},"inference-fair-comparison":{"answer":0,"revealNote":"多个变量同时改变时，吞吐差异可能来自 batch 或上下文长度，而不只是 cache。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

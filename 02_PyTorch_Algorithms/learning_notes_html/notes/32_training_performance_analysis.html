@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 32 | 零基础导学关卡</p>
         <h1>Training Performance Analysis</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">32_Training_Performance_Analysis.ipynb</span>
           <span class="pill">Profiling</span><span class="pill">Training</span><span class="pill">Memory</span>
@@ -735,158 +986,425 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">step_time=data+forward+backward+optimizer(+sync)</div>
       </div>
     </section>
 
 
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 32_Training_Performance_Analysis.ipynb</span>
-      </div>
-      <div class="notebook-content">
-        <h2>32. Training Performance Analysis | 训练性能分析</h2>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练</code>, <code>profiling</code>, <code>显存</code> | <strong>目标人群：</strong> 训练工程与性能分析</p>
-<p>这个项目把训练链路里的性能问题拆开：数据准备、前向反向和显存压力，判断到底哪个环节拖慢了系统。它应该能接住 <code>2.3</code> 的训练闭环、<code>2.5</code> 的显存优化，以及 <code>Part 1</code> 的 profiling 入口。</p>
-<p><strong>关键词：</strong> <code>training</code>, <code>profiling</code>, <code>memory</code>, <code>step time</code></p>
-<h3>前置阅读</h3>
-<p><strong>导语：</strong> 先把训练闭环、显存优化和项目实战看完，再做训练性能分析会更容易定位瓶颈。</p>
-<ul>
-<li>[Part 2: 13 End-to-End Fine-Tuning Experiment](./13_End_to_End_Fine_Tuning_Experiment.md)</li>
-<li>[19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](./19_Activation_Checkpointing_and_Activation_Offload.md)</li>
-<li>[30. LoRA Fine-Tuning Project | LoRA 微调项目](./30_LoRA_Fine_Tuning_Project.md)</li>
-</ul>
-<h3>相关阅读</h3>
-<p><strong>导语：</strong> 如果想继续往更底层的性能分析延伸，可以回看 Part 1 的 profiling 章节。</p>
-<ul>
-<li>[13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)</li>
-<li>[19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)</li>
-</ul>
-<h3>项目目标</h3>
-<p>这个项目的目标是把训练链路里的性能问题拆开：到底是数据准备慢、前向反向慢，还是显存压力把系统拖慢。它应该能接住 <code>2.3</code> 的训练闭环、<code>2.5</code> 的显存优化，以及 <code>Part 1</code> 的 profiling 入口。</p>
-<ul>
-<li>观察训练 step 的耗时构成。</li>
-<li>记录峰值显存、梯度累积和 checkpointing 对训练开销的影响。</li>
-<li>输出一个“改前 / 改后”的训练性能对照结论。</li>
-</ul>
-<h3>实验对象</h3>
-<p>建议沿用一个尽量稳定的小训练任务，例如微型因果语言模型、分类模型或前面章节已经跑通的 SFT 样本。关键是保持输入、批大小和优化器设置尽量固定，避免比较对象不一致。</p>
-<ul>
-<li><strong>训练输入</strong>：固定一批样本，尽量复用同一数据切片。</li>
-<li><strong>训练配置</strong>：固定 optimizer、lr、batch size 和 accumulation 策略。</li>
-<li><strong>对照变量</strong>：只改一个变量，例如是否开启 checkpointing、是否使用 offload、是否改变 accumulation。</li>
-</ul>
-<h3>实现步骤</h3>
-<ul>
-<li><strong>建立基线</strong>：先跑一个最简单的训练循环，记录 step time 和 peak memory。</li>
-<li><strong>引入变量</strong>：逐个切换 gradient accumulation、activation checkpointing、offload 或更小 batch。</li>
-<li><strong>记录变化</strong>：对比每种设置下的吞吐、显存和 loss 下降速度。</li>
-<li><strong>找出瓶颈</strong>：判断是数据、计算、通信，还是显存回收机制在限制训练速度。</li>
-<li><strong>回到正文</strong>：把结果和 <code>13</code> 的 profiling 方法一起解释清楚。</li>
-</ul>
-<h3>参考代码与解析</h3>
-<h4>代码</h4>
-<h4>测试</h4>
-      </div>
-    </section>
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="core">
+
+        <article class="lesson-card inquiry" data-lesson="training-step-measurement">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">本关 TODO</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 measure_train_step 的计时与峰值显存契约</span>
           </div>
-          <h2>Training Performance Analysis：先建立本关直觉</h2>
+          <h2>测一个训练 step：先预热，再重置峰值，最后统一成毫秒</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>总 step time 需要按阶段拆分。</li><li>峰值显存应在相同 batch 与模型设置下比较。</li><li>优化前先用 profiler 或计时证据定位瓶颈。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>先不要背实现。把本关拆成输入、核心操作、输出三段，写代码时就不容易迷路。</p>
-            
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>1. 先认出本关的核心对象</strong>
-              <p>把训练 step 拆成数据、前向、反向和优化器阶段，定位真正的性能与显存瓶颈。</p>
-              <div class="concept-badges">
-                <span>Profiling</span><span>Training</span><span>Memory</span>
-              </div>
-            </div>
-            <div class="story-arrow">把名词翻译成张量、函数或训练步骤</div>
-            <div class="story-panel">
-              <strong>2. 再看输入输出关系</strong>
-              <p>每个 notebook 的 TODO 都在训练一种固定动作：先确认输入是什么，再确认输出应该长什么样，最后用测试检查数值或 shape。</p>
-              <div class="mini-pipeline">
-                <span>输入</span><span>核心操作</span><span>输出/测试</span>
-              </div>
-            </div>
-          </div>
-            
-          <div class="syntax-card">
-            <h4>语法热身：读 PyTorch 练习时先抓这三件事</h4>
-            <p>下面是通用读法，不直接等同于本关 notebook 答案。</p>
-            <pre><code># 1. 先看 shape，别急着写公式
-print(x.shape)
-
-# 2. 写模块时，参数通常放在 __init__
-class TinyModule(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.proj = nn.Linear(4, 4, bias=False)
-
-    def forward(self, x):
-        return self.proj(x)
-
-# 3. 测试通常会检查 shape 或数值接近
-assert out.shape[0] == x.shape[0]
-torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
-            <p class="syntax-tip">读法：先找 TODO 附近的输入变量和期望输出，再回到课程区确认这个操作在数学上想做什么。</p>
-          </div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>训练变慢时最先应该做什么？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="0">
-                <span>删除 loss</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">调用 measure_train_step(train_step, warmup=0, iters=2)。</p>
+            <p class="predict-q">若 train_step 每次只让 counter 加 1，测试结束时 counter 应是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-training-step-measurement" value="0">
+                <span>2</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="1">
-                <span>盲目减小所有张量</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-step-measurement" value="1">
+                <span>8</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-core" value="2">
-                <span>分阶段计时或 profiling 定位瓶颈</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-step-measurement" value="2">
+                <span>10</span>
               </label></div>
-            <div class="feedback" data-feedback="core"></div>
+            <div class="predict-feedback" data-predict-feedback="training-step-measurement">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="training-step-measurement">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>train_step_fn 是一个无需参数的完整训练步函数；每调用一次，应该完成相同口径的工作。</li><li>warmup 在正式测量前执行，用于稳定运行状态；Notebook 默认 warmup=2、iters=8。</li><li>CUDA 可用时，正式计时前重置 peak memory，测量结束后读取 max_memory_allocated；CPU 路径约定 peak_mem_mb=0.0。</li><li>perf_counter 的差值单位是秒；除以 iters 得单步秒数，再乘 1000 得 step_time_ms。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>训练计时要画清边界：预热先跑完；若在 GPU 上，清空旧的峰值记录；然后只包住固定次数的训练 step。最终返回一项时间和一项资源，让不同配置能用同一口径比较。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>1. warmup</b>调用 train_step_fn，不计时</span>
+          <span><b>2. reset peak</b>仅 CUDA 可用时执行</span>
+          <span><b>3. timed loop</b>正式执行 iters 次</span>
+          <span><b>4. average</b>秒 / iters * 1000</span>
+          <span><b>5. memory</b>字节 / 1024² 得 MB</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>CPU-first 分支</h4>
+            <div class="adv-contract">
+              <span>计时</span><strong>仍然正常执行并返回非负毫秒</strong>
+              <span>峰值显存</span><strong>保持初始化值 0.0</strong>
+              <span>基础测试</span><strong>只要求两个键存在且数值非负</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>CUDA 分支</h4>
+            <div class="adv-contract">
+              <span>正式测量前</span><strong>reset_peak_memory_stats()</strong>
+              <span>正式测量后</span><strong>max_memory_allocated()</strong>
+              <span>单位换算</span><strong>bytes / (1024 ** 2) -&gt; MB</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-checks">
+          <span><strong>counter == 2</strong><br>warmup=0,iters=2</span>
+          <span><strong>step_time_ms</strong><br>键存在且 &gt;= 0</span>
+          <span><strong>peak_mem_mb</strong><br>键存在且 &gt;= 0</span>
+        </div>
+
+        <div class="adv-callout">当前模板没有显式 CUDA synchronize。若 train_step_fn 在 GPU 上含异步工作，工程级精确计时要考虑同步；但复写 Notebook 基础函数时先保持它现有的调用与返回契约。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用数组更新任务练习平均 step 计时</h4><pre><code>import time
+
+state = {'steps': 0}
+def update_once():
+    state['steps'] += 1
+
+for _ in range(1):
+    update_once()
+
+begin = time.perf_counter()
+for _ in range(4):
+    update_once()
+avg_ms = (time.perf_counter() - begin) / 4 * 1000
+result = {'step_time_ms': round(avg_ms, 2), 'peak_mem_mb': 0.0}</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；目标是独立复写 <code>measure_train_step</code>。</li>
+            <li><code>update_once</code> -&gt; <code>train_step_fn</code>；<code>1/4</code> -&gt; <code>warmup/iters</code>。</li>
+            <li><code>avg_ms</code> -&gt; 返回字典的 <code>step_time_ms</code>。</li>
+            <li>例子固定 CPU 峰值为 0.0；Notebook 还需按 CUDA 可用性执行 reset 与读取峰值。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 CUDA 峰值统计要在 warmup 之后重置？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-step-measurement" value="0">
+                <span>让 iters 自动变成 0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-step-measurement" value="1">
+                <span>把 GPU 张量自动转为 CPU</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-step-measurement" value="2">
+                <span>避免把预热阶段的分配峰值混入正式测量</span>
+              </label></div>
+              <div class="feedback" data-feedback="training-step-measurement"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-0">
-                <span>记录 data/forward/backward/step 耗时。</span>
+                <input type="checkbox" data-homework="training-step-measurement-0">
+                <span>当前 Notebook 无 TODO 占位：独立复写 measure_train_step，保持 warmup、条件重置、正式循环、平均毫秒和条件读取峰值的顺序。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-1">
-                <span>测量峰值显存与吞吐。</span>
+                <input type="checkbox" data-homework="training-step-measurement-1">
+                <span>shape/dtype/device：helper 返回标量字典；真实 train_step 的输入 shape、模型/输入 dtype 与 device 必须在各配置间一致，CUDA 峰值只反映当前设备上的张量分配。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="core-2">
-                <span>只改变一个因素并复测。</span>
+                <input type="checkbox" data-homework="training-step-measurement-2">
+                <span>测试：运行 warmup=0、iters=2 用例，确认 counter==2、两个键都存在且数值非负；CPU 上 peak_mem_mb=0.0 是模板预期。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-step-measurement-3">
+                <span>常见错误排查：counter 不对查循环边界；时间大 1000 倍查单位；CPU 调 CUDA API 报错查 is_available 分支；GPU 时间虚低查异步同步边界。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="training-delta-semantics">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 summarize_training_result 的差值方向与布尔字段</span>
+          </div>
+          <h2>读懂改前减改后：正差值才表示更快或更省</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">baseline 每步 100 ms，tuned 每步 125 ms，模板计算 base - tuned。</p>
+            <p class="predict-q">step_time_delta_ms 与 time_improved 应该是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-training-delta-semantics" value="0">
+                <span>-25.0 与 False</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-delta-semantics" value="1">
+                <span>+25.0 与 True</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-delta-semantics" value="2">
+                <span>0.0 与 True</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="training-delta-semantics">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="training-delta-semantics">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>base_metrics 是优化前基线，tuned_metrics 是优化后配置；两者都应含 step_time_ms 与 peak_mem_mb。</li><li>模板把 delta 定义为 base - tuned，而不是 tuned - base。</li><li>若 tuned 更小，base - tuned 为正，因此 time_improved 或 memory_improved 为 True。</li><li>差值保留 2 位小数；布尔判断使用未舍入的 delta &gt; 0，恰好相等不算 improved。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把 delta 理解成“省下了多少”：原来 120 ms，现在 98 ms，省下 22 ms，所以是正数。显存同理。负数不是程序坏了，而是优化后反而更慢或更占内存。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>正差值：改后更好</h4>
+            <div class="adv-contract">
+              <span>时间</span><strong>120 - 98 = +22 ms</strong>
+              <span>显存</span><strong>8192 - 6144 = +2048 MB</strong>
+              <span>布尔值</span><strong>time_improved=True，memory_improved=True</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>负差值：存在代价</h4>
+            <div class="adv-contract">
+              <span>时间</span><strong>100 - 130 = -30 ms</strong>
+              <span>含义</span><strong>优化后每步慢 30 ms</strong>
+              <span>布尔值</span><strong>time_improved=False</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>time_delta = base time - tuned time</code><span>正数表示每步省时</span></div>
+          <div><b>2</b><code>mem_delta = base memory - tuned memory</code><span>正数表示峰值显存下降</span></div>
+          <div><b>3</b><code>delta &gt; 0</code><span>严格大于 0 才标记 improved</span></div>
+          <div><b>4</b><code>round(delta, 2)</code><span>统一报告精度</span></div>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>返回键</th><th>类型</th><th>正值/True 的含义</th></tr></thead>
+          <tbody>
+            <tr><td><code>step_time_delta_ms</code></td><td>float</td><td>tuned 每步更快</td></tr>
+            <tr><td><code>peak_mem_delta_mb</code></td><td>float</td><td>tuned 峰值显存更低</td></tr>
+            <tr><td><code>time_improved</code></td><td>bool</td><td>time_delta &gt; 0</td></tr>
+            <tr><td><code>memory_improved</code></td><td>bool</td><td>mem_delta &gt; 0</td></tr>
+          </tbody>
+        </table>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用数据加载优化练习差值方向</h4><pre><code>before = {'load_ms': 18.4, 'ram_mb': 720.0}
+after = {'load_ms': 14.1, 'ram_mb': 760.0}
+
+load_saved = before['load_ms'] - after['load_ms']
+ram_saved = before['ram_mb'] - after['ram_mb']
+report = {
+    'load_delta_ms': round(load_saved, 2),
+    'ram_delta_mb': round(ram_saved, 2),
+    'load_improved': load_saved &gt; 0,
+    'ram_improved': ram_saved &gt; 0,
+}
+# 时间改善，但 ram_saved 为负，说明内存是代价</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；目标是独立复写 <code>summarize_training_result</code>。</li>
+            <li><code>before/after</code> -&gt; <code>base_metrics/tuned_metrics</code>。</li>
+            <li><code>load_saved</code> -&gt; <code>time_delta</code>；<code>ram_saved</code> -&gt; <code>mem_delta</code>。</li>
+            <li>例子的字段名不同；返回 Notebook 时必须恢复四个规定键。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>若 base 与 tuned 的 peak_mem_mb 完全相等，memory_improved 是什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-delta-semantics" value="0">
+                <span>False</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-delta-semantics" value="1">
+                <span>无法返回</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-delta-semantics" value="2">
+                <span>True</span>
+              </label></div>
+              <div class="feedback" data-feedback="training-delta-semantics"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-delta-semantics-0">
+                <span>当前 Notebook 无 TODO 占位：独立复写 summarize_training_result，先算 base-tuned 的两个 delta，再返回两个 round 数值和两个严格大于 0 的布尔值。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-delta-semantics-1">
+                <span>shape/dtype/device：输入是含 Python 数值的字典，输出是 float/bool，无 tensor shape/device；这些 metrics 必须来自相同输入 shape、dtype 与 device 的训练对照。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-delta-semantics-2">
+                <span>测试：Notebook 当前基础测试未断言 summary；请保留示例 120/8192 对 98/6144，自查应得到 22.0、2048.0、True、True，并补测负差值与零差值。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-delta-semantics-3">
+                <span>常见错误排查：符号反了检查减法顺序；布尔值不符检查是否用了 &gt;=；KeyError 检查四个输入/输出键；结论冲突时确认时间和显存单位一致。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="training-controlled-analysis">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">当前 Notebook 无 TODO 占位：组织 baseline/tuned 对照并区分数据、计算与显存瓶颈</span>
+          </div>
+          <h2>从两个 helper 到瓶颈结论：固定训练任务，一次只改一个变量</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">开启 activation checkpointing 后，peak memory 降低，但 step time 上升。</p>
+            <p class="predict-q">最合理的初步解释是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-training-controlled-analysis" value="0">
+                <span>用反向重算换取更少的激活保存，形成时间与显存交换</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-controlled-analysis" value="1">
+                <span>两个指标必须同时改善，否则代码一定错</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-training-controlled-analysis" value="2">
+                <span>说明 batch size 自动变成了 0</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="training-controlled-analysis">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="training-controlled-analysis">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Notebook 要求固定样本、optimizer、lr、batch size 与 accumulation 策略，除非其中某一项正是本轮唯一对照变量。</li><li>gradient accumulation、activation checkpointing、offload 和更小 batch 会同时影响时间与显存，收益常伴随代价。</li><li>measure_train_step 提供 step_time 与 peak memory，summary 只比较前后差值；它们不会自动判断瓶颈来源。</li><li>要定位数据、计算或显存回收问题，还需结合 profiler、阶段计时和多次重复测量。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>先得到稳定 baseline，再只拨动一个开关。若显存下降但 step 变慢，这可能是 checkpointing 用重算换显存；若 GPU 等数据，问题可能在数据准备。性能分析不是只追求两个 True，而是解释每个变化的来源与代价。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>固定任务</b>同样本、模型、optimizer、lr</span>
+          <span><b>建立 baseline</b>多次测 step time 与 peak memory</span>
+          <span><b>只改一项</b>accumulation、checkpoint 或 offload</span>
+          <span><b>计算 delta</b>时间与显存分别判断</span>
+          <span><b>解释瓶颈</b>数据、计算、通信或回收</span>
+        </div>
+
+        <div class="adv-grid three">
+          <section class="adv-panel neutral"><h4>数据瓶颈</h4><p>训练 step 等待 batch；先拆出数据准备时间。</p></section>
+          <section class="adv-panel blue"><h4>计算瓶颈</h4><p>前向/反向占主导；看算子与利用率。</p></section>
+          <section class="adv-panel warn"><h4>显存瓶颈</h4><p>OOM、频繁 offload 或回收；看峰值与传输。</p></section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>只改变的变量</th><th>常见收益</th><th>可能代价</th><th>应观察</th></tr></thead>
+          <tbody>
+            <tr><td>activation checkpointing</td><td>保存更少激活</td><td>反向时重算，step 变慢</td><td>peak memory 与 step time</td></tr>
+            <tr><td>offload</td><td>设备显存下降</td><td>主机传输与等待</td><td>显存、传输、空闲间隙</td></tr>
+            <tr><td>gradient accumulation</td><td>较小 micro-batch 也能模拟大 batch</td><td>每次 optimizer update 需要更多 micro-step</td><td>计时口径与吞吐</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">“step_time 改善”和“memory 改善”是两个独立判断。真实优化常是一正一负；报告应写清交换关系，而不是只挑有利指标。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用独立配置表保证一次只改 checkpoint</h4><pre><code>baseline_cfg = {
+    'batch': 4, 'lr': 1e-3, 'accum': 2, 'checkpoint': False
+}
+tuned_cfg = {
+    'batch': 4, 'lr': 1e-3, 'accum': 2, 'checkpoint': True
+}
+
+for key in ['batch', 'lr', 'accum']:
+    assert baseline_cfg[key] == tuned_cfg[key]
+
+base_metrics = {'step_time_ms': 44.0, 'peak_mem_mb': 900.0}
+tuned_metrics = {'step_time_ms': 53.0, 'peak_mem_mb': 610.0}</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li>本页无编号 TODO；<code>base_metrics/tuned_metrics</code> -&gt; summary helper 的两个输入。</li>
+            <li><code>checkpoint</code> -&gt; Markdown 提议逐个切换的 activation checkpointing 变量。</li>
+            <li><code>batch/lr/accum</code> 的相等断言 -&gt; 固定训练配置的公平性检查。</li>
+            <li>例子展示显存改善、时间退化；需要同时报告两种 delta。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为了判断 offload 是否导致 step 变慢，最可靠的第一步是什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-controlled-analysis" value="0">
+                <span>同时改 batch、lr 和模型大小</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-controlled-analysis" value="1">
+                <span>固定其余训练配置，只切换 offload，并用相同测量口径重复比较</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-training-controlled-analysis" value="2">
+                <span>只看一次运行的最终 loss</span>
+              </label></div>
+              <div class="feedback" data-feedback="training-controlled-analysis"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-controlled-analysis-0">
+                <span>当前 Notebook 无 TODO 占位：用 measure_train_step 生成 baseline/tuned 指标，再用 summarize_training_result 写一行“收益 + 代价 + 可能瓶颈”结论。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-controlled-analysis-1">
+                <span>shape/dtype/device：两次实验必须固定训练输入 shape、模型与输入 dtype/device；改变 checkpoint/offload 时记录哪些张量位置变化，避免把配置漂移当优化收益。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-controlled-analysis-2">
+                <span>测试：先通过 counter、返回键和非负值的基础断言，再为 summary 增加正、负、零 delta 自检，并验证对照配置除目标变量外完全相同。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="training-controlled-analysis-3">
+                <span>常见错误排查：波动大时增加 warmup/iters 并重复；显存为 0 先确认是否在 CPU；GPU 时间虚低查同步；loss 行为变化查是否意外改变 batch、accum 或 optimizer step 口径。</span>
               </label>
           </div>
         </article>
@@ -894,7 +1412,7 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -906,11 +1424,11 @@ torch.allclose(out_a, out_b, atol=1e-5)</code></pre>
 
   <script>
     const levelId = "32";
-    const checkpointData = {"core":{"answer":2,"explain":"先获得证据，才能判断是数据、计算、同步还是显存问题。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
+    const checkpointData = {"training-step-measurement":{"answer":2,"explain":"重置后读取到的峰值更接近正式 timed loop 的资源上限。"},"training-delta-semantics":{"answer":0,"explain":"mem_delta 等于 0，而模板使用严格条件 mem_delta > 0，所以结果是 False。"},"training-controlled-analysis":{"answer":1,"explain":"单变量、同口径、重复测量能最大程度隔离 offload 的影响。"}};
+    const predictData = {"training-step-measurement":{"answer":0,"revealNote":"没有预热调用，正式循环正好执行 2 次，因此计数器为 2。"},"training-delta-semantics":{"answer":0,"revealNote":"100-125=-25，说明 tuned 反而慢了 25 ms，因此 time_improved 为 False。"},"training-controlled-analysis":{"answer":0,"revealNote":"Checkpointing 的典型机制就是少存激活、需要时重算，因此省显存同时增加计算是合理现象。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

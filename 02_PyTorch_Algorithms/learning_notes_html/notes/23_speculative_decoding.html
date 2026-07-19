@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 23 | 零基础导学关卡</p>
         <h1>Speculative Decoding</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">23_Speculative_Decoding.ipynb</span>
           <span class="pill">Draft Model</span><span class="pill">Verification</span><span class="pill">Acceptance</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">acceptance α(x)=min(1,p_target(x)/p_draft(x))</div>
       </div>
@@ -746,125 +997,388 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="spec-draft-verify">
+
+        <article class="lesson-card inquiry" data-lesson="speculative-probability-lookup">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">整体流程</span>
+            <span class="todo-pill">TODO 1 前置与直接接受分支：读取 [K,V] 中的对应概率并判断 p &gt;= q</span>
           </div>
-          <h2>Speculative Decoding：小模型先起草，大模型来验收</h2>
+          <h2>先读对 p 和 q：每一行只验证草稿实际选中的 token</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>draft model 生成快但不够准。</li><li>target model 生成慢但质量高。</li><li>本 notebook 只练接受/拒绝前缀；完整算法还会处理拒绝后的修正采样。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>像先写草稿再让老师批改：草稿正确的部分直接采用，错误处再由老师接管。</p>
-            <div class="mini-flow"><span>draft: A B C</span><span>target 验证</span><strong>接受 A B，拒绝 C</strong></div>
-            <div class="syntax-card"><h4>语法热身：逐个检查候选 token</h4><pre><code>accepted = []
-for token, p, q in zip(draft_tokens, target_probs, draft_probs):
-    if should_accept(p, q):
-        accepted.append(token)
-    else:
-        break</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>在本 notebook 的验证函数里，接受概率 p/q 中的 p 来自哪里？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-draft-verify" value="0">
-                <span>tokenizer</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">当前 token 的目标概率 p=0.8，草稿概率 q=0.5。</p>
+            <p class="predict-q">验证器应该走哪条路径？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-probability-lookup" value="0">
+                <span>直接接受，不调用 torch.rand</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-draft-verify" value="1">
-                <span>draft model</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-probability-lookup" value="1">
+                <span>以 0.625 的概率接受</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-draft-verify" value="2">
-                <span>target model</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-probability-lookup" value="2">
+                <span>立即拒绝并停止</span>
               </label></div>
-            <div class="feedback" data-feedback="spec-draft-verify"></div>
+            <div class="predict-feedback" data-predict-feedback="speculative-probability-lookup">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="speculative-probability-lookup">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>draft_probs 和 target_probs 都是 [K, vocab_size]：第 i 行表示草稿第 i 个位置的一整份词表概率。</li><li>draft_tokens 是长度 K 的 Python token_id 列表；token_id 用来选中该行真正草拟出的那一列。</li><li>二维索引 probs[i, token_id] 得到 0 维张量，.item() 把它转成 Python float。</li><li>p 表示目标模型对当前草稿 token 的概率，q 表示草稿模型对同一 token 的概率。先解释两者，再使用接受公式。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>验证第 i 个草稿时，不比较两整行分布，也不取每行最大值。草稿已经选定 token_id，所以只需分别查询两个模型在这个位置、这个 token 上的概率。若目标模型给出的 p 不小于草稿模型的 q，接受概率已经封顶为 1，可以直接收下，不需要随机数。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>位置 i</b>当前验证草稿链中的第几个 token</span>
+          <span><b>token_id</b>草稿模型在该位置实际选中的词</span>
+          <span><b>p</b>target_probs[i, token_id]</span>
+          <span><b>q</b>draft_probs[i, token_id]</span>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>shape / 类型</th><th>语义</th></tr></thead>
+          <tbody>
+            <tr><td><code>draft_probs</code></td><td>[K,V] 浮点张量</td><td>小模型在 K 个位置的词表分布</td></tr>
+            <tr><td><code>target_probs</code></td><td>[K,V] 浮点张量</td><td>大模型在同样 K 个位置的词表分布</td></tr>
+            <tr><td><code>draft_tokens</code></td><td>长度 K 的 List[int]</td><td>每个位置实际草拟出的 token_id</td></tr>
+            <tr><td><code>p</code>、<code>q</code></td><td>Python float</td><td>两个模型对当前草稿 token 的概率</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>p >= q</h4>
+            <div class="adv-flow"><span>p = 0.8</span><span>q = 0.5</span><strong>接受概率 = 1</strong></div>
+            <p>直接把当前 token_id 加入 accepted_tokens。</p>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>p &lt; q</h4>
+            <div class="adv-flow"><span>p = 0.4</span><span>q = 0.5</span><strong>进入随机分支</strong></div>
+            <p>这时才需要计算 p/q 并抽随机数；下一课再处理。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">分支结构要互斥：直接接受之后不应再进入随机分支，否则同一个 token 可能被追加两次，测试提供的随机数调用次数也会错位。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：查询两位评审对已选方案的分数</h4><pre><code>junior_scores = torch.tensor([[0.2, 0.6, 0.2],
+                              [0.5, 0.1, 0.4]])
+senior_scores = torch.tensor([[0.3, 0.5, 0.2],
+                              [0.6, 0.1, 0.3]])
+chosen_options = [1, 0]
+
+row = 0
+option_id = chosen_options[row]
+senior_value = senior_scores[row, option_id].item()
+junior_value = junior_scores[row, option_id].item()
+certain = senior_value &gt;= junior_value</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>row</code> -> 循环变量 <code>i</code>，表示当前草稿位置。</li>
+            <li><code>chosen_options</code> -> <code>draft_tokens</code>，其中元素映射到 <code>token_id</code>。</li>
+            <li><code>senior_value</code> -> <code>p</code>，<code>junior_value</code> -> <code>q</code>。</li>
+            <li><code>certain</code> -> TODO 1 的直接接受判断；成立时只做一次追加，不抽随机数。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么索引要写成第 i 行与当前 token_id，而不是比较两整行概率？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-probability-lookup" value="0">
+                <span>因为整行概率没有 dtype</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-probability-lookup" value="1">
+                <span>因为 token_id 表示 batch 大小</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-probability-lookup" value="2">
+                <span>验证对象是草稿在该位置实际选中的 token</span>
+              </label></div>
+              <div class="feedback" data-feedback="speculative-probability-lookup"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-draft-verify-0">
-                <span>读懂 notebook 中 draft 概率 q 和 target 概率 p 的含义。</span>
+                <input type="checkbox" data-homework="speculative-probability-lookup-0">
+                <span>完成 TODO 1 的直接接受分支，并为后续随机逻辑保留互斥分支结构；不要让 p&gt;=q 的 token 再抽一次随机数。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-draft-verify-1">
-                <span>确认验证过程按候选 token 顺序进行。</span>
+                <input type="checkbox" data-homework="speculative-probability-lookup-1">
+                <span>核对 draft_probs/target_probs 是 [K,vocab_size] 浮点张量且通常在同一 device；索引后 .item() 得到 Python float，draft_tokens 与 accepted_tokens 是 Python int 列表。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-draft-verify-2">
-                <span>理解拒绝后为什么停止接受后续草稿；完整算法的后续采样不在本 notebook 范围内。</span>
+                <input type="checkbox" data-homework="speculative-probability-lookup-2">
+                <span>对照测试第 0 个 token：p=0.8、q=0.5，必须接受 token 10。若结果重复或 mock_rand 提前消耗，检查直接分支后是否仍落入随机分支。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="spec-accept-rule">
+        <article class="lesson-card inquiry" data-lesson="speculative-ratio-coin">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 2 前半：生成 r，并用 r &lt; p/q 决定接受</span>
           </div>
-          <h2>接受规则：p &gt;= q 时全收，否则按 p/q 抽签</h2>
+          <h2>p 小于 q：把比值变成一枚可复现的概率硬币</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>p 是 target model 对草稿 token 的概率。</li><li>q 是 draft model 对同一 token 的概率。</li><li>当 draft 过于乐观时，需要降低接受概率。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>如果大模型比小模型还认可这个 token，就直接通过；如果小模型太自信，就按比例抽签。</p>
-            <div class="ratio-board"><span>p=.20, q=.50</span><span>accept prob=.40</span><strong>随机数小于 .40 才接受</strong></div>
-            <div class="syntax-card"><h4>语法热身：条件判断和随机数</h4><pre><code>if p &gt;= q:
-    accept = True
-else:
-    accept_prob = p / q
-    accept = torch.rand(()) &lt; accept_prob</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>p=0.3，q=0.6 时，接受概率是多少？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-accept-rule" value="0">
-                <span>0.5</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">p=0.4、q=0.5，所以 p/q=0.8；测试给出的 r=0.5。</p>
+            <p class="predict-q">当前草稿 token 是否接受？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-ratio-coin" value="0">
+                <span>接受，因为 0.5 &lt; 0.8</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-accept-rule" value="1">
-                <span>1.0</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-ratio-coin" value="1">
+                <span>拒绝，因为 p &lt; q</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-spec-accept-rule" value="2">
-                <span>0.3</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-ratio-coin" value="2">
+                <span>直接接受且不应读取 r</span>
               </label></div>
-            <div class="feedback" data-feedback="spec-accept-rule"></div>
+            <div class="predict-feedback" data-predict-feedback="speculative-ratio-coin">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="speculative-ratio-coin">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>本阶段只在 p &lt; q 时执行，因此 0 &lt;= p/q &lt; 1，可以作为接受概率。</li><li>torch.rand(1) 返回 shape [1] 的均匀随机张量，取 .item() 后得到区间 [0,1) 的 Python float。</li><li>判断 r &lt; p/q 时，小随机数落在接受区间内；否则表示拒绝。</li><li>Notebook 测试会临时替换 torch.rand，使第一次返回 0.5、第二次返回 0.9，所以分支调用次数必须准确。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>当草稿模型比目标模型更看好当前 token 时，不能总是接受。接受区间从 0 开始，长度是 p/q：比值越接近 1，硬币越容易通过；比值越小，越容易拒绝。随机数 r 就像在 0 到 1 的尺子上落一个点。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>测试中的第二个 token</h4>
+            <div class="adv-steps">
+              <div><b>1</b><code>p/q = 0.4/0.5 = 0.8</code><span>接受区间长度为 0.8</span></div>
+              <div><b>2</b><code>r = 0.5</code><span>随机点落在接受区间</span></div>
+              <div><b>3</b><code>0.5 &lt; 0.8</code><span>接受 token 20</span></div>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>测试中的第三个 token</h4>
+            <div class="adv-steps">
+              <div><b>1</b><code>p/q = 0.1/0.9</code><span>接受区间约为 0.11</span></div>
+              <div><b>2</b><code>r = 0.9</code><span>随机点落在接受区间外</span></div>
+              <div><b>3</b><code>0.9 不小于 0.11</code><span>拒绝当前 token</span></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span><code>p/q</code></span><strong>Python float，当前分支中位于 0 到 1 之间</strong>
+          <span><code>r</code></span><strong>Python float，由 torch.rand(1).item() 得到</strong>
+          <span><code>r &lt; p/q</code></span><strong>bool；True 接受，False 拒绝</strong>
+          <span>随机设备</span><strong>本 Notebook 测试在 CPU 上 monkeypatch torch.rand，按测试给出的调用形式即可</strong>
+        </div>
+
+        <div class="adv-callout">这里不要把比较写成 r &lt; q/p。概率校正的分子是目标模型概率 p，分母是产生草稿的模型概率 q。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：按合格率决定是否抽检通过</h4><pre><code>trusted_rate = 0.35
+claimed_rate = 0.50
+accept_chance = trusted_rate / claimed_rate
+draw = torch.rand(1).item()
+
+if draw &lt; accept_chance:
+    decision = 'accept'
+else:
+    decision = 'reject'
+print(draw, accept_chance, decision)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>trusted_rate</code> -> 目标模型概率 <code>p</code>。</li>
+            <li><code>claimed_rate</code> -> 草稿模型概率 <code>q</code>。</li>
+            <li><code>accept_chance</code> -> TODO 2 中的 <code>p / q</code>。</li>
+            <li><code>draw</code> -> TODO 2 的 <code>r</code>；accept 分支映射为追加当前 token_id。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>在 p&lt;q 分支中，哪个量是接受概率？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-ratio-coin" value="0">
+                <span>p/q</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-ratio-coin" value="1">
+                <span>p+q</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-ratio-coin" value="2">
+                <span>q/p</span>
+              </label></div>
+              <div class="feedback" data-feedback="speculative-ratio-coin"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-accept-rule-0">
-                <span>实现 p &gt;= q 时 100% 接受。</span>
+                <input type="checkbox" data-homework="speculative-ratio-coin-0">
+                <span>完成 TODO 2 的随机接受部分：只在 p&lt;q 分支生成一次 r，并把 r 与 p/q 比较；接受时追加当前 token_id。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-accept-rule-1">
-                <span>实现 p &lt; q 时按 p/q 接受。</span>
+                <input type="checkbox" data-homework="speculative-ratio-coin-1">
+                <span>shape/type 账本：torch.rand(1) 是 [1] 浮点 CPU 张量，.item() 后 r 是 Python float；p、q 也已是 float，accepted_tokens 仍是 List[int]。不要无故把输入 [K,V] 搬 device 或改 dtype。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="spec-accept-rule-2">
-                <span>注意 q 很小时的数值安全。</span>
+                <input type="checkbox" data-homework="speculative-ratio-coin-2">
+                <span>用测试数值手算两次：0.5 &lt; 0.8 应接受 token 20，0.9 &lt; 0.1/0.9 为假。若结果相反，检查比值方向、比较符号和 torch.rand 的调用位置。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="speculative-rejection-stop">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 2 后半：拒绝时停止验证并满足 accepted == [10, 20]</span>
+          </div>
+          <h2>拒绝必须 break：后续草稿依赖已经失效的前缀</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">接受状态依次为 [True, True, False, True]。</p>
+            <p class="predict-q">投机验证应返回哪段 token？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-rejection-stop" value="0">
+                <span>只返回前两个连续接受的 token</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-rejection-stop" value="1">
+                <span>返回第 1、2、4 个 token</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-speculative-rejection-stop" value="2">
+                <span>返回空列表</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="speculative-rejection-stop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="speculative-rejection-stop">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>for 循环中的 break 会立刻结束整个循环；continue 只跳过当前轮，下一轮仍会执行。</li><li>草稿 token 30 之后的 token 40，是在包含 token 30 的前缀上生成的。若 30 被拒绝，40 的上下文前提已不成立。</li><li>accepted_tokens 只记录从开头开始连续通过的草稿前缀，不是从 K 个位置里任意挑选的集合。</li><li>测试只断言最终列表等于 [10, 20]；这同时检查直接接受、随机接受和拒绝后停止三段控制流。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>投机验证不是独立批改 K 道选择题，而是在验证一条连续路径。某一步拒绝，就像路线从这里断了；后面的草稿基于错误前缀，不能越过断点继续收集。因此拒绝分支的状态动作只有一个重点：立刻 break。</p>
+              <div class="adv-course">
+        <div class="adv-flow">
+          <strong>token 10<br>直接接受</strong><strong>token 20<br>随机接受</strong><span>token 30<br>随机拒绝</span><span>token 40<br>不再验证</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>如果误写 continue</h4>
+            <p>循环会继续验证 token 40，可能得到非连续结果 [10,20,40]，还会多调用一次测试替换过的 torch.rand。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>使用 break</h4>
+            <p>拒绝 token 30 后立即结束，返回已经连续通过的前缀 [10,20]。</p>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span>循环状态</span><strong>i 从 0 向后推进，只要此前所有草稿都已接受</strong>
+          <span>接受动作</span><strong>append 当前 token_id，然后进入下一轮</strong>
+          <span>拒绝动作</span><strong>不 append，并 break</strong>
+          <span>返回契约</span><strong>List[int]，内容是最长连续接受前缀</strong>
+        </div>
+
+        <div class="adv-checks">
+          <span>第 0 位<br>不消耗随机数</span>
+          <span>第 1 位<br>消耗 r=0.5</span>
+          <span>第 2 位<br>消耗 r=0.9 后拒绝</span>
+          <span>第 3 位<br>完全不执行</span>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：读取连续有效的批次编号</h4><pre><code>batch_ids = [101, 102, 103, 104]
+is_valid = [True, True, False, True]
+continuous_prefix = []
+
+for batch_id, ok in zip(batch_ids, is_valid):
+    if ok:
+        continuous_prefix.append(batch_id)
+    else:
+        break
+print(continuous_prefix)  # [101, 102]</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>batch_ids</code> -> <code>draft_tokens</code>，顺序具有前缀依赖。</li>
+            <li><code>ok</code> -> 当前 token 的直接接受或随机接受结果。</li>
+            <li><code>continuous_prefix</code> -> <code>accepted_tokens</code>，只收集连续通过的开头部分。</li>
+            <li><code>break</code> -> TODO 2 的拒绝动作；不能替换成 continue。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>拒绝草稿 token 时，为什么不能用 continue？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-rejection-stop" value="0">
+                <span>continue 会把列表 dtype 改成 float</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-rejection-stop" value="1">
+                <span>后续草稿依赖被拒绝 token 所在的前缀，已不再有效</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-speculative-rejection-stop" value="2">
+                <span>continue 只能用于 while 循环</span>
+              </label></div>
+              <div class="feedback" data-feedback="speculative-rejection-stop"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="speculative-rejection-stop-0">
+                <span>补齐 TODO 2 的拒绝分支并使用 break，保证函数返回的是连续接受前缀；随后从头审视 TODO 1/2 是否形成完整互斥控制流。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="speculative-rejection-stop-1">
+                <span>返回值必须是 List[int]，本步骤不创建新张量，不改变 draft_probs/target_probs 的 [K,V]、浮点 dtype 或 device；随机标量仍通过 .item() 进入 Python 控制流。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="speculative-rejection-stop-2">
+                <span>运行唯一断言 accepted == [10,20]。若包含 30，检查概率比较；若包含 40，检查是否误用 continue；若随机序列错位，检查 p&gt;=q 分支是否不必要地调用了 torch.rand。</span>
               </label>
           </div>
         </article>
@@ -872,7 +1386,7 @@ else:
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -884,11 +1398,11 @@ else:
 
   <script>
     const levelId = "23";
-    const checkpointData = {"spec-draft-verify":{"answer":2,"explain":"draft 负责提出候选；这里练的是用 target 概率 p 和 draft 概率 q 做前缀接受判断。完整投机解码还要补拒绝后的修正采样。"},"spec-accept-rule":{"answer":0,"explain":"target 概率低于 draft 概率，所以按 p/q = 0.5 接受。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"speculative-probability-lookup":{"answer":2,"explain":"投机验证针对已经草拟出的具体 token，p 与 q 都必须是两个模型对同一个位置、同一个 token 的概率。"},"speculative-ratio-coin":{"answer":0,"explain":"目标分布给当前 token 的质量 p，要除以草稿分布产生它的概率 q；当前分支下该比值小于 1。"},"speculative-rejection-stop":{"answer":1,"explain":"草稿是一条自回归路径。中间断点出现后，后续候选不再对应目标模型接受的上下文。"}};
+    const predictData = {"speculative-probability-lookup":{"answer":0,"revealNote":"p/q 大于 1，但概率不能超过 1，所以接受概率封顶为 1；代码可直接接受。"},"speculative-ratio-coin":{"answer":0,"revealNote":"p<q 只说明进入随机分支，不等于必拒绝。随机数小于接受概率 0.8，因此通过。"},"speculative-rejection-stop":{"answer":0,"revealNote":"第三个 token 被拒绝后，第四个 token 的生成前缀已经失效，因此循环必须在第三个位置停止。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

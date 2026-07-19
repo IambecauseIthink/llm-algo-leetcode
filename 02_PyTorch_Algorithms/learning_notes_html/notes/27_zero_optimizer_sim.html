@@ -710,15 +710,266 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -726,7 +977,7 @@
       <div class="card hero-main">
         <p class="eyebrow">Level 27 | 零基础导学关卡</p>
         <h1>ZeRO Optimizer Sim</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 2 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">27_ZeRO_Optimizer_Sim.ipynb</span>
           <span class="pill">ZeRO</span><span class="pill">Optimizer State</span><span class="pill">Sharding</span>
@@ -735,9 +986,9 @@
       </div>
       <div class="card hero-map">
         <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
         </div>
         <div class="formula">ZeRO-1: states; ZeRO-2: +grads; ZeRO-3: +params</div>
       </div>
@@ -746,125 +997,417 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card" data-lesson="zero-state-shard">
+
+        <article class="lesson-card inquiry" data-lesson="zero1-parameter-partitions">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 1：收集参数、计算 half_idx、建立 gpu_partitions</span>
           </div>
-          <h2>ZeRO：把优化器状态切给不同 GPU</h2>
+          <h2>先分清对象：两张逻辑 GPU 各负责一半 Parameter</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>Adam 等优化器会为参数保存额外状态。</li><li>每张卡都保存完整状态会浪费显存。</li><li>ZeRO 把参数或优化器状态按 shard 分给多张卡。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>多人共同保管一本大账本，每个人只负责自己的几页，需要时再同步完整结果。</p>
-            <div class="gpu-grid"><span>GPU0: 参数 0-3</span><span>GPU1: 参数 4-7</span><span>GPU2: 参数 8-11</span></div>
-            <div class="syntax-card"><h4>语法热身：用参数列表划分负责范围</h4><pre><code>params = list(model.parameters())
-half_idx = len(params) // 2
-gpu_partitions = {
-    0: params[:half_idx],
-    1: params[half_idx:],
-}</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>ZeRO 分片的直接目的是什么？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-state-shard" value="0">
-                <span>减少每张 GPU 的显存占用</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">SimpleModel(dim=4) 有两个无 bias 的 Linear 层。</p>
+            <p class="predict-q">list(model.parameters()) 中有多少个 Parameter 对象？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-parameter-partitions" value="0">
+                <span>2 个</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-state-shard" value="1">
-                <span>让 loss 不需要反传</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-parameter-partitions" value="1">
+                <span>32 个</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-state-shard" value="2">
-                <span>把模型改成 CNN</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-parameter-partitions" value="2">
+                <span>4 个</span>
               </label></div>
-            <div class="feedback" data-feedback="zero-state-shard"></div>
+            <div class="predict-feedback" data-predict-feedback="zero1-parameter-partitions">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="zero1-parameter-partitions">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>model.parameters() 返回一个可迭代对象；先转成 list，后面才能按下标切片并反复访问。</li><li>当前 SimpleModel 有 fc1.weight 和 fc2.weight 两个 Parameter，因为两个 Linear 都设置了 bias=False。</li><li>Notebook 文字用 flatten 帮助理解，但当前代码并没有把每个 Parameter 的元素拼成大向量；它实际切分的是 Parameter 对象列表。</li><li>列表切片保留原 Parameter 的引用，不会复制权重。后面通过这些引用更新时，SimpleModel 里的权重也会改变。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把优化器看成一个任务分派员。它先把模型参数按出现顺序排成列表，再从中点切成前后两组：逻辑 GPU 0 负责前半，逻辑 GPU 1 负责后半。这里没有真实 CUDA 通信，字典只是模拟每张卡的责任范围。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>收集</b>model_params -&gt; self.params 列表</span>
+          <span><b>找中点</b>half_idx = 参数对象数 // 2</span>
+          <span><b>切前半</b>逻辑 GPU 0 的参数引用</span>
+          <span><b>切后半</b>逻辑 GPU 1 的参数引用</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>当前模型到底有几个参数对象</h4>
+            <div class="adv-contract">
+              <span><code>fc1.weight</code></span><strong>一个 Parameter，测试中 shape=[4,4]</strong>
+              <span><code>fc2.weight</code></span><strong>一个 Parameter，测试中 shape=[4,4]</strong>
+              <span><code>bias</code></span><strong>不存在，因为 bias=False</strong>
+              <span><code>len(self.params)</code></span><strong>2，而不是 32 个标量</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>切分后的所有权</h4>
+            <div class="adv-flow">
+              <span>参数列表<br>[fc1.weight, fc2.weight]</span>
+              <strong>GPU 0<br>[fc1.weight]</strong>
+              <strong>GPU 1<br>[fc2.weight]</strong>
+            </div>
+            <p>测试正是按这个顺序提供梯度：键 0 对应 fc1，键 1 对应 fc2。</p>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>结构</th><th>外层类型</th><th>内容</th><th>是否复制 Tensor</th></tr></thead>
+          <tbody>
+            <tr><td><code>self.params</code></td><td>list</td><td>全部 Parameter 引用</td><td>否</td></tr>
+            <tr><td><code>self.gpu_partitions</code></td><td>dict</td><td>gpu_id -&gt; Parameter 列表</td><td>否</td></tr>
+            <tr><td><code>self.gpu_partitions[0]</code></td><td>list</td><td>当前测试中只有 fc1.weight</td><td>否</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">不要对每个 [4,4] 权重张量沿元素维度切半；可见测试希望每张逻辑 GPU 恰好负责一个完整 Parameter。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用待处理任务列表练习中点切分</h4><pre><code>tasks = ['embed', 'attention', 'mlp', 'head']
+middle = len(tasks) // 2
+owners = {
+    0: tasks[:middle],
+    1: tasks[middle:],
+}
+
+assert owners[0] == ['embed', 'attention']
+assert owners[1] == ['mlp', 'head']</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>tasks</code> -&gt; <code>self.params</code>：Notebook 先用 list 收集 Parameter 引用。</li>
+            <li><code>middle</code> -&gt; <code>half_idx</code>：都使用列表长度的整除中点。</li>
+            <li><code>owners</code> -&gt; <code>self.gpu_partitions</code>：键是 gpu_id，值是它负责的列表切片。</li>
+            <li>字符串任务没有 shape；Notebook 列表元素是 Parameter，各自保留原 shape、dtype、device。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 gpu_partitions 中应保存原 Parameter 引用？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-parameter-partitions" value="0">
+                <span>局部更新才能直接反映到原 SimpleModel 权重</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-parameter-partitions" value="1">
+                <span>为了把权重自动转成字符串</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-parameter-partitions" value="2">
+                <span>为了让每个 GPU 保存完整的重复状态</span>
+              </label></div>
+              <div class="feedback" data-feedback="zero1-parameter-partitions"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-state-shard-0">
-                <span>把 model_params 转成参数列表，并按列表切成两份。</span>
+                <input type="checkbox" data-homework="zero1-parameter-partitions-0">
+                <span>完成 TODO 1，确认 self.params 长度为 2，gpu_partitions 的键为 0/1，两个值各含一个 shape=[4,4] 的 Parameter 引用。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-state-shard-1">
-                <span>为每张 GPU 初始化局部 optimizer state。</span>
+                <input type="checkbox" data-homework="zero1-parameter-partitions-1">
+                <span>不要在这里改 dtype/device 或 clone 参数；分区只描述所有权，参数仍保持模型原有 dtype 与 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-state-shard-2">
-                <span>确认局部状态长度小于完整参数长度。</span>
+                <input type="checkbox" data-homework="zero1-parameter-partitions-2">
+                <span>先打印每个分区的参数数量和 id；若后续状态数量断言不是 1，排查是否错误地按 Tensor 元素切分，或忘记模型没有 bias。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card" data-lesson="zero-local-step">
+        <article class="lesson-card inquiry" data-lesson="zero1-local-states">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3 / TODO 4</span>
+            <span class="todo-pill">TODO 2：optimizer_states 的两层字典与 zeros_like</span>
           </div>
-          <h2>局部更新：单机模拟里原位修改就是同步</h2>
+          <h2>再建局部账本：每张卡只给自己的参数保存动量</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>每张卡只遍历自己负责的参数列表。</li><li>TODO 3 要更新局部动量并用动量更新参数。</li><li>TODO 4 在本 notebook 中不需要写代码，只要理解真实多卡需要把更新后的权重同步出去。</li></ul>
-          </div>
-
-          <div class="lesson-section intuition">
-            <h3>图解原理</h3>
-            <p>本练习里每个 p 都是同一个 Parameter 的引用；你原位改 p.data，模型里的参数也同步变了。</p>
-            <div class="sum-flow"><span>GPU0 负责 fc1</span><span>GPU1 负责 fc2</span><strong>p.data 原位更新</strong><span>真实多卡才需要广播</span></div>
-            <div class="syntax-card"><h4>语法热身：遍历本 GPU 参数和梯度</h4><pre><code>for p, g in zip(params, grads):
-    momentum = states[id(p)]
-    momentum = momentum + g
-    states[id(p)] = momentum
-    p.data = p.data - lr * momentum</code></pre></div>
-          </div>
-
-          <div class="lesson-section checkpoint">
-            <h3>闯关题</h3>
-            <p>为什么 notebook 的 TODO 4 不需要额外写 All-Gather 代码？</p>
-            <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-local-step" value="0">
-                <span>因为梯度会自动消失</span>
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">fc1.weight 在 CPU 上是 float32，shape=[4,4]。</p>
+            <p class="predict-q">torch.zeros_like(fc1.weight.data) 会得到什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-states" value="0">
+                <span>CPU float32、shape=[4,4] 的全 0 Tensor</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-local-step" value="1">
-                <span>p.data 是原位引用，单机模拟里已经同步</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-states" value="1">
+                <span>标量整数 0</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-zero-local-step" value="2">
-                <span>因为 ZeRO 不需要参数</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-states" value="2">
+                <span>GPU int8、shape=[1] 的 Tensor</span>
               </label></div>
-            <div class="feedback" data-feedback="zero-local-step"></div>
+            <div class="predict-feedback" data-predict-feedback="zero1-local-states">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="zero1-local-states">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>优化器状态与参数不是同一个东西：Parameter 保存权重，状态 Tensor 保存历史动量。</li><li>外层字典按 gpu_id 找到某张逻辑卡，内层字典按 id(p) 找到某个参数的状态。</li><li>id(p) 是当前 Python 进程中对象身份的整数标识；同一个 Parameter 引用在分区和更新阶段会得到同一个 id。</li><li>torch.zeros_like(p.data) 会复制 p 的 shape、dtype 和 device，但把数值全部初始化为 0。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>分区只是写下“谁负责谁”，局部状态才是真正省重复存储的地方。GPU 0 不为 fc2 建动量，GPU 1 也不为 fc1 建动量。每个状态必须长得和对应参数一样，后面才能与梯度逐元素相加。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>分区告诉我们该为谁建状态</h4>
+            <div class="adv-flow">
+              <span>GPU 0<br>fc1.weight</span>
+              <strong>一个 [4,4] 零动量</strong>
+            </div>
+            <div class="adv-flow">
+              <span>GPU 1<br>fc2.weight</span>
+              <strong>一个 [4,4] 零动量</strong>
+            </div>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>两层字典的读取路径</h4>
+            <div class="adv-contract">
+              <span>第一层</span><strong><code>optimizer_states[gpu_id]</code> 找到本卡状态表</strong>
+              <span>第二层</span><strong><code>states[id(p)]</code> 找到参数 p 的动量</strong>
+              <span>状态值</span><strong>与 p 同 shape/dtype/device 的 Tensor</strong>
+            </div>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>测试对象</th><th>状态条目数</th><th>状态 shape</th><th>初始数值</th></tr></thead>
+          <tbody>
+            <tr><td>GPU 0 / fc1.weight</td><td>1</td><td><code>[4,4]</code></td><td>全 0</td></tr>
+            <tr><td>GPU 1 / fc2.weight</td><td>1</td><td><code>[4,4]</code></td><td>全 0</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>为什么用 zeros_like</h4>
+            <p>它一次满足数值、shape、dtype、device 四项初始化契约，梯度到来时可以直接逐元素相加。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>为什么不用同一个零 Tensor</h4>
+            <p>每个 Parameter 必须拥有独立历史。共享同一个状态会让一个参数的梯度污染另一个参数。</p>
+          </section>
+        </div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：为两个独立计数器建立按对象身份索引的状态</h4><pre><code>counter_a = torch.randn(2, 3)
+counter_b = torch.randn(4)
+assigned = {0: [counter_a], 1: [counter_b]}
+
+history = {}
+for worker_id, tensors in assigned.items():
+    history[worker_id] = {
+        id(t): torch.zeros_like(t) for t in tensors
+    }
+
+assert history[0][id(counter_a)].shape == counter_a.shape</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>assigned</code> -&gt; <code>self.gpu_partitions</code>：外层键表示负责者。</li>
+            <li><code>history</code> -&gt; <code>self.optimizer_states</code>：每个负责者拥有自己的内层状态表。</li>
+            <li><code>id(t)</code> -&gt; <code>id(p)</code>：用原对象身份取回对应状态。</li>
+            <li><code>zeros_like(t)</code> -&gt; <code>zeros_like(p.data)</code>：状态继承参数的 shape、dtype、device。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>当前测试为什么要求 len(optimizer.optimizer_states[0]) == 1？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-states" value="0">
+                <span>字典只能存一个键</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-states" value="1">
+                <span>GPU 0 只负责 fc1.weight，因此只保存一个局部状态</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-states" value="2">
+                <span>GPU 0 必须复制 GPU 1 的所有状态</span>
+              </label></div>
+              <div class="feedback" data-feedback="zero1-local-states"></div>
+            </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-local-step-0">
-                <span>只遍历当前 GPU 负责的 params 和对应 grads。</span>
+                <input type="checkbox" data-homework="zero1-local-states-0">
+                <span>完成 TODO 2：为每个分区参数建立独立零状态；内层键使用 id(p)，值与 p.data 的 shape/dtype/device 一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-local-step-1">
-                <span>更新 states[id(p)] 中保存的动量。</span>
+                <input type="checkbox" data-homework="zero1-local-states-1">
+                <span>运行测试前检查两个外层分区的状态长度都等于 1，并确认状态全 0、参数本身未被改动。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="zero-local-step-2">
-                <span>用 p.data 原位更新参数，并理解 TODO 4 在真实多卡中的同步意义。</span>
+                <input type="checkbox" data-homework="zero1-local-states-2">
+                <span>若 KeyError，打印建立状态和读取状态时的 id(p)；常见错误是 clone 参数后对象身份改变，或把 p 与 id(p) 混作不同键类型。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="zero1-local-update">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 3：局部动量累加与参数更新</span>
+          </div>
+          <h2>最后更新原权重：对齐 params、grads、states 三条列表</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">初始 momentum 为 0，梯度每个元素都是 2.0，学习率是 0.1。</p>
+            <p class="predict-q">第一次 step 后，旧权重减新权重的每个元素是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-update" value="0">
+                <span>0.2</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-update" value="1">
+                <span>2.0</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-zero1-local-update" value="2">
+                <span>-0.2</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="zero1-local-update">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="zero1-local-update">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>gradients_from_all_gpus 已经模拟 Reduce-Scatter 的结果：每个 gpu_id 只拿到自己负责参数的平均梯度列表。</li><li>同一分区中 params 与 grads 的顺序必须一一对应；zip(params, grads) 正好按位置配对。</li><li>本页的 momentum 是教学简化版，只做 old_momentum + gradient，没有 beta 系数，也没有 Adam 的二阶状态。</li><li>更新公式是新权重 = 旧权重 - lr * momentum；减号表示沿降低损失的方向移动。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>每张逻辑卡打开自己的三样东西：负责的参数、收到的梯度、保存的动量。先把新梯度记进动量，再用学习率缩小这一步，最后从原权重减掉。因为 params 保存的是原模型引用，改完后测试直接读取 model.fc1.weight 就能看到变化。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>按 gpu_id</b>取本卡 params</span>
+          <span><b>同一个键</b>取本卡 grads 与 states</span>
+          <span><b>逐对 zip</b>参数 p 对齐梯度 g</span>
+          <span><b>先状态后参数</b>momentum += g，p -= lr × momentum</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>GPU 0 的第一步</h4>
+            <div class="adv-steps">
+              <div><b>1</b><code>momentum: 0 + 1 = 1</code><span>梯度是全 1 Tensor</span></div>
+              <div><b>2</b><code>update: 0.1 × 1 = 0.1</code><span>每个权重元素都减 0.1</span></div>
+              <div><b>3</b><code>initial_w1 - new_w1 = 0.1</code><span>测试比较的正是这个差值</span></div>
+            </div>
+          </section>
+          <section class="adv-panel blue">
+            <h4>GPU 1 的第一步</h4>
+            <div class="adv-steps">
+              <div><b>1</b><code>momentum: 0 + 2 = 2</code><span>梯度是全 2 Tensor</span></div>
+              <div><b>2</b><code>update: 0.1 × 2 = 0.2</code><span>每个权重元素都减 0.2</span></div>
+              <div><b>3</b><code>initial_w2 - new_w2 = 0.2</code><span>与第二条 allclose 断言对齐</span></div>
+            </div>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>配对项</th><th>当前测试 shape</th><th>dtype/device</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td><code>p</code></td><td><code>[4,4]</code></td><td>模型参数原属性</td><td>被更新的原权重</td></tr>
+            <tr><td><code>g</code></td><td><code>[4,4]</code></td><td>由 ones_like/full_like 对齐</td><td>Reduce-Scatter 模拟梯度</td></tr>
+            <tr><td><code>momentum</code></td><td><code>[4,4]</code></td><td>由 zeros_like 对齐</td><td>累积历史并参与更新</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">states[id(p)] 必须写回新的 momentum。只更新局部变量而不写回字典，会让第二次 step 忘记历史，破坏“状态”的含义。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用两个货架的库存与累计修正量练局部更新</h4><pre><code>shelves = {0: [torch.tensor([5.0, 7.0])], 1: [torch.tensor([9.0])]}
+corrections = {0: [torch.tensor([1.0, 2.0])], 1: [torch.tensor([3.0])]}
+memory = {worker: {id(item): torch.zeros_like(item) for item in items}
+          for worker, items in shelves.items()}
+rate = 0.25
+
+for worker in (0, 1):
+    local_memory = memory[worker]
+    for item, change in zip(shelves[worker], corrections[worker]):
+        accumulated = local_memory[id(item)] + change
+        local_memory[id(item)] = accumulated
+        item.sub_(rate * accumulated)</code></pre></div>
+        <div class="adv-map">
+          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <ul>
+            <li><code>shelves[worker]</code> -&gt; <code>params</code>，<code>corrections[worker]</code> -&gt; <code>grads</code>。</li>
+            <li><code>local_memory</code> -&gt; <code>states</code>，通过 id(p) 读取并写回 momentum。</li>
+            <li><code>zip(item, change)</code> -&gt; <code>zip(params, grads)</code>：顺序必须一致，shape 才逐项匹配。</li>
+            <li><code>rate</code> -&gt; <code>self.lr</code>；Notebook 使用 Parameter 的 data 更新原模型引用。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 TODO 3 要同时执行 states[id(p)] = momentum？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-update" value="0">
+                <span>把参数 dtype 改成 id 类型</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-update" value="1">
+                <span>把梯度广播给所有 GPU</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-zero1-local-update" value="2">
+                <span>保存本次累积结果，供后续 step 继续使用</span>
+              </label></div>
+              <div class="feedback" data-feedback="zero1-local-update"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="zero1-local-update-0">
+                <span>完成 TODO 3：每个 gpu_id 分别取 params、grads、states；每对 p/g 的 shape、dtype、device 应兼容，然后先更新状态、再更新 p.data。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="zero1-local-update-1">
+                <span>运行可见测试，确认 diff_w1 全为 0.1、diff_w2 全为 0.2；这也证明分区里保存的是原模型参数引用。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="zero1-local-update-2">
+                <span>常见错误排查：若差值符号相反，检查更新公式的减号；若只有一层变化，检查 gpu 循环和梯度字典键；若第二次手工 step 不累积，检查是否写回 states[id(p)]。</span>
               </label>
           </div>
         </article>
@@ -872,7 +1415,7 @@ gpu_partitions = {
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -884,11 +1427,11 @@ gpu_partitions = {
 
   <script>
     const levelId = "27";
-    const checkpointData = {"zero-state-shard":{"answer":0,"explain":"把状态切开后，每张卡只保存自己负责的部分。"},"zero-local-step":{"answer":1,"explain":"真实多卡需要广播或 All-Gather；这个单机模拟直接修改 Parameter 引用，效果等价于模型参数已经更新。"}};
-    const predictData = {};
-    const predictTotal = 0;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"zero1-parameter-partitions":{"answer":0,"explain":"列表切片只创建新的列表容器，里面仍指向原参数；这让模拟更新无需真正 All-Gather 也能被模型看到。"},"zero1-local-states":{"answer":1,"explain":"ZeRO-1 的核心节省来自不重复保存别的分区的优化器状态。当前每个分区恰好有一个 Parameter。"},"zero1-local-update":{"answer":2,"explain":"momentum 是跨 step 的优化器状态。只改变局部变量，字典中的历史仍会停留在旧值。"}};
+    const predictData = {"zero1-parameter-partitions":{"answer":0,"revealNote":"每个 [4,4] weight 是一个 Parameter 对象。Notebook 当前按对象切分，不按 16 个内部元素切分。"},"zero1-local-states":{"answer":0,"revealNote":"zeros_like 的价值正是继承参照 Tensor 的 shape、dtype 与 device，只把内容置零。"},"zero1-local-update":{"answer":0,"revealNote":"先得 momentum=2，再从权重减去 0.1×2，所以 initial - new = 0.2。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";
