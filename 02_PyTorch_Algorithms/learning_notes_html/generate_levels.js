@@ -3,6 +3,7 @@ const path = require("path");
 const lessonOverrides = require("./lesson_overrides");
 const curriculumV2 = require("./curriculum_v2");
 const enhanceFoundationLessons = require("./foundation_enhancements");
+const renderLevel25ModelFactory = require("./level_25_model_factory");
 
 const root = __dirname;
 const notesDir = path.join(root, "notes");
@@ -1248,6 +1249,54 @@ function lessonLevelPage(level, prev, next) {
   const checkpointLabel = `${level.lessons.length} 道`;
   const prevLink = prev ? `<a class="ghost" href="${slug(prev)}">上一关：L${prev.id}</a>` : `<a class="ghost" href="../index.html">返回地图</a>`;
   const nextLink = next ? `<a class="primary" href="${slug(next)}">下一关：L${next.id}</a>` : `<a class="primary" href="../index.html">回到地图</a>`;
+  const factoryEntryStyles = level.id === "25" ? `
+  <style>
+    .factory-entry {
+      margin: 0 0 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      border-color: #68cdbf;
+      background:
+        linear-gradient(135deg, rgba(7, 20, 24, 0.98), rgba(12, 49, 50, 0.96)),
+        #071418;
+      color: #eefbf7;
+      box-shadow: 0 20px 50px rgba(12, 66, 64, 0.18);
+    }
+    .factory-entry p { margin: 6px 0 0; color: #a8c9c3; }
+    .factory-entry .factory-kicker {
+      color: #67e8d4;
+      font: 900 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .12em;
+    }
+    .factory-entry .factory-launch {
+      min-width: 190px;
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #67e8d4;
+      border-radius: 8px;
+      background: #67e8d4;
+      color: #061311;
+      font-weight: 900;
+    }
+    @media (max-width: 640px) {
+      .factory-entry { grid-template-columns: 1fr; }
+      .factory-entry .factory-launch { width: 100%; }
+    }
+  </style>` : "";
+  const factoryEntryHtml = level.id === "25" ? `
+
+    <section class="card factory-entry">
+      <div>
+        <span class="factory-kicker">NEW · INTERACTIVE MODEL FACTORY</span>
+        <h2>先进入 Transformer 内部，再回来写量化代码</h2>
+        <p>跟随一个 token 穿过 Embedding、Block、Attention、SwiGLU 和 Linear；一路拆到权重矩阵与单个字节，亲手完成 W8A16 改造。</p>
+      </div>
+      <a class="factory-launch" href="25_quantization_model_factory.html">启动模型工厂 →</a>
+    </section>` : "";
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -1960,7 +2009,7 @@ function lessonLevelPage(level, prev, next) {
       .top { display: grid; }
       .map-steps { grid-template-columns: 1fr; }
     }
-  </style>${lessonStyles ? `
+  </style>${factoryEntryStyles}${lessonStyles ? `
   <style>
 ${lessonStyles}
   </style>` : ""}
@@ -2001,7 +2050,7 @@ ${lessonStyles}
         </div>
         <div class="formula">${esc(level.formula)}</div>
       </div>
-    </section>
+    </section>${factoryEntryHtml}
 
 ${level.notebookGuide || ""}
 
@@ -2415,18 +2464,28 @@ ${cards}
 `;
 }
 
+const cleanGeneratedHtml = (html) => html.replace(/[ \t]+$/gm, "");
+
 levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
-  fs.writeFileSync(filePath, levelPage(level, levels[index - 1], levels[index + 1]));
+  const page = levelPage(level, levels[index - 1], levels[index + 1]);
+  const preserveLegacyWhitespace = Number(level.id) <= 11 || level.id === "20";
+  fs.writeFileSync(filePath, preserveLegacyWhitespace ? page : cleanGeneratedHtml(page));
+  if (level.id === "25") {
+    fs.writeFileSync(
+      path.join(notesDir, "25_quantization_model_factory.html"),
+      cleanGeneratedHtml(renderLevel25ModelFactory(level, levels[index - 1], levels[index + 1], slug))
+    );
+  }
 });
 
-const expectedPages = new Set(levels.map(slug));
+const expectedPages = new Set([...levels.map(slug), "25_quantization_model_factory.html"]);
 for (const file of fs.readdirSync(notesDir)) {
   if (file.endsWith(".html") && !expectedPages.has(file)) {
     fs.unlinkSync(path.join(notesDir, file));
   }
 }
 
-fs.writeFileSync(path.join(root, "index.html"), indexPage());
+fs.writeFileSync(path.join(root, "index.html"), cleanGeneratedHtml(indexPage()));
 
 console.log(`Generated ${levels.length} level pages and index.html`);

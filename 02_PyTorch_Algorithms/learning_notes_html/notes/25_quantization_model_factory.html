@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071014">
+  <meta name="description" content="进入 Transformer 模型工厂，逐层拆解 Linear 权重并完成 W8A16 INT8 量化改造。">
+  <title>Level 25 | 模型工厂 · W8A16 量化</title>
+  <link rel="stylesheet" href="../assets/level25_model_factory.css">
+</head>
+<body>
+  <canvas id="factory-canvas" aria-hidden="true"></canvas>
+  <header class="mf-topbar">
+    <div class="mf-topbar-left">
+      <a class="mf-button quiet" href="25_quantization_w8a16.html">← Level 25 导学</a>
+      <div class="mf-brand">
+        <span class="mf-brand-mark">25</span>
+        <span><b>MODEL FACTORY</b><small>W8A16 改造任务</small></span>
+      </div>
+    </div>
+    <div class="mf-controls" aria-label="工厂控制台">
+      <div class="mf-segmented" role="group" aria-label="探索模式">
+        <button class="active" data-mode="guided">跟随 Token</button>
+        <button data-mode="free">自由剖视</button>
+      </div>
+      <div class="mf-segmented" role="group" aria-label="模型规模">
+        <button class="active" data-preset="toy">玩具模型</button>
+        <button data-preset="real">真实估算</button>
+      </div>
+      <button class="mf-button quiet" id="reset-level" type="button">重置本关</button>
+    </div>
+  </header>
+
+  <main class="mf-shell">
+    <section class="mf-hero">
+      <div>
+        <p class="mf-kicker">DECODER-ONLY TRANSFORMER · 教学剖面</p>
+        <h1>进入模型内部，<br><span>把 FP32 巨型仓库压进 INT8。</span></h1>
+        <p class="mf-lead">不要先背公式。先跟着一个 token 穿过整座模型工厂，找到真正占显存的 Linear 权重，再亲手拆开、校准、铸造和上线。</p>
+      </div>
+      <div class="mf-crisis">
+        <div class="mf-crisis-head"><span>显存警报</span><strong id="budget-state">OVER BUDGET</strong></div>
+        <div class="mf-memory-gauge"><i id="memory-gauge"></i></div>
+        <div class="mf-crisis-stats">
+          <span><small>FP32 权重仓</small><b id="fp32-total">—</b></span>
+          <span><small>INT8 改造后</small><b id="int8-total">—</b></span>
+          <span><small>压缩率</small><b>4.00×</b></span>
+        </div>
+        <p id="preset-note">玩具模型会真实计算每个数值；比例与大模型一致。</p>
+      </div>
+    </section>
+
+    <nav class="mf-mission-rail" aria-label="任务进度">
+      <button class="active" data-mission-tab="0"><span>00</span><b>显存危机</b><small>找到权重仓</small></button>
+      <button data-mission-tab="1"><span>01</span><b>拆开 Linear</b><small>看到每个字节</small></button>
+      <button data-mission-tab="2"><span>02</span><b>校准标尺</b><small>absmax + scale</small></button>
+      <button data-mission-tab="3"><span>03</span><b>整数铸造</b><small>量化流水线</small></button>
+      <button data-mission-tab="4"><span>04</span><b>推理反应堆</b><small>反量化 + Linear</small></button>
+      <button data-mission-tab="5"><span>★</span><b>上线挑战</b><small>同时满足四项指标</small></button>
+    </nav>
+
+    <section class="mf-workbench">
+      <aside class="mf-depth-rail" aria-label="剖视深度">
+        <p>剖视深度</p>
+        <button class="active" data-view="0"><b>01</b><span>完整模型</span></button>
+        <button data-view="1"><b>02</b><span>Block</span></button>
+        <button data-view="2"><b>03</b><span>Linear</span></button>
+        <button data-view="3"><b>04</b><span>权重矩阵</span></button>
+        <button data-view="4"><b>05</b><span>一个权重</span></button>
+      </aside>
+
+      <section class="mf-viewport" aria-label="模型工厂剖视图">
+        <div class="mf-viewport-head">
+          <div>
+            <p id="view-path">MODEL / OVERVIEW</p>
+            <h2 id="view-title">Decoder Transformer 工厂</h2>
+          </div>
+          <div class="mf-lenses" role="group" aria-label="观察镜片">
+            <button class="active" data-lens="flow">数据流</button>
+            <button data-lens="shape">Shape</button>
+            <button data-lens="memory">内存</button>
+            <button data-lens="numeric">数值</button>
+          </div>
+        </div>
+
+        <div class="mf-world" id="factory-world" data-view="0" data-lens="flow">
+          <div class="mf-scene model-scene" data-scene="0">
+            <div class="mf-model-line">
+              <button class="mf-station token-station" data-node="token"><span>token</span><b>“量化”</b><small>ID 7</small></button>
+              <i class="mf-pipe"><em></em></i>
+              <button class="mf-station" data-node="embedding"><span>Embedding</span><b>ID → 向量</b><small>[B,S,H]</small></button>
+              <i class="mf-pipe"><em></em></i>
+              <div class="mf-block-stack" aria-label="重复 Transformer Block">
+                <button class="mf-station block-machine" data-node="block"><span>Block × <i data-layers>2</i></span><b>Attention + MLP</b><small>点击进入内部</small></button>
+                <span class="mf-stack-layer one"></span><span class="mf-stack-layer two"></span>
+              </div>
+              <i class="mf-pipe"><em></em></i>
+              <button class="mf-station" data-node="final_norm"><span>RMSNorm</span><b>稳定尺度</b><small>小参数</small></button>
+              <i class="mf-pipe"><em></em></i>
+              <button class="mf-station quantizable" data-node="lm_head"><span>LM Head</span><b>H → Vocab</b><small>大型 Linear</small></button>
+              <i class="mf-pipe"><em></em></i>
+              <button class="mf-station logits-station" data-node="logits"><span>Logits</span><b>下个 token</b><small>[B,S,V]</small></button>
+            </div>
+            <div class="mf-factory-floor"></div>
+          </div>
+
+          <div class="mf-scene block-scene" data-scene="1">
+            <div class="mf-residual-track top"><span>residual 主干</span></div>
+            <div class="mf-block-flow">
+              <button class="mf-machine" data-node="rms1"><small>PRE-NORM</small><b>RMSNorm</b><span>无大型矩阵</span></button>
+              <i class="mf-arrow"></i>
+              <div class="mf-machine-group attention-group">
+                <strong>SELF ATTENTION</strong>
+                <div>
+                  <button class="mf-mini-machine quantizable" data-node="q_proj">q_proj</button>
+                  <button class="mf-mini-machine quantizable" data-node="k_proj">k_proj</button>
+                  <button class="mf-mini-machine quantizable" data-node="v_proj">v_proj</button>
+                </div>
+                <button class="mf-process" data-node="rope">Q/K + RoPE → Attention</button>
+                <button class="mf-mini-machine quantizable wide" data-node="o_proj">o_proj</button>
+              </div>
+              <i class="mf-arrow"></i>
+              <button class="mf-machine residual-machine" data-node="residual1"><small>ADD</small><b>Residual</b><span>无权重</span></button>
+              <i class="mf-arrow"></i>
+              <button class="mf-machine" data-node="rms2"><small>PRE-NORM</small><b>RMSNorm</b><span>无大型矩阵</span></button>
+              <i class="mf-arrow"></i>
+              <div class="mf-machine-group mlp-group">
+                <strong>SWIGLU MLP</strong>
+                <div>
+                  <button class="mf-mini-machine quantizable" data-node="gate_proj">gate_proj</button>
+                  <button class="mf-mini-machine quantizable" data-node="up_proj">up_proj</button>
+                </div>
+                <button class="mf-process" data-node="silu">SiLU(gate) ⊙ up</button>
+                <button class="mf-mini-machine quantizable wide" data-node="down_proj">down_proj</button>
+              </div>
+              <i class="mf-arrow"></i>
+              <button class="mf-machine residual-machine" data-node="residual2"><small>ADD</small><b>Residual</b><span>无权重</span></button>
+            </div>
+            <div class="mf-residual-track bottom"><span>residual 主干</span></div>
+          </div>
+
+          <div class="mf-scene linear-scene" data-scene="2">
+            <div class="mf-linear-picker" aria-label="选择投影层">
+              <button class="active" data-linear="q_proj">q_proj</button>
+              <button data-linear="o_proj">o_proj</button>
+              <button data-linear="gate_proj">gate_proj</button>
+              <button data-linear="down_proj">down_proj</button>
+            </div>
+            <div class="mf-linear-machine">
+              <div class="mf-port input-port"><small>入口 x</small><b id="linear-input-shape">[B,S,H]</b><span>activation · x.dtype</span></div>
+              <div class="mf-rotor">
+                <span class="mf-rotor-ring"></span>
+                <b>W</b>
+                <small id="linear-weight-shape">[out,in]</small>
+              </div>
+              <div class="mf-port output-port"><small>出口 y</small><b id="linear-output-shape">[B,S,out]</b><span>floating output</span></div>
+            </div>
+            <div class="mf-equation"><code>y = x Wᵀ + b</code><span id="linear-equation-note">最后一维 in_features 被 out_features 替换</span></div>
+          </div>
+
+          <div class="mf-scene matrix-scene" data-scene="3">
+            <div class="mf-matrix-wrap">
+              <div class="mf-matrix-label top">in_features →</div>
+              <div class="mf-matrix-label side">out_features ↓</div>
+              <div class="mf-matrix" id="weight-matrix" aria-label="玩具权重矩阵"></div>
+              <div class="mf-matrix-scan"></div>
+            </div>
+            <div class="mf-matrix-stats">
+              <span><small>权重 shape</small><b id="matrix-shape">—</b></span>
+              <span><small>参数量</small><b id="matrix-params">—</b></span>
+              <span><small>FP32 仓库</small><b id="matrix-fp32">—</b></span>
+              <span><small>INT8 仓库</small><b id="matrix-int8">—</b></span>
+            </div>
+          </div>
+
+          <div class="mf-scene byte-scene" data-scene="4">
+            <div class="mf-byte-lab">
+              <section>
+                <p>原始 FP32 权重 <code>2.5</code></p>
+                <div class="mf-byte-row fp32-bytes">
+                  <span>0100 0000</span><span>0010 0000</span><span>0000 0000</span><span>0000 0000</span>
+                </div>
+                <small>32 bit = 4 byte</small>
+              </section>
+              <div class="mf-compressor"><span>× scale</span><b>量化压缩舱</b><span>round · clamp</span></div>
+              <section>
+                <p>INT8 权重 <code>106</code></p>
+                <div class="mf-byte-row int8-bytes"><span>0110 1010</span></div>
+                <small>8 bit = 1 byte</small>
+              </section>
+            </div>
+            <div class="mf-byte-verdict"><b>同样数量的权重</b><span>相对 FP32：4× 更小</span><span>相对 FP16：2× 更小</span></div>
+          </div>
+
+          <div class="mf-lens-readout" id="lens-readout" aria-live="polite"></div>
+          <div class="mf-zoom-controls">
+            <button class="mf-button quiet" id="zoom-out" type="button">← 向外一层</button>
+            <span id="zoom-hint">点击 Block，进入模型内部</span>
+            <button class="mf-button hot" id="zoom-in" type="button">深入一层 →</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="mf-inspector" aria-label="机器检查器">
+        <div class="mf-inspector-head">
+          <span id="node-type">MODEL</span>
+          <i id="quant-badge">教学剖面</i>
+        </div>
+        <h3 id="node-title">Decoder Transformer</h3>
+        <p id="node-description">一个 token 会先变成 hidden state，再穿过重复 Block，最后由 LM Head 产生下一个 token 的 logits。</p>
+        <dl class="mf-contract">
+          <div><dt>输入</dt><dd id="node-input">token ids [B,S]</dd></div>
+          <div><dt>输出</dt><dd id="node-output">logits [B,S,V]</dd></div>
+          <div><dt>权重</dt><dd id="node-weight">Embedding + Linear 为主</dd></div>
+          <div><dt>量化</dt><dd id="node-quant">逐台检查大型权重仓</dd></div>
+        </dl>
+        <div class="mf-console" id="factory-console" role="status">
+          <span>SYSTEM</span>
+          <p>显存预算不足。先找出模型里真正的大型权重仓库。</p>
+        </div>
+        <details class="mf-manual">
+          <summary>工程师手册：这层到底在做什么？</summary>
+          <div id="manual-content"></div>
+        </details>
+      </aside>
+    </section>
+
+    <section class="mf-mission-deck">
+      <article class="mf-mission-panel active" data-mission-panel="0">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">PROLOGUE · MEMORY CRISIS</p>
+          <h2>先别急着量化：模型里到底谁最占地方？</h2>
+          <p>下面三台机器都会参与前向，但只有一类拥有巨大的二维权重矩阵。选中真正的主仓库，工厂才会开放下一层。</p>
+        </div>
+        <div class="mf-choice-grid">
+          <button data-hunt="norm"><b>RMSNorm</b><span>每个 hidden channel 一组缩放参数</span></button>
+          <button data-hunt="residual"><b>Residual Add</b><span>把主干与支路结果相加</span></button>
+          <button data-hunt="linear"><b>Linear Projection</b><span>保存 [out_features, in_features] 权重矩阵</span></button>
+        </div>
+        <div class="mf-feedback" id="hunt-feedback">提示：参数量不只看“有没有参数”，还要看参数 shape。</div>
+      </article>
+
+      <article class="mf-mission-panel" data-mission-panel="1">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">MISSION 01 · LINEAR AUTOPSY</p>
+          <h2>从整座模型一路拆到 1 个权重</h2>
+          <p>沿着左侧五级剖视轨道深入。到达字节层后，亲手把 4 个 FP32 字节装进 1 个 INT8 单元。</p>
+        </div>
+        <div class="mf-action-row">
+          <button class="mf-button hot" id="unfold-bytes" type="button">展开一个 FP32 权重</button>
+          <button class="mf-button hot" id="compress-byte" type="button" disabled>装配 INT8 存储单元</button>
+          <span class="mf-status-chip" id="autopsy-status">尚未到达字节层</span>
+        </div>
+      </article>
+
+      <article class="mf-mission-panel" data-mission-panel="2">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">MISSION 02 · CALIBRATION TOWER</p>
+          <h2>一把 INT8 尺子，怎样量遍整张权重矩阵？</h2>
+          <p>本 Notebook 使用 per-tensor 对称量化：整个张量共享一个 scale。先扫描最大绝对值，再把它对齐到 127。</p>
+        </div>
+        <div class="mf-calibration-grid">
+          <section class="mf-lab-card">
+            <div class="mf-card-head"><b>输入权重</b><button class="mf-button tiny" id="restore-sample" type="button">恢复样本</button></div>
+            <div class="mf-sample-values" id="sample-values"></div>
+            <label class="mf-switch"><input type="checkbox" id="zero-mode"><span></span>切换为全零张量，制造除零故障</label>
+            <label class="mf-slider">异常值幅度 <b id="outlier-value">3.0</b><input type="range" id="outlier-slider" min="3" max="20" value="3" step="0.5"></label>
+          </section>
+          <section class="mf-lab-card calibration-tower">
+            <div class="mf-tower-dial"><i id="dial-needle"></i><span>127</span></div>
+            <dl>
+              <div><dt>absmax</dt><dd id="absmax-readout">等待扫描</dd></div>
+              <div><dt>scale = 127 / absmax</dt><dd id="scale-readout">—</dd></div>
+              <div><dt>2.5 的量化值</dt><dd id="sample-quant-readout">—</dd></div>
+            </dl>
+            <label class="mf-switch danger"><input type="checkbox" id="zero-guard"><span></span>安装零值保护模块</label>
+            <button class="mf-button hot" id="run-calibration" type="button">启动 absmax 扫描</button>
+          </section>
+          <section class="mf-lab-card">
+            <div class="mf-card-head"><b>量化误差显微镜</b><span id="error-average">MAE —</span></div>
+            <div class="mf-error-bars" id="error-bars"></div>
+            <p class="mf-card-note">把异常值拖大：scale 会照顾最远的值，小权重能分到的整数刻度随之减少。</p>
+          </section>
+        </div>
+        <div class="mf-feedback" id="calibration-feedback">先用原始样本扫描一次，再试试全零和异常值。</div>
+      </article>
+
+      <article class="mf-mission-panel" data-mission-panel="3">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">MISSION 03 · INTEGER FOUNDRY</p>
+          <h2>把四台机器排成正确的铸造流水线</h2>
+          <p>点击或拖动模块进入流水线。错误顺序不会只说“错了”，机器会展示它破坏了哪条 dtype 或数值契约。</p>
+        </div>
+        <div class="mf-foundry">
+          <div class="mf-module-bin" id="quant-module-bin" aria-label="可用量化模块">
+            <button draggable="true" data-module="scale">× scale</button>
+            <button draggable="true" data-module="round">round</button>
+            <button draggable="true" data-module="clamp">clamp [-128,127]</button>
+            <button draggable="true" data-module="cast">cast int8</button>
+          </div>
+          <div class="mf-pipeline" id="quant-pipeline" aria-label="量化流水线" tabindex="0">
+            <span data-slot="0">01</span><i></i><span data-slot="1">02</span><i></i><span data-slot="2">03</span><i></i><span data-slot="3">04</span>
+          </div>
+          <div class="mf-particle-trace" id="quant-trace"><span>输入 2.5 / float</span></div>
+          <div class="mf-action-row">
+            <button class="mf-button quiet" id="clear-quant-pipeline" type="button">清空</button>
+            <button class="mf-button hot" id="run-quant-pipeline" type="button">点火运行</button>
+          </div>
+        </div>
+        <div class="mf-feedback" id="quant-feedback">正确链路必须在浮点域完成缩放、舍入与边界限制，最后才改存储 dtype。</div>
+      </article>
+
+      <article class="mf-mission-panel" data-mission-panel="4">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">MISSION 04 · INFERENCE REACTOR</p>
+          <h2>INT8 负责存，x.dtype 负责算</h2>
+          <p>Notebook 模拟层不会直接调用 INT8 Tensor Core。它先恢复近似浮点权重，再交给普通 F.linear。</p>
+        </div>
+        <div class="mf-reactor-grid">
+          <section class="mf-lab-card">
+            <b>连接反应堆</b>
+            <div class="mf-module-bin runtime-bin" id="runtime-module-bin">
+              <button data-runtime="cast">to(x.dtype)</button>
+              <button data-runtime="divide">÷ scale</button>
+              <button data-runtime="linear">F.linear</button>
+            </div>
+            <div class="mf-runtime-chain" id="runtime-chain"><span>weight_int8</span><i></i><span>?</span><i></i><span>?</span><i></i><span>?</span></div>
+            <div class="mf-action-row">
+              <button class="mf-button quiet" id="clear-runtime" type="button">清空</button>
+              <button class="mf-button hot" id="run-runtime" type="button">启动推理</button>
+            </div>
+          </section>
+          <section class="mf-reactor mf-lab-card">
+            <div class="mf-reactor-core"><span></span><b>F.linear</b><small>FLOAT COMPUTE</small></div>
+            <div class="mf-shape-transform"><code>[2,10,128]</code><i>×</i><code>[64,128]</code><b>→</b><code>[2,10,64]</code></div>
+          </section>
+          <section class="mf-lab-card mf-metrics">
+            <div><span>FP32 输出</span><b id="fp-output">—</b></div>
+            <div><span>W8A16 输出</span><b id="quant-output">—</b></div>
+            <div><span>Cosine Similarity</span><b id="cosine-output">—</b></div>
+            <p>生产环境若要获得真正 INT8 计算加速，需要融合量化 GEMM 内核与硬件支持。</p>
+          </section>
+        </div>
+        <div class="mf-feedback" id="runtime-feedback">反量化方向很重要：量化时乘 scale，恢复时必须除以同一个 scale。</div>
+      </article>
+
+      <article class="mf-mission-panel boss-panel" data-mission-panel="5">
+        <div class="mf-mission-copy">
+          <p class="mf-kicker">BOSS CHALLENGE · SHIP THE MODEL</p>
+          <h2>让整座模型在预算内上线</h2>
+          <p>四条工程约束必须同时满足。通关后，模型里所有可采用 weight-only 量化的 Linear 仓库都会点亮。</p>
+        </div>
+        <div class="mf-boss-grid">
+          <div class="mf-boss-core"><span class="orbit one"></span><span class="orbit two"></span><b>INT8</b><small>DEPLOY CORE</small></div>
+          <ul class="mf-boss-checks" id="boss-checks">
+            <li data-boss="memory"><i></i><span>权重仓相对 FP32 缩小 4 倍</span><b>4.00×</b></li>
+            <li data-boss="scale"><i></i><span>全零输入的 scale 保持有限</span><b>finite</b></li>
+            <li data-boss="cosine"><i></i><span>输出余弦相似度超过 0.99</span><b id="boss-cosine">—</b></li>
+            <li data-boss="shape"><i></i><span>输出 shape 为 [2,10,64]</span><b>[2,10,64]</b></li>
+          </ul>
+          <button class="mf-button boss-button" id="launch-model" type="button">执行上线检查</button>
+        </div>
+        <div class="mf-feedback" id="boss-feedback">完成 Mission 01–04 后执行最终检查。</div>
+        <div class="mf-notebook-bridge" id="notebook-bridge" hidden>
+          <div>
+            <p class="mf-kicker">MISSION COMPLETE · RETURN TO NOTEBOOK</p>
+            <h3>你已经看见了权重的完整生命周期</h3>
+            <p>下面只给检查点，不直接泄露完整代码。回到 Notebook 完成真正的 PyTorch 实现。</p>
+          </div>
+          <ol>
+            <li><b>TODO 1</b><span>absmax 是标量；全零输入先保护再做除法。</span></li>
+            <li><b>TODO 2</b><span>scale 表示量化时乘上的放大倍数：127 / absmax。</span></li>
+            <li><b>TODO 3</b><span>shape 不变，最后 dtype 必须是 torch.int8。</span></li>
+            <li><b>TODO 4</b><span>weight_int8 跟随 x.dtype 后除以 scale，再调用 F.linear。</span></li>
+          </ol>
+          <a class="mf-button hot" href="../../25_Quantization_W8A16.ipynb">打开 Notebook 作业</a>
+        </div>
+      </article>
+    </section>
+
+    <footer class="mf-footer">
+      <div>
+        <b>教学剖面，不是特定模型配置声明</b>
+        <p>本工厂使用 LLaMA 风格组件建立心智模型；真实模型的层数、GQA 比例、权重共享和量化粒度可能不同。</p>
+      </div>
+      <nav><a class="mf-button quiet" href="24_sglang_radixattention.html">← L24</a><a class="mf-button quiet" href="26_qlora_and_4bit_quantization.html">L26 →</a></nav>
+    </footer>
+  </main>
+
+  <script src="../assets/level25_model_factory.js"></script>
+</body>
+</html>
