@@ -1,6 +1,6 @@
-# 00. PyTorch Warmup | PyTorch 核心基础热身: 张量、前反向传播与 Embedding (Warmup)
+# 00. PyTorch Warmup | PyTorch 热身
 
-**难度：** Easy | **标签：** `PyTorch`, `Foundation` | **目标人群：** 通用基础 (算法/Infra)
+**难度：** Easy | **环境：** CPU-first | **标签：** `PyTorch`, `基础入门`, `反向传播` | **目标人群：** 通用基础 (算法/Infra)
 
 > 🚀 **云端运行环境**
 >
@@ -10,19 +10,36 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-在深入大模型的浩瀚海洋（如 Attention、LoRA、MoE）之前，我们必须确保自己的“底层积木”是非常扎实的。
-本节作为**热身关卡**，将用三个非常经典的实战填空，带你快速找回 PyTorch 的核心肌肉记忆：张量维度变换 (Tensor Reshaping)、嵌入层查表 (Embedding Lookup) 以及链式法则的反向传播 (Backpropagation)。
+---
 
+## 本节导读
 
-```python
-# 导入所有必需的库
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import einops
-```
+进入 Part 02 后，我们不再只讨论概念，而是要把大模型里的模块真正写成 PyTorch 代码。最先需要补齐的不是某个复杂算法，而是三类基本动作：张量维度能不能对上，token id 能不能查成向量，loss 的梯度能不能顺利传回参数。
 
+本节是这一部分的热身关卡，会用三个小练习重新建立 PyTorch 的实现手感：reshape、embedding lookup 和最小反向传播。完成后，你应该能更顺畅地进入 RMSNorm、SwiGLU、RoPE 和 Attention 这些核心组件实现，不会被基础张量操作打断主线。
+
+**关键词：** `reshape`, `Embedding`, `backpropagation`
+
+---
+## 前置阅读
+
+**导语：** 这一节先把后续章节要用到的基础张量、Autograd 和训练接口先补齐。
+
+- [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
+- [P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播](../00_Prerequisites/07_PyTorch_Autograd_and_Backward.md)
+- [P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
+
+## 相关阅读
+
+**导语：** 本节先把 PyTorch 的热身算子讲清楚；如果想继续看张量数据类型和 GPU 架构，再顺着读下面这些页。
+
+- [P1: 01. Data Types and Precision | 大模型的数据格式与混合精度](../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.md)
+- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+
+---
 ### Part 1: 张量维度变换与 `einops`
+
+无论是注意力里的多头合并，还是各种特征整理，都会反复用到张量形状重排同一类操作。
 
 > **为什么我们需要 `einops`？**
 > 在大模型开发中，张量形状不匹配（`RuntimeError: size mismatch`）是最高频的调试痛点之一。熟练掌握原生的 `view`, `reshape`, `transpose`, `permute` 是算法工程师的基础功底。
@@ -35,6 +52,15 @@ import einops
 > 这正是为什么现代深度学习框架和开源模型广泛拥抱 **`einops`** 库，它能让复杂的张量操作变得语义清晰、安全可防错。
 
 ```python
+# 导入所有必需的库
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import einops
+```
+
+
+```python
 def tensor_warmup(x: torch.Tensor):
     """
     假设 x 是一批图像的特征 (例如在多模态大模型中)，形状为 [batch_size, channels, height, width]
@@ -42,26 +68,32 @@ def tensor_warmup(x: torch.Tensor):
     目标形状: [batch_size, height * width, channels]
     """
     
+    # 这一段先把图像特征重排成 Transformer 更容易消费的序列格式。
+    # 重点不是记住某个 API，而是理解“先换维度顺序，再合并空间维”的处理思路。
     # ==========================================
     # TODO 1.1: 使用原生的 PyTorch 方法 (permute + reshape/flatten) 完成变换
     # 提示: 先调整维度顺序，再合并空间维度
     # ==========================================
     # x_native = ???
     
+    # 这里再用 `einops` 做同一件事，方便对照“显式维度操作”和“语义化写法”。
+    # 两种写法应该得到完全一致的结果，便于确认你理解的是形状变换本身。
     # ==========================================
     # TODO 1.2: 使用 einops.rearrange 优雅地完成完全相同的操作
     # 提示: 使用括号表示要合并的维度
     # ==========================================
     # x_einops = ???
-    
-    # return x_native, x_einops
-    pass
+    return x_native, x_einops
+
 ```
 
 ### Part 2: 嵌入层 (Embedding Layer) 的本质
 
->文本是离散的（Token IDs，如 `[10, 42, 99]`）。神经网络只能处理连续的稠密向量（Dense Vectors）。
->**Embedding 层的本质：** 就是一个大规模的查表（Lookup Table）。给定一个 ID 列表，它直接把对应的行向量抽出来拼在一起。
+
+大模型的第一步，是把离散的文本转化为连续的数学表示：
+原始文本经字节对编码(Byte Pair Encoding，BPE)分词后得到`token id`（即词典里的编号），再通过嵌入层（`Embedding`）查表，将该编号映射为固定长度的连续向量（其维度称为`hidden dim`或者`hidden size`）；随后注入旋转位置编码（主流方案如`RoPE`及其变体）以保留顺序信息。若一句话包含多个token，这些向量会按顺序拼接成完整的输入序列（`sequence`），供模型后续处理，从而让模型真正开始“阅读”和理解文本。
+
+>**那 Embedding 层本质上是什么？就是一张巨大的查找表（Lookup Table）。** 给定一个 ID 列表，它直接把对应的行向量抽出来拼在一起。
 >它在数学上等价于：把离散的 ID 转换成 One-hot 向量，然后去乘以一个全连接层（Linear）。
 
 
@@ -73,6 +105,8 @@ def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
     Args:
         input_ids: 形状 [batch_size, seq_len]，包含整数类型的 Token IDs
     """
+    # 这一段先把“词表查表”这个抽象过程落成官方实现。
+    # 先看 nn.Embedding 如何工作，再手写索引复现同样的输出。
     # ==========================================
     # TODO 2.1: 实例化一个官方的 nn.Embedding，并用其进行前向传播
     # ==========================================
@@ -80,18 +114,19 @@ def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
     # emb_layer.weight.data.normal_(0, 0.1)  # 随便初始化一下
     # out_official = ???
     
+    # 这里不再调用 nn.Embedding，而是直接用权重矩阵做索引。
+    # 这样可以把“Embedding 本质上就是查表”这件事看得更直观。
     # ==========================================
     # TODO 2.2: 使用纯 PyTorch 张量索引 (Advanced Indexing)，不使用 nn.Embedding，
     # 达到和上面官方 API 完全一模一样的输出。
     # 提示: Embedding 的本质是查表，思考如何用索引从权重矩阵中提取向量
     # ==========================================
     # out_manual = ???
-    
-    # return out_official, out_manual
-    pass
+    return out_official, out_manual
 ```
 
 ### Part 3: 前向传播与反向传播 (Forward & Backward)
+
 
 > **为什么要理解前向和反向传播？**
 > 大模型的训练机制完全建立在**反向传播算法 (Backpropagation)** 与 **链式法则 (Chain Rule)** 之上。
@@ -106,6 +141,9 @@ def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
 > - 前向传播如何计算输出并保存中间结果
 > - 反向传播如何利用链式法则计算梯度
 > - 为什么需要在前向传播时保存某些张量（如 mask）
+> 
+> **闭环提示：** 先算 `Linear -> ReLU`，再保存 `mask`；反向时先过 `mask`，再把梯度回传到输入和参数。
+
 
 ```python
 class LinearReLUFunction(torch.autograd.Function):
@@ -116,6 +154,8 @@ class LinearReLUFunction(torch.autograd.Function):
     
     @staticmethod
     def forward(ctx, x, weight, bias):
+        # 这里先把线性变换和激活拆开，便于明确哪些中间量要留给反向传播。
+        # mask 的保存是关键：它决定了 ReLU 之后哪些位置还能继续传梯度。
         # ==========================================
         # TODO 3.1: 实现前向传播
         # 1. 使用 F.linear 计算线性变换
@@ -127,8 +167,7 @@ class LinearReLUFunction(torch.autograd.Function):
         # y = ???
         # mask = ???
         # ctx.save_for_backward(???)
-        # return ???
-        pass
+        return y
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -138,12 +177,16 @@ class LinearReLUFunction(torch.autograd.Function):
         """
         x, weight, mask = ctx.saved_tensors
         
+        # 先把上游梯度过 ReLU 的门，再进入线性层的矩阵求导。
+        # 这一小段是整个自定义算子最核心的反向链路。
         # ==========================================
         # TODO 3.2: 反传过 ReLU
         # 提示: ReLU 的导数在正值处为 1，负值处为 0
         # ==========================================
         # grad_z = ???
         
+        # 接着把梯度回传到输入和参数，分别得到 x / weight / bias 的梯度。
+        # 这里的形状对齐和转置关系，是矩阵求导最常见的检查点。
         # ==========================================
         # TODO 3.3: 反传过 Linear
         # 提示: 利用矩阵求导的链式法则，分别计算对 x, weight, bias 的梯度
@@ -153,8 +196,8 @@ class LinearReLUFunction(torch.autograd.Function):
         # grad_weight = ???
         # grad_bias = ???
         
-        # return grad_x, grad_weight, grad_bias
-        pass
+        return grad_x, grad_weight, grad_bias
+
 ```
 
 
@@ -284,13 +327,22 @@ def test_warmup():
         
     except NotImplementedError:
         print("\n❌ 测试失败: 请先完成 TODO 部分的代码！")
-    except TypeError as e:
-        print(f"\n❌ 测试失败: 代码可能未完成，导致类型错误")
-        print(f"   错误信息: {e}")
+        raise
+    except (AttributeError, NameError, TypeError) as e:
+        if isinstance(e, AttributeError):
+            print("\n❌ 测试失败: 代码未完成，无法找到必要的属性")
+        elif isinstance(e, NameError):
+            print("\n❌ 测试失败: 代码可能未完成，导致了变量未定义")
+        else:
+            print("\n❌ 测试失败: 代码可能未完成，导致类型错误")
+            print(f"   错误信息: {e}")
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
     except AssertionError as e:
         print(f"\n❌ 测试失败: {e}")
+        raise
     except Exception as e:
         print(f"\n❌ 发生未知异常: {type(e).__name__}: {e}")
+        raise
 
 test_warmup()
 ```
@@ -311,7 +363,9 @@ test_warmup()
 ```python
 def tensor_warmup(x: torch.Tensor):
     # TODO 1.1 & 1.2
+    # 先把通道维挪到最后，再把空间维合并成序列维。
     x_native = x.permute(0, 2, 3, 1).reshape(x.shape[0], x.shape[2] * x.shape[3], x.shape[1])
+    # `einops` 只是同一件事的语义化写法，方便对照理解。
     x_einops = einops.rearrange(x, "b c h w -> b (h w) c")
     return x_native, x_einops
 
@@ -319,7 +373,9 @@ def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
     # TODO 2.1 & 2.2
     emb_layer = nn.Embedding(vocab_size, hidden_dim)
     emb_layer.weight.data.normal_(0, 0.1)
+    # 官方实现直接按 token id 查表，返回对应行向量。
     out_official = emb_layer(input_ids)
+    # 手动实现也是同样的高级索引查表。
     out_manual = emb_layer.weight[input_ids]
     return out_official, out_manual
 
@@ -327,6 +383,7 @@ class LinearReLUFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, weight, bias):
         # TODO 3.1
+        # 先算线性项，再过 ReLU；mask 要保存给反向传播使用。
         z = F.linear(x, weight, bias)
         y = F.relu(z)
         mask = (z > 0).float()
@@ -338,9 +395,11 @@ class LinearReLUFunction(torch.autograd.Function):
         x, weight, mask = ctx.saved_tensors
         
         # TODO 3.2
+        # ReLU 的梯度就是一个 0/1 掩码，直接过滤上游梯度。
         grad_z = grad_output * mask
         
         # TODO 3.3
+        # 再把梯度分别回传到输入、权重和偏置。
         grad_x = grad_z @ weight
         grad_weight = grad_z.T @ x
         grad_bias = grad_z.sum(dim=0)
@@ -348,34 +407,38 @@ class LinearReLUFunction(torch.autograd.Function):
         return grad_x, grad_weight, grad_bias
 ```
 
-### 解析
+### 答案与直觉
 
 **1. TODO 1.1 & 1.2 (张量维度变换)**
 
-- **原生实现：** 使用 `permute(0, 2, 3, 1)` 将维度重排为 `[batch, height, width, channels]`，再用 `reshape` 合并空间维度。必须使用 `x.shape[...]` 动态获取维度，避免硬编码。
-- **`einops` 实现：** `rearrange(x, 'b c h w -> b (h w) c')` 一行完成，括号 `(h w)` 表示合并维度，语义清晰。
-- **工程推荐：** 在多头注意力等复杂张量操作中，`einops` 的可读性远超原生方法，代码即文档。
+- **这一题要解决什么：** 把 `[batch, channels, height, width]` 的图像特征整理成 `[batch, height * width, channels]` 的序列格式，方便后续送入 Transformer。
+- **为什么先 `permute` 再 `reshape`：** 先把通道维挪到最后，再合并空间维，这样形状语义最清楚，也最不容易写错。
+- **`einops` 的意义：** `rearrange(x, 'b c h w -> b (h w) c')` 只是更语义化的表达，核心做的仍然是同一件形状重排。
+- **带走的直觉：** 这类题的重点不是记 API，而是形成“先换顺序，再合并维度”的稳定思维。
 
 **2. TODO 2.1 & 2.2 (Embedding 层模拟)**
 
-- **官方实现：** `nn.Embedding(vocab_size, hidden_dim)` 内部维护权重矩阵 `[vocab_size, hidden_dim]`，调用时用 `input_ids` 索引提取行向量。
-- **手动实现：** 直接使用高级索引 `emb_layer.weight[input_ids]` 达到相同效果，揭示了 Embedding 的本质是查表而非矩阵乘法。
-- **进阶思考：** 为什么查表比 One-hot 乘法快？One-hot 产生大量零元素（稀疏矩阵），而直接索引只需一次内存访问，在大词表场景（50k+ tokens）性能优势明显。
+- **这一题要解决什么：** 把离散的 token id 映射成连续向量，让文本输入真正变成神经网络可处理的张量。
+- **为什么能手动复现：** `nn.Embedding` 本质上就是维护一个词表矩阵，然后按 `input_ids` 去取对应行，所以 `emb_layer.weight[input_ids]` 可以得到相同结果。
+- **为什么比 One-hot 更合适：** 查表直接取值，避免了大规模稀疏向量乘法，词表越大越能体现这种实现方式的优势。
+- **带走的直觉：** 遇到 Embedding 时，先把它理解成“查表层”，再去看实现细节。
 
 **3. TODO 3.1 (前向传播)**
 
-- **Linear 层计算：** `F.linear(x, weight, bias)` 完成 `z = x @ weight.T + bias`，注意 `F.linear` 内部自动转置 `weight`。
-- **ReLU 激活：** `F.relu(z)` 将负值置零，数学定义为 `relu(z) = max(0, z)`。
-- **保存中间结果：** 计算 `mask = (z > 0).float()` 并通过 `ctx.save_for_backward(x, weight, mask)` 保存，供反向传播使用。`mask` 记录哪些位置大于0，`x` 和 `weight` 用于计算梯度。
+- **这一题要解决什么：** 手动拼出一个最小的 `Linear + ReLU` 前向链路，并明确哪些中间量要保留给反向传播。
+- **关键步骤：** 先算 `z = x @ weight.T + bias`，再过 `ReLU` 得到输出 `y`，这是最标准的前向组合。
+- **为什么要保存 `mask`：** `mask = (z > 0).float()` 记录了哪些位置能继续传梯度，反向时它会直接参与链式法则。
+- **带走的直觉：** 前向不是只管算出结果，还要为反向预留必要的中间状态。
 
 **4. TODO 3.2 (ReLU 反向传播)**
 
-- **梯度计算：** `grad_z = grad_output * mask`，其中 `mask` 是前向保存的 `(z > 0).float()`，充当 ReLU 导数的角色。
-- **数学原理：** ReLU 导数为 `d_relu(z)/dz = 1 if z > 0 else 0`，根据链式法则 `grad_z = grad_output * mask`。
+- **这一题要解决什么：** 把上游梯度先穿过 ReLU 的“门”，只让正区间的位置继续传回去。
+- **为什么是逐元素相乘：** ReLU 的导数本身就是一个 0/1 掩码，所以 `grad_z = grad_output * mask` 正好对应链式法则。
+- **带走的直觉：** 激活函数不是纯前向的装饰，它会直接改变反向传播的梯度流。
 
 **5. TODO 3.3 (Linear 反向传播)**
 
-- **对输入 `x` 的梯度：** `grad_x = grad_z @ weight`，根据矩阵求导链式法则计算。
-- **对权重 `weight` 的梯度：** `grad_weight = grad_z.T @ x`，需转置 `grad_z` 以匹配 `weight` 形状 `[out_features, in_features]`。
-- **对偏置 `bias` 的梯度：** `grad_bias = grad_z.sum(dim=0)`，因为 `bias` 在前向传播中被广播到每个样本，反向时需沿 batch 维度求和累加。
-- **进阶思考：** 理解手动推导是编写自定义 CUDA 算子（如 Flash Attention、Fused Operators）的必备基础，这些高性能算子需要手动实现前向和反向传播以实现算子融合和内存优化。
+- **这一题要解决什么：** 把梯度从输出层回传到输入和参数，完整补上一个线性层的反向链路。
+- **三个梯度分别对应什么：** `grad_x` 回到输入，`grad_weight` 回到参数矩阵，`grad_bias` 回到广播到 batch 维的偏置项。
+- **为什么要看转置和求和：** 矩阵求导里最容易出错的就是维度对齐，`grad_weight = grad_z.T @ x` 和 `grad_bias = grad_z.sum(dim=0)` 正是在处理这两件事。
+- **带走的直觉：** 会手推这一层，后面再看更复杂的自定义算子、融合算子和 CUDA 实现时，就更容易理解它们为什么要保存哪些状态。

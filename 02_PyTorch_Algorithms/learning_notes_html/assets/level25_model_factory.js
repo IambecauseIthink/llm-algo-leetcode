@@ -27,6 +27,7 @@
     [1.0, -1.0, 0.5, 2.0],
     [0.0, 1.0, -1.0, 3.0]
   ];
+  const PROBE_TOKENS = ["量化", "模型", "压缩", "速度", "误差"];
 
   const PRESETS = {
     toy: {
@@ -36,6 +37,7 @@
       intermediate: 16,
       vocab: 32,
       layers: 2,
+      budgetBytes: 1800,
       batchShape: "[1,4",
       note: "玩具模型会真实计算每个数值；比例与大模型一致。"
     },
@@ -46,6 +48,7 @@
       intermediate: 11008,
       vocab: 32000,
       layers: 32,
+      budgetBytes: 6.5 * 1024 ** 3,
       batchShape: "[B,S",
       note: "典型 LLaMA 风格估算：不在浏览器创建十亿级矩阵，且未计 bias、Norm、权重共享等架构差异。"
     }
@@ -280,10 +283,291 @@
     return perBlock * preset.layers + lmOut * lmIn;
   }
 
+  function float32Bytes(value) {
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setFloat32(0, Number(value), false);
+    return Array.from({ length: 4 }, (_, index) => view.getUint8(index));
+  }
+
+  function byteBits(value) {
+    return (Number(value) & 0xff).toString(2).padStart(8, "0");
+  }
+
+  function deploymentGroups(preset) {
+    const h = preset.hidden;
+    const kv = preset.kv;
+    const intermediate = preset.intermediate;
+    const attention = preset.layers * (
+      h * h + kv * h + kv * h + h * h
+    );
+    const mlp = preset.layers * (
+      intermediate * h + intermediate * h + h * intermediate
+    );
+    const lmHead = preset.vocab * h;
+    const norm = (preset.layers * 2 + 1) * h;
+    return { attention, mlp, lm_head: lmHead, norm };
+  }
+
+  function scaleCount(target, elements, preset, granularity) {
+    if (granularity === "group") return Math.ceil(elements / 64);
+    if (granularity === "channel") {
+      if (target === "attention") {
+        return preset.layers * (preset.hidden * 2 + preset.kv * 2);
+      }
+      if (target === "mlp") {
+        return preset.layers * (preset.intermediate * 2 + preset.hidden);
+      }
+      if (target === "lm_head") return preset.vocab;
+    }
+    if (target === "attention") return preset.layers * 4;
+    if (target === "mlp") return preset.layers * 3;
+    return 1;
+  }
+
+  function makeProbeMatrix(rows, columns, phase, amplitude) {
+    return Array.from({ length: rows }, (_, row) => (
+      Array.from({ length: columns }, (_, column) => {
+        const wave = Math.sin((row + 1) * 1.73 + (column + 1) * 0.91 + phase);
+        const cross = Math.cos((row + 1) * (column + 2) * 0.37 + phase * 0.6);
+        return Number(((wave + cross * 0.35) * amplitude).toFixed(7));
+      })
+    ));
+  }
+
+  const TOY_PROBE = {
+    input: [0.8, -1.1, 0.35, 1.6],
+    attention: makeProbeMatrix(4, 4, 0.2, 0.46),
+    gate: makeProbeMatrix(8, 4, 0.9, 0.38),
+    up: makeProbeMatrix(8, 4, 1.7, 0.41),
+    down: makeProbeMatrix(4, 8, 2.3, 0.34),
+    norm1: [1.06, 0.93, 1.11, 0.89],
+    norm2: [0.96, 1.08, 0.91, 1.04],
+    lmHead: makeProbeMatrix(5, 4, 3.1, 0.52),
+    lmBias: [0.02, -0.04, 0.01, 0.05, -0.02]
+  };
+  const TOY_PROBE_INPUTS = [
+    TOY_PROBE.input,
+    [-1.4, 0.2, 1.05, -0.55],
+    [0.18, 1.75, -0.9, 0.4],
+    [2.1, -0.35, -1.2, 0.65],
+    [-0.7, -1.3, 1.9, 0.15],
+    [0.05, 0.12, -0.08, 0.2],
+    [1.3, 0.85, -1.6, -0.45],
+    [-2.0, 1.1, 0.3, 0.95]
+  ];
+  const TOY_QUALITY_LIMITS = {
+    worstCosine: 0.99,
+    maxLogitError: 0.1,
+    meanAbsoluteError: 0.02
+  };
+  const BLOCK_ASSEMBLY = [
+    { id: "rms1", label: "RMSNorm", role: "Attention 前归一化", shape: "[B,S,H] → [B,S,H]", weight: "[H] 小权重" },
+    { id: "attention", label: "Attention", role: "Q/K/V + RoPE + O", shape: "[B,S,H] → [B,S,H]", weight: "4 类 Linear 大矩阵" },
+    { id: "residual1", label: "Residual +", role: "加回 Block 原输入", shape: "[B,S,H] + [B,S,H]", weight: "0 个权重" },
+    { id: "rms2", label: "RMSNorm", role: "MLP 前归一化", shape: "[B,S,H] → [B,S,H]", weight: "[H] 小权重" },
+    { id: "mlp", label: "SwiGLU MLP", role: "gate/up/down", shape: "H → I → H", weight: "3 个 Linear 大矩阵" },
+    { id: "residual2", label: "Residual +", role: "加回 Attention 后主干", shape: "[B,S,H] + [B,S,H]", weight: "0 个权重" }
+  ];
+
+  function quantizeValuesAtBits(values, bits) {
+    const qmax = 2 ** (bits - 1) - 1;
+    const qmin = -(2 ** (bits - 1));
+    const absmax = values.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+    if (absmax === 0) return values.map(() => 0);
+    const scale = qmax / absmax;
+    return values.map((value) => (
+      Math.max(qmin, Math.min(qmax, roundToEven(value * scale))) / scale
+    ));
+  }
+
+  function quantizeMatrixAtBits(matrix, bits, granularity) {
+    if (granularity === "channel") {
+      return matrix.map((row) => quantizeValuesAtBits(row, bits));
+    }
+    if (granularity === "group") {
+      const flat = flattenMatrix(matrix);
+      const groupSize = 4;
+      const restored = [];
+      for (let start = 0; start < flat.length; start += groupSize) {
+        restored.push(...quantizeValuesAtBits(flat.slice(start, start + groupSize), bits));
+      }
+      let cursor = 0;
+      return matrix.map((row) => row.map(() => restored[cursor++]));
+    }
+    const restored = quantizeValuesAtBits(flattenMatrix(matrix), bits);
+    let cursor = 0;
+    return matrix.map((row) => row.map(() => restored[cursor++]));
+  }
+
+  function matrixForScheme(matrix, scheme, granularity) {
+    if (scheme === "int8") return quantizeMatrixAtBits(matrix, 8, granularity);
+    if (scheme === "int4") return quantizeMatrixAtBits(matrix, 4, granularity);
+    return matrix.map((row) => row.slice());
+  }
+
+  function vectorForScheme(vector, scheme) {
+    return scheme === "int8" ? quantizeValuesAtBits(vector, 8) : vector.slice();
+  }
+
+  function matVec(matrix, vector) {
+    return matrix.map((row) => row.reduce((sum, value, index) => sum + value * vector[index], 0));
+  }
+
+  function rmsNorm(vector, weight) {
+    const rms = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0) / vector.length + 1e-6);
+    return vector.map((value, index) => value / rms * weight[index]);
+  }
+
+  function softmax(values) {
+    const maxValue = Math.max(...values);
+    const exponentials = values.map((value) => Math.exp(value - maxValue));
+    const total = exponentials.reduce((sum, value) => sum + value, 0);
+    return exponentials.map((value) => value / total);
+  }
+
+  function runToyProbe(plan, input) {
+    const granularity = plan.granularity || "tensor";
+    const attentionWeight = matrixForScheme(TOY_PROBE.attention, plan.attention || "fp32", granularity);
+    const gateWeight = matrixForScheme(TOY_PROBE.gate, plan.mlp || "fp32", granularity);
+    const upWeight = matrixForScheme(TOY_PROBE.up, plan.mlp || "fp32", granularity);
+    const downWeight = matrixForScheme(TOY_PROBE.down, plan.mlp || "fp32", granularity);
+    const lmHeadWeight = matrixForScheme(TOY_PROBE.lmHead, plan.lm_head || "fp32", granularity);
+    const norm1Weight = vectorForScheme(TOY_PROBE.norm1, plan.norm || "fp32");
+    const norm2Weight = vectorForScheme(TOY_PROBE.norm2, plan.norm || "fp32");
+
+    const trace = [];
+    let hidden = (input || TOY_PROBE.input).slice();
+    let residual = hidden.slice();
+    let normalized = rmsNorm(hidden, norm1Weight);
+    trace.push(normalized.slice());
+    const attentionOutput = matVec(attentionWeight, normalized);
+    trace.push(attentionOutput.slice());
+    hidden = residual.map((value, index) => value + attentionOutput[index]);
+    trace.push(hidden.slice());
+    if (plan.activation === "a8") hidden = quantizeValuesAtBits(hidden, 8);
+
+    residual = hidden.slice();
+    normalized = rmsNorm(hidden, norm2Weight);
+    trace.push(normalized.slice());
+    const gate = matVec(gateWeight, normalized).map((value) => value / (1 + Math.exp(-value)));
+    const up = matVec(upWeight, normalized);
+    const mlpHidden = gate.map((value, index) => value * up[index]);
+    const mlpOutput = matVec(downWeight, mlpHidden);
+    trace.push(mlpOutput.slice());
+    hidden = residual.map((value, index) => value + mlpOutput[index]);
+    trace.push(hidden.slice());
+    if (plan.activation === "a8") hidden = quantizeValuesAtBits(hidden, 8);
+
+    const logits = matVec(lmHeadWeight, hidden).map((value, index) => value + TOY_PROBE.lmBias[index]);
+    const probabilities = softmax(logits);
+    const tokens = PROBE_TOKENS.map((token, index) => ({
+      token,
+      probability: probabilities[index],
+      logit: logits[index]
+    })).sort((a, b) => b.probability - a.probability);
+    return { hidden, logits, probabilities, tokens, trace };
+  }
+
+  function evaluateToyProbeSuite(plan) {
+    const baselinePlan = {
+      mlp: "fp32",
+      attention: "fp32",
+      lm_head: "fp32",
+      norm: "fp32",
+      activation: "a16",
+      granularity: "tensor"
+    };
+    const samples = TOY_PROBE_INPUTS.map((input) => {
+      const baseline = runToyProbe(baselinePlan, input);
+      const current = runToyProbe(plan, input);
+      const absoluteErrors = baseline.logits.map((value, index) => Math.abs(value - current.logits[index]));
+      return {
+        baseline,
+        current,
+        cosine: cosineSimilarity(baseline.logits, current.logits),
+        maxLogitError: Math.max(...absoluteErrors),
+        absoluteErrors,
+        top1Changed: baseline.tokens[0].token !== current.tokens[0].token
+      };
+    });
+    const allAbsoluteErrors = samples.flatMap((sample) => sample.absoluteErrors);
+    const worstCosine = Math.min(...samples.map((sample) => sample.cosine));
+    const meanCosine = samples.reduce((sum, sample) => sum + sample.cosine, 0) / samples.length;
+    const maxLogitError = Math.max(...samples.map((sample) => sample.maxLogitError));
+    const meanAbsoluteError = allAbsoluteErrors.reduce((sum, value) => sum + value, 0) / allAbsoluteErrors.length;
+    const top1Flips = samples.filter((sample) => sample.top1Changed).length;
+    return {
+      samples,
+      worstCosine,
+      meanCosine,
+      maxLogitError,
+      meanAbsoluteError,
+      top1Flips,
+      sampleCount: samples.length,
+      baselineTokens: samples[0].baseline.tokens,
+      tokens: samples[0].current.tokens
+    };
+  }
+
+  function simulateDeployment(plan, preset) {
+    const groups = deploymentGroups(preset);
+    const bytesPerElement = { fp32: 4, int8: 1, int4: 0.5 };
+    const granularity = plan.granularity || "tensor";
+    const memoryByGroup = {};
+    ["mlp", "attention", "lm_head"].forEach((target) => {
+      const scheme = plan[target] || "fp32";
+      const weightBytes = groups[target] * bytesPerElement[scheme];
+      const metadata = scheme === "fp32"
+        ? 0
+        : scaleCount(target, groups[target], preset, granularity) * 4;
+      memoryByGroup[target] = weightBytes + metadata;
+    });
+    memoryByGroup.norm = groups.norm * (plan.norm === "int8" ? 1 : 4);
+    const baselineBytes = (
+      groups.mlp + groups.attention + groups.lm_head + groups.norm
+    ) * 4;
+    const currentBytes = Object.values(memoryByGroup).reduce((sum, value) => sum + value, 0);
+
+    const probeSuite = evaluateToyProbeSuite(plan);
+    const cosine = probeSuite.worstCosine;
+    const maxLogitError = probeSuite.maxLogitError;
+    const top1Unchanged = probeSuite.top1Flips === 0;
+    const specPass = plan.mlp === "int8"
+      && plan.attention === "int8"
+      && plan.lm_head === "int8"
+      && plan.norm === "fp32"
+      && plan.activation === "a16";
+    const memoryPass = currentBytes <= preset.budgetBytes;
+    const qualityPass = cosine >= TOY_QUALITY_LIMITS.worstCosine
+      && maxLogitError <= TOY_QUALITY_LIMITS.maxLogitError
+      && probeSuite.meanAbsoluteError <= TOY_QUALITY_LIMITS.meanAbsoluteError;
+    const passed = memoryPass && qualityPass && top1Unchanged && specPass;
+    return {
+      baselineBytes,
+      currentBytes,
+      memoryByGroup,
+      cosine,
+      meanCosine: probeSuite.meanCosine,
+      maxLogitError,
+      meanAbsoluteError: probeSuite.meanAbsoluteError,
+      top1Flips: probeSuite.top1Flips,
+      sampleCount: probeSuite.sampleCount,
+      top1Unchanged,
+      specPass,
+      memoryPass,
+      qualityPass,
+      passed,
+      baselineTokens: probeSuite.baselineTokens,
+      tokens: probeSuite.tokens,
+      savedBytes: baselineBytes - currentBytes
+    };
+  }
+
   function init(doc) {
     const one = (selector, scope) => (scope || doc).querySelector(selector);
     const all = (selector, scope) => [...(scope || doc).querySelectorAll(selector)];
-    const gameKey = "pytorch-v2-level-25-factory-v1";
+    const gameKey = "pytorch-v2-level-25-factory-v3";
     const checkpointKey = "pytorch-v2-level-25-checkpoints";
     const homeworkKey = "pytorch-v2-level-25-homework";
     const predictKey = "pytorch-v2-level-25-predicts";
@@ -295,15 +579,28 @@
     };
 
     const defaultState = {
-      version: 1,
+      version: 2,
       mode: "guided",
-      preset: "toy",
+      preset: "real",
       view: 0,
       lens: "flow",
       mission: 0,
       selectedNode: "model",
       selectedLinear: "q_proj",
+      selectedWeight: 2.5,
+      selectedWeightIndex: 3,
+      deployment: {
+        mlp: "fp32",
+        attention: "fp32",
+        lm_head: "fp32",
+        norm: "fp32",
+        activation: "a16",
+        granularity: "tensor"
+      },
+      rescuePassed: false,
       completed: [],
+      blockAssembly: [],
+      assemblyRan: false,
       unfolded: false,
       compressed: false,
       calibrated: false,
@@ -328,10 +625,15 @@
     }
 
     const loaded = readJson(gameKey, {});
-    const state = { ...defaultState, ...loaded };
+    const state = {
+      ...defaultState,
+      ...loaded,
+      deployment: { ...defaultState.deployment, ...(loaded.deployment || {}) }
+    };
     state.completed = Array.isArray(state.completed) ? state.completed : [];
     state.quantPipeline = Array.isArray(state.quantPipeline) ? state.quantPipeline : [];
     state.runtimePipeline = Array.isArray(state.runtimePipeline) ? state.runtimePipeline : [];
+    state.blockAssembly = Array.isArray(state.blockAssembly) ? state.blockAssembly : [];
 
     const oldCheckpoints = new Set(readJson(checkpointKey, []));
     Object.entries(checkpointMission).forEach(([mission, checkpoint]) => {
@@ -372,7 +674,15 @@
     }
 
     function setMission(mission) {
-      state.mission = Math.max(0, Math.min(5, mission));
+      const targetMission = Math.max(0, Math.min(5, mission));
+      const prerequisites = Array.from({ length: targetMission }, (_, index) => index);
+      const locked = state.mode === "guided" && prerequisites.some((item) => !state.completed.includes(item));
+      if (locked) {
+        const firstMissing = prerequisites.find((item) => !state.completed.includes(item));
+        setConsole("warn", `引导模式下请先完成 Mission ${String(firstMissing).padStart(2, "0")}。切换“自由剖视”仍可查看任何结构。`, "MISSION LOCKED");
+        return;
+      }
+      state.mission = targetMission;
       all("[data-mission-panel]").forEach((panel) => {
         panel.classList.toggle("active", Number(panel.dataset.missionPanel) === state.mission);
       });
@@ -480,16 +790,42 @@
         const cell = doc.createElement("button");
         const value = values[index % values.length];
         cell.type = "button";
+        cell.dataset.weightIndex = String(index);
         cell.textContent = String(value);
         cell.title = `W[${Math.floor(index / 8)},${index % 8}] = ${value}`;
+        cell.classList.toggle("active", index === state.selectedWeightIndex);
         cell.addEventListener("click", () => {
           all("button", matrix).forEach((item) => item.classList.remove("active"));
           cell.classList.add("active");
-          setConsole("", `选中 ${cell.title}。FP32 用 4 byte；量化后对应 1 个 INT8 code 与共享 scale。`, "WEIGHT CELL");
+          state.selectedWeight = value;
+          state.selectedWeightIndex = index;
+          renderByteView();
+          setConsole("", `选中 ${cell.title}。下方字节现在由这个值实时计算，不再使用固定示例。`, "WEIGHT CELL");
           setView(4);
+          save();
         });
         matrix.appendChild(cell);
       }
+      renderByteView();
+    }
+
+    function renderByteView() {
+      const value = Number(state.selectedWeight);
+      const scale = 127 / 3;
+      const code = Math.max(-128, Math.min(127, roundToEven(value * scale)));
+      const restored = code / scale;
+      const error = Math.abs(restored - value);
+      const bytes = float32Bytes(value);
+      one("#byte-fp-value").textContent = formatNumeric(value);
+      one("#byte-fp32-row").innerHTML = bytes.map((byte, index) => (
+        `<span><b>${byteBits(byte).slice(0, 4)} ${byteBits(byte).slice(4)}</b><small>B${index + 1}</small></span>`
+      )).join("");
+      one("#byte-fp-hex").textContent = `0x${bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+      one("#byte-int-value").textContent = String(code);
+      one("#byte-int8-row").innerHTML = `<span><b>${byteBits(code).slice(0, 4)} ${byteBits(code).slice(4)}</b><small>1 byte</small></span>`;
+      one("#byte-restored-value").textContent = formatNumeric(restored);
+      one("#byte-error").textContent = formatNumeric(error);
+      one("#byte-selection").textContent = `当前 W[${Math.floor(state.selectedWeightIndex / 8)},${state.selectedWeightIndex % 8}] = ${formatNumeric(value)}`;
     }
 
     function renderLens() {
@@ -511,19 +847,183 @@
       }
     }
 
+    function renderTokenList(element, tokens, baseline) {
+      element.innerHTML = tokens.map((item, index) => (
+        `<li class="${index === 0 ? "top" : ""}">
+          <span>${item.token}</span>
+          <i><em style="width:${(item.probability * 100).toFixed(1)}%"></em></i>
+          <b>${(item.probability * 100).toFixed(1)}%</b>
+          ${!baseline && index === 0 ? "<small>模型选择</small>" : ""}
+        </li>`
+      )).join("");
+    }
+
+    function formatVector(vector) {
+      return `[${vector.map((value) => Number(value).toFixed(2).replace("-", "−")).join(", ")}]`;
+    }
+
+    function renderAssembly() {
+      const nextIndex = state.blockAssembly.length;
+      all("[data-block-slot]").forEach((slot, index) => {
+        const piece = BLOCK_ASSEMBLY[index];
+        const installed = state.blockAssembly[index] === piece.id;
+        slot.classList.toggle("installed", installed);
+        slot.innerHTML = installed
+          ? `<b>${piece.label}</b><small>${piece.shape}</small>`
+          : String(index + 1).padStart(2, "0");
+      });
+      all("[data-block-piece]").forEach((button) => {
+        button.classList.toggle("used", state.blockAssembly.includes(button.dataset.blockPiece));
+        button.disabled = state.blockAssembly.includes(button.dataset.blockPiece);
+      });
+      if (nextIndex < BLOCK_ASSEMBLY.length) {
+        const next = BLOCK_ASSEMBLY[nextIndex];
+        one("#assembly-step").textContent = `STEP ${nextIndex + 1} / ${BLOCK_ASSEMBLY.length}`;
+        one("#assembly-instruction").textContent = `${next.role}：安装 ${next.label}`;
+        one("#assembly-contract").textContent = `${next.shape}；${next.weight}。`;
+      } else {
+        one("#assembly-step").textContent = "BLOCK ASSEMBLED";
+        one("#assembly-instruction").textContent = "Pre-Norm 残差 Block 已正确闭合";
+        one("#assembly-contract").textContent = "两条子层都先归一化、再变换、最后与各自的 residual 主干相加。";
+      }
+      one("#run-assembly").disabled = nextIndex !== BLOCK_ASSEMBLY.length;
+      one("#unfold-bytes").disabled = !state.assemblyRan;
+      if (!state.assemblyRan) {
+        one("#assembly-vector").textContent = formatVector(TOY_PROBE.input);
+      }
+    }
+
+    function maybeCompleteMissionOne() {
+      if (state.assemblyRan && state.compressed) {
+        completeMission(1, "已正确组装并运行 Pre-Norm Block，也完成了 FP32 4 byte → INT8 1 byte 的权重存储改造。");
+      }
+    }
+
+    function rescueGuidance(simulation) {
+      const plan = state.deployment;
+      if (plan.norm === "int8") {
+        return [
+          "撤销 RMSNorm INT8：它不属于本关的 Linear 改造",
+          `只多省 ${formatBytes(simulation.memoryByGroup.norm * 3)}；8 组实算的最差 cosine=${simulation.cosine.toFixed(6)}，平均 |Δlogit|=${simulation.meanAbsoluteError.toFixed(6)}。单样本 cosine 偶尔微升只是误差抵消，不是质量提升。`
+        ];
+      }
+      if (plan.activation === "a8") {
+        return [
+          "A8 不是本关的 W8 权重压缩",
+          `切回 A16。权重仓字节没有变化；8 组实算平均 |Δlogit|=${simulation.meanAbsoluteError.toFixed(6)}，真实 W8A8 还需要校准与适配内核。`
+        ];
+      }
+      const int4Target = ["mlp", "attention", "lm_head"].find((target) => plan[target] === "int4");
+      if (int4Target) {
+        const label = { mlp: "MLP Linear", attention: "Attention Linear", lm_head: "LM Head" }[int4Target];
+        return [
+          `${label} 已变成 INT4，不符合 W8A16`,
+          `8 组探针的最差 cosine=${simulation.cosine.toFixed(6)}、平均 |Δlogit|=${simulation.meanAbsoluteError.toFixed(6)}。朴素 absmax INT4 不等于 GPTQ/AWQ。`
+        ];
+      }
+      const fp32Target = ["mlp", "attention", "lm_head"].find((target) => plan[target] === "fp32");
+      if (fp32Target) {
+        const label = { mlp: "MLP Linear", attention: "Attention Linear", lm_head: "LM Head" }[fp32Target];
+        return [`下一步：量化 ${label}`, `把 ${label} 从 FP32 · 4 byte 切到 INT8 · 1 byte，观察仓库缩短多少。`];
+      }
+      if (!simulation.memoryPass) {
+        return ["显存仍超预算", "三类大型 Linear 都已是 INT8；尝试更细的 scale 粒度会增加少量元数据，不会带来 4 倍以上的免费压缩。"];
+      }
+      if (!simulation.qualityPass || !simulation.top1Unchanged) {
+        return [
+          "显存已达标，但 Toy 输出越过验收线",
+          `8 组中最差 cosine=${simulation.cosine.toFixed(6)}、最大 |Δlogit|=${simulation.maxLogitError.toFixed(6)}、Top-1 翻转 ${simulation.top1Flips}/${simulation.sampleCount}；调整方案后再验证。`
+        ];
+      }
+      if (state.rescuePassed) {
+        return ["抢救完成：显存警报已解除", "大型 Linear 已换成 INT8；继续 Mission 01，拆开一个权重看清 4 byte 如何变成 1 byte。"];
+      }
+      return ["四项条件已满足", "点击“验证当前改造方案”，关闭显存警报并进入模型内部。"];
+    }
+
+    function renderRescue() {
+      const preset = PRESETS[state.preset];
+      const simulation = simulateDeployment(state.deployment, preset);
+      const baseline = simulation.baselineBytes;
+      one("#fp32-total").textContent = formatBytes(baseline);
+      one("#int8-total").textContent = formatBytes(simulation.currentBytes);
+      one("#compression-total").textContent = `${(baseline / simulation.currentBytes).toFixed(2)}×`;
+      one("#budget-limit").textContent = formatBytes(preset.budgetBytes);
+      one("#warehouse-total").textContent = formatBytes(simulation.currentBytes);
+      one("#goal-memory").textContent = `${formatBytes(simulation.currentBytes)} / ${formatBytes(preset.budgetBytes)}`;
+      one("#goal-quality").textContent = `${simulation.cosine.toFixed(6)} / ≥0.990000`;
+      one("#goal-token").textContent = `${simulation.top1Flips} / ${simulation.sampleCount} 翻转`;
+      one("#goal-spec").textContent = simulation.specPass ? "W8A16" : "不符合 W8A16";
+      one("#quality-score").textContent = simulation.cosine.toFixed(6);
+      one("#deployment-cosine").textContent = simulation.cosine.toFixed(6);
+      one("#mean-logit-error").textContent = simulation.meanAbsoluteError.toFixed(6);
+      one("#max-logit-error").textContent = simulation.maxLogitError.toFixed(6);
+      one("#top1-state").textContent = `${simulation.top1Flips} / ${simulation.sampleCount}`;
+      one("#saved-memory").textContent = formatBytes(simulation.savedBytes);
+      one("#quality-meter").style.width = `${Math.max(0, Math.min(100, simulation.cosine * 100))}%`;
+      one("#quality-state").textContent = simulation.qualityPass && simulation.top1Unchanged ? "OUTPUT STABLE" : "OUTPUT DRIFT";
+      one("#quality-state").classList.toggle("warn", !simulation.qualityPass || !simulation.top1Unchanged);
+      renderTokenList(one("#baseline-tokens"), simulation.baselineTokens, true);
+      renderTokenList(one("#current-tokens"), simulation.tokens, false);
+
+      const goals = {
+        memory: simulation.memoryPass,
+        quality: simulation.qualityPass,
+        token: simulation.top1Unchanged,
+        spec: simulation.specPass
+      };
+      Object.entries(goals).forEach(([goal, passed]) => {
+        const item = one(`[data-rescue-goal="${goal}"]`);
+        item.classList.toggle("pass", passed);
+        item.classList.toggle("fail", !passed);
+      });
+
+      all("[data-target][data-scheme]").forEach((button) => {
+        button.classList.toggle("active", state.deployment[button.dataset.target] === button.dataset.scheme);
+      });
+      all("[data-granularity]").forEach((button) => {
+        button.classList.toggle("active", state.deployment.granularity === button.dataset.granularity);
+      });
+
+      const groups = deploymentGroups(preset);
+      const largestBytes = groups.mlp * 4;
+      ["mlp", "attention", "lm_head", "norm"].forEach((target) => {
+        const cargo = one(`[data-cargo="${target}"]`);
+        const current = simulation.memoryByGroup[target];
+        const full = groups[target] * 4;
+        cargo.style.setProperty("--cargo-base", `${Math.max(6, full / largestBytes * 100)}%`);
+        cargo.style.setProperty("--cargo-ratio", String(Math.max(0.04, current / full)));
+        one("b", cargo).textContent = `${formatBytes(full)} → ${formatBytes(current)}`;
+        cargo.classList.toggle("compressed", current < full);
+        cargo.classList.toggle("danger", target === "norm" && state.deployment.norm === "int8");
+      });
+
+      const memoryRatio = simulation.currentBytes / baseline;
+      one("#memory-gauge").style.width = `${Math.min(100, memoryRatio * 100)}%`;
+      one(".mf-memory-gauge").style.setProperty("--budget-position", `${Math.min(100, preset.budgetBytes / baseline * 100)}%`);
+      let budgetState = "OVER BUDGET";
+      if (simulation.memoryPass && (!simulation.qualityPass || !simulation.top1Unchanged || !simulation.specPass)) {
+        budgetState = "MEMORY OK · MODEL AT RISK";
+      } else if (simulation.passed) {
+        budgetState = state.rescuePassed ? "RESCUE COMPLETE" : "READY TO VALIDATE";
+      }
+      one("#budget-state").textContent = budgetState;
+      one(".mf-crisis").classList.toggle("compact", simulation.passed);
+      one(".mf-crisis").classList.toggle("quality-risk", simulation.memoryPass && !simulation.passed);
+      const [objective, nextAction] = rescueGuidance(simulation);
+      one("#current-objective").textContent = objective;
+      one("#next-action").textContent = nextAction;
+      one("#rescue-feedback").textContent = nextAction;
+      one("#validate-rescue").disabled = false;
+      return simulation;
+    }
+
     function renderPreset() {
       const preset = PRESETS[state.preset];
       all("[data-preset]").forEach((button) => button.classList.toggle("active", button.dataset.preset === state.preset));
       all("[data-layers]").forEach((element) => { element.textContent = String(preset.layers); });
-      const elements = linearWeightCount(preset);
-      const fp32 = memoryBytes(elements, 32);
-      const int8 = memoryBytes(elements, 8);
-      one("#fp32-total").textContent = formatBytes(fp32);
-      one("#int8-total").textContent = formatBytes(int8);
       one("#preset-note").textContent = preset.note;
-      one("#memory-gauge").style.width = state.shipped ? "24%" : "94%";
-      one(".mf-crisis").classList.toggle("compact", state.shipped);
-      one("#budget-state").textContent = state.shipped ? "WITHIN BUDGET" : "OVER BUDGET";
+      renderRescue();
       renderLinear(state.selectedLinear);
       selectNode(state.selectedNode, false);
     }
@@ -531,7 +1031,11 @@
     function renderMissionRail() {
       all("[data-mission-tab]").forEach((button) => {
         const mission = Number(button.dataset.missionTab);
+        const prerequisites = Array.from({ length: mission }, (_, index) => index);
+        const locked = state.mode === "guided" && prerequisites.some((item) => !state.completed.includes(item));
         button.classList.toggle("complete", state.completed.includes(mission) || (mission === 5 && state.shipped));
+        button.classList.toggle("locked", locked);
+        button.setAttribute("aria-disabled", String(locked));
       });
     }
 
@@ -642,9 +1146,11 @@
     }
 
     function renderBoss() {
-      const missionReady = [1, 2, 3, 4].every((mission) => state.completed.includes(mission));
+      const deployment = simulateDeployment(state.deployment, PRESETS[state.preset]);
+      const missionReady = [0, 1, 2, 3, 4].every((mission) => state.completed.includes(mission));
       const checks = {
-        memory: state.compressed,
+        memory: deployment.memoryPass,
+        rescue: state.rescuePassed && deployment.qualityPass && deployment.top1Unchanged && deployment.specPass,
         scale: state.zeroSafe,
         cosine: Number(state.lastCosine) > 0.99,
         shape: state.outputShapeOk
@@ -656,12 +1162,15 @@
       one(".boss-panel").classList.toggle("shipped", state.shipped);
       one("#notebook-bridge").hidden = !state.shipped;
       if (state.lastCosine) one("#boss-cosine").textContent = Number(state.lastCosine).toFixed(6);
+      one("#boss-memory").textContent = formatBytes(deployment.currentBytes);
+      one("#boss-quality").textContent = `worst cos ${deployment.cosine.toFixed(6)}`;
     }
 
     function bindInteractions() {
       all("[data-mode]").forEach((button) => button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
         all("[data-mode]").forEach((item) => item.classList.toggle("active", item.dataset.mode === state.mode));
+        renderMissionRail();
         setConsole("", state.mode === "guided"
           ? "导览模式会按权重生命周期组织任务，但所有剖视层仍可自由访问。"
           : "自由剖视已开启：可从任意机器直接下钻，不影响任务进度。", "NAVIGATION");
@@ -672,6 +1181,46 @@
         renderPreset();
         save();
       }));
+      all("[data-target][data-scheme]").forEach((button) => button.addEventListener("click", () => {
+        state.deployment[button.dataset.target] = button.dataset.scheme;
+        const simulation = renderRescue();
+        if (!simulation.passed) {
+          state.rescuePassed = false;
+          state.shipped = false;
+          state.completed = state.completed.filter((mission) => mission !== 0 && mission !== 5);
+        }
+        renderMissionRail();
+        renderBoss();
+        save();
+      }));
+      all("[data-granularity]").forEach((button) => button.addEventListener("click", () => {
+        state.deployment.granularity = button.dataset.granularity;
+        const simulation = renderRescue();
+        if (!simulation.passed) {
+          state.rescuePassed = false;
+          state.shipped = false;
+          state.completed = state.completed.filter((mission) => mission !== 0 && mission !== 5);
+        }
+        renderMissionRail();
+        renderBoss();
+        save();
+      }));
+      one("#validate-rescue").addEventListener("click", () => {
+        const simulation = renderRescue();
+        if (!simulation.passed) {
+          const [objective, action] = rescueGuidance(simulation);
+          setFeedback("#rescue-feedback", "warn", `${objective}：${action}`);
+          setConsole("warn", "显存、8 组 Toy 探针、Top-1 与 W8A16 规格必须同时通过；只让显存变绿不算完成。", "CONFIG REJECTED");
+          return;
+        }
+        state.rescuePassed = true;
+        completeMission(0, `显存进入预算；8 组探针最差 cosine=${simulation.cosine.toFixed(6)}，Top-1 零翻转，且方案符合 W8A16。`);
+        setFeedback("#rescue-feedback", "good", "抢救成功：大型 Linear 使用 INT8；RMSNorm 保留 FP32；activation 保持 A16。现在进入模型内部，理解为什么。");
+        renderRescue();
+        renderBoss();
+        setMission(1);
+        save();
+      });
       all("[data-mission-tab]").forEach((button) => button.addEventListener("click", () => setMission(Number(button.dataset.missionTab))));
       all("[data-view]").forEach((button) => button.addEventListener("click", () => setView(Number(button.dataset.view))));
       all("[data-lens]").forEach((button) => button.addEventListener("click", () => setLens(button.dataset.lens)));
@@ -687,19 +1236,92 @@
       all("[data-hunt]").forEach((button) => button.addEventListener("click", () => {
         const choice = button.dataset.hunt;
         if (choice === "linear") {
-          setFeedback("#hunt-feedback", "good", "正确。Linear 的 [out,in] 二维权重会随 hidden size 平方级增长，是本次 weight-only 量化的主要仓库。");
-          completeMission(0, "找到大型 Linear 权重仓。RMSNorm 有少量参数，Residual Add 没有参数。");
+          setFeedback("#hunt-feedback", "good", "Linear 的 [out,in] 二维权重才是主仓库。上方 MLP 箱体约 16.13 GiB，RMSNorm 总共约 0.001 GiB。");
+          setConsole("good", "已定位大型 Linear。回到救援驾驶舱选择实际存储方案，显存才会真正变化。", "TARGET LOCATED");
           selectNode("block", true);
         } else if (choice === "norm") {
-          setFeedback("#hunt-feedback", "warn", "RMSNorm 确实有可学习缩放参数，但通常只有 H 个；Linear 常有 H×H 或 I×H 个，量级完全不同。");
-          setConsole("warn", "目标有参数，但不是主仓库。比较 [H] 与 [H,H] 的参数量。", "MISIDENTIFIED");
+          const normFp32Bytes = deploymentGroups(PRESETS[state.preset]).norm * 4;
+          setFeedback("#hunt-feedback", "warn", `全部 RMSNorm 的 FP32 权重只有 ${formatBytes(normFp32Bytes)}；改成 INT8 只省 75%，远小于二维 Linear 仓库。本 Notebook 的 W8A16Linear 也不替换 Norm。`);
+          setConsole("warn", "这里能确定的是“持久权重收益极小、超出本实验实现范围”。真实精度影响必须对目标 checkpoint 做逐层消融，不能仅凭层名断言。", "OUT OF SCOPE");
         } else {
-          setFeedback("#hunt-feedback", "warn", "Residual Add 会搬运并相加 activation，但它没有持久化权重矩阵，因此不是 W8 的压缩对象。");
-          setConsole("warn", "计算过程复杂不等于拥有模型参数。Residual Add 的权重数是 0。", "NO WEIGHT");
+          setFeedback("#hunt-feedback", "warn", "A8 可以减少部分运行时 activation 缓冲区，但 W8A16 的模型权重仓不会因此变小；它还是另一套精度与内核问题。");
+          setConsole("warn", "Residual Add 的持久化权重数是 0。不要把运行时 activation 内存与模型权重存储混为一谈。", "WRONG BUDGET");
         }
       }));
 
+      all("[data-block-piece]").forEach((button) => button.addEventListener("click", () => {
+        const pieceId = button.dataset.blockPiece;
+        const next = BLOCK_ASSEMBLY[state.blockAssembly.length];
+        if (!next) return;
+        if (pieceId !== next.id) {
+          const chosen = BLOCK_ASSEMBLY.find((piece) => piece.id === pieceId);
+          let reason = `说明书当前需要 ${next.label}（${next.role}），而不是 ${chosen.label}。`;
+          if (pieceId === "attention" && next.id === "rms1") {
+            reason = "LLaMA-style Pre-Norm Block 要先对输入做 RMSNorm，再送进 Attention；否则你搭成了另一种架构。";
+          } else if (pieceId.startsWith("residual") && !state.blockAssembly.includes("attention")) {
+            reason = "Residual Add 必须等子层产生 [B,S,H] 输出后，才能与保存的主干相加；现在第二个加数还不存在。";
+          } else if (pieceId === "mlp" && next.id !== "mlp") {
+            reason = "SwiGLU MLP 前还有第二个 RMSNorm；Pre-Norm 的位置不能跳过。";
+          }
+          setFeedback("#assembly-feedback", "warn", reason);
+          setConsole("warn", reason, "ASSEMBLY MISMATCH");
+          return;
+        }
+        state.blockAssembly.push(pieceId);
+        state.assemblyRan = false;
+        setFeedback("#assembly-feedback", "good", `${next.label} 已锁定：${next.shape}；${next.weight}。`);
+        renderAssembly();
+        save();
+      }));
+
+      one("#clear-assembly").addEventListener("click", () => {
+        state.blockAssembly = [];
+        state.assemblyRan = false;
+        state.completed = state.completed.filter((mission) => mission !== 1);
+        one("#assembly-token").classList.remove("running");
+        setFeedback("#assembly-feedback", "", "积木已拆回零件区。跟随说明书重新搭建 Pre-Norm Block。");
+        renderAssembly();
+        renderMissionRail();
+        save();
+      });
+
+      one("#run-assembly").addEventListener("click", () => {
+        if (state.blockAssembly.length !== BLOCK_ASSEMBLY.length) return;
+        const baselinePlan = {
+          mlp: "fp32",
+          attention: "fp32",
+          lm_head: "fp32",
+          norm: "fp32",
+          activation: "a16",
+          granularity: "tensor"
+        };
+        const probe = runToyProbe(baselinePlan);
+        const token = one("#assembly-token");
+        const reduceMotion = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        token.classList.remove("running");
+        void token.offsetWidth;
+        token.classList.add("running");
+        probe.trace.forEach((vector, index) => {
+          root.setTimeout(() => {
+            one("#assembly-vector").textContent = formatVector(vector);
+            all("[data-block-slot]").forEach((slot, slotIndex) => slot.classList.toggle("active", slotIndex === index));
+            if (index === probe.trace.length - 1) {
+              state.assemblyRan = true;
+              all("[data-block-slot]").forEach((slot) => slot.classList.remove("active"));
+              setFeedback("#assembly-feedback", "good", "hidden state 已沿 6 块积木完成一次真实前向：主干 shape 始终保持 [B,S,H]。现在可以下钻到单个权重。");
+              renderAssembly();
+              maybeCompleteMissionOne();
+              save();
+            }
+          }, reduceMotion ? 0 : index * 420);
+        });
+      });
+
       one("#unfold-bytes").addEventListener("click", () => {
+        if (!state.assemblyRan) {
+          setFeedback("#assembly-feedback", "warn", "请先按说明书搭完 Block，并让 hidden state 跑一遍。");
+          return;
+        }
         state.unfolded = true;
         state.view = 4;
         one("#compress-byte").disabled = false;
@@ -713,7 +1335,7 @@
         if (!state.unfolded) return;
         state.compressed = true;
         one("#autopsy-status").textContent = "FP32 4 byte → INT8 1 byte";
-        completeMission(1, "完成 4 byte → 1 byte 的权重存储改造。相对 FP16 则是 2 byte → 1 byte。");
+        maybeCompleteMissionOne();
         renderBoss();
       });
 
@@ -795,8 +1417,10 @@
       one("#run-runtime").addEventListener("click", runRuntime);
 
       one("#launch-model").addEventListener("click", () => {
-        const ready = state.compressed && state.zeroSafe && Number(state.lastCosine) > 0.99 && state.outputShapeOk
-          && [1, 2, 3, 4].every((mission) => state.completed.includes(mission));
+        const deployment = simulateDeployment(state.deployment, PRESETS[state.preset]);
+        const ready = state.rescuePassed && deployment.passed
+          && state.compressed && state.zeroSafe && Number(state.lastCosine) > 0.99 && state.outputShapeOk
+          && [0, 1, 2, 3, 4].every((mission) => state.completed.includes(mission));
         if (!ready) {
           setFeedback("#boss-feedback", "warn", "上线检查未通过。查看未点亮的指标，并回到对应 Mission 修复。");
           return;
@@ -934,6 +1558,7 @@
     all("[data-mode]").forEach((button) => button.classList.toggle("active", button.dataset.mode === state.mode));
     buildMatrix();
     bindInteractions();
+    renderAssembly();
     renderPreset();
     renderMissionRail();
     renderQuantPipeline();
@@ -974,6 +1599,16 @@
     memoryBytes,
     weightDims,
     linearWeightCount,
-    quantizeMatrix
+    quantizeMatrix,
+    float32Bytes,
+    byteBits,
+    deploymentGroups,
+    simulateDeployment,
+    quantizeMatrixAtBits,
+    runToyProbe,
+    evaluateToyProbeSuite,
+    TOY_PROBE_INPUTS,
+    TOY_QUALITY_LIMITS,
+    BLOCK_ASSEMBLY
   };
 });

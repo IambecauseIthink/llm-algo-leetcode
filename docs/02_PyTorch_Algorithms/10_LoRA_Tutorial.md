@@ -1,6 +1,6 @@
-# 10. LoRA Tutorial | 参数高效微调: 深入剖析 LoRA (PEFT)
+# 10. LoRA Tutorial | LoRA 教程
 
-**难度：** Medium | **标签：** `微调`, `PEFT`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Medium | **环境：** CPU-first | **标签：** `微调`, `PEFT`, `PyTorch` | **目标人群：** 模型微调与工程部署
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,37 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-本节我们将解析大语言模型领域最具影响力的微调算法：**LoRA (Low-Rank Adaptation)**。我们将实现一个 `LoRALinear` 层，替换标准的 `nn.Linear`，体验矩阵秩分解是如何极大地节省显存开销的。
+---
 
+## 本节导读
+
+大模型微调最直接的做法是更新全部参数，但这会把显存压力迅速放大：除了模型权重，还要保存梯度和优化器状态。很多场景里，我们真正需要的不是重写整个模型，而是在已有能力上做小幅适配。
+
+LoRA 的思路就是冻结原始权重，只在旁边加一条低秩可训练旁路。本节会实现一个最小 `LoRALinear`，看清矩阵 A、B 如何构成 $\Delta W$，以及为什么它能用很少的可训练参数完成微调。完成后，你应该能把 LoRA 接到后面的端到端微调实验和 QLoRA 低比特微调里。
+
+**关键词：** `LoRA`, `PEFT`, `adapter`
+
+---
+## 前置阅读
+
+**导语：** 先把模型封装、优化器和最小训练闭环补齐，再看 LoRA 如何只训练一小部分参数。
+- [P0: 09. PyTorch nn.Module Basics | nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
+- [P0: 11. PyTorch Optimizers and Loss | 优化器与损失](../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.md)
+- [P0: 13. Simple Neural Network Training | 简单神经网络训练](../00_Prerequisites/13_Simple_Neural_Network_Training.md)
+
+## 相关阅读
+
+**导语：** 理解 LoRA 的低秩旁路后，可以继续看端到端微调、显存账本和 4-bit 微调如何把它项目化。
+- [P1: 03. GPU Architecture and Memory | GPU 架构与显存](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+- [P1: 06. VRAM Calculation and ZeRO | 显存估算与 ZeRO](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
+- [P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
+- [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](../02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.md)
+- [26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化](../02_PyTorch_Algorithms/26_QLoRA_and_4bit_Quantization.md)
+  
+---
 ### Step 1: 核心思想与痛点
+
+全参微调的主要成本来自保存和更新完整参数，而 LoRA 的思路是只训练一条低秩旁路。
 
 > **为什么需要 LoRA？**
 > 全参微调 (Full Fine-tuning) 一个 7B 模型需要大规模的显存来保存优化器状态（Adam 需要保存参数的动量和方差，占用额外 8 倍参数量的显存）。绝大多数中小企业和个人开发者无法承担。
@@ -20,9 +48,12 @@
 > 冻结原始的预训练模型权重，并在每个 Dense 层旁边注入可训练的“旁路”降秩矩阵（A 和 B）。微调时只更新这非常少量的参数。最终推理时，可以将旁路权重无损“合并（Merge）”回主权重中。
 
 ### Step 2: LoRA 代码框架
+
 在 PyTorch 实现中，除了保留原始冻结的线性层权重外，我们需要并排初始化两个很小的可训练矩阵 A 和 B。A 通常用 Kaiming 均匀分布或高斯分布初始化，而 B 严格初始化为零，以保证训练开始时 $W = W_0 + B A \approx W_0$。
 
 ###  Step 3: 核心公式与张量维度
+
+LoRA 的核心公式可以拆成两部分：冻结的原始权重输出，以及由低秩矩阵 A、B 构成的增量输出。
 
 **前向传播公式：**
 给定预训练权重 $W_0 \in \mathbb{R}^{d \times k}$，输入 $x$，LoRA 修改后的输出为：
@@ -38,6 +69,7 @@ $$ W_{\text{merged}} = W_0 + \frac{\alpha}{r} B A $$
 这样在部署时，计算图里没有 A 和 B，完全没有额外的推理耗时（No Inference Latency）。
 
 ###  Step 4: 动手实战
+
 
 **要求**：请补全下方 `LoRALinear` 的初始化、前向传播和合并权重的 `TODO` 逻辑。
 
@@ -59,33 +91,30 @@ class LoRALinear(nn.Module):
         self.scaling = self.lora_alpha / self.r
         
         # ==========================================
+        # 主权重冻结，只让低秩旁路参与训练。
         # TODO 1: 初始化主权重和 LoRA 矩阵
         # ==========================================
         # self.linear = ???
         # self.linear.weight.requires_grad = ???
         # self.lora_A = ???
         # self.lora_B = ???
-        self.linear = nn.Linear(in_features, out_features, bias=False)   # 占位初始化      
-        self.lora_A = nn.Parameter(torch.zeros(r, in_features))  # 占位初始化                                                                                                                 
-        self.lora_B = nn.Parameter(torch.zeros(out_features, r)) # 占位初始化    
-
+        pass
         self.reset_parameters()
 
     def reset_parameters(self):
         # ==========================================
+        # 主权重和 LoRA 旁路分别按各自规则初始化。
         # TODO 2: 初始化权重
         # ==========================================
         # nn.init.kaiming_uniform_(???)
         # nn.init.kaiming_uniform_(???)
         # nn.init.zeros_(???)
+        pass
         
-        # 占位初始化
-        nn.init.ones_(self.linear.weight)  # 占位初始化
-        nn.init.ones_(self.lora_A) # 占位初始化
-        nn.init.ones_(self.lora_B)  # 占位初始化
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ==========================================
+        # 先走主分支，再叠加低秩旁路的增量。
         # TODO 3: 实现前向传播
         # 1. 计算主权重的输出
         # 2. 计算 LoRA 分支的输出（先降维再升维，最后乘以缩放因子）
@@ -94,9 +123,7 @@ class LoRALinear(nn.Module):
         # ==========================================
         # result = ???
         # lora_out = ???
-
-        return torch.zeros(x.shape[0], x.shape[1], self.linear.out_features, device=x.device) # 占位初始化
-        
+        return result
 
     def merge_weights(self):
         # ==========================================
@@ -104,7 +131,7 @@ class LoRALinear(nn.Module):
         # 提示: 将 LoRA 的低秩更新合并到主权重中
         # ==========================================
         # self.linear.weight.data += ???
-        
+        pass
 
 ```
 
@@ -116,36 +143,42 @@ def test_lora():
         in_dim, out_dim = 128, 256
         batch_size, seq_len = 32, 10
         layer = LoRALinear(in_dim, out_dim, r=8, lora_alpha=16)
-        
+
         x = torch.randn(batch_size, seq_len, in_dim)
-        
+
         # 1. 验证初始化导致 B 全零，所以初始输出等于冻结权重的输出
         with torch.no_grad():
             out_lora = layer(x)
             out_base = layer.linear(x)
             assert torch.allclose(out_lora, out_base), "初始化错误: lora_B 未被初始化为 0"
-        
+
         # 2. 模拟训练一步，改变 B 的值
         layer.lora_B.data.normal_(0, 0.02)
-        
+
         out_trained = layer(x)
         assert not torch.allclose(out_trained, out_base), "前向传播错误: 旁路未能注入梯度值"
-        
+
         # 3. 验证合并权重的正确性
         layer.merge_weights()
         out_merged = layer.linear(x)
         assert torch.allclose(out_trained, out_merged, atol=1e-5), "权重合并错误: 合并后的输出与分离时的输出不一致！"
-        
+
         print("\n✅ All Tests Passed! LoRA 核心算子实现正确。")
-        
+
     except NotImplementedError:
         print("请先完成 TODO 部分的代码！")
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print("代码可能未完成，导致变量未定义" if isinstance(e, NameError) else "代码可能未完成，导致了类型错误")
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
+    except AssertionError as e:
+        print(f"❌ 测试失败: {e}")
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
-        raise e
+        print(f"❌ 发生异常: {e}")
+        raise
 
 test_lora()
-
 ```
 
 ---
@@ -199,7 +232,11 @@ class LoRALinear(nn.Module):
 
 ```
 
-### 解析
+### 答案与直觉
+
+- **这一题要解决什么：** 用低秩旁路替代全参更新，把微调参数量压到很小。
+- **为什么这样做：** 冻结主权重，训练 A/B 两个小矩阵，合并时又能回到原始线性层。
+- **带走的直觉：** LoRA 的核心不是“少写几个参数”，而是把更新预算集中到最有效的低秩方向上。
 
 **1. TODO 1 & 2: 初始化主权重和 LoRA 矩阵**
 

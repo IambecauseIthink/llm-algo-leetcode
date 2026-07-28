@@ -2054,6 +2054,8 @@ ${lessonStyles}
 
 ${level.notebookGuide || ""}
 
+${level.notebookGuide || ""}
+
     <section class="lessons">
       ${lessons}
     </section>
@@ -2469,7 +2471,7 @@ const cleanGeneratedHtml = (html) => html.replace(/[ \t]+$/gm, "");
 levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
   const page = levelPage(level, levels[index - 1], levels[index + 1]);
-  const preserveLegacyWhitespace = Number(level.id) <= 11 || level.id === "20";
+  const preserveLegacyWhitespace = Number(level.id) <= 11;
   fs.writeFileSync(filePath, preserveLegacyWhitespace ? page : cleanGeneratedHtml(page));
   if (level.id === "25") {
     fs.writeFileSync(

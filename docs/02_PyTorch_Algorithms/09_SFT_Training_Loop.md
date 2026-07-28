@@ -1,6 +1,6 @@
-# 09. SFT Training Loop | 监督微调训练框架: 数据构造与 Loss Masking (SFT Training Loop)
+# 09. SFT Training Loop | 监督微调训练循环
 
-**难度：** Medium | **标签：** `训练框架`, `SFT`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Medium | **环境：** CPU-first | **标签：** `训练框架`, `SFT`, `PyTorch` | **目标人群：** 模型微调与工程部署
 
 > 🚀 **云端运行环境**
 >
@@ -10,10 +10,38 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-在面试大模型算法工程师时，面试官极大概率会问：“在做 SFT（监督微调）时，你是怎么构造 `input_ids` 和 `labels` 的？”、“为什么要 `shift logits`？”
-本节我们将实现 SFT 训练中最容易写错的代码：**Prompt Masking**（忽略提问部分的 Loss）和 **交叉熵对齐**。
+---
 
+## 本节导读
+
+把模型结构写出来以后，下一步就是让它按监督数据学习回答。但 SFT 最容易出错的地方并不在 optimizer，而在数据和 loss 的对齐：模型输入通常是 `[prompt + response]`，真正应该学习的是 response，而不是让模型去复述 prompt。
+
+本节聚焦 SFT 训练循环里最关键的两件事：用 prompt masking 把不该学习的位置设为 `ignore_index`，再通过 shift logits / labels 对齐下一个 token 预测。完成后，你应该能看懂 `input_ids`、`labels` 和 cross entropy 之间的关系，并为后面的端到端微调实验、LoRA 和 RLHF 对齐训练打基础。
+
+**关键词：** `SFT`, `masking`, `shift logits`
+
+---
+## 前置阅读
+
+**导语：** 先把模型封装、训练循环和优化器基础看清，再读 SFT 的数据构造与 loss 对齐会更顺。
+
+- [P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
+- [P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失](../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.md)
+- [P0: 13. Simple Neural Network Training | 简单神经网络训练循环](../00_Prerequisites/13_Simple_Neural_Network_Training.md)
+
+## 相关阅读
+
+**导语：** 读完 SFT 的最小训练循环后，建议继续看端到端微调实验、LoRA 以及训练显存和性能分析。
+
+- [10. LoRA Tutorial | LoRA 教程](../02_PyTorch_Algorithms/10_LoRA_Tutorial.md)
+- [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](../02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.md)
+- [P0: 17. PyTorch Profiling Basics | PyTorch 性能剖析基础](../00_Prerequisites/17_PyTorch_Profiling_Basics.md)
+- [P0: 18. Memory Profiling and Optimization | 显存剖析与优化](../00_Prerequisites/18_Memory_Profiling_and_Optimization.md)
+
+---
 ### Step 1: 核心思想与痛点
+
+SFT 和预训练的关键差异在于 loss 只应该作用在 response 上，而不是 prompt 上。
 
 > **预训练 (Pre-training) vs 微调 (SFT)**
 > * **预训练**：模型预测下一个 Token。给定一本书，每一个字都要算 Loss。
@@ -22,13 +50,19 @@
 > **如何解决？（Loss Masking）**
 > 在 PyTorch 的 `CrossEntropyLoss` 中，有一个神仙参数叫 `ignore_index`，默认值是 `-100`。我们只要把 `labels` 中属于 `Prompt` 和 `Padding` 的部分全部替换成 `-100`，这部分就不会产生任何梯度！
 
+后面的 `Step 2 / Step 3` 就围绕这条链路，把 logits 对齐、loss 计算和训练流程串起来。
+
 ### Step 2: Causal Masking 与 Shift Logits
+
 
 在自回归语言模型中，预测第 $t+1$ 个词完全依赖于前 $t$ 个词。因此，在计算 CrossEntropyLoss 时，模型的预测输出序列（Logits）需要向左偏移（Shift）一位，与真实的标签序列（Labels）对齐。此外，对于 SFT 提示词部分，通常需要设置 `ignore_index = -100` 以避免它们产生梯度传播。
 
 ### Step 3: 动手实战
 
+
 **要求**：请补全下方 `build_sft_data`（构造单条 SFT 数据）和 `compute_sft_loss`（计算损失）的 `TODO` 逻辑。
+
+接下来把“数据构造 -> 标签 mask -> next-token 对齐”串成一个最小训练闭环。
 
 
 ```python
@@ -38,6 +72,7 @@ import torch.nn as nn
 
 
 ```python
+
 def build_sft_data(prompt_ids: list[int], response_ids: list[int], pad_id: int = 0, max_len: int = 16):
     """
     构造单条 SFT 训练数据
@@ -46,6 +81,7 @@ def build_sft_data(prompt_ids: list[int], response_ids: list[int], pad_id: int =
     input_ids = prompt_ids + response_ids
     
     # ==========================================
+    # Prompt 部分先统一标成 ignore_index，确保只对 Response 计算损失。
     # TODO 1: 构造 labels
     # 规则：
     # - 长度与 input_ids 相同
@@ -68,8 +104,6 @@ def build_sft_data(prompt_ids: list[int], response_ids: list[int], pad_id: int =
     # pad_len = ???
     # input_ids = ???
     # labels = ???
-    labels = input_ids.copy() # 占位初始化
-    
     return torch.tensor(input_ids, dtype=torch.long), torch.tensor(labels, dtype=torch.long)
 
 def compute_sft_loss(logits: torch.Tensor, labels: torch.Tensor):
@@ -93,7 +127,6 @@ def compute_sft_loss(logits: torch.Tensor, labels: torch.Tensor):
     # loss_fct = ???
     # loss = ???
     
-    loss = torch.tensor(100.0, device=logits.device) # 占位初始化
     return loss
 
 ```
@@ -137,15 +170,16 @@ def test_sft_pipeline():
         
     except NotImplementedError:
         print("请先完成 TODO 部分的代码！")
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print("代码可能未完成，导致变量未定义" if isinstance(e, NameError) else "代码可能未完成，导致了类型错误")
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
     except AssertionError as e:
         print(f"❌ 测试失败: {e}")
-        raise e
-    except TypeError as e:
-        print("代码未完成导致返回 None 错误。")
-        raise e
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
     except Exception as e:
         print(f"❌ 发生异常: {e}")
-        raise e
+        raise
 
 test_sft_pipeline()
 
@@ -173,6 +207,7 @@ def build_sft_data(prompt_ids: list[int], response_ids: list[int], pad_id: int =
     # TODO 1: 构造 labels
     labels = [-100] * len(prompt_ids) + response_ids
     
+    # 长度超限就截断，不足则补 pad；labels 的 pad 位置也必须保持忽略。
     # TODO 2: 截断与填充
     if len(input_ids) > max_len:
         input_ids = input_ids[:max_len]
@@ -185,10 +220,12 @@ def build_sft_data(prompt_ids: list[int], response_ids: list[int], pad_id: int =
     return torch.tensor(input_ids, dtype=torch.long), torch.tensor(labels, dtype=torch.long)
 
 def compute_sft_loss(logits: torch.Tensor, labels: torch.Tensor):
+    # 预测位置向左对齐一位，对应 next-token prediction。
     # TODO 3: 实现 Shift 错位对齐
     shift_logits = logits[..., :-1, :].contiguous()
     shift_labels = labels[..., 1:].contiguous()
     
+    # 展平后按 ignore_index 计算交叉熵，忽略 prompt 和 pad 区域。
     # TODO 4: 展平并计算交叉熵
     loss_fct = nn.CrossEntropyLoss(ignore_index=-100)
     shift_logits = shift_logits.view(-1, shift_logits.size(-1))
@@ -199,7 +236,11 @@ def compute_sft_loss(logits: torch.Tensor, labels: torch.Tensor):
 
 ```
 
-### 解析
+### 答案与直觉
+
+- **这一题要解决什么：** 把 SFT 的 prompt/response 数据构造和 next-token loss 对齐成一个最小训练闭环。
+- **为什么这样做：** 只让 Response 参与损失，模型才会学会回答而不是复述提问；shift 则保证预测和标签一一对应。
+- **带走的直觉：** SFT 的关键不是“把序列喂进去”，而是“哪些位置该学、哪些位置该忽略”。
 
 **1. TODO 1: 构造 labels**
 

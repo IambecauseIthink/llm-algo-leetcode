@@ -1,6 +1,6 @@
-# 01. RMSNorm Tutorial | 均方根层归一化 (RMSNorm)
+# 01. RMSNorm Tutorial | RMSNorm 教程
 
-**难度：** Easy | **标签：** `基础架构`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Easy | **环境：** CPU-first | **标签：** `基础架构`, `PyTorch`, `归一化` | **目标人群：** 模型微调与工程部署
 
 > 🚀 **云端运行环境**
 >
@@ -10,13 +10,38 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-本节我们将实现大语言模型（如 LLaMA、Gemma）中最常用的归一化技术：**RMSNorm (Root Mean Square Normalization)**。相比于传统的 LayerNorm，它能带来可观的训练加速，同时几乎不损失模型表现。
+---
 
-> **相关阅读**:
-> 本节使用纯 PyTorch 实现了算法逻辑与数学推导。
-> 如果你想学习工业界如何打破该算子的 Memory Bound (访存瓶颈)，请前往 Triton 篇：
->  [03_Triton_Fused_RMSNorm](../03_CUDA_and_Triton_Kernels/03_Triton_Fused_RMSNorm.md)
+## 本节导读
+
+Transformer 层数一深，中间激活的尺度就会不断变化。如果不做归一化，后面的矩阵乘法和激活函数很容易面对不稳定的输入；但标准 LayerNorm 又要同时计算均值和方差，在大模型里会带来额外开销。
+
+RMSNorm 选择更直接的做法：不再减均值，只用均方根控制特征尺度。本节会实现一个最小 RMSNorm，重点看清归一化维度、`eps` 的数值稳定作用，以及为什么许多 LLaMA 系模型会采用这种更轻的归一化层。完成后，你可以把它接到后面的 MLP、Attention 和完整 Transformer 组件里。
+
+**关键词：** `RMSNorm`, `LayerNorm`, `normalization`
+
+---
+## 前置阅读
+
+**导语：** 先把张量维度、训练循环和归一化直觉理顺，再看 RMSNorm 的实现会更顺。
+
+- [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
+- [P0: 13. Simple Neural Network Training | 简单神经网络训练循环](../00_Prerequisites/13_Simple_Neural_Network_Training.md)
+- [P0: 15. Normalization Techniques | 归一化技术](../00_Prerequisites/15_Normalization_Techniques.md)
+
+## 相关阅读
+
+**导语：** 理解 RMSNorm 后，可以继续看它在模型组件里的位置，以及同一类算子如何通过融合优化提升吞吐。
+
+- [02. SwiGLU Activation | SwiGLU 激活](../02_PyTorch_Algorithms/02_SwiGLU_Activation.md)
+- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
+
+---
 ### Step 1: 核心思想与痛点
+
+RMSNorm 的核心洞察很朴素：既然大模型的中间层均值通常已接近0，何不干脆省掉"减去均值"这一步，只用均方根做归一化？
 
 > **为什么抛弃了 LayerNorm？**
 > 标准的 LayerNorm 需要计算均值（Mean）和方差（Variance）。
@@ -24,6 +49,8 @@
 > 假设输入的均值已经接近 0（在大型网络中通常成立），那么我们**直接去掉减去均值的操作**，只用均方根（RMS）去归一化特征。这减少了同步开销，显著提升了前向和反向传播的计算速度。
 
 ### Step 2: 核心公式与张量维度
+
+明确了 RMSNorm 的设计取舍后，我们把它的数学公式摆出来。输入输出维度先理清楚，后面代码实现只是在把这组公式翻译成张量操作。
 
 给定输入向量 $x \in \mathbb{R}^d$，RMSNorm 的输出 $y$ 为：
 
@@ -36,6 +63,8 @@
    其中 $\gamma \in \mathbb{R}^d$ 是可学习的权重参数（Weight）。**RMSNorm 没有偏置项 (Bias)**。
 
 ### Step 3: 代码实现与混合精度 (AMP) 陷阱
+
+数学公式翻译成代码并不难，真正需要小心的是混合精度训练时的数值稳定性——FP16 下平方运算极易溢出，这里给出标准处理方案。
 
 在 PyTorch 中，我们需要通过 `torch.mean` 计算均方，加上一个极小的 `eps` 防止除以零，最后乘以可学习的参数 `weight`。
 
@@ -50,9 +79,13 @@
 > 无论模型输入是什么精度格式，在执行平方和均值操作前，通常需要显式地将其转换为 `float32` 计算。待归一化计算完毕后，再将结果转换回原有精度。这是深度学习框架中处理该算子的标准做法。
 ### Step 4: 动手实战
 
+这里开始把前面的公式和精度约束落到最小可运行代码里，重点看每一步为什么存在。
+
 **要求**：请补全下方 `RMSNorm` 的 `forward` 方法。
 **注意：**
-1. 确保在浮点数精度较高的情况下计算 RMS，以防止半精度（FP16/BF16）溢出。即：强制转换 `x` 为 `float32` 计算 `pow(2).mean()`。
+1. 先在 `float32` 下完成归一化，再乘以可学习的 `weight`，最后转回输入精度。
+2. 确保在浮点数精度较高的情况下计算 RMS，以防止半精度（FP16/BF16）溢出。即：强制转换 `x` 为 `float32` 计算 `pow(2).mean()`。
+
 
 ```python
 import torch
@@ -71,8 +104,6 @@ class RMSNorm(nn.Module):
         # 提示: 使用 nn.Parameter 包装张量使其可学习
         # ==========================================
         # self.weight = ???
-        pass
-        
 
     def _norm(self, x: torch.Tensor) -> torch.Tensor:
         # ==========================================
@@ -84,18 +115,17 @@ class RMSNorm(nn.Module):
         # 4. 返回归一化后的结果（保持高精度，便于后续操作）
         # ==========================================
         # variance = ???
-        # return ???
-        pass
-
+        x_fp32 = x if x.dtype == torch.float32 else x.float()
+        return x_fp32 * torch.rsqrt(variance + self.eps)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ==========================================
-        # TODO 3: 组合归一化与权重缩放
-        # 提示: 调用 _norm 进行归一化，乘以可学习的 weight，最后转回输入精度
+        # TODO 3: 先归一化，再缩放并转回输入精度
+        # 提示: 调用 _norm 进行归一化后，乘以可学习的 weight，最后转回输入精度
         # ==========================================
-        # output = ???
-        # return ???
-        pass
+        # weight = ???
+        return (weight * self._norm(x)).to(x.dtype)
+
 ```
 
 
@@ -133,8 +163,15 @@ def test_rmsnorm():
         
     except NotImplementedError:
         print("请先完成 TODO 部分的代码！")
-    except AttributeError:
-        print("代码未完成，无法找到 Parameter")
+        raise
+    except (AttributeError, NameError, TypeError) as e:
+        if isinstance(e, AttributeError):
+            print("代码未完成，无法找到 Parameter")
+        elif isinstance(e, NameError):
+            print("代码可能未完成，导致了变量未定义")
+        else:
+            print("代码可能未完成，导致了类型错误")
+        raise NotImplementedError("请先完成 TODO 部分的代码！") from e
     except Exception as e:
         print(f"\n❌ 测试失败: {e}")
 
@@ -162,35 +199,40 @@ class RMSNorm(nn.Module):
     def __init__(self, hidden_size: int, eps: float = 1e-6):
         super().__init__()
         self.eps = eps
+        # 先定义逐元素缩放参数，形状要和特征维一致。
         # TODO 1
         self.weight = nn.Parameter(torch.ones(hidden_size))
 
     def _norm(self, x: torch.Tensor) -> torch.Tensor:
+        # 先把输入提升到 FP32，再做平方均值和倒数平方根。
         # TODO 2
         x_fp32 = x if x.dtype == torch.float32 else x.float()
         variance = x_fp32.pow(2).mean(dim=-1, keepdim=True)
         return x_fp32 * torch.rsqrt(variance + self.eps)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # 先按输入精度对齐 weight，再把归一化结果乘回原始 dtype。
         # TODO 3
         weight = self.weight.to(x.dtype)
         return (weight * self._norm(x)).to(x.dtype)
 ```
 
-### 解析
+### 答案与直觉
 
 **1. TODO 1 (可学习参数)**
 
-- **参数定义：** RMSNorm 的 `weight`（论文中称为 $\gamma$）是逐元素乘以归一化结果的，形状应与特征维度 `hidden_size` 一致，初始化为全 1。
+- **这一题要解决什么：** 给归一化后的特征加一个逐元素缩放参数，让模型能恢复部分表达能力。
+- **为什么这样定义：** `weight` 就是论文里的 $\gamma$，形状要和特征维度一致，初始化为全 1 才不会干扰初始归一化结果。
 
 **2. TODO 2 (核心计算逻辑)**
 
-- **防溢出：** 大模型特征的平方和极易越界（超过 FP16 的 `65504` 上限），因此在计算均方值前，必须将输入强制转换为 `float32`。
-- **张量广播：** 使用 `.mean(dim=-1, keepdim=True)` 保留维度数量（形状变为 `(batch_size, seq_len, 1)`），以便与 `x_fp32` 正确广播相乘。
-- **指令优化：** 使用 `torch.rsqrt(x)`（相当于 $1/\sqrt{x}$）而非 `1.0 / torch.sqrt(x)`，前者直接映射为 CUDA 快速倒数平方根指令，速度更快且数值更稳定。
-- **精度保持：** 返回 `float32` 结果，不要急着转换精度。
+- **这一题要解决什么：** 在保证数值稳定的前提下，算出 RMSNorm 的归一化分量。
+- **为什么先转 FP32：** 输入平方很容易在 FP16 下溢出，所以要先升级精度再算均方值。
+- **为什么保留最后一维：** `.mean(dim=-1, keepdim=True)` 是为了让结果能和原输入广播相乘。
+- **带走的直觉：** 这里的关键不是公式本身，而是“计算前先升精度”这个工程习惯。
 
 **3. TODO 3 (类型恢复与权重缩放)**
 
-- **精度一致性：** 必须确保最终输出的精度与输入一致。在经过 FP32 的归一化计算后，将其与 `weight` 相乘，最后统一通过 `.to(x.dtype)` 转换回原生精度（如 `float16`）。
-- **进阶思考：** 为什么最后的乘法敢在低精度做（真实场景下 weight 也是低精度），不怕溢出吗？因为 `_norm(x)` 计算完毕后，数值的均方根为 1，绝大多数值落在 [-3, 3] 区间（3σ 原则），乘以 weight（通常接近 1）后仍远低于 FP16 的溢出上限 65504。而 `weight`（初始为 1）通常在 `[0.5, 2.0]` 附近波动。两者的乘积一般在 `[-6, 6]` 之间，距离 FP16 的溢出红线 `65504` 差了一万倍，因此发生溢出的概率极低。
+- **这一题要解决什么：** 把归一化结果乘回可学习参数，并恢复到输入时的 dtype。
+- **为什么最后再转回原精度：** 前面的归一化已经用 FP32 算完了，最后只需要让输出和输入保持一致即可。
+- **带走的直觉：** 先保数值稳定，再做 dtype 对齐，是很多训练算子的通用写法。
