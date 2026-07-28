@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1003,14 +1028,14 @@
         <article class="lesson-card inquiry" data-lesson="training-step-measurement">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 measure_train_step 的计时与峰值显存契约</span>
+            <span class="todo-pill">TODO 1：measure_train_step 的计时、平均值和 CUDA 峰值显存</span>
           </div>
-          <h2>测一个训练 step：先预热，再重置峰值，最后统一成毫秒</h2>
+          <h2>量一轮训练：预热、平均 step time 与条件显存统计</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">调用 measure_train_step(train_step, warmup=0, iters=2)。</p>
-            <p class="predict-q">若 train_step 每次只让 counter 加 1，测试结束时 counter 应是多少？</p>
+            <p class="predict-hook">measure_train_step(train_step, warmup=0, iters=2)，train_step 每次把 counter 加 1。</p>
+            <p class="predict-q">测试结束时 counter 应是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-training-step-measurement" value="0">
@@ -1030,50 +1055,43 @@
           <div class="gated" data-gated="training-step-measurement">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>train_step_fn 是一个无需参数的完整训练步函数；每调用一次，应该完成相同口径的工作。</li><li>warmup 在正式测量前执行，用于稳定运行状态；Notebook 默认 warmup=2、iters=8。</li><li>CUDA 可用时，正式计时前重置 peak memory，测量结束后读取 max_memory_allocated；CPU 路径约定 peak_mem_mb=0.0。</li><li>perf_counter 的差值单位是秒；除以 iters 得单步秒数，再乘 1000 得 step_time_ms。</li></ul>
+              <ul><li>train_step_fn 是可调用函数；warmup 与 iters 都会真正执行它，但只有 iters 循环进入正式计时。</li><li>elapsed 必须是 (end - start) / iters，单位为秒/step；返回时再乘 1000 变成 step_time_ms。</li><li>CUDA 峰值统计只在 torch.cuda.is_available() 为 True 时调用，CPU 环境保持 peak_mem_mb=0.0。</li><li>torch.cuda.max_memory_allocated() 返回 bytes，除以 1024 ** 2 才是 MB；重置峰值要放在 warmup 后、正式计时前。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>训练计时要画清边界：预热先跑完；若在 GPU 上，清空旧的峰值记录；然后只包住固定次数的训练 step。最终返回一项时间和一项资源，让不同配置能用同一口径比较。</p>
+              <p>训练测量有两把尺：时间尺算每一步平均多久，显存尺记录正式阶段最高水位。先预热，再清空旧峰值，随后测固定轮数；CPU 没有 CUDA 水位计，就明确返回 0.0，让同一个 helper 仍可运行。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>1. warmup</b>调用 train_step_fn，不计时</span>
-          <span><b>2. reset peak</b>仅 CUDA 可用时执行</span>
-          <span><b>3. timed loop</b>正式执行 iters 次</span>
-          <span><b>4. average</b>秒 / iters * 1000</span>
-          <span><b>5. memory</b>字节 / 1024² 得 MB</span>
+          <span><b>预热</b>执行 warmup 次，不进正式平均</span>
+          <span><b>重置峰值</b>仅 CUDA，排除预热分配</span>
+          <span><b>正式计时</b>start -&gt; iters 次 -&gt; end</span>
+          <span><b>算平均</b>(end-start)/iters</span>
+          <span><b>读峰值</b>bytes / 1024²，CPU 保持 0</span>
         </div>
 
         <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>CPU-first 分支</h4>
-            <div class="adv-contract">
-              <span>计时</span><strong>仍然正常执行并返回非负毫秒</strong>
-              <span>峰值显存</span><strong>保持初始化值 0.0</strong>
-              <span>基础测试</span><strong>只要求两个键存在且数值非负</strong>
-            </div>
-          </section>
           <section class="adv-panel good">
-            <h4>CUDA 分支</h4>
+            <h4>返回字典契约</h4>
             <div class="adv-contract">
-              <span>正式测量前</span><strong>reset_peak_memory_stats()</strong>
-              <span>正式测量后</span><strong>max_memory_allocated()</strong>
-              <span>单位换算</span><strong>bytes / (1024 ** 2) -&gt; MB</strong>
+              <span><code>step_time_ms</code></span><strong>平均秒数 * 1000，round 到 2 位</strong>
+              <span><code>peak_mem_mb</code></span><strong>CUDA 峰值 MB；CPU 为 0.0，round 到 2 位</strong>
+            </div>
+          </section>
+          <section class="adv-panel blue">
+            <h4>基础测试契约</h4>
+            <div class="adv-contract">
+              <span>调用</span><strong><code>warmup=0, iters=2</code></strong>
+              <span>counter</span><strong>必须恰好等于 2</strong>
+              <span>两个指标</span><strong>键存在且数值都非负</strong>
             </div>
           </section>
         </div>
 
-        <div class="adv-checks">
-          <span><strong>counter == 2</strong><br>warmup=0,iters=2</span>
-          <span><strong>step_time_ms</strong><br>键存在且 &gt;= 0</span>
-          <span><strong>peak_mem_mb</strong><br>键存在且 &gt;= 0</span>
-        </div>
-
-        <div class="adv-callout">当前模板没有显式 CUDA synchronize。若 train_step_fn 在 GPU 上含异步工作，工程级精确计时要考虑同步；但复写 Notebook 基础函数时先保持它现有的调用与返回契约。</div>
+        <div class="adv-callout">当前 Notebook 参考实现没有显式 torch.cuda.synchronize()。先完成页面规定的函数契约；真实 GPU 精准计时要再考虑异步 kernel 的同步边界。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用数组更新任务练习平均 step 计时</h4><pre><code>import time
+        <div class="syntax-card"><h4>语法热身：用批量更新任务练习预热、平均耗时与默认资源值</h4><pre><code>import time
 
 state = {'steps': 0}
 def update_once():
@@ -1082,18 +1100,19 @@ def update_once():
 for _ in range(1):
     update_once()
 
-begin = time.perf_counter()
+start = time.perf_counter()
 for _ in range(4):
     update_once()
-avg_ms = (time.perf_counter() - begin) / 4 * 1000
-result = {'step_time_ms': round(avg_ms, 2), 'peak_mem_mb': 0.0}</code></pre></div>
+end = time.perf_counter()
+elapsed = (end - start) / 4
+result = {'step_ms': round(elapsed * 1000, 2), 'resource_mb': 0.0}</code></pre></div>
         <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <h4>独立例子 -&gt; Notebook TODO</h4>
           <ul>
-            <li>本页无编号 TODO；目标是独立复写 <code>measure_train_step</code>。</li>
-            <li><code>update_once</code> -&gt; <code>train_step_fn</code>；<code>1/4</code> -&gt; <code>warmup/iters</code>。</li>
-            <li><code>avg_ms</code> -&gt; 返回字典的 <code>step_time_ms</code>。</li>
-            <li>例子固定 CPU 峰值为 0.0；Notebook 还需按 CUDA 可用性执行 reset 与读取峰值。</li>
+            <li><code>update_once</code> -&gt; <code>train_step_fn</code>，每次循环都要真正调用。</li>
+            <li><code>1/4</code> -&gt; <code>warmup/iters</code>，elapsed 只除正式迭代数。</li>
+            <li><code>step_ms</code> -&gt; <code>step_time_ms</code>，秒乘 1000。</li>
+            <li><code>resource_mb=0.0</code> -&gt; CPU 分支；CUDA 分支要重置并读取峰值，再换算 MB。</li>
           </ul>
         </div>
       </div>
@@ -1101,19 +1120,19 @@ result = {'step_time_ms': round(avg_ms, 2), 'peak_mem_mb': 0.0}</code></pre></di
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 CUDA 峰值统计要在 warmup 之后重置？</p>
+              <p>为什么 reset_peak_memory_stats 要放在 warmup 之后？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-step-measurement" value="0">
-                <span>让 iters 自动变成 0</span>
+                <span>让 iters 自动归零</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-step-measurement" value="1">
-                <span>把 GPU 张量自动转为 CPU</span>
+                <span>把 GPU 张量自动搬到 CPU</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-step-measurement" value="2">
-                <span>避免把预热阶段的分配峰值混入正式测量</span>
+                <span>避免把预热阶段的内存峰值算进正式测量</span>
               </label></div>
               <div class="feedback" data-feedback="training-step-measurement"></div>
             </div>
@@ -1125,115 +1144,103 @@ result = {'step_time_ms': round(avg_ms, 2), 'peak_mem_mb': 0.0}</code></pre></di
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-step-measurement-0">
-                <span>当前 Notebook 无 TODO 占位：独立复写 measure_train_step，保持 warmup、条件重置、正式循环、平均毫秒和条件读取峰值的顺序。</span>
+                <span>完成 TODO 1，先在 CPU 跑基础测试：counter=2、两个键存在、step_time_ms&gt;=0、peak_mem_mb=0.0。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-step-measurement-1">
-                <span>shape/dtype/device：helper 返回标量字典；真实 train_step 的输入 shape、模型/输入 dtype 与 device 必须在各配置间一致，CUDA 峰值只反映当前设备上的张量分配。</span>
+                <span>逐项核对单位：elapsed 是秒/step，返回时间乘 1000；CUDA memory 是 bytes，返回显存除以 1024**2。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-step-measurement-2">
-                <span>测试：运行 warmup=0、iters=2 用例，确认 counter==2、两个键都存在且数值非负；CPU 上 peak_mem_mb=0.0 是模板预期。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="training-step-measurement-3">
-                <span>常见错误排查：counter 不对查循环边界；时间大 1000 倍查单位；CPU 调 CUDA API 报错查 is_available 分支；GPU 时间虚低查异步同步边界。</span>
+                <span>若 counter 不对，检查两个循环边界；若时间差 iters 倍，检查是否求平均；若 CPU 调 CUDA API 报错，检查所有 CUDA 语句是否都在 is_available 分支内。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="training-delta-semantics">
+        <article class="lesson-card inquiry" data-lesson="training-delta-summary">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前 Notebook 无 TODO 占位：独立复写 summarize_training_result 的差值方向与布尔字段</span>
+            <span class="todo-pill">TODO 2：summarize_training_result 的差值方向与布尔字段</span>
           </div>
-          <h2>读懂改前减改后：正差值才表示更快或更省</h2>
+          <h2>比较改前改后：baseline - tuned 的正数才表示改善</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">baseline 每步 100 ms，tuned 每步 125 ms，模板计算 base - tuned。</p>
-            <p class="predict-q">step_time_delta_ms 与 time_improved 应该是什么？</p>
+            <p class="predict-hook">baseline 每步 100 ms，tuned 每步 125 ms。</p>
+            <p class="predict-q">step_time_delta_ms 与 time_improved 应是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-training-delta-semantics" value="0">
+                <input type="radio" name="predict-training-delta-summary" value="0">
                 <span>-25.0 与 False</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-training-delta-semantics" value="1">
-                <span>+25.0 与 True</span>
+                <input type="radio" name="predict-training-delta-summary" value="1">
+                <span>25.0 与 True</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-training-delta-semantics" value="2">
+                <input type="radio" name="predict-training-delta-summary" value="2">
                 <span>0.0 与 True</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="training-delta-semantics">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="training-delta-summary">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="training-delta-semantics">
+          <div class="gated" data-gated="training-delta-summary">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>base_metrics 是优化前基线，tuned_metrics 是优化后配置；两者都应含 step_time_ms 与 peak_mem_mb。</li><li>模板把 delta 定义为 base - tuned，而不是 tuned - base。</li><li>若 tuned 更小，base - tuned 为正，因此 time_improved 或 memory_improved 为 True。</li><li>差值保留 2 位小数；布尔判断使用未舍入的 delta &gt; 0，恰好相等不算 improved。</li></ul>
+              <ul><li>base_metrics 与 tuned_metrics 都必须含 step_time_ms 和 peak_mem_mb 两个键。</li><li>本课统一定义 delta = baseline - tuned；tuned 数值更小时，差值为正。</li><li>time_improved 与 memory_improved 使用未舍入差值严格判断 delta &gt; 0；相等时为 False。</li><li>返回的两个 delta round 到 2 位，两个 improved 字段必须是 Python bool。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把 delta 理解成“省下了多少”：原来 120 ms，现在 98 ms，省下 22 ms，所以是正数。显存同理。负数不是程序坏了，而是优化后反而更慢或更占内存。</p>
+              <p>把 delta 读成“优化后省下多少”。原来 120 ms，现在 98 ms，省 22 ms；原来 8192 MB，现在 6144 MB，省 2048 MB。若结果为负，不是一定写错，而是 tuned 付出了更多成本。</p>
               <div class="adv-course">
         <div class="adv-grid two">
           <section class="adv-panel good">
-            <h4>正差值：改后更好</h4>
+            <h4>Notebook 的正向测试</h4>
             <div class="adv-contract">
-              <span>时间</span><strong>120 - 98 = +22 ms</strong>
-              <span>显存</span><strong>8192 - 6144 = +2048 MB</strong>
-              <span>布尔值</span><strong>time_improved=True，memory_improved=True</strong>
+              <span>时间</span><strong><code>120 - 98 = 22.0 ms</code></strong>
+              <span>显存</span><strong><code>8192 - 6144 = 2048.0 MB</code></strong>
+              <span>布尔</span><strong><code>True / True</code></strong>
             </div>
           </section>
           <section class="adv-panel warn">
-            <h4>负差值：存在代价</h4>
+            <h4>别忽略负数与零</h4>
             <div class="adv-contract">
-              <span>时间</span><strong>100 - 130 = -30 ms</strong>
-              <span>含义</span><strong>优化后每步慢 30 ms</strong>
-              <span>布尔值</span><strong>time_improved=False</strong>
+              <span>base 100，tuned 125</span><strong>delta=-25，improved=False</strong>
+              <span>base 100，tuned 100</span><strong>delta=0，improved=False</strong>
+              <span>判断条件</span><strong>严格 <code>&gt; 0</code>，不是 <code>&gt;= 0</code></strong>
             </div>
           </section>
         </div>
 
-        <div class="adv-steps">
-          <div><b>1</b><code>time_delta = base time - tuned time</code><span>正数表示每步省时</span></div>
-          <div><b>2</b><code>mem_delta = base memory - tuned memory</code><span>正数表示峰值显存下降</span></div>
-          <div><b>3</b><code>delta &gt; 0</code><span>严格大于 0 才标记 improved</span></div>
-          <div><b>4</b><code>round(delta, 2)</code><span>统一报告精度</span></div>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>返回键</th><th>类型</th><th>正值/True 的含义</th></tr></thead>
+          <thead><tr><th>返回键</th><th>类型</th><th>公式</th><th>正值/True 含义</th></tr></thead>
           <tbody>
-            <tr><td><code>step_time_delta_ms</code></td><td>float</td><td>tuned 每步更快</td></tr>
-            <tr><td><code>peak_mem_delta_mb</code></td><td>float</td><td>tuned 峰值显存更低</td></tr>
-            <tr><td><code>time_improved</code></td><td>bool</td><td>time_delta &gt; 0</td></tr>
-            <tr><td><code>memory_improved</code></td><td>bool</td><td>mem_delta &gt; 0</td></tr>
+            <tr><td><code>step_time_delta_ms</code></td><td>float</td><td>base time - tuned time</td><td>tuned 更快</td></tr>
+            <tr><td><code>peak_mem_delta_mb</code></td><td>float</td><td>base memory - tuned memory</td><td>tuned 更省</td></tr>
+            <tr><td><code>time_improved</code></td><td>bool</td><td>time_delta &gt; 0</td><td>时间改善</td></tr>
+            <tr><td><code>memory_improved</code></td><td>bool</td><td>mem_delta &gt; 0</td><td>显存改善</td></tr>
           </tbody>
         </table>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用数据加载优化练习差值方向</h4><pre><code>before = {'load_ms': 18.4, 'ram_mb': 720.0}
+        <div class="syntax-card"><h4>语法热身：用数据加载优化练习 baseline - tuned</h4><pre><code>before = {'load_ms': 18.4, 'ram_mb': 720.0}
 after = {'load_ms': 14.1, 'ram_mb': 760.0}
 
-load_saved = before['load_ms'] - after['load_ms']
-ram_saved = before['ram_mb'] - after['ram_mb']
+load_delta = before['load_ms'] - after['load_ms']
+ram_delta = before['ram_mb'] - after['ram_mb']
 report = {
-    'load_delta_ms': round(load_saved, 2),
-    'ram_delta_mb': round(ram_saved, 2),
-    'load_improved': load_saved &gt; 0,
-    'ram_improved': ram_saved &gt; 0,
-}
-# 时间改善，但 ram_saved 为负，说明内存是代价</code></pre></div>
+    'load_delta_ms': round(load_delta, 2),
+    'ram_delta_mb': round(ram_delta, 2),
+    'load_improved': load_delta &gt; 0,
+    'ram_improved': ram_delta &gt; 0,
+}</code></pre></div>
         <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <h4>独立例子 -&gt; Notebook TODO</h4>
           <ul>
-            <li>本页无编号 TODO；目标是独立复写 <code>summarize_training_result</code>。</li>
             <li><code>before/after</code> -&gt; <code>base_metrics/tuned_metrics</code>。</li>
-            <li><code>load_saved</code> -&gt; <code>time_delta</code>；<code>ram_saved</code> -&gt; <code>mem_delta</code>。</li>
-            <li>例子的字段名不同；返回 Notebook 时必须恢复四个规定键。</li>
+            <li><code>load_delta</code> -&gt; <code>time_delta</code>，都按旧值减新值。</li>
+            <li><code>ram_delta</code> -&gt; <code>mem_delta</code>；例子故意为负，表示内存代价。</li>
+            <li>四个 report 字段 -&gt; Notebook 返回字典的两个 float 与两个 bool。</li>
           </ul>
         </div>
       </div>
@@ -1241,21 +1248,21 @@ report = {
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>若 base 与 tuned 的 peak_mem_mb 完全相等，memory_improved 是什么？</p>
+              <p>base 与 tuned 的 peak_mem_mb 完全相等时，memory_improved 是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-training-delta-semantics" value="0">
+                <input type="radio" name="checkpoint-training-delta-summary" value="0">
                 <span>False</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-training-delta-semantics" value="1">
+                <input type="radio" name="checkpoint-training-delta-summary" value="1">
                 <span>无法返回</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-training-delta-semantics" value="2">
+                <input type="radio" name="checkpoint-training-delta-summary" value="2">
                 <span>True</span>
               </label></div>
-              <div class="feedback" data-feedback="training-delta-semantics"></div>
+              <div class="feedback" data-feedback="training-delta-summary"></div>
             </div>
           </div>
 
@@ -1264,29 +1271,25 @@ report = {
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="training-delta-semantics-0">
-                <span>当前 Notebook 无 TODO 占位：独立复写 summarize_training_result，先算 base-tuned 的两个 delta，再返回两个 round 数值和两个严格大于 0 的布尔值。</span>
+                <input type="checkbox" data-homework="training-delta-summary-0">
+                <span>完成 TODO 2，用 Notebook 数据核对 22.0、2048.0、True、True 四个断言。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="training-delta-semantics-1">
-                <span>shape/dtype/device：输入是含 Python 数值的字典，输出是 float/bool，无 tensor shape/device；这些 metrics 必须来自相同输入 shape、dtype 与 device 的训练对照。</span>
+                <input type="checkbox" data-homework="training-delta-summary-1">
+                <span>增加一组 tuned 更慢、更占显存的反例和一组完全相同的零差值案例，确认符号与严格布尔条件。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="training-delta-semantics-2">
-                <span>测试：Notebook 当前基础测试未断言 summary；请保留示例 120/8192 对 98/6144，自查应得到 22.0、2048.0、True、True，并补测负差值与零差值。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="training-delta-semantics-3">
-                <span>常见错误排查：符号反了检查减法顺序；布尔值不符检查是否用了 &gt;=；KeyError 检查四个输入/输出键；结论冲突时确认时间和显存单位一致。</span>
+                <input type="checkbox" data-homework="training-delta-summary-2">
+                <span>若两个 delta 都是负号，检查是否写成 tuned-base；若相等时返回 True，检查是否误用 &gt;=；若 KeyError，逐字检查两个输入键。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="training-controlled-analysis">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前 Notebook 无 TODO 占位：组织 baseline/tuned 对照并区分数据、计算与显存瓶颈</span>
+            <span class="todo-pill">项目交付：measure -&amp;gt; compare -&amp;gt; profiling 归因与取舍报告</span>
           </div>
-          <h2>从两个 helper 到瓶颈结论：固定训练任务，一次只改一个变量</h2>
+          <h2>从两个 helper 走向瓶颈结论：一次只改一个变量</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
@@ -1295,7 +1298,7 @@ report = {
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-training-controlled-analysis" value="0">
-                <span>用反向重算换取更少的激活保存，形成时间与显存交换</span>
+                <span>少保存激活、反向时重算，形成时间与显存交换</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-training-controlled-analysis" value="1">
@@ -1303,7 +1306,7 @@ report = {
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-training-controlled-analysis" value="2">
-                <span>说明 batch size 自动变成了 0</span>
+                <span>checkpoint 自动把 batch 设为 0</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="training-controlled-analysis">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1311,58 +1314,60 @@ report = {
           <div class="gated" data-gated="training-controlled-analysis">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>Notebook 要求固定样本、optimizer、lr、batch size 与 accumulation 策略，除非其中某一项正是本轮唯一对照变量。</li><li>gradient accumulation、activation checkpointing、offload 和更小 batch 会同时影响时间与显存，收益常伴随代价。</li><li>measure_train_step 提供 step_time 与 peak memory，summary 只比较前后差值；它们不会自动判断瓶颈来源。</li><li>要定位数据、计算或显存回收问题，还需结合 profiler、阶段计时和多次重复测量。</li></ul>
+              <ul><li>measure_train_step 只给出平均 step time 与整体峰值显存，不会自动区分数据、forward、backward 或 optimizer 瓶颈。</li><li>baseline 与 tuned 必须固定模型、数据、batch、seq len、optimizer、精度和训练 step；一轮只改变一个目标变量。</li><li>step time 改善、显存改善与 loss/收敛约束是不同维度，真实优化允许出现交换关系。</li><li>完整交付还要结合 profiler 或阶段计时，说明瓶颈来源与下一轮优先级。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>先得到稳定 baseline，再只拨动一个开关。若显存下降但 step 变慢，这可能是 checkpointing 用重算换显存；若 GPU 等数据，问题可能在数据准备。性能分析不是只追求两个 True，而是解释每个变化的来源与代价。</p>
+              <p>两个 helper 负责“量”和“比”，但因果解释仍需要实验设计。开启 checkpointing 后显存下降、时间上升，可能是用重计算换存储；数据加载变快但 GPU 仍空闲，则要继续看拷贝和同步。性能分析不是追求两个 True，而是解释每个变化。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>固定任务</b>同样本、模型、optimizer、lr</span>
-          <span><b>建立 baseline</b>多次测 step time 与 peak memory</span>
-          <span><b>只改一项</b>accumulation、checkpoint 或 offload</span>
-          <span><b>计算 delta</b>时间与显存分别判断</span>
-          <span><b>解释瓶颈</b>数据、计算、通信或回收</span>
+          <span><b>固定任务</b>同模型、数据、batch、seq、optimizer</span>
+          <span><b>建立 baseline</b>warmup 后重复测量</span>
+          <span><b>只改一项</b>精度、checkpoint、loader 等</span>
+          <span><b>比较 delta</b>时间与显存分别判断</span>
+          <span><b>解释瓶颈</b>结合 loss 与 profiler</span>
         </div>
 
         <div class="adv-grid three">
-          <section class="adv-panel neutral"><h4>数据瓶颈</h4><p>训练 step 等待 batch；先拆出数据准备时间。</p></section>
-          <section class="adv-panel blue"><h4>计算瓶颈</h4><p>前向/反向占主导；看算子与利用率。</p></section>
-          <section class="adv-panel warn"><h4>显存瓶颈</h4><p>OOM、频繁 offload 或回收；看峰值与传输。</p></section>
+          <section class="adv-panel neutral"><h4>数据瓶颈</h4><p>DataLoader、CPU 预处理或 H2D 拷贝让计算等待。</p></section>
+          <section class="adv-panel blue"><h4>计算瓶颈</h4><p>forward/backward 热点算子或 optimizer step 占主导。</p></section>
+          <section class="adv-panel warn"><h4>显存瓶颈</h4><p>激活、梯度、优化器状态或临时 buffer 接近上限。</p></section>
         </div>
 
         <table class="adv-shapes">
-          <thead><tr><th>只改变的变量</th><th>常见收益</th><th>可能代价</th><th>应观察</th></tr></thead>
+          <thead><tr><th>单一改动</th><th>可能收益</th><th>可能代价</th><th>必须一起观察</th></tr></thead>
           <tbody>
-            <tr><td>activation checkpointing</td><td>保存更少激活</td><td>反向时重算，step 变慢</td><td>peak memory 与 step time</td></tr>
-            <tr><td>offload</td><td>设备显存下降</td><td>主机传输与等待</td><td>显存、传输、空闲间隙</td></tr>
-            <tr><td>gradient accumulation</td><td>较小 micro-batch 也能模拟大 batch</td><td>每次 optimizer update 需要更多 micro-step</td><td>计时口径与吞吐</td></tr>
+            <tr><td>activation checkpointing</td><td>峰值显存下降</td><td>反向重算，step 变慢</td><td>time、memory、loss</td></tr>
+            <tr><td>混合精度</td><td>计算/显存改善</td><td>数值稳定性风险</td><td>吞吐、loss、溢出</td></tr>
+            <tr><td>DataLoader 优化</td><td>减少等待</td><td>CPU/RAM 使用增加</td><td>数据阶段与 GPU 利用率</td></tr>
           </tbody>
         </table>
 
-        <div class="adv-callout">“step_time 改善”和“memory 改善”是两个独立判断。真实优化常是一正一负；报告应写清交换关系，而不是只挑有利指标。</div>
+        <div class="adv-callout">measure 返回的 peak_mem_mb 在 CPU 是 0.0，这不表示训练没有内存占用，只表示该 helper 只统计 CUDA allocated memory。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用独立配置表保证一次只改 checkpoint</h4><pre><code>baseline_cfg = {
-    'batch': 4, 'lr': 1e-3, 'accum': 2, 'checkpoint': False
+        <div class="syntax-card"><h4>语法热身：用配置断言保证只切换 checkpoint</h4><pre><code>baseline_cfg = {
+    'batch': 4, 'seq': 128, 'precision': 'fp32',
+    'checkpoint': False
 }
 tuned_cfg = {
-    'batch': 4, 'lr': 1e-3, 'accum': 2, 'checkpoint': True
+    'batch': 4, 'seq': 128, 'precision': 'fp32',
+    'checkpoint': True
 }
 
-for key in ['batch', 'lr', 'accum']:
+for key in ['batch', 'seq', 'precision']:
     assert baseline_cfg[key] == tuned_cfg[key]
 
 base_metrics = {'step_time_ms': 44.0, 'peak_mem_mb': 900.0}
 tuned_metrics = {'step_time_ms': 53.0, 'peak_mem_mb': 610.0}</code></pre></div>
         <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
+          <h4>独立例子 -&gt; Notebook 项目</h4>
           <ul>
-            <li>本页无编号 TODO；<code>base_metrics/tuned_metrics</code> -&gt; summary helper 的两个输入。</li>
-            <li><code>checkpoint</code> -&gt; Markdown 提议逐个切换的 activation checkpointing 变量。</li>
-            <li><code>batch/lr/accum</code> 的相等断言 -&gt; 固定训练配置的公平性检查。</li>
-            <li>例子展示显存改善、时间退化；需要同时报告两种 delta。</li>
+            <li>配置相等断言 -&gt; Step 1 与 Step 3 的公平 baseline 要求。</li>
+            <li><code>base_metrics/tuned_metrics</code> -&gt; TODO 2 的两个输入字典。</li>
+            <li>checkpoint 是唯一变化 -&gt; 可以把显存下降与时间上升初步归因于重计算交换。</li>
+            <li>下一步仍要结合 profiling 和 loss，确认热点与训练行为没有异常。</li>
           </ul>
         </div>
       </div>
@@ -1370,19 +1375,19 @@ tuned_metrics = {'step_time_ms': 53.0, 'peak_mem_mb': 610.0}</code></pre></div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为了判断 offload 是否导致 step 变慢，最可靠的第一步是什么？</p>
+              <p>为了判断混合精度是否真正改善训练，最可靠的第一步是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-controlled-analysis" value="0">
-                <span>同时改 batch、lr 和模型大小</span>
+                <span>只看一次运行的最终耗时</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-controlled-analysis" value="1">
-                <span>固定其余训练配置，只切换 offload，并用相同测量口径重复比较</span>
+                <span>固定其余配置，只切换精度，并重复测量 time、memory 与 loss</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-training-controlled-analysis" value="2">
-                <span>只看一次运行的最终 loss</span>
+                <span>同时修改 batch、optimizer 和数据集</span>
               </label></div>
               <div class="feedback" data-feedback="training-controlled-analysis"></div>
             </div>
@@ -1394,19 +1399,15 @@ tuned_metrics = {'step_time_ms': 53.0, 'peak_mem_mb': 610.0}</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-controlled-analysis-0">
-                <span>当前 Notebook 无 TODO 占位：用 measure_train_step 生成 baseline/tuned 指标，再用 summarize_training_result 写一行“收益 + 代价 + 可能瓶颈”结论。</span>
+                <span>用 TODO 1 生成 baseline/tuned 指标，再用 TODO 2 汇总，写一条包含收益、代价、loss 约束与可能瓶颈的结论。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-controlled-analysis-1">
-                <span>shape/dtype/device：两次实验必须固定训练输入 shape、模型与输入 dtype/device；改变 checkpoint/offload 时记录哪些张量位置变化，避免把配置漂移当优化收益。</span>
+                <span>保存两份配置并断言除目标变量外完全一致；至少重复测量多轮，避免把一次抖动当作优化。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="training-controlled-analysis-2">
-                <span>测试：先通过 counter、返回键和非负值的基础断言，再为 summary 增加正、负、零 delta 自检，并验证对照配置除目标变量外完全相同。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="training-controlled-analysis-3">
-                <span>常见错误排查：波动大时增加 warmup/iters 并重复；显存为 0 先确认是否在 CPU；GPU 时间虚低查同步；loss 行为变化查是否意外改变 batch、accum 或 optimizer step 口径。</span>
+                <span>若时间波动大，增加 warmup/iters 并检查数据加载与同步；若 CUDA 显存为 0，确认运行设备；若指标改善但 loss 异常，优先回退并排查精度或训练配置变化。</span>
               </label>
           </div>
         </article>
@@ -1419,18 +1420,18 @@ tuned_metrics = {'step_time_ms': 53.0, 'peak_mem_mb': 610.0}</code></pre></div>
       </div>
       <div>
         <a class="ghost" href="31_inference_performance_comparison.html">上一关：L31</a>
-        <a class="primary" href="../index.html">回到地图</a>
+        <a class="primary" href="33_profiling_driven_end_to_end_optimization.html">下一关：L33</a>
       </div>
     </section>
   </main>
 
   <script>
     const levelId = "32";
-    const checkpointData = {"training-step-measurement":{"answer":2,"explain":"重置后读取到的峰值更接近正式 timed loop 的资源上限。"},"training-delta-semantics":{"answer":0,"explain":"mem_delta 等于 0，而模板使用严格条件 mem_delta > 0，所以结果是 False。"},"training-controlled-analysis":{"answer":1,"explain":"单变量、同口径、重复测量能最大程度隔离 offload 的影响。"}};
-    const predictData = {"training-step-measurement":{"answer":0,"revealNote":"没有预热调用，正式循环正好执行 2 次，因此计数器为 2。"},"training-delta-semantics":{"answer":0,"revealNote":"100-125=-25，说明 tuned 反而慢了 25 ms，因此 time_improved 为 False。"},"training-controlled-analysis":{"answer":0,"revealNote":"Checkpointing 的典型机制就是少存激活、需要时重算，因此省显存同时增加计算是合理现象。"}};
+    const checkpointData = {"training-step-measurement":{"answer":2,"explain":"重置后记录的峰值只覆盖本轮正式迭代，更符合对比口径。"},"training-delta-summary":{"answer":0,"explain":"差值为 0，而条件是严格大于 0，所以结果为 False。"},"training-controlled-analysis":{"answer":1,"explain":"单变量、同口径、重复测量才能建立较可信的因果关系。"}};
+    const predictData = {"training-step-measurement":{"answer":0,"revealNote":"预热为 0，正式循环执行两次，所以计数器恰好为 2。"},"training-delta-summary":{"answer":0,"revealNote":"100-125=-25，说明 tuned 反而慢了 25 ms。"},"training-controlled-analysis":{"answer":0,"revealNote":"Checkpointing 的典型机制就是用额外计算换更低激活存储。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
+    const homeworkTotal = 9;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

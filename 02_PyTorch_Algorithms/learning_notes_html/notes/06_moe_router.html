@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -710,15 +723,278 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -748,518 +1024,413 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card inquiry" data-lesson="moe-router-softmax-topk">
+
+        <article class="lesson-card inquiry" data-lesson="router-global-probabilities">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 1：routing_probs</span>
           </div>
-          <h2>Router 打分：每个 token 先看所有专家，再选 Top-K</h2>
+          <h2>先让每个 token 给所有专家分配概率</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">Router 有多种等价写法。本关 notebook 明确要求先得到完整概率表，再从概率里取 Top-K。</p>
-            <p class="predict-q">先判断：为什么 notebook 要先对全量 router_logits 做 softmax？</p>
+            <p class="predict-hook">router_logits.shape=[8,8]，其中第 0 维是 token，第 1 维是专家。</p>
+            <p class="predict-q">softmax 应该沿哪个维度计算，才能让每个 token 独立给所有专家分配概率？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-softmax-topk" value="0">
-                <span>因为 torch.topk 不能处理 logits，只能处理概率</span>
+                <input type="radio" name="predict-router-global-probabilities" value="0">
+                <span>dim=-1</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-softmax-topk" value="1">
-                <span>因为本关要先得到 [tokens, experts] 的完整概率表，再按概率取 Top-K，并为后续负载统计保留清晰接口</span>
+                <input type="radio" name="predict-router-global-probabilities" value="1">
+                <span>dim=0</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-softmax-topk" value="2">
-                <span>因为 softmax 会改变 tensor 的 shape，方便 topk 使用</span>
+                <input type="radio" name="predict-router-global-probabilities" value="2">
+                <span>先把整个张量 flatten 成一维</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="moe-router-softmax-topk">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="router-global-probabilities">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="moe-router-softmax-topk">
+          <div class="gated" data-gated="router-global-probabilities">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>MoE 的目标是“大容量、低激活”：模型有很多专家，但每个 token 只去少数几个专家那里计算。</li><li>Router 是一个很小的线性层，把每个 token 的 hidden state 映射成 num_experts 个 logit 分数。</li><li>本 notebook 的实现路径是：先对所有专家做 softmax 得到完整概率表，再从概率里取 Top-K，最后对 Top-K 权重重归一化。</li><li>Router 不负责真正执行专家网络，它只输出两张清单：选了哪些专家 selected_experts，以及每个专家拿多少权重 routing_weights。</li></ul>
+              <ul><li>输入 hidden_states 的 shape 是 [batch_size, seq_len, hidden_size]。B 是句子数，S 是每句 token 数，H 是每个 token 的特征数。</li><li>view(-1, hidden_size) 把 B 和 S 合并成 token 总数 T=B×S；它不改变数据，只把 [B,S,H] 看成 [T,H]。</li><li>gate 是 nn.Linear(hidden_size, num_experts, bias=False)，所以每个 token 的 H 个特征会变成 E=num_experts 个打分。</li><li>logit 是未归一化分数，可以为负，也不要求总和为 1；softmax 才把一行分数变成概率分布。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把 Router 想成分诊台。每个 token 先拿自己的特征名片给所有专家打分，softmax 把分数变成全局概率，再只保留最适合的 K 个专家。Notebook 的 TODO 1/2 本质就是这两步。初学时先盯住一行：一行代表一个 token，这一行里所有列代表它对所有专家的偏好。</p>
-              
-          <div class="shape-story moe-story">
-            <style>
-              .moe-story { gap: 12px; }
-              .moe-concept-grid,
-              .moe-practice-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 12px;
-                margin: 12px 0;
-                align-items: stretch;
-              }
-              .moe-practice-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-              .moe-practice-grid .syntax-card { margin-top: 0; }
-              .moe-card {
-                border: 1px solid var(--line);
-                border-radius: 8px;
-                background: #fff;
-                padding: 14px;
-                display: grid;
-                gap: 10px;
-                align-content: start;
-              }
-              .moe-card > strong {
-                color: #1d4ed8;
-                font-size: 17px;
-              }
-              .moe-card.accent {
-                border-color: #e8b66f;
-                background: #fff8ed;
-              }
-              .moe-card.good {
-                border-color: #99d6bf;
-                background: #f4fcf8;
-              }
-              .moe-card.warn {
-                border-color: #e8b66f;
-                background: #fff6e8;
-              }
-              .moe-card p { margin: 0; }
-              .moe-route {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 8px;
-                margin: 12px 0;
-              }
-              .moe-route span,
-              .moe-route strong {
-                min-height: 76px;
-                border: 1px solid var(--line);
-                border-radius: 8px;
-                background: #fff;
-                padding: 10px;
-                display: grid;
-                place-items: center;
-                text-align: center;
-                line-height: 1.45;
-              }
-              .moe-route b {
-                display: block;
-                color: #1d4ed8;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-              }
-              .moe-route strong {
-                border-color: #99d6bf;
-                background: var(--soft-green);
-                color: #123f31;
-              }
-              .moe-kv {
-                display: grid;
-                grid-template-columns: minmax(130px, 0.42fr) minmax(0, 1fr);
-                gap: 8px;
-                margin: 12px 0;
-              }
-              .moe-kv span,
-              .moe-kv strong {
-                min-height: 44px;
-                border: 1px solid var(--line);
-                border-radius: 8px;
-                background: #fff;
-                padding: 10px;
-                display: grid;
-                align-items: center;
-                line-height: 1.45;
-              }
-              .moe-kv span {
-                color: var(--muted);
-                font-weight: 800;
-                text-align: center;
-                background: #fbfcfd;
-              }
-              .moe-kv strong {
-                color: #182033;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-                overflow-wrap: anywhere;
-              }
-              .moe-token-row {
-                display: grid;
-                grid-template-columns: repeat(4, minmax(82px, 1fr));
-                gap: 8px;
-                margin: 12px 0;
-              }
-              .moe-token-row span {
-                min-height: 58px;
-                border: 1px solid #dce2e8;
-                border-radius: 8px;
-                background: #f8fbff;
-                display: grid;
-                place-items: center;
-                text-align: center;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-                font-weight: 800;
-              }
-              .moe-token-row .hot {
-                border-color: #d9a15a;
-                background: #fde68a;
-                color: #6f3d08;
-              }
-              @media (max-width: 640px) {
-                .moe-kv,
-                .moe-token-row { grid-template-columns: 1fr; }
-              }
-            </style>
-            <div class="moe-concept-grid">
-              <div class="moe-card">
-                <strong>0. 先读 forward 的输入输出合同</strong>
-                <p><code>TopKRouter.forward</code> 的输入仍是三维句子张量，但输出是按 token 排好的两张清单。先把这个合同读清楚，后面代码就不会绕。</p>
-                <div class="moe-kv">
-                  <span>输入</span><strong>hidden_states [B,S,H]</strong>
-                  <span>输出权重</span><strong>routing_weights [B*S,K]</strong>
-                  <span>输出专家</span><strong>selected_experts [B*S,K]</strong>
-                </div>
-              </div>
-              <div class="moe-card accent">
-                <strong>TODO 1 / 2 只负责“选专家”</strong>
-                <p>先算每个 token 对所有专家的概率，再保留 Top-K。真正执行专家网络是后面的 <code>SparseMoEBlock</code>，不要在 Router 里混进去。</p>
-                <div class="moe-route">
-                  <span><b>TODO 1</b>softmax 概率表</span>
-                  <strong><b>TODO 2</b>topk 权重 + 专家 id</strong>
-                </div>
-              </div>
+              <p>把每个 token 想成一张问诊单，E 位专家都先给它一个匹配分。Router 要沿专家这一维把分数变成概率，因此同一 token 的 E 个概率相加为 1。Notebook 还先把 logits 转成 FP32，因为 softmax 里的指数运算对低精度更敏感。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>[B,S,H]</b>句子中的 token 特征</span>
+          <span><b>[T,H]</b>T=B×S，排成 token 队列</span>
+          <span><b>[T,E]</b>gate 给每位专家打分</span>
+          <span><b>[T,E]</b>每行变成概率分布</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>先认清最后一维</h4>
+            <div class="adv-contract">
+              <span><code>hidden_states</code></span><strong>[2,4,16]，共 8 个 token</strong>
+              <span><code>router_logits</code></span><strong>[8,8]，每行对应 8 位专家</strong>
+              <span><code>dim=-1</code></span><strong>在每行的专家列表内归一化</strong>
+              <span>输出 dtype</span><strong>TODO 先用 FP32，返回前再恢复输入 dtype</strong>
             </div>
-
-            <div class="story-arrow">主线：先把 [B,S,H] 变成 token 队列，再沿专家维做 softmax/topk</div>
-            <div class="story-panel">
-              <div class="moe-route">
-                <span><b>hidden_states</b>[B,S,H]</span>
-                <span><b>flatten</b>[B*S,H]</span>
-                <span><b>gate</b>router_logits [B*S,E]</span>
-                <span><b>softmax</b>routing_probs [B*S,E]</span>
-                <strong><b>topk</b>weights / experts [B*S,K]</strong>
-              </div>
-              <p>这里的关键不是画很多线，而是抓住最后一维的含义：展平后每一行是一枚 token，最后一维是全部专家。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>一行只属于一个 token</h4>
+            <div class="adv-flow">
+              <span>logits<br>[-1, 2, 0, 1]</span>
+              <span>转 FP32</span>
+              <span>softmax<br>全部为正</span>
+              <strong>一行总和 = 1</strong>
             </div>
+            <p>不能沿 token 维做 softmax，否则不同 token 会互相争概率，Router 就失去“每个 token 自己选专家”的含义。</p>
+          </section>
+        </div>
 
-            <div class="moe-concept-grid">
-              <div class="moe-card">
-                <strong>1. 每一行是一枚 token</strong>
-                <p>如果有 4 个专家，一行 logits 就是这个 token 对 4 个专家的偏好分数。softmax 和 topk 都只在这一行内部做。</p>
-                <div class="moe-token-row">
-                  <span>E0<br>1.2</span>
-                  <span>E1<br>0.1</span>
-                  <span class="hot">E2<br>2.0</span>
-                  <span>E3<br>-0.5</span>
-                </div>
-              </div>
-              <div class="moe-card">
-                <strong>2. <code>dim=-1</code> 就是专家维</strong>
-                <p>不要把不同 token 混在一起归一化。Router 要让“同一个 token 的所有专家概率”加起来等于 1。</p>
-                <div class="moe-kv">
-                  <span>正确</span><strong>F.softmax(router_logits.float(), dim=-1)</strong>
-                  <span>读法</span><strong>每个 token 自己在专家列表里分配概率</strong>
-                </div>
-              </div>
-            </div>
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>shape</th><th>最后一维表示什么</th><th>本步是否改变 shape</th></tr></thead>
+          <tbody>
+            <tr><td><code>hidden_states</code></td><td><code>[T,H]</code></td><td>隐藏特征</td><td>已在前面展平</td></tr>
+            <tr><td><code>router_logits</code></td><td><code>[T,E]</code></td><td>专家原始分数</td><td>gate 把 H 改为 E</td></tr>
+            <tr><td><code>routing_probs</code></td><td><code>[T,E]</code></td><td>专家全局概率</td><td>softmax 不改 shape</td></tr>
+          </tbody>
+        </table>
 
-            <div class="story-arrow">topk 返回两张表：values 是权重，indices 是专家编号</div>
-            <div class="moe-concept-grid">
-              <div class="moe-card good">
-                <strong>3. 值和编号要一起拿</strong>
-                <div class="moe-kv">
-                  <span>routing_probs 一行</span><strong>[0.05, 0.62, 0.08, 0.25]</strong>
-                  <span>values</span><strong>routing_weights = [0.62, 0.25]</strong>
-                  <span>indices</span><strong>selected_experts = [1, 3]</strong>
-                </div>
-              </div>
-              <div class="moe-card warn">
-                <strong>4. 最容易掉坑的地方</strong>
-                <p>notebook 里 TODO 后面有 zero 占位变量。写完 TODO 后，要返回你真正算出的 <code>routing_weights</code> 和 <code>selected_experts</code>，不要让占位值覆盖结果。</p>
-              </div>
-            </div>
+        <div class="adv-callout">这里“全局 Softmax”是指对一个 token 的全部 E 位专家归一化，不是把 batch 中所有 token 混在一起归一化。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：给每位学生的所有兴趣方向分配概率</h4><pre><code>scores = torch.tensor([
+    [1.0, 3.0, -1.0],
+    [2.0, 0.0, 1.0],
+])
 
-            <div class="field-note">
-              <div class="fn-title">行业视角：Router 是 MoE 的调度器</div>
-              <p>MoE 的专家像并行工作台，Router 只决定每个 token 送去哪几个工作台，以及每个工作台占多少权重。调度得好，模型容量变大但每个 token 只激活少数专家；调度得差，热门专家拥堵，冷门专家闲置。</p>
-              <p>下一关的负载均衡损失，就是专门约束这个调度器不要总偏心同几个专家。</p>
-            </div>
-          </div>
-              <div class="moe-practice-grid">
-          <div class="syntax-card"><h4>语法热身：先用一行玩具分数练 softmax 和 topk</h4><pre><code># 1 个 token, 4 个专家
-toy_logits = torch.tensor([[1.2, 0.1, 2.0, -0.5]])
-
-# dim=-1：只在“专家这一行”里归一化，得到每个专家的概率
-toy_probs = F.softmax(toy_logits.float(), dim=-1)
-
-# topk 同时返回值(values)和下标(indices)
-toy_weights, toy_ids = torch.topk(
-    toy_probs, k=2, dim=-1
-)
-print(toy_weights)
-print(toy_ids)</code></pre></div>
-          <div class="syntax-card">
-          <h4>举一反三：把玩具张量换成 notebook 变量</h4>
-          <p>玩具例子只有 1 个 token。notebook 只是把很多 token 排成 [tokens, experts]，同样沿最后一维做 softmax/topk。</p>
-          <div class="moe-kv">
-            <span>toy_logits</span><strong>router_logits</strong>
-            <span>toy_probs</span><strong>routing_probs</strong>
-            <span>toy_weights</span><strong>routing_weights</strong>
-            <span>toy_ids</span><strong>selected_experts</strong>
-            <span>k=2</span><strong>self.top_k</strong>
-          </div>
-          <p class="syntax-tip">迁移口诀：先把输入展平成 [tokens, hidden]，gate 后得到 [tokens, experts]；之后所有 softmax/topk 都沿 <code>dim=-1</code>，因为最后一维就是专家维。</p>
+# 每一行是一位学生，最后一维是 3 个方向
+probabilities = F.softmax(scores.float(), dim=-1)
+print(probabilities.shape)       # [2, 3]
+print(probabilities.sum(dim=-1)) # [1, 1]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>scores</code> 对应 gate 产出的 <code>router_logits</code>。</li>
+            <li><code>3 个方向</code> 对应 <code>num_experts</code> 位专家。</li>
+            <li><code>probabilities</code> 对应 TODO 1 要创建的 <code>routing_probs</code>。</li>
+            <li>保留 <code>.float()</code> 和 <code>dim=-1</code>：前者提高 softmax 稳定性，后者明确沿专家维计算。</li>
+          </ul>
         </div>
       </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>hidden_states shape 是 [2,4,16]，num_experts=8，top_k=2。展平并 topk 后 selected_experts 的 shape 是？</p>
+              <p>输入是 [2,4,16]，num_experts=8。展平、gate、softmax 后 routing_probs 的 shape 是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-softmax-topk" value="0">
-                <span>[8, 2]</span>
+                <input type="radio" name="checkpoint-router-global-probabilities" value="0">
+                <span>[8,8]</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-softmax-topk" value="1">
-                <span>[2, 4, 8]</span>
+                <input type="radio" name="checkpoint-router-global-probabilities" value="1">
+                <span>[8,16]</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-softmax-topk" value="2">
-                <span>[8, 16]</span>
+                <input type="radio" name="checkpoint-router-global-probabilities" value="2">
+                <span>[2,4,8]</span>
               </label></div>
-              <div class="feedback" data-feedback="moe-router-softmax-topk"></div>
+              <div class="feedback" data-feedback="router-global-probabilities"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-softmax-topk-0">
-                <span>TODO 1：对 router_logits.float() 在专家维度 dim=-1 做全局 softmax。</span>
+                <input type="checkbox" data-homework="router-global-probabilities-0">
+                <span>完成 TODO 1：只写出从 router_logits 得到 routing_probs 的表达式，不要在这一步提前截取专家。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-softmax-topk-1">
-                <span>TODO 2：用 torch.topk(routing_probs, self.top_k, dim=-1) 同时取 routing_weights（概率值）和 selected_experts（专家编号）。</span>
+                <input type="checkbox" data-homework="router-global-probabilities-1">
+                <span>shape 自检：routing_probs 与 router_logits 都应为 [batch_size*seq_len, num_experts]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-softmax-topk-2">
-                <span>注意把 TODO 后面的 zero 占位返回替换掉，不要让它覆盖你算出的 routing_weights 和 selected_experts；这是本关最常见的低级坑。</span>
+                <input type="checkbox" data-homework="router-global-probabilities-2">
+                <span>数值自检：临时查看 routing_probs.sum(dim=-1)，每个 token 都应接近 1。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-softmax-topk-3">
-                <span>检查返回 shape：二者都应该是 [batch_size * seq_len, top_k]，专家索引必须落在 [0, num_experts) 内。</span>
+                <input type="checkbox" data-homework="router-global-probabilities-3">
+                <span>错误诊断：若不同 token 被绑在一起分配概率，检查 softmax 是否误用了 dim=0；若低精度出现异常，检查是否漏掉 router_logits.float()。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="moe-router-renorm-merge">
+        <article class="lesson-card inquiry" data-lesson="router-topk-values-indices">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3 / 阅读已给聚合逻辑</span>
+            <span class="todo-pill">TODO 2：routing_weights 与 selected_experts</span>
           </div>
-          <h2>Top-K 之后：重归一化，再把专家输出加权合成</h2>
+          <h2>再用 topk 同时取出权重和专家编号</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">Top-K 后，两个留下的概率可能是 0.60 和 0.27。它们已经是概率了，看起来可以直接用。</p>
-            <p class="predict-q">先判断：为什么还要做 routing_weights / routing_weights.sum(..., keepdim=True)？</p>
+            <p class="predict-hook">某 token 的概率是 [0.10, 0.55, 0.20, 0.15]，top_k=2。</p>
+            <p class="predict-q">torch.topk 返回的 values 与 indices 分别是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-renorm-merge" value="0">
-                <span>为了把 expert 索引也变成概率</span>
+                <input type="radio" name="predict-router-topk-values-indices" value="0">
+                <span>[0.55,0.20] 与 [1,2]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-renorm-merge" value="1">
-                <span>为了让 Top-K 留下的权重重新加和为 1，避免输出尺度被整体压小</span>
+                <input type="radio" name="predict-router-topk-values-indices" value="1">
+                <span>[1,2] 与 [0.55,0.20]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-router-renorm-merge" value="2">
-                <span>为了把 [tokens, top_k] 改成 [tokens, hidden]</span>
+                <input type="radio" name="predict-router-topk-values-indices" value="2">
+                <span>[0.55,0.20] 与 [0,1]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="moe-router-renorm-merge">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="router-topk-values-indices">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="moe-router-renorm-merge">
+          <div class="gated" data-gated="router-topk-values-indices">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>全量 softmax 的一整行概率和为 1；但丢掉非 Top-K 专家后，留下来的概率和通常小于 1。</li><li>重归一化就是把留下来的 Top-K 权重按比例放大，让每个 token 的这 K 个权重重新加和为 1。</li><li>SparseMoEBlock 的聚合逻辑是：找到选中某专家的 token，跑这个专家，再乘对应权重，加回 final_hidden_states。</li><li>同一个 token 会被 top_k 个专家各处理一次，所以 final_hidden_states 需要用累加，而不是赋值覆盖。</li></ul>
+              <ul><li>torch.topk(input, k, dim) 会返回两个 Tensor：values 是最大的 k 个值，indices 是这些值原来所在的下标。</li><li>TODO 2 的输入是完整概率表 routing_probs，不是原始 hidden_states，也不是已经截断的 logits。</li><li>每个 token 只保留 K 位专家，因此最后一维会从 E 变成 K。</li><li>权重是浮点 Tensor；专家编号是整数 Tensor，后续 torch.where 会用编号决定 token 去哪个 expert。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>Top-K 像只留下票数最高的两位专家，但他们原本只拿到了全体专家票数的一部分。重归一化把这部分票按比例摊成 100%，保证输出尺度稳定；聚合时每个专家贡献多少，由 routing weight 决定。把这段想成“先重新分配投票权，再按投票权合成专家意见”。</p>
-              
-          <div class="shape-story moe-story">
-            <div class="moe-concept-grid">
-              <div class="moe-card accent">
-                <strong>0. 本 Mission 分两层读</strong>
-                <p>你真正要补的是 TODO 3：把 Top-K 权重重新归一化。后面的专家聚合逻辑已经给好，目标是读懂它为什么这样写。</p>
-                <div class="moe-kv">
-                  <span>要补代码</span><strong>routing_weights / row_sum</strong>
-                  <span>要读懂</span><strong>where 找 token, expert 计算, 加权累加</strong>
-                </div>
-              </div>
-              <div class="moe-card">
-                <strong>先看权重，再看专家输出</strong>
-                <p>不要一开始就盯着 for 循环。Router 先给出权重和专家编号；SparseMoEBlock 再按编号把 token 送到专家，并把结果加回来。</p>
-                <div class="moe-route">
-                  <span><b>Router</b>weights + experts</span>
-                  <strong><b>MoE Block</b>expert outputs weighted sum</strong>
-                </div>
-              </div>
+              <p>Top-K 不只回答“最高的两个概率是多少”，还必须回答“这两个概率属于哪两位专家”。values 决定加权比例，indices 决定分发位置；少拿任何一张表，后面的 SparseMoEBlock 都无法工作。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>同一个操作返回两种信息</h4>
+            <div class="adv-contract">
+              <span>输入一行</span><strong>[0.05, 0.62, 0.08, 0.25]</strong>
+              <span><code>values</code></span><strong>[0.62, 0.25]，后续叫 routing_weights</strong>
+              <span><code>indices</code></span><strong>[1, 3]，后续叫 selected_experts</strong>
             </div>
+          </section>
+          <section class="adv-panel blue">
+            <h4>shape 只缩短专家维</h4>
+            <div class="adv-flow">
+              <span>routing_probs<br>[T,E]</span>
+              <span>每行选 K 个</span>
+              <strong>两个输出<br>[T,K]</strong>
+            </div>
+            <p>T 个 token 都保留；每个 token 的专家候选从 E 个缩到 K 个。</p>
+          </section>
+        </div>
 
-            <div class="story-arrow">第一层：Top-K 留下来的概率要重新分成 100%</div>
-            <div class="moe-concept-grid">
-              <div class="moe-card">
-                <strong>1. 为什么要除以每行 sum</strong>
-                <p>全量概率一行加起来是 1，但只保留 Top-2 后可能只剩 0.87。直接混合专家输出会把整体尺度压小，所以要在留下的专家内部重新分配。</p>
-                <div class="moe-route">
-                  <span><b>Top-2</b>.60 + .27 = .87</span>
-                  <span><b>divide</b>.60/.87, .27/.87</span>
-                  <strong><b>renorm</b>.69 + .31 = 1.00</strong>
-                </div>
-              </div>
-              <div class="moe-card good">
-                <strong>2. <code>keepdim=True</code> 保住可广播维度</strong>
-                <p><code>routing_weights</code> 是 [tokens, top_k]。sum 后保留成 [tokens, 1]，才能自动广播除回每个 Top-K 槽位。</p>
-                <div class="moe-kv">
-                  <span>原权重</span><strong>routing_weights [8,2]</strong>
-                  <span>行和</span><strong>routing_weights.sum(dim=-1, keepdim=True) [8,1]</strong>
-                  <span>归一化后</span><strong>routing_weights [8,2], 每行和接近 1</strong>
-                </div>
-              </div>
-            </div>
+        <div class="adv-steps">
+          <div><b>1</b><code>input = routing_probs</code><span>使用 TODO 1 的完整专家概率表</span></div>
+          <div><b>2</b><code>k = self.top_k</code><span>不要把 Notebook 测试里的 2 硬编码进模块</span></div>
+          <div><b>3</b><code>dim = -1</code><span>每个 token 在自己的专家维中选择</span></div>
+          <div><b>4</b><code>values, indices = topk(...)</code><span>按 forward 的返回合同给两个结果命名</span></div>
+        </div>
 
-            <div class="story-arrow">第二层：SparseMoEBlock 逐专家找 token，再把加权输出累加回去</div>
-            <div class="story-panel">
-              <div class="moe-route">
-                <span><b>selected_experts</b>专家编号表</span>
-                <span><b>torch.where</b>token_idx + kth_expert</span>
-                <span><b>routing_weights</b>取当前权重</span>
-                <span><b>unsqueeze</b>[n] 变 [n,1]</span>
-                <strong><b>+=</b>累加到 final_hidden_states</strong>
-              </div>
-              <p>这段的读法是“谁选了当前专家，就把谁拿出来跑当前专家；再按对应权重写回”。</p>
-            </div>
-
-            <div class="moe-concept-grid">
-              <div class="moe-card">
-                <strong>3. <code>where</code> 返回两个坐标</strong>
-                <p>第一个坐标告诉你第几个 token 选中了当前专家；第二个坐标告诉你它是在 Top-K 的第几个槽位选中的。</p>
-                <div class="moe-kv">
-                  <span>selected_experts</span><strong>[[2,0], [1,2], [3,1]]</strong>
-                  <span>expert_idx=2</span><strong>token_idx=[0,1], kth_expert=[0,1]</strong>
-                  <span>取权重</span><strong>routing_weights[token_idx, kth_expert]</strong>
-                </div>
-              </div>
-              <div class="moe-card warn">
-                <strong>4. 为什么必须是 <code>+=</code></strong>
-                <p>top_k=2 时，同一个 token 会从两个专家收集贡献。第一次写回不能覆盖第二次，第二次也不能抹掉第一次，所以这里是累加。</p>
-                <div class="moe-route">
-                  <span>expert2(x0) * w0,0</span>
-                  <span>expert0(x0) * w0,1</span>
-                  <strong>token0 = 两份贡献相加</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="story-panel">
-              <strong>5. 用测试反查三件事</strong>
-              <div class="moe-kv">
-                <span>weights / indices</span><strong>[batch_size * seq_len, top_k]</strong>
-                <span>weights.sum(dim=-1)</span><strong>每行接近 1</strong>
-                <span>MoE 输出</span><strong>回到 [batch_size, seq_len, hidden_size]</strong>
-              </div>
-            </div>
-
-            <div class="field-note">
-              <div class="fn-title">行业视角：玩具循环易懂，工业实现会先排队再批处理</div>
-              <p>这里用 for 循环遍历专家，是为了让逻辑透明。真实推理框架会把同一个专家的 token 先排序聚到一起，一次性组成大 batch 喂给专家网络，减少小矩阵调用带来的 GPU 空转。</p>
-              <p>但核心协议没变：Router 给专家 id 和权重，专家产出向量，最后按权重加回对应 token。</p>
-            </div>
-          </div>
-              <div class="moe-practice-grid">
-          <div class="syntax-card"><h4>语法热身：先用一行权重练 keepdim=True</h4><pre><code>toy_weights = torch.tensor([
-    [0.60, 0.27],
-    [0.40, 0.10],
+        <div class="adv-callout">不要只写 <code>selected_experts = torch.topk(...)</code>。topk 返回的是具名二元结果；本题需要把“值”和“下标”分别接住。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：从每场比赛中选出前两名及其赛道号</h4><pre><code>race_scores = torch.tensor([
+    [0.10, 0.55, 0.20, 0.15],
+    [0.40, 0.05, 0.35, 0.20],
 ])
 
-# keepdim=True：sum 后保留成 [2, 1]
-row_sum = toy_weights.sum(
-    dim=-1, keepdim=True
+top_scores, lane_ids = torch.topk(
+    race_scores, k=2, dim=-1
 )
-toy_normed = toy_weights / row_sum
-print(toy_normed.sum(dim=-1))</code></pre></div>
-          <div class="syntax-card"><h4>语法热身：再用玩具 selected_experts 读懂 where 和 unsqueeze</h4><pre><code>selected = torch.tensor([
-    [2, 0],
-    [1, 2],
-    [3, 1],
-])
-expert_idx = 2
-
-# where 返回两个坐标：第几个 token、第几个 top-k 槽位
-token_idx, kth = torch.where(selected == expert_idx)
-print(token_idx)  # tensor([0, 1])
-print(kth)        # tensor([0, 1])
-
-weights = torch.tensor([
-    [0.7, 0.3],
-    [0.4, 0.6],
-    [0.5, 0.5],
-])
-w = weights[token_idx, kth]
-w = w.unsqueeze(-1)  # [2] -&gt; [2, 1]</code></pre></div>
-          <div class="syntax-card">
-          <h4>举一反三：把玩具写法搬回 notebook</h4>
-          <p>TODO 3 只需要第一张卡的重归一化写法。第二张卡是为了读懂后面已经给出的专家聚合代码。</p>
-          <div class="moe-kv">
-            <span>toy_weights</span><strong>routing_weights</strong>
-            <span>selected</span><strong>selected_experts</strong>
-            <span>expert_idx</span><strong>for 循环里的 expert_idx</strong>
-            <span>w</span><strong>current_weight</strong>
-          </div>
-          <p class="syntax-tip">迁移口诀：归一化看最后一维 <code>top_k</code>，所以 <code>sum(dim=-1, keepdim=True)</code>；聚合时权重先从 [n] 变 [n,1]，才能广播乘到专家输出的 hidden 维。</p>
+print(top_scores) # 成绩值
+print(lane_ids)   # 原来的列下标</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>race_scores</code> 对应 <code>routing_probs</code>。</li>
+            <li><code>top_scores</code> 对应浮点的 <code>routing_weights</code>。</li>
+            <li><code>lane_ids</code> 对应整数的 <code>selected_experts</code>。</li>
+            <li><code>k=2</code> 要改成模块配置 <code>self.top_k</code>，这样测试换 K 时仍能工作。</li>
+          </ul>
         </div>
       </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>routing_weights[token_idx, kth_expert] 的 shape 是 [n]，要乘 expert 输出 [n, hidden]，应该先做什么？</p>
+              <p>为什么 selected_experts 必须保留整数索引，而不能只返回 routing_weights？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-renorm-merge" value="0">
-                <span>flatten() 变成 [n*hidden]</span>
+                <input type="radio" name="checkpoint-router-topk-values-indices" value="0">
+                <span>整数索引会让 softmax 更准确</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-renorm-merge" value="1">
-                <span>unsqueeze(-1) 变成 [n,1]</span>
+                <input type="radio" name="checkpoint-router-topk-values-indices" value="1">
+                <span>后面的分发逻辑要用索引找到每个 token 应执行的专家</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-router-renorm-merge" value="2">
-                <span>argmax() 变成一个专家编号</span>
+                <input type="radio" name="checkpoint-router-topk-values-indices" value="2">
+                <span>权重不能参与乘法</span>
               </label></div>
-              <div class="feedback" data-feedback="moe-router-renorm-merge"></div>
+              <div class="feedback" data-feedback="router-topk-values-indices"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-renorm-merge-0">
-                <span>TODO 3：用 routing_weights / routing_weights.sum(dim=-1, keepdim=True) 完成 Top-K 权重重归一化。</span>
+                <input type="checkbox" data-homework="router-topk-values-indices-0">
+                <span>完成 TODO 2：从 routing_probs 沿最后一维取 self.top_k 个最大概率，同时接住 values 和 indices。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-renorm-merge-1">
-                <span>按顺序阅读 SparseMoEBlock：final_hidden_states 初始化、flat_hidden_states 展平、遍历专家、torch.where 找 token、取权重 unsqueeze、加权累加。</span>
+                <input type="checkbox" data-homework="router-topk-values-indices-1">
+                <span>shape/dtype 自检：两个输出都是 [T,K]；routing_weights 是浮点，selected_experts 是整数。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-router-renorm-merge-2">
-                <span>跑 notebook 测试：weights.sum(dim=-1) 应接近 1，专家索引不能越界，输出 shape 应回到原来的 [batch_size, seq_len, hidden_size]。</span>
+                <input type="checkbox" data-homework="router-topk-values-indices-2">
+                <span>边界自检：selected_experts 的所有值都必须在 [0, num_experts) 内。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-topk-values-indices-3">
+                <span>错误诊断：若后续 torch.where 比较异常，检查是否把 values 和 indices 的接收顺序写反。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="router-renormalize-and-dispatch">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 3：Top-K 权重重归一化</span>
+          </div>
+          <h2>最后重归一化，并读懂专家输出如何汇合</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">routing_weights.shape=[8,2]，要让每行两个权重重新相加为 1。</p>
+            <p class="predict-q">分母最合适的 shape 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-router-renormalize-and-dispatch" value="0">
+                <span>[8,1]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-router-renormalize-and-dispatch" value="1">
+                <span>[8]</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-router-renormalize-and-dispatch" value="2">
+                <span>[1,2]</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="router-renormalize-and-dispatch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="router-renormalize-and-dispatch">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>全量 routing_probs 每行和为 1，但丢掉未入选专家后，Top-K 权重之和通常小于 1。</li><li>sum(dim=-1, keepdim=True) 会把 [T,K] 的每行求和为 [T,1]；保留长度为 1 的维度后可以广播除回 K 个权重。</li><li>返回前 routing_weights.to(hidden_states.dtype) 会恢复输入精度；selected_experts 仍保持整数类型。</li><li>SparseMoEBlock 已经写好：torch.where 找到选择当前专家的 token，专家计算后乘对应权重，再用 += 汇总多位专家的贡献。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>只留下两位专家后，他们原来的概率可能合计只有 0.8。重归一化就是在入选者内部重新分配 100% 的话语权，同时保持 0.6:0.2 的相对比例不变。这样不同 token 的专家混合尺度一致。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>截取后还不是完整混合权重</h4>
+            <div class="adv-flow">
+              <span>Top-2<br>[0.60,0.20]</span>
+              <span>行和<br>0.80</span>
+              <span>分别除 0.80</span>
+              <strong>[0.75,0.25]<br>和为 1</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>keepdim 让广播意图清楚</h4>
+            <div class="adv-contract">
+              <span>权重</span><strong>[T,K]</strong>
+              <span>不 keepdim 的和</span><strong>[T]，不能按预期对齐最后一维</strong>
+              <span>keepdim 的和</span><strong>[T,1]，一行的和广播给本行 K 个值</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>selected_experts</b>决定 token 去哪里</span>
+          <span><b>torch.where</b>找 token 行和 Top-K 槽位</span>
+          <span><b>unsqueeze(-1)</b>把 [n] 权重变 [n,1]</span>
+          <span><b>+=</b>把 K 位专家贡献累加</span>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>测试检查</th><th>期望</th><th>失败时优先检查</th></tr></thead>
+          <tbody>
+            <tr><td>Router 权重</td><td><code>[B*S,K]</code></td><td>topk 的 dim 和 k</td></tr>
+            <tr><td>每行权重和</td><td>接近 1</td><td>TODO 3 的分母与 keepdim</td></tr>
+            <tr><td>最终 MoE 输出</td><td>恢复为 <code>[B,S,H]</code></td><td>聚合是否保留 token 与 hidden 维</td></tr>
+          </tbody>
+        </table>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：把入选评委的票数重新归一化</h4><pre><code>chosen_votes = torch.tensor([
+    [0.60, 0.20],
+    [0.30, 0.15],
+])
+
+vote_total = chosen_votes.sum(dim=-1, keepdim=True)
+normalized_votes = chosen_votes / vote_total
+print(vote_total.shape)                 # [2, 1]
+print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>chosen_votes</code> 对应 TODO 2 产出的 <code>routing_weights</code>。</li>
+            <li><code>vote_total</code> 对应每个 token 的 Top-K 概率和。</li>
+            <li>TODO 3 可以把求和直接写进除法，但必须保留 <code>dim=-1, keepdim=True</code>。</li>
+            <li>完成后不要删掉 Notebook 已给出的 dtype 恢复与返回语句。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么专家聚合使用 final_hidden_states[token_idx] += current_output * current_weight？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-router-renormalize-and-dispatch" value="0">
+                <span>因为 Linear 只能原地执行</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-router-renormalize-and-dispatch" value="1">
+                <span>因为 selected_experts 是浮点数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-router-renormalize-and-dispatch" value="2">
+                <span>同一 token 会接收 K 位专家的贡献，必须累加</span>
+              </label></div>
+              <div class="feedback" data-feedback="router-renormalize-and-dispatch"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-0">
+                <span>完成 TODO 3：沿最后一维计算每个 token 的 Top-K 权重和，并用它重归一化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-1">
+                <span>运行测试前先手算 [0.60,0.20] 应变成 [0.75,0.25]，确认代码保持相对比例。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-2">
+                <span>测试目标：每行权重和接近 1、索引不越界、SparseMoEBlock 输出 shape 与输入完全相同。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-3">
+                <span>错误诊断：出现广播错误时检查 keepdim；输出整体偏小时检查是否忘了重归一化；只剩一个专家贡献时检查聚合是否误用赋值代替 +=。</span>
               </label>
           </div>
         </article>
@@ -1267,7 +1438,7 @@ w = w.unsqueeze(-1)  # [2] -&gt; [2, 1]</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1279,11 +1450,11 @@ w = w.unsqueeze(-1)  # [2] -&gt; [2, 1]</code></pre></div>
 
   <script>
     const levelId = "06";
-    const checkpointData = {"moe-router-softmax-topk":{"answer":0,"explain":"num_tokens = 2*4 = 8；每个 token 选 2 个专家，所以 selected_experts 是 [8,2]。"},"moe-router-renorm-merge":{"answer":1,"explain":"专家输出有 hidden 维，权重需要 [n,1] 才能沿 hidden 维广播，给每个 token 的整条向量乘同一个 routing weight。"}};
-    const predictData = {"moe-router-softmax-topk":{"answer":1,"revealNote":"按 notebook 写：F.softmax(router_logits.float(), dim=-1) 得到完整概率表，再 torch.topk。后续 TODO 3 会把 Top-K 权重重新归一化。"},"moe-router-renorm-merge":{"answer":1,"revealNote":"Top-K 丢掉了部分概率质量，留下的权重和通常小于 1。重归一化后，每个 token 的专家混合仍然是稳定的加权平均。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 7;
+    const checkpointData = {"router-global-probabilities":{"answer":0,"explain":"Notebook 在 gate 前已经把 B×S 合并成 8 个 token；gate 输出每个 token 对 8 位专家的分数，所以是 [8,8]。"},"router-topk-values-indices":{"answer":1,"explain":"权重只说明贡献大小；没有专家编号，SparseMoEBlock 不知道该调用哪一个 nn.Linear 专家。"},"router-renormalize-and-dispatch":{"answer":2,"explain":"Top-K 路由让一个 token 经过多位专家；每位专家只贡献加权的一部分，最终输出是这些贡献之和。"}};
+    const predictData = {"router-global-probabilities":{"answer":0,"revealNote":"最后一维是专家维。沿 dim=-1 后，每一行 8 个专家概率之和为 1。"},"router-topk-values-indices":{"answer":0,"revealNote":"values 保留最大的概率值，indices 保留这些值在原专家维中的列号。"},"router-renormalize-and-dispatch":{"answer":0,"revealNote":"[8,1] 表示每个 token 一个行和，可以沿最后一维广播给该 token 的两个权重。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

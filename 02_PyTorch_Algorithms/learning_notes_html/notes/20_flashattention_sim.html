@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -712,29 +725,67 @@
   </style>
   <style>
 
-    .flash-course {
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
     }
-    .flash-course h4,
-    .flash-practice h4 {
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
       margin: 0;
       font-size: 17px;
       color: #182033;
     }
-    .flash-course p,
-    .flash-practice p { margin: 0; }
-    .flash-roadmap {
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       border: 1px solid #cdd9ef;
       border-radius: 8px;
       overflow: hidden;
       background: #f7faff;
     }
-    .flash-roadmap span {
-      min-height: 82px;
+    .adv-roadmap > span {
+      min-height: 78px;
       padding: 12px;
       display: grid;
       align-content: center;
@@ -742,22 +793,23 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
-    .flash-roadmap span:last-child { border-right: 0; }
-    .flash-roadmap b {
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
       color: #1d4ed8;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .flash-split,
-    .flash-practice {
+    .adv-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       align-items: stretch;
     }
-    .flash-panel,
-    .flash-example,
-    .flash-map {
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
       padding: 14px;
       border: 1px solid #dce3eb;
       border-radius: 8px;
@@ -765,18 +817,21 @@
       display: grid;
       gap: 10px;
       align-content: start;
+      min-width: 0;
     }
-    .flash-panel.standard { border-top: 4px solid #657184; }
-    .flash-panel.blocked { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .flash-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .flash-line {
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
       gap: 8px;
     }
-    .flash-line span,
-    .flash-line strong {
-      min-height: 58px;
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
       padding: 9px;
       border: 1px solid #dce3eb;
       border-radius: 6px;
@@ -785,22 +840,23 @@
       place-items: center;
       text-align: center;
       line-height: 1.4;
+      overflow-wrap: anywhere;
     }
-    .flash-line strong {
+    .adv-flow > strong {
       border-color: #99d6bf;
       background: #e9f7f0;
       color: #125b45;
     }
-    .flash-contract {
+    .adv-contract {
       display: grid;
-      grid-template-columns: minmax(125px, 0.34fr) minmax(0, 1fr);
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
       border: 1px solid #dce3eb;
       border-radius: 8px;
       overflow: hidden;
       background: #fff;
     }
-    .flash-contract span,
-    .flash-contract strong {
+    .adv-contract > span,
+    .adv-contract > strong {
       min-height: 48px;
       padding: 10px 12px;
       display: grid;
@@ -808,54 +864,48 @@
       border-bottom: 1px solid #dce3eb;
       line-height: 1.45;
     }
-    .flash-contract span {
+    .adv-contract > span {
       border-right: 1px solid #dce3eb;
       background: #f7f9fc;
       color: #526077;
       font-weight: 800;
     }
-    .flash-contract strong {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    .adv-contract > strong {
       overflow-wrap: anywhere;
     }
-    .flash-contract span:nth-last-child(-n+2),
-    .flash-contract strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .flash-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
-    .flash-shapes {
+    .adv-shapes {
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
       background: #fff;
       border: 1px solid #dce3eb;
     }
-    .flash-shapes th,
-    .flash-shapes td {
+    .adv-shapes th,
+    .adv-shapes td {
       padding: 10px;
       border: 1px solid #dce3eb;
       text-align: left;
       vertical-align: top;
       overflow-wrap: anywhere;
     }
-    .flash-shapes th {
+    .adv-shapes th {
       background: #eaf1ff;
       color: #1d4ed8;
     }
-    .flash-shapes code { white-space: normal; }
-    .flash-formula {
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
       display: grid;
       gap: 8px;
     }
-    .flash-formula div {
+    .adv-steps > div {
       display: grid;
-      grid-template-columns: 36px minmax(180px, 0.75fr) minmax(0, 1fr);
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
       gap: 10px;
       align-items: center;
       padding: 10px;
@@ -863,7 +913,7 @@
       border-radius: 7px;
       background: #fff;
     }
-    .flash-formula b {
+    .adv-steps > div > b {
       width: 30px;
       height: 30px;
       border-radius: 50%;
@@ -872,25 +922,40 @@
       background: #2563eb;
       color: #fff;
     }
-    .flash-formula code {
+    .adv-steps code {
       color: #172033;
       font-weight: 800;
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    .flash-formula span { color: #5f6d82; }
-    .flash-example { background: #f5fbf8; border-color: #a9d9c6; }
-    .flash-map { background: #f7f9fc; }
-    .flash-map ul { margin: 0; padding-left: 20px; }
-    .flash-map li { margin: 6px 0; line-height: 1.5; }
-    .flash-practice .syntax-card { margin-top: 0; }
-    .flash-test-grid {
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 8px;
     }
-    .flash-test-grid span {
-      min-height: 72px;
+    .adv-checks > span {
+      min-height: 70px;
       padding: 10px;
       border: 1px solid #dce3eb;
       border-radius: 7px;
@@ -899,25 +964,26 @@
       place-items: center;
       text-align: center;
       line-height: 1.4;
+      overflow-wrap: anywhere;
     }
     @media (max-width: 760px) {
-      .flash-roadmap,
-      .flash-split,
-      .flash-practice,
-      .flash-test-grid { grid-template-columns: 1fr; }
-      .flash-roadmap span {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
         border-right: 0;
         border-bottom: 1px solid #cdd9ef;
       }
-      .flash-roadmap span:last-child { border-bottom: 0; }
-      .flash-contract { grid-template-columns: 1fr; }
-      .flash-contract span { border-right: 0; }
-      .flash-contract span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .flash-formula div { grid-template-columns: 36px minmax(0, 1fr); }
-      .flash-formula div span { grid-column: 2; }
-      .flash-shapes { font-size: 13px; }
-      .flash-shapes th,
-      .flash-shapes td { padding: 7px; }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
     }
   </style>
 </head>
@@ -959,115 +1025,107 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="flash-state-and-tiles">
+        <article class="lesson-card inquiry" data-lesson="flash-tiles-and-state">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 + 两层分块循环</span>
+            <span class="todo-pill">TODO 1：初始化 out、m、l；理解两层分块循环与最后一块</span>
           </div>
-          <h2>先读懂函数：分块不改答案，只改计算顺序</h2>
+          <h2>先建状态账本：分块改变计算顺序，不改变 Attention 答案</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">代码一开始还没有读过任何 score，却要先给每行的最大值 m 一个初值。</p>
-            <p class="predict-q">m 为什么应该从负无穷开始，而不是从 0 开始？</p>
+            <p class="predict-hook">seq_len=5、block_size=3，外层循环第二次执行 i=3。</p>
+            <p class="predict-q">q[3:6] 的实际 shape 是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-flash-state-and-tiles" value="0">
-                <span>这样第一块里的负分数也能正确成为最大值</span>
+                <input type="radio" name="predict-flash-tiles-and-state" value="0">
+                <span>[2, dim]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-flash-state-and-tiles" value="1">
-                <span>因为负无穷会让所有输出永远为 0</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-flash-state-and-tiles" value="2">
-                <span>因为 block_size 只能是负数</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="flash-state-and-tiles">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
-          </div>
-
-          <div class="gated" data-gated="flash-state-and-tiles">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>本 Notebook 暂时没有 Batch 和 Head 维度，q、k、v 都是 [seq_len, dim]。先把二维版本学明白，再迁移到真实多头实现。</li><li>Python 切片 start:start+block_size 即使越过末尾也不会报错，它会自然返回较短的最后一块。</li><li>FlashAttention 仍然计算精确 Attention；这里的核心是逐块读取 K/V，并且不把完整 [seq_len, seq_len] 分数矩阵长期保存下来。</li><li>对每一行 query，算法只需要持续记住三个状态：当前输出 out、见过的最大值 m、指数和 l。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>先把代码当成两层翻页：外层固定一小块 Q，内层把 K/V 一块块翻完。每翻一页，就把这一页的信息并入 m、l 和 out；翻完全部 K/V 后，这块 Q 的答案就完成了。</p>
-              <div class="flash-course">
-        <div class="flash-roadmap">
-          <span><b>1. 固定 Q 块</b>一次只处理几行 query</span>
-          <span><b>2. 扫描 K/V 块</b>内层循环逐块读取</span>
-          <span><b>3. 保存滚动状态</b>每行只保留 out、m、l</span>
-        </div>
-
-        <div class="flash-split">
-          <section class="flash-panel standard">
-            <h4>普通写法：先造出完整分数表</h4>
-            <div class="flash-line">
-              <span>Q [S,D]</span><span>K^T [D,S]</span><strong>Scores [S,S]</strong>
-            </div>
-            <p>序列变长时，S×S 的中间矩阵按平方增长。这里的模拟作业，就是为了理解如何避免长期保存它。</p>
-          </section>
-          <section class="flash-panel blocked">
-            <h4>分块写法：固定 Q 块，逐块读 K/V</h4>
-            <div class="flash-line">
-              <span>Q_i [Bq,D]</span><span>K_j^T [D,Bk]</span><strong>S_ij [Bq,Bk]</strong>
-            </div>
-            <p>每次只出现一个小分数块。数学结果没有近似，变化的是计算顺序和中间数据的生存时间。</p>
-          </section>
-        </div>
-
-        <div class="flash-contract">
-          <span><code>out</code></span><strong>[seq_len, dim]，每个 query 当前已经归一化的输出</strong>
-          <span><code>m</code></span><strong>[seq_len, 1]，每行目前见过的最大 score；初始值是 -inf</strong>
-          <span><code>l</code></span><strong>[seq_len, 1]，以当前 m 为基准的指数和；初始值是 0</strong>
-          <span>为什么是列向量</span><strong>[seq_len, 1] 可以沿最后一维广播到 score 块的每一列</strong>
-        </div>
-
-        <div class="flash-callout">初始化的含义比写法更重要：还没看任何 K 块，所以输出贡献和指数和都是 0；最大值设为 -inf，保证第一块中任何正常分数都能成为新最大值。</div>
-      </div>
-              <div class="flash-practice">
-        <div class="syntax-card"><h4>语法热身：用另一个张量练初始化、切片和最后一块</h4><pre><code>rows, width = 5, 3
-x = torch.randn(rows, width)
-
-buffer = torch.zeros((rows, width), device=x.device, dtype=x.dtype)
-running_max = torch.full((rows, 1), -float('inf'), device=x.device, dtype=x.dtype)
-running_sum = torch.zeros((rows, 1), device=x.device, dtype=x.dtype)
-
-for start in range(0, rows, 3):
-    chunk = x[start:start + 3]
-    print(chunk.shape)  # [3, 3]，然后是 [2, 3]</code></pre></div>
-        <div class="flash-map">
-          <h4>从例子迁移到 TODO 1</h4>
-          <ul>
-            <li><code>buffer</code> 对应需要返回的输出状态，shape 要同时包含序列行和特征列。</li>
-            <li><code>running_max</code> 与 <code>running_sum</code> 都是每个 query 一份统计量，所以第二维保留为 1。</li>
-            <li><code>device</code> 和 <code>dtype</code> 跟随输入，可以避免 CPU/GPU 或精度不一致。</li>
-            <li>不要手工补齐最后一块；Notebook 的第二个测试专门覆盖 seq_len 不能整除 block_size 的情况。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>seq_len=5、block_size=3 时，第二个切片 q[3:6] 的 shape 是什么？</p>
-              <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-state-and-tiles" value="0">
-                <span>会越界报错</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-state-and-tiles" value="1">
+                <input type="radio" name="predict-flash-tiles-and-state" value="1">
                 <span>[3, dim] 并自动补零</span>
               </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-state-and-tiles" value="2">
-                <span>[2, dim]</span>
+              <label class="predict-option">
+                <input type="radio" name="predict-flash-tiles-and-state" value="2">
+                <span>切片会越界报错</span>
               </label></div>
-              <div class="feedback" data-feedback="flash-state-and-tiles"></div>
+            <div class="predict-feedback" data-predict-feedback="flash-tiles-and-state">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="flash-tiles-and-state">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>本题刻意省略 Batch 和 Head 维度，q、k、v 都是 [seq_len, dim]；返回 out 也必须是 [seq_len, dim]。</li><li>外层固定一块 Q，内层遍历所有 K/V 块。Python 切片允许终点超过长度，所以最后一块可以比 block_size 短。</li><li>每个 query 行都维护自己的最大值 m 和指数和 l，因此它们是 [seq_len, 1] 列向量，便于向 score 的列方向广播。</li><li>q_block 已在外层乘 scale = 1/sqrt(dim)，内层计算分数时不能再次缩放。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>把内层循环看成逐页读取 K/V：每读一页，就把这页对当前 Q 块的贡献合并进三个滚动状态。out 记当前归一化输出，m 记目前见过的最大 score，l 记以 m 为基准的指数和。翻完所有页后，这块 Q 的精确 Attention 才完成。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>外层 i</b>固定 q[i:i+block_size]</span>
+          <span><b>内层 j</b>逐块读取 k 和 v</span>
+          <span><b>滚动合并</b>更新 out_i、m_i、l_i</span>
+          <span><b>写回</b>保存当前 Q 块的最终状态</span>
+        </div>
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>标准 Attention 的大中间量</h4>
+            <div class="adv-flow">
+  <span>Q [S,D]</span><span>Kᵀ [D,S]</span><strong>Scores [S,S]</strong>
+</div>
+            <p>完整分数矩阵会随序列长度按平方增长。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>当前模拟只保留一个小分数块</h4>
+            <div class="adv-flow">
+  <span>Q_i [Bq,D]</span><span>K_jᵀ [D,Bk]</span><strong>S_ij [Bq,Bk]</strong>
+</div>
+            <p>结果仍是精确 Attention，改变的是中间量的生存时间。</p>
+          </section>
+        </div>
+        <div class="adv-contract">
+  <span>out</span><strong>[seq_len, dim]；初始为 0，逐块形成最终输出</strong><span>m</span><strong>[seq_len, 1]；初始为 -inf，表示尚未看过任何 score</strong><span>l</span><strong>[seq_len, 1]；初始为 0，表示尚无指数贡献</strong><span>scale</span><strong>Python float，值为 1 / sqrt(dim)</strong><span>device</span><strong>新张量至少跟随 q.device；可见测试使用 CPU float32</strong>
+</div>
+        <div class="adv-callout">m 不能从 0 开始。若第一块 score 全是负数，0 会变成一个数据中从未出现的假最大值；-inf 才表示“空状态”。</div>
+      </div>
+              <div class="adv-practice">
+  <div class="syntax-card"><h4>语法热身：用分批处理成绩表练初始化和尾块切片</h4><pre><code>import torch
+
+rows, width = 5, 3
+scores = torch.randn(rows, width)
+
+summary = torch.zeros((rows, width), device=scores.device)
+running_max = torch.full((rows, 1), -float('inf'), device=scores.device)
+running_sum = torch.zeros((rows, 1), device=scores.device)
+
+for start in range(0, rows, 3):
+    batch = scores[start:start + 3]
+    print(batch.shape)  # [3,3]，然后 [2,3]</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 TODO 1</h4>
+  <ul><li><code>summary</code>：对应 out，行数与序列长度一致，列数与 value 特征维一致</li><li><code>running_max</code>：对应 m；每一行只保存一个最大值，所以末维是 1</li><li><code>running_sum</code>：对应 l；每一行只保存一个指数和，所以末维是 1</li><li><code>scores.device</code>：对应 q.device，避免创建在错误设备上的状态张量</li></ul>
+</div>
+</div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 m 和 l 使用 [seq_len, 1]，而不是 [seq_len]？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-flash-tiles-and-state" value="0">
+                <span>为了让它们变成整数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-flash-tiles-and-state" value="1">
+                <span>为了删除 dim 维</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-flash-tiles-and-state" value="2">
+                <span>保留列维后可广播到每行的 score 列</span>
+              </label></div>
+              <div class="feedback" data-feedback="flash-tiles-and-state"></div>
             </div>
           </div>
 
@@ -1076,132 +1134,111 @@ for start in range(0, rows, 3):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-state-and-tiles-0">
-                <span>在 Notebook 函数顶部先给 q、k、v 和三个状态标注 shape，再写 TODO 1；不要只凭变量名猜维度。</span>
+                <input type="checkbox" data-homework="flash-tiles-and-state-0">
+                <span>完成 TODO 1 前先在纸上写出 out、m、l 的 shape 和初值含义，再根据 q.device 创建它们。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-state-and-tiles-1">
-                <span>检查 out、m、l 的初值分别表达“无输出、未见最大值、无指数贡献”，并让新张量跟随 q 的 device 与 dtype。</span>
+                <input type="checkbox" data-homework="flash-tiles-and-state-1">
+                <span>手工走一遍 seq_len=5、block_size=3 的 i、j 取值，确认 Q 和 K/V 的尾块都允许只有 2 行。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-state-and-tiles-2">
-                <span>沿着外层 i、内层 j 手工走一遍 seq_len=5、block_size=3，确认最后的 Q 块和 K/V 块都允许少于 3 行。</span>
+                <input type="checkbox" data-homework="flash-tiles-and-state-2">
+                <span>若第一轮出现未定义变量，检查三个状态是否都在 scale 和循环之前初始化；若设备报错，检查新状态是否跟随 q.device。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="flash-score-max-normalizer">
+        <article class="lesson-card inquiry" data-lesson="flash-online-softmax">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2 / TODO 3 / TODO 4 / TODO 5</span>
+            <span class="todo-pill">TODO 2–5：S_ij、m_block/m_new、P_ij、l_block/l_new</span>
           </div>
-          <h2>处理一个 K/V 块：先守住 shape，再更新 m 与 l</h2>
+          <h2>再合并一个分数块：最大值换基准，旧统计量必须重标定</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">固定一个有 Bq 行的 Q 块，再拿一个有 Bk 行的 K 块做点积。</p>
-            <p class="predict-q">S_ij = q_block @ k_block.transpose(-2, -1) 的 shape 是什么？</p>
+            <p class="predict-hook">旧最大值 m_i=2，新块最大值 m_block=5，因此 m_new=5。</p>
+            <p class="predict-q">旧指数和 l_i 应乘哪个修正因子后再与新块相加？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-flash-score-max-normalizer" value="0">
-                <span>[Bq, Bk]</span>
+                <input type="radio" name="predict-flash-online-softmax" value="0">
+                <span>exp(2-5)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-flash-score-max-normalizer" value="1">
-                <span>[D, D]</span>
+                <input type="radio" name="predict-flash-online-softmax" value="1">
+                <span>exp(5-2)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-flash-score-max-normalizer" value="2">
-                <span>[Bk, Bq, D]</span>
+                <input type="radio" name="predict-flash-online-softmax" value="2">
+                <span>完全不修正</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="flash-score-max-normalizer">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="flash-online-softmax">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="flash-score-max-normalizer">
+          <div class="gated" data-gated="flash-online-softmax">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>矩阵乘法 [Bq,D] @ [D,Bk] 会得到 [Bq,Bk]：每一行属于一个 query，每一列属于当前 K 块中的一个 key。</li><li>q_block 已经在外层乘过 1/sqrt(dim)，所以计算 S_ij 时不要再次缩放。</li><li>max 和 sum 都要沿最后一维做，因为 softmax 是对每个 query 的所有 key 分数归一化。</li><li>keepdim=True 会把结果保留为 [Bq,1]，后续才能稳定地与 [Bq,Bk] 广播。</li></ul>
+              <ul><li>矩阵乘法 [Bq,D] @ [D,Bk] 得到 [Bq,Bk]；每行属于一个 query，每列属于当前 K 块中的一个 key。</li><li>Softmax 沿 key 维计算，所以 max 和 sum 都使用 dim=-1，并保留 keepdim=True。</li><li>m_new = maximum(m_i, m_block) 是逐元素比较两个 [Bq,1] 张量；它与 torch.max(S_ij, dim=...) 的归约作用不同。</li><li>P_ij = exp(S_ij - m_new) 已经把当前块放到新的共同基准下，因此 l_block 直接对 P_ij 求和。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>这一阶段先不碰 V，只处理 softmax 的账本。当前块给出一组新分数；m_new 统一新旧标尺，P_ij 把当前分数换到这把标尺下，l_new 再把旧块和新块的指数贡献合起来。</p>
-              <div class="flash-course">
-        <table class="flash-shapes">
-          <thead><tr><th>张量</th><th>shape</th><th>每一维在说什么</th></tr></thead>
+              <p>难点不是求新块的指数和，而是“最大值基准可能变了”。旧 l_i 是按旧 m_i 计算的；当 m_new 更大时，旧指数整体要乘 exp(m_i-m_new) 才能和新块相加。这就像两份用不同汇率记录的账，先换成同一种基准才能合并。</p>
+              <div class="adv-course">
+        <div class="adv-steps">
+          <div><b>1</b><code>S_ij = q_block @ k_block.T</code><span>[Bq,D] @ [D,Bk] → [Bq,Bk]</span></div>
+          <div><b>2</b><code>m_block = max(S_ij, dim=-1)</code><span>当前 K 块每个 query 行的局部最大值</span></div>
+          <div><b>3</b><code>m_new = maximum(m_i, m_block)</code><span>选择旧块与新块共同的稳定基准</span></div>
+          <div><b>4</b><code>P_ij = exp(S_ij - m_new)</code><span>广播减法后再取指数</span></div>
+          <div><b>5</b><code>l_new = l_i * exp(m_i-m_new) + sum(P_ij)</code><span>修正旧账，再加入新块</span></div>
+        </div>
+        <table class="adv-shapes">
+          <thead><tr><th>变量</th><th>shape</th><th>检查重点</th></tr></thead>
           <tbody>
-            <tr><td><code>q_block</code></td><td><code>[Bq, D]</code></td><td>Bq 个 query，每个 query 有 D 个特征</td></tr>
-            <tr><td><code>k_block.T</code></td><td><code>[D, Bk]</code></td><td>转置后 D 对齐做点积，Bk 成为分数列</td></tr>
-            <tr><td><code>S_ij</code></td><td><code>[Bq, Bk]</code></td><td>每个 query 对当前 Bk 个 key 的分数</td></tr>
-            <tr><td><code>m_block / m_new</code></td><td><code>[Bq, 1]</code></td><td>每个 query 只保留一个最大值</td></tr>
-            <tr><td><code>P_ij</code></td><td><code>[Bq, Bk]</code></td><td>当前块在新最大值标尺下的指数值</td></tr>
-            <tr><td><code>l_block / l_new</code></td><td><code>[Bq, 1]</code></td><td>每个 query 只保留一个指数和</td></tr>
+            <tr><td><code>S_ij</code></td><td>[Bq,Bk]</td><td>q_block 已缩放，不重复乘 scale</td></tr>
+            <tr><td><code>m_block</code></td><td>[Bq,1]</td><td>dim=-1 且 keepdim=True</td></tr>
+            <tr><td><code>m_new</code></td><td>[Bq,1]</td><td>torch.maximum 做逐元素比较</td></tr>
+            <tr><td><code>P_ij</code></td><td>[Bq,Bk]</td><td>减 m_new 时按列广播</td></tr>
+            <tr><td><code>l_new</code></td><td>[Bq,1]</td><td>旧 l 先按新最大值修正</td></tr>
           </tbody>
         </table>
-
-        <div class="flash-formula">
-          <div><b>1</b><code>m_block = row_max(S_ij)</code><span>只在当前 K 块里找每行最大值</span></div>
-          <div><b>2</b><code>m_new = maximum(m_i, m_block)</code><span>把旧块和当前块放到同一个新标尺</span></div>
-          <div><b>3</b><code>P_ij = exp(S_ij - m_new)</code><span>减去行最大值，避免 exp 溢出</span></div>
-          <div><b>4</b><code>old_scale = exp(m_i - m_new)</code><span>把过去保存的指数和换算到新标尺</span></div>
-          <div><b>5</b><code>l_new = l_i * old_scale + sum(P_ij)</code><span>旧贡献修正后，再加当前块贡献</span></div>
-        </div>
-
-        <div class="flash-split">
-          <section class="flash-example">
-            <h4>只看一行的小例子</h4>
-            <p>旧块最大值是 2，新块分数是 [4, 0]，所以新最大值变成 4。</p>
-            <div class="flash-contract">
-              <span>旧贡献缩放</span><strong>exp(2 - 4) = exp(-2)，旧值整体变小</strong>
-              <span>新块指数</span><strong>exp([4, 0] - 4) = [1, exp(-4)]</strong>
-              <span>共同标尺</span><strong>旧块和新块现在都以 m_new=4 为基准</strong>
-            </div>
-          </section>
-          <section class="flash-panel warn">
-            <h4>两个最容易漏掉的细节</h4>
-            <p><code>q_block</code> 已经乘过 scale，S_ij 这里只做矩阵乘法。</p>
-            <p><code>m_i</code> 和 <code>m_block</code> 是两个同 shape 张量，要逐元素比较，使用的是 <code>torch.maximum</code>。</p>
-          </section>
-        </div>
+        <div class="adv-callout">如果直接写 l_i + l_block，只在最大值从未变化时才碰巧正确。一旦新块出现更大 score，旧的指数和必须先乘修正因子。</div>
       </div>
-              <div class="flash-practice">
-        <div class="syntax-card"><h4>语法热身：用独立矩阵练转置、逐行归约和广播</h4><pre><code>left = torch.randn(2, 3)   # [Bq=2, D=3]
-right = torch.randn(4, 3)  # [Bk=4, D=3]
-scores = left @ right.transpose(-2, -1)  # [2, 4]
+              <div class="adv-practice">
+  <div class="syntax-card"><h4>语法热身：用两批传感器读数练在线 log-sum-exp</h4><pre><code>import torch
 
-block_max = scores.max(dim=-1, keepdim=True).values  # [2, 1]
-old_max = torch.full((2, 1), -float('inf'))
-new_max = torch.maximum(old_max, block_max)
-weights = torch.exp(scores - new_max)               # 广播到 [2, 4]
-block_sum = weights.sum(dim=-1, keepdim=True)        # [2, 1]</code></pre></div>
-        <div class="flash-map">
-          <h4>从例子迁移到 TODO 2-5</h4>
-          <ul>
-            <li><code>left/right/scores</code> 分别迁移成当前 Q 块、当前 K 块和 S_ij。</li>
-            <li><code>block_max/new_max</code> 对应局部最大值和新全局最大值。</li>
-            <li><code>weights</code> 对应当前块的未归一化指数 P_ij；它还不是最终 softmax 概率。</li>
-            <li><code>block_sum</code> 只是新块贡献，必须和经过 old_scale 修正的旧 l_i 合并。</li>
-          </ul>
-        </div>
-      </div>
+old_max = torch.tensor([[2.0]])
+old_sum = torch.tensor([[1.5]])
+new_values = torch.tensor([[1.0, 4.0, 3.0]])
+
+batch_max = new_values.max(dim=-1, keepdim=True).values
+joint_max = torch.maximum(old_max, batch_max)
+batch_exp = torch.exp(new_values - joint_max)
+batch_sum = batch_exp.sum(dim=-1, keepdim=True)
+joint_sum = old_sum * torch.exp(old_max - joint_max) + batch_sum</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 Notebook TODO</h4>
+  <ul><li><code>new_values</code>：对应 S_ij；每行是一位 query 对当前 K 块的分数</li><li><code>batch_max</code>：对应 m_block，沿最后一维归约并保留列维</li><li><code>joint_max</code>：对应 m_new，合并旧 m_i 与当前 m_block</li><li><code>batch_exp</code>：对应 P_ij，所有分数都使用 m_new 这个共同基准</li><li><code>joint_sum</code>：对应 l_new，先修正旧 l_i 再加 l_block</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>m_block 和 l_block 为什么都要使用 keepdim=True？</p>
+              <p>TODO 3 中 torch.max 与 torch.maximum 分别负责什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-score-max-normalizer" value="0">
-                <span>保留 [Bq,1]，方便和分数块按行广播</span>
+                <input type="radio" name="checkpoint-flash-online-softmax" value="0">
+                <span>前者沿 score 列归约，后者逐元素比较旧、新最大值</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-score-max-normalizer" value="1">
-                <span>让 block_size 自动翻倍</span>
+                <input type="radio" name="checkpoint-flash-online-softmax" value="1">
+                <span>前者只支持 CPU，后者只支持 GPU</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-score-max-normalizer" value="2">
-                <span>把浮点数变成整数</span>
+                <input type="radio" name="checkpoint-flash-online-softmax" value="2">
+                <span>二者都删除 batch 维</span>
               </label></div>
-              <div class="feedback" data-feedback="flash-score-max-normalizer"></div>
+              <div class="feedback" data-feedback="flash-online-softmax"></div>
             </div>
           </div>
 
@@ -1210,129 +1247,117 @@ block_sum = weights.sum(dim=-1, keepdim=True)        # [2, 1]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-score-max-normalizer-0">
-                <span>TODO 2 先写出 S_ij 的 shape 推导，再完成矩阵乘法；确认 q_block 的 scale 没有乘第二次。</span>
+                <input type="checkbox" data-homework="flash-online-softmax-0">
+                <span>按 shape 链完成 TODO 2–5：每写一行就标注输出 shape，确保所有行级统计量都保持 [Bq,1]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-score-max-normalizer-1">
-                <span>TODO 3 用逐行 max 得到 [Bq,1]，再逐元素合并旧 m_i 与当前 m_block。</span>
+                <input type="checkbox" data-homework="flash-online-softmax-1">
+                <span>用极端值手算一行：旧最大值 2、新块最大值 5，验证旧 l 的修正因子小于 1，而不是大于 1。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-score-max-normalizer-2">
-                <span>TODO 4/5 按顺序写 P_ij、l_block、old_scale 和 l_new；每写一行都检查 shape，而不是一次抄完整公式。</span>
+                <input type="checkbox" data-homework="flash-online-softmax-2">
+                <span>若结果出现 inf/NaN，检查是否先减 m_new 再 exp；若广播报错，检查 max/sum 是否漏了 keepdim=True。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="flash-merge-output">
+        <article class="lesson-card inquiry" data-lesson="flash-output-and-tests">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 6 + 状态更新 + 全局写回</span>
+            <span class="todo-pill">TODO 6 + 状态更新 + 外层写回；通过三组标准 Attention 对照测试</span>
           </div>
-          <h2>合并输出并写回：把旧答案换到新标尺，再加入当前块</h2>
+          <h2>最后更新输出并写回：旧贡献和新贡献都要除以同一个 l_new</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">旧 out_i 和当前块的 P_ij @ v_block 都有 [Bq, dim] 的 shape，看起来可以直接相加。</p>
-            <p class="predict-q">为什么不能直接写 out_i + P_ij @ v_block？</p>
+            <p class="predict-hook">当前 Q 块已经遍历完所有 K/V 块，但代码没有执行 out[i:i+block_size] = out_i。</p>
+            <p class="predict-q">函数最终返回的 out 会出现什么问题？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-flash-merge-output" value="0">
-                <span>两部分使用的最大值标尺和归一化权重不同，必须先修正并除以 l_new</span>
+                <input type="radio" name="predict-flash-output-and-tests" value="0">
+                <span>对应切片仍保留初始化值，计算结果没有进入返回张量</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-flash-merge-output" value="1">
-                <span>因为两个张量的 shape 永远不同</span>
+                <input type="radio" name="predict-flash-output-and-tests" value="1">
+                <span>PyTorch 会自动猜出 out_i 应写到哪里</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-flash-merge-output" value="2">
-                <span>因为 FlashAttention 不能使用加法</span>
+                <input type="radio" name="predict-flash-output-and-tests" value="2">
+                <span>out 会自动增加一个维度</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="flash-merge-output">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="flash-output-and-tests">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="flash-merge-output">
+          <div class="gated" data-gated="flash-output-and-tests">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>out_i 保存的是已经除过 l_i 的归一化输出，不是未归一化分子。</li><li>当 m 从 m_i 变成 m_new 时，旧贡献要乘 old_scale = exp(m_i - m_new)。</li><li>P_ij @ v_block 得到当前 K/V 块对每个 query 的新输出分子，shape 是 [Bq, dim]。</li><li>一个 K/V 块处理完后要更新 m_i、l_i；内层循环结束后，再把 out_i、m_i、l_i 写回全局切片。</li></ul>
+              <ul><li>out_i 是已经归一化的旧输出 [Bq,D]，不能直接与 P_ij @ v_block 相加；两者当前所用的归一化尺度不同。</li><li>P_ij @ v_block 的 shape 是 [Bq,Bk] @ [Bk,D] = [Bq,D]，与 out_i 同形状。</li><li>每处理完一个 K/V 块，都要令 m_i=m_new、l_i=l_new，下一轮才会从最新状态继续。</li><li>内层循环结束后，out_i、m_i、l_i 只覆盖当前 Q 切片；必须写回全局对应的 i:i+block_size 区域。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把 out_i 想成旧数据的加权平均。要和新数据合并，不能直接把两个平均数相加；先用旧总权重 l_i 找回旧贡献，再按新最大值缩放，加入新块的加权和，最后除以新的总权重 l_new。</p>
-              <div class="flash-course">
-        <div class="flash-formula">
-          <div><b>1</b><code>old_numerator = out_i * l_i * old_scale</code><span>从旧平均值恢复旧分子，并换到 m_new 标尺</span></div>
-          <div><b>2</b><code>new_numerator = P_ij @ v_block</code><span>当前块的指数权重乘 Value</span></div>
-          <div><b>3</b><code>out_new = (old_numerator + new_numerator) / l_new</code><span>合并分子，再除以新指数和</span></div>
-        </div>
-
-        <div class="flash-split">
-          <section class="flash-panel blocked">
-            <h4>与 Notebook 参考公式完全等价</h4>
-            <div class="flash-contract">
-              <span>旧部分</span><strong>out_i * (l_i * old_scale / l_new)</strong>
-              <span>新部分</span><strong>(P_ij @ v_block) / l_new</strong>
-              <span>合并</span><strong>out_new = old_part + new_part</strong>
-            </div>
+              <p>输出更新可以拆成两部分：先把旧的归一化输出缩放到新分母下，再把当前块的加权 V 贡献除以同一个 l_new。这个“同分母再相加”是保持数学等价的关键。循环状态没更新或最终没写回，都会让后续块看见过期数据。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>旧输出的权重</h4>
+            <p><code>l_i * exp(m_i - m_new) / l_new</code></p>
+            <p>把以前已经归一化的 out_i 调整到新的最大值与总指数和下。</p>
           </section>
-          <section class="flash-example">
-            <h4>用第一块做自检</h4>
-            <p>第一块开始时 out_i=0、l_i=0、m_i=-inf。旧部分自然为 0，只剩当前块贡献除以 l_new，这正是普通 softmax 在第一个块上的结果。</p>
-            <p>如果第一块就出现 NaN，优先检查是否先算了 l_new、分母是否为 0，以及 m_new 的 shape 是否正确。</p>
+          <section class="adv-panel good">
+            <h4>当前块的贡献</h4>
+            <p><code>(P_ij @ v_block) / l_new</code></p>
+            <p>先按当前块指数权重聚合 V，再除以合并后的共同分母。</p>
           </section>
         </div>
-
-        <div class="flash-roadmap">
-          <span><b>每个 j 块后</b>out_i 更新为合并结果</span>
-          <span><b>滚动状态</b>m_i=m_new，l_i=l_new</span>
-          <span><b>所有 j 完成</b>写回 out/m/l 的 i 切片</span>
+        <div class="adv-roadmap">
+          <span><b>更新 out_i</b>合并旧输出与当前 V 块</span>
+          <span><b>更新 m_i/l_i</b>供下一个 K/V 块使用</span>
+          <span><b>结束内层</b>当前 Q 块已看完全部 keys</span>
+          <span><b>写回全局</b>保存 out、m、l 对应切片</span>
         </div>
-
-        <div class="flash-test-grid">
-          <span><strong>8 / 4 / block 2</strong><br>检查常规分块</span>
-          <span><strong>5 / 3 / block 3</strong><br>检查不完整尾块</span>
-          <span><strong>3 / 2 / block 1</strong><br>检查逐 token 更新</span>
-        </div>
-
-        <div class="flash-callout">测试比较的是分块结果与标准 Attention 的最大绝对误差。shape 正确但误差大，通常不是循环边界问题，而是旧贡献没有按 m_new 重缩放、scale 乘了两次，或状态更新/写回漏了一步。</div>
-      </div>
-              <div class="flash-practice">
-        <div class="syntax-card"><h4>语法热身：用滚动加权平均理解输出合并</h4><pre><code># old_avg 已经是归一化平均值，old_total 是旧权重和
-old_scale = torch.exp(old_max - new_max)
-new_total = old_total * old_scale + block_total
-
-old_share = old_avg * (old_total * old_scale / new_total)
-new_share = block_weighted_sum / new_total
-merged_avg = old_share + new_share</code></pre></div>
-        <div class="flash-map">
-          <h4>从例子迁移到 TODO 6 和写回</h4>
-          <ul>
-            <li><code>old_avg</code> 对应 out_i，<code>block_weighted_sum</code> 对应 P_ij @ v_block。</li>
-            <li>先得到新的 out_i，再把 m_i、l_i 更新为 m_new、l_new，下一轮 j 才能接着累计。</li>
-            <li>内层循环结束只代表当前 Q 块完成；还要把三个局部状态写回全局的 i 切片。</li>
-            <li>最后依次跑 Notebook 的三个测试，用误差和边界 case 判断是否真正等价。</li>
-          </ul>
+        <div class="adv-checks">
+          <span><b>case 1</b><br>S=8,D=4,block=2</span>
+          <span><b>case 2</b><br>S=5,D=3,block=3</span>
+          <span><b>case 3</b><br>S=3,D=2,block=1</span>
+          <span><b>误差</b><br>max abs diff &lt; 1e-5</span>
         </div>
       </div>
+              <div class="adv-practice">
+  <div class="syntax-card"><h4>语法热身：用“旧平均 + 新一批数据”练同分母合并</h4><pre><code>import torch
+
+old_mean = torch.tensor([[10.0, 20.0]])
+old_weight = torch.tensor([[2.0]])
+new_weighted_sum = torch.tensor([[9.0, 12.0]])
+new_weight = torch.tensor([[3.0]])
+
+total_weight = old_weight + new_weight
+merged = old_mean * (old_weight / total_weight)
+merged = merged + new_weighted_sum / total_weight
+print(merged.shape)  # [1,2]</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 TODO 6</h4>
+  <ul><li><code>old_mean</code>：对应 out_i，它已经是旧块归一化后的输出</li><li><code>old_weight</code>：对应修正后的 l_i * exp(m_i-m_new)</li><li><code>new_weighted_sum</code>：对应 P_ij @ v_block</li><li><code>total_weight</code>：对应 l_new，旧、新贡献共享的分母</li><li><code>merged</code>：对应更新后的 out_i，shape 仍为 [Bq,D]</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>合并新块前，为什么旧 out_i 需要带上 l_i * old_scale？</p>
+              <p>为什么可见测试包含 seq_len=5、block_size=3？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-merge-output" value="0">
-                <span>为了把 dim 改成 seq_len</span>
+                <input type="radio" name="checkpoint-flash-output-and-tests" value="0">
+                <span>验证只能使用 GPU</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-merge-output" value="1">
-                <span>out_i 是旧的归一化平均值，要恢复并重标定旧分子</span>
+                <input type="radio" name="checkpoint-flash-output-and-tests" value="1">
+                <span>验证最后一块较短时切片、广播和写回仍正确</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-flash-merge-output" value="2">
-                <span>为了删除当前 V 块</span>
+                <input type="radio" name="checkpoint-flash-output-and-tests" value="2">
+                <span>验证 block_size 必须整除 seq_len</span>
               </label></div>
-              <div class="feedback" data-feedback="flash-merge-output"></div>
+              <div class="feedback" data-feedback="flash-output-and-tests"></div>
             </div>
           </div>
 
@@ -1341,16 +1366,16 @@ merged_avg = old_share + new_share</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-merge-output-0">
-                <span>TODO 6 先分别写出旧部分和新部分，核对两者都是 [Bq, dim]，再相加得到新的 out_i。</span>
+                <input type="checkbox" data-homework="flash-output-and-tests-0">
+                <span>完成 TODO 6、m_i/l_i 更新和三个全局写回；逐项确认 out_i 与 P_ij @ v_block 都是 [Bq,D]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-merge-output-1">
-                <span>每处理完一个 K/V 块，更新 m_i 与 l_i；每处理完一个 Q 块，把 out_i、m_i、l_i 写回对应全局切片。</span>
+                <input type="checkbox" data-homework="flash-output-and-tests-1">
+                <span>运行三组测试并记录最大绝对误差。若只有非整除用例失败，优先排查是否用固定 block_size 创建了临时张量或写回边界。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="flash-merge-output-2">
-                <span>运行全部三个测试；若误差超标，按“scale 是否重复、old_scale 是否使用、状态是否逐块更新、尾块是否自然切片”四项逐一排查。</span>
+                <input type="checkbox" data-homework="flash-output-and-tests-2">
+                <span>若所有结果都有系统性偏差，检查 scale 是否只应用一次；若后几个 K 块贡献异常，检查每轮是否更新 m_i 和 l_i。</span>
               </label>
           </div>
         </article>
@@ -1370,8 +1395,8 @@ merged_avg = old_share + new_share</code></pre></div>
 
   <script>
     const levelId = "20";
-    const checkpointData = {"flash-state-and-tiles":{"answer":2,"explain":"Python 切片允许终点超过长度，最后一块会自然缩短为剩余的 2 行。"},"flash-score-max-normalizer":{"answer":0,"explain":"去掉最后一维后容易得到 [Bq]，它与 [Bq,Bk] 的广播方向不符合逐行 softmax 的需要。"},"flash-merge-output":{"answer":1,"explain":"旧输出已经除过旧 l_i；合并前需要恢复它代表的加权贡献，并按新的最大值标尺缩放。"}};
-    const predictData = {"flash-state-and-tiles":{"answer":0,"revealNote":"如果所有 score 都是负数，m=0 会引入一个从未出现过的假最大值；-inf 才代表“还没看过任何数据”。"},"flash-score-max-normalizer":{"answer":0,"revealNote":"每个 query 都要和当前块的每个 key 得到一个分数，因此行数来自 Q，列数来自 K。"},"flash-merge-output":{"answer":0,"revealNote":"shape 一样只说明能执行相加，不说明数学含义一致。在线 softmax 的难点正是统一标尺和归一化因子。"}};
+    const checkpointData = {"flash-tiles-and-state":{"answer":2,"explain":"Online Softmax 对每个 query 行维护一个统计量；[Bq,1] 能自然与 [Bq,Bk] 运算。"},"flash-online-softmax":{"answer":0,"explain":"先从 S_ij 每行取 m_block，再把 m_block 与同形状的 m_i 逐行比较得到 m_new。"},"flash-output-and-tests":{"answer":1,"explain":"第二组用例专门覆盖尾块大小不一致；硬编码固定 Bq/Bk 会在这里暴露。"}};
+    const predictData = {"flash-tiles-and-state":{"answer":0,"revealNote":"切片终点可以超过序列长度，Python 会自然返回剩余两行。可见测试专门覆盖了不能整除的尾块。"},"flash-online-softmax":{"answer":0,"revealNote":"旧项原本以 2 为基准，改成更大的 5 后，每个旧指数都要缩小 exp(2-5) 倍。"},"flash-output-and-tests":{"answer":0,"revealNote":"out_i 在循环中被重新绑定为新张量；必须显式写回全局 out 的当前切片。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
     const homeworkTotal = 9;

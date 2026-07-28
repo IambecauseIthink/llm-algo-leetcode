@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1003,26 +1028,26 @@
         <article class="lesson-card inquiry" data-lesson="sft-build-batch">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：构造 SFT 的 input_ids 与 labels</span>
+            <span class="todo-pill">TODO 1：构造 input_ids 与 labels</span>
           </div>
-          <h2>先造监督样本：上下文要保留，prompt 不计分</h2>
+          <h2>把 prompt 和 response 变成可监督的 SFT 样本</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt 有 3 个 token，response 有 4 个 token，max_len=8。</p>
-            <p class="predict-q">补齐完成后，labels 中应该有几个 -100？</p>
+            <p class="predict-hook">prompt=[1,2,3]，response=[4,5]，max_len=7，pad_id=0。</p>
+            <p class="predict-q">正确的 labels 是哪一个？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-sft-build-batch" value="0">
-                <span>4 个：3 个 prompt 位置加 1 个 padding 位置</span>
+                <span>[-100,-100,-100,4,5,-100,-100]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-build-batch" value="1">
-                <span>3 个：只忽略 prompt</span>
+                <span>[1,2,3,4,5,0,0]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-build-batch" value="2">
-                <span>1 个：只忽略 padding</span>
+                <span>[-100,-100,-100,-100,-100,0,0]</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="sft-build-batch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1030,87 +1055,61 @@
           <div class="gated" data-gated="sft-build-batch">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>prompt_ids 是用户提示的 token id 列表，response_ids 是希望模型学会生成的回答 token id 列表。两者都先是 Python list。</li><li>input_ids 决定模型能看到什么；labels 决定哪些位置产生训练误差。它们长度必须始终相同。</li><li>CrossEntropyLoss 的 ignore_index=-100 会跳过标签值为 -100 的位置，因此 -100 是监督开关，不是词表里的 token。</li><li>函数随后已有统一的裁剪或补齐逻辑：input 用 pad_id 补，labels 用 -100 补，最终都变成 torch.long。</li></ul>
+              <ul><li>input_ids 是模型真正读取的 token 序列；labels 决定每个位置是否产生训练损失。</li><li>CrossEntropyLoss 的 ignore_index=-100 会忽略 label 为 -100 的位置。</li><li>Python 列表用 + 表示拼接；[value] * n 会生成 n 个相同值。</li><li>函数最终返回两个 dtype=torch.long 的一维 Tensor，长度都必须恰好等于 max_len。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>模型需要先读到问题，才能写回答，所以 prompt 必须出现在 input_ids；但这页只训练回答，不要求模型复述问题，所以 prompt 对应的 labels 放 -100。response 同时出现在输入和标签中，经过下一课的一位错位后，就形成“看前文，猜下一个回答 token”。</p>
+              <p>模型需要读完整的 prompt+response 才知道上下文，但我们只想让它因回答部分的预测好坏而受罚。因此 input_ids 保留整段内容，labels 在 prompt 和 padding 位置放 -100，只在 response 位置保留真实 token。</p>
               <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>input_ids：模型读到的完整序列</h4>
-            <div class="adv-flow">
-              <span>prompt<br>1, 2, 3</span><strong>response<br>4, 5, 6, 7</strong><span>padding<br>0</span>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>labels：只有回答与训练有关</h4>
-            <div class="adv-flow">
-              <span>忽略<br>-100, -100, -100</span><strong>监督<br>4, 5, 6, 7</strong><span>忽略<br>-100</span>
-            </div>
-          </section>
+        <div class="adv-roadmap">
+          <span><b>拼输入</b>prompt_ids + response_ids</span>
+          <span><b>做监督</b>prompt → -100，response → 原 token</span>
+          <span><b>统一长度</b>超长从开头截断，不足则 padding</span>
+          <span><b>转 Tensor</b>两个结果都是 long、shape [max_len]</span>
         </div>
-
-        <div class="adv-contract">
-          <span><code>prompt_ids</code></span><strong>上下文 token；进入 input，但对应 label 为 -100</strong>
-          <span><code>response_ids</code></span><strong>目标回答 token；进入 input，也保留为监督标签</strong>
-          <span><code>pad_id</code></span><strong>只用于把 input 补到 max_len</strong>
-          <span><code>-100</code></span><strong>告诉损失函数跳过 prompt 和 padding 位置</strong>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>阶段</th><th>input_ids</th><th>labels</th></tr></thead>
+          <thead><tr><th>位置</th><th>input_ids</th><th>labels</th><th>是否计算 loss</th></tr></thead>
           <tbody>
-            <tr><td>拼接后</td><td>长度 = prompt 长度 + response 长度</td><td>同长度，前段为 -100</td></tr>
-            <tr><td>裁剪后</td><td>最多 max_len</td><td>使用相同边界裁剪</td></tr>
-            <tr><td>补齐后</td><td>pad_id 补到 max_len</td><td>-100 补到 max_len</td></tr>
-            <tr><td>返回时</td><td><code>[max_len]</code>，torch.long</td><td><code>[max_len]</code>，torch.long</td></tr>
+            <tr><td>prompt</td><td>原 prompt token</td><td><code>-100</code></td><td>否</td></tr>
+            <tr><td>response</td><td>原 response token</td><td>原 response token</td><td>是</td></tr>
+            <tr><td>padding</td><td><code>pad_id</code></td><td><code>-100</code></td><td>否</td></tr>
           </tbody>
         </table>
-
-        <div class="adv-callout">不要把 prompt 从 input_ids 删除。mask 的是损失，不是上下文；模型仍需要看到 prompt 才能条件生成 response。</div>
+        <div class="adv-callout">Notebook 明确采用“从开头直接截断”的简化策略。不要自行实现保留 response 的复杂截断，否则可能偏离本题测试契约。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：把题干与答案做成另一条监督序列</h4><pre><code>question_tokens = [9, 8]
-answer_tokens = [7, 6, 5]
-sequence = question_tokens + answer_tokens
-targets = [-100] * len(question_tokens) + answer_tokens
-
+  <div class="syntax-card"><h4>语法热身：为问答卡片构造输入与评分掩码</h4><pre><code>question = [8, 9]
+answer = [10, 11, 12]
 limit = 7
-missing = limit - len(sequence)
-sequence = sequence + [0] * missing
-targets = targets + [-100] * missing
 
-sequence = torch.tensor(sequence, dtype=torch.long)
-targets = torch.tensor(targets, dtype=torch.long)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>question_tokens / answer_tokens</code> -&gt; <code>prompt_ids / response_ids</code>。</li>
-            <li><code>sequence</code> -&gt; TODO 1 的 <code>input_ids</code> 拼接结果。</li>
-            <li><code>targets</code> -&gt; TODO 1 的 <code>labels</code>；prompt 长度决定前面有几个 -100。</li>
-            <li><code>limit</code> -&gt; <code>max_len</code>；Notebook 已提供裁剪与补齐分支，不要在 TODO 中重复一遍。</li>
-          </ul>
-        </div>
-      </div>
+tokens = question + answer
+targets = [-100] * len(question) + answer
+padding = limit - len(tokens)
+tokens = tokens + [0] * padding
+targets = targets + [-100] * padding</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>question / answer</code> 对应 <code>prompt_ids / response_ids</code>。</li><li><code>tokens / targets</code> 对应 <code>input_ids / labels</code>。</li><li><code>limit</code> 对应 <code>max_len</code>，Notebook 还要求先判断截断或 padding。</li><li>最后把两个列表分别转成 <code>torch.long</code> Tensor。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 prompt token 要留在 input_ids，却在 labels 中写成 -100？</p>
+              <p>为什么 prompt token 仍放进 input_ids，却在 labels 中写成 -100？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-build-batch" value="0">
-                <span>因为 -100 是 prompt 的 pad_id</span>
+                <span>Embedding 不能读取 response</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-build-batch" value="1">
-                <span>模型需要 prompt 作为上下文，但本页只让 response 位置贡献 loss</span>
+                <span>模型需要它作为上下文，但本实验不让 prompt 位置贡献 loss</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-build-batch" value="2">
-                <span>因为模型不能读取正整数 token</span>
+                <span>-100 会让 token 自动移到 GPU</span>
               </label></div>
               <div class="feedback" data-feedback="sft-build-batch"></div>
             </div>
@@ -1122,45 +1121,45 @@ targets = torch.tensor(targets, dtype=torch.long)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-build-batch-0">
-                <span>完成 TODO 1：只负责 prompt/response 的拼接与 label mask，把已有 max_len 裁剪和补齐逻辑留在后面统一处理。</span>
+                <span>完成 input_ids=prompt+response，以及 labels=prompt 对应 -100、response 保留原 token。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-build-batch-1">
-                <span>shape/dtype/device 自检：返回的 input_ids、labels 都应为 [max_len]、torch.long；torch.tensor 默认创建在 CPU，符合本 Notebook 的 CPU-first 测试。</span>
+                <span>按 Notebook 顺序处理长度：超长时两个列表都取 [:max_len]；不足时 input 补 pad_id、labels 补 -100。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-build-batch-2">
-                <span>为测试样例手算 max_len=8 的两个返回序列；随后 unsqueeze/repeat 后应得到 batch shape [4,8]。</span>
+                <span>返回两个 torch.long Tensor，并确认测试样本得到 shape [8]；随后 repeat 后 batch shape 是 [4,8]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-build-batch-3">
-                <span>常见错误排查：若 prompt 也产生 loss，检查 labels 前缀；若长度不一致，检查拼接和 padding；若 Embedding 报 dtype 错，检查是否返回 long。</span>
+                <span>错误诊断：长度不同时检查两个列表是否同步截断/补齐；prompt 也产生 loss 时检查 labels mask；Embedding 报 dtype 错时检查是否用了 long。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="sft-next-token-loss">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：shift logits、shift labels 与交叉熵</span>
+            <span class="todo-pill">TODO 2：shift logits、shift labels 并计算交叉熵</span>
           </div>
-          <h2>错开一位：让当前位置预测下一个 token</h2>
+          <h2>错开一位：让位置 t 预测位置 t+1</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
             <p class="predict-hook">logits.shape=[4,8,64]，labels.shape=[4,8]。</p>
-            <p class="predict-q">完成 next-token shift 后，哪组 shape 正确？</p>
+            <p class="predict-q">完成 shift 并展平后，交叉熵的两个输入 shape 是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-sft-next-token-loss" value="0">
-                <span>shift_logits=[4,7,64]，shift_labels=[4,7]</span>
+                <span>[28,64] 与 [28]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-next-token-loss" value="1">
-                <span>shift_logits=[4,8,63]，shift_labels=[4,7]</span>
+                <span>[32,64] 与 [32]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-next-token-loss" value="2">
-                <span>shift_logits=[3,8,64]，shift_labels=[4,8]</span>
+                <span>[4,7] 与 [4,7]</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="sft-next-token-loss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1168,93 +1167,69 @@ targets = torch.tensor(targets, dtype=torch.long)</code></pre></div>
           <div class="gated" data-gated="sft-next-token-loss">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>TinyCausalLM 输出 logits，shape 是 [batch_size, seq_len, vocab_size]；最后一维是每个候选 token 的未归一化分数。</li><li>labels 的 shape 是 [batch_size, seq_len]；每个位置存正确 token id 或 -100。</li><li>自回归训练要求位置 t 的输出去预测位置 t+1 的 token，所以 logits 去掉最后一步，labels 去掉第一步。</li><li>CrossEntropyLoss 接收分类分数 [N,C] 与类别索引 [N]；这里 C=vocab_size，需要把 batch 和时间两维展平。</li></ul>
+              <ul><li>TinyCausalLM 输出 logits.shape=[B,T,V]，最后一维 V 是词表类别数；labels.shape=[B,T]。</li><li>自回归训练中，位置 t 的 logits 用来预测下一个 token，即 labels 的位置 t+1。</li><li>切片后的 Tensor 可能不连续；contiguous 后再 view 展平更稳妥。</li><li>CrossEntropyLoss 接收 [N,C] 浮点 logits 与 [N] long targets，并通过 ignore_index=-100 跳过 mask。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>序列像接龙：读到第 0 个 token 后预测第 1 个，读到第 1 个后预测第 2 个。最后一个位置没有“下一个标签”，所以 logits 丢掉末尾；第一个 token 前没有本函数提供的预测位置，所以 labels 丢掉开头。</p>
+              <p>把 logits 行看成每个位置写下的“下一词猜测”。第 0 个位置的猜测应与第 1 个 token 对答案，第 1 个位置与第 2 个 token 对答案，所以 logits 去掉最后一步，labels 去掉第一步，然后再按 token 做分类。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>原 logits</b>[B, T, V]</span>
-          <span><b>去最后时间步</b>[B, T-1, V]</span>
-          <span><b>labels 去第一项</b>[B, T-1]</span>
-          <span><b>展平分类</b>[B×(T-1), V] 对 [B×(T-1)]</span>
+        <div class="adv-flow">
+          <span>logits[:,0]</span><strong>预测 labels[:,1]</strong>
+          <span>logits[:,1]</span><strong>预测 labels[:,2]</strong>
+          <span>...</span><strong>直到 T-2 → T-1</strong>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel neutral">
-            <h4>时间位置如何配对</h4>
-            <div class="adv-contract">
-              <span>logits 位置 0</span><strong>对齐 labels 位置 1</strong>
-              <span>logits 位置 1</span><strong>对齐 labels 位置 2</strong>
-              <span>logits 位置 T-2</span><strong>对齐 labels 位置 T-1</strong>
-              <span>logits 位置 T-1</span><strong>没有下一个标签，丢弃</strong>
-            </div>
-          </section>
-          <section class="adv-panel blue">
-            <h4>分类损失眼中的数据</h4>
-            <div class="adv-flow">
-              <span>B 个样本</span><span>T-1 个位置</span><strong>B×(T-1) 道 V 选 1 的分类题</strong>
-            </div>
-            <p><code>ignore_index=-100</code> 会跳过 prompt 与 padding 对应的题目。</p>
-          </section>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>变量</th><th>Notebook 测试中的 shape</th><th>语义</th></tr></thead>
+          <thead><tr><th>变量</th><th>切片前</th><th>切片后</th><th>送入 CE 前</th></tr></thead>
           <tbody>
-            <tr><td><code>logits</code></td><td><code>[4,8,64]</code></td><td>每条序列每个位置对 64 个词的分数</td></tr>
-            <tr><td><code>shift_logits</code></td><td><code>[4,7,64]</code></td><td>去掉没有下一个目标的最后一步</td></tr>
-            <tr><td><code>shift_labels</code></td><td><code>[4,7]</code></td><td>去掉无法由序列内前一步预测的首 token</td></tr>
-            <tr><td><code>loss</code></td><td><code>[]</code></td><td>忽略 -100 后的平均交叉熵标量</td></tr>
+            <tr><td><code>logits</code></td><td><code>[B,T,V]</code></td><td><code>[B,T-1,V]</code></td><td><code>[B(T-1),V]</code></td></tr>
+            <tr><td><code>labels</code></td><td><code>[B,T]</code></td><td><code>[B,T-1]</code></td><td><code>[B(T-1)]</code></td></tr>
           </tbody>
         </table>
-
-        <div class="adv-callout">不要在词表维上 shift。省略号切片中的倒数第二维是时间，最后一维 V 必须完整保留给 CrossEntropyLoss。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用天气序列练 next-step 分类</h4><pre><code>batch, days, states = 2, 6, 5
-weather_logits = torch.randn(batch, days, states)
-weather_labels = torch.tensor([
-    [-100, 1, 2, 3, 4, -100],
-    [-100, 2, 2, 1, 0, -100],
-])
-
-predict_next = weather_logits[..., :-1, :].contiguous()
-next_state = weather_labels[..., 1:].contiguous()
-criterion = nn.CrossEntropyLoss(ignore_index=-100)
-loss = criterion(
-    predict_next.view(-1, predict_next.size(-1)),
-    next_state.view(-1),
-)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>weather_logits</code> -&gt; <code>logits</code>，最后一维 <code>states</code> -&gt; <code>vocab_size</code>。</li>
-            <li><code>predict_next</code> -&gt; <code>shift_logits</code>，保留所有类别列，只去掉最后时间步。</li>
-            <li><code>next_state</code> -&gt; <code>shift_labels</code>，去掉第一时间步。</li>
-            <li>两次 <code>view</code> -&gt; TODO 2 中把 token 位置合成 N，再交给 ignore_index=-100 的交叉熵。</li>
-          </ul>
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>监督有效位置</h4>
+            <p>response label 保留词表下标，CrossEntropy 会计算分类误差。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>忽略位置</h4>
+            <p>prompt 与 padding 的 label 是 -100；损失函数必须显式设置 ignore_index=-100。</p>
+          </section>
         </div>
       </div>
+              <div class="adv-practice">
+  <div class="syntax-card"><h4>语法热身：把天气序列的当前时刻与下一时刻对齐</h4><pre><code>scores = torch.randn(2, 5, 4)
+next_state = torch.tensor([[0, 1, 2, 3, 1], [2, 2, 0, 1, 3]])
+
+usable_scores = scores[..., :-1, :].contiguous()
+future_targets = next_state[..., 1:].contiguous()
+loss_fn = nn.CrossEntropyLoss()
+loss = loss_fn(
+    usable_scores.view(-1, usable_scores.size(-1)),
+    future_targets.view(-1),
+)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>scores / next_state</code> 对应 <code>logits / labels</code>。</li><li><code>usable_scores</code> 对应 <code>shift_logits</code>；去掉最后一个预测位置。</li><li><code>future_targets</code> 对应 <code>shift_labels</code>；去掉第一个目标位置。</li><li>Notebook 的 loss_fn 还必须加入 <code>ignore_index=-100</code>。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>送入 CrossEntropyLoss 前，为什么 shift_logits 的最后一维不能展平掉？</p>
+              <p>为何不能让 logits[...,1:,:] 对 labels[...,:-1]？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-next-token-loss" value="0">
-                <span>它表示 batch_size</span>
+                <span>因为 labels 必须是 float</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-next-token-loss" value="1">
-                <span>它只包含被忽略的位置</span>
+                <span>因为 logits 不能切片</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-next-token-loss" value="2">
-                <span>它是分类类别数 vocab_size，必须保留为 C 维</span>
+                <span>那会让后一个位置预测前一个 token，方向与 causal LM 目标相反</span>
               </label></div>
               <div class="feedback" data-feedback="sft-next-token-loss"></div>
             </div>
@@ -1266,45 +1241,45 @@ loss = criterion(
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-loss-0">
-                <span>完成 TODO 2：先沿时间维构造 shift_logits 与 shift_labels，再用 ignore_index=-100 的交叉熵得到标量 loss；可按语法支架自行组织 loss_fct。</span>
+                <span>完成两个 shift，并在 view 前调用 contiguous；检查 shift_logits=[B,T-1,V]、shift_labels=[B,T-1]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-loss-1">
-                <span>shape/dtype/device 自检：测试时两者应从 [4,8,64]/[4,8] 变为 [4,7,64]/[4,7]；logits 为浮点，labels 为 long，且必须同 device。</span>
+                <span>用 nn.CrossEntropyLoss(ignore_index=-100) 对展平后的 Tensor 计算标量 loss 并返回。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-loss-2">
-                <span>先单独调用 compute_sft_loss，确认返回 0 维有限 Tensor；端到端测试会比较训练前后的 .item() 数值。</span>
+                <span>错误诊断：target size 报错时检查时间维切片与展平；prompt/pad 也计入 loss 时检查 ignore_index；view 报 stride 时检查 contiguous。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-loss-3">
-                <span>常见错误排查：类别越界或 dtype 报错查 labels；size mismatch 查 shift 方向；prompt 被计入 loss 查 ignore_index；view 报错时确认切片后 contiguous。</span>
+                <span>测试会在训练前后重复调用该函数，因此实现不能修改传入的 logits 或 labels。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="sft-training-loop">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：梯度累积训练循环与 history</span>
+            <span class="todo-pill">TODO 3：micro-batch 训练、梯度累积与 history</span>
           </div>
-          <h2>合上训练闭环：每次 update 包含两次 micro-backward</h2>
+          <h2>合成四层闭环：数据、模型、loss 与优化器</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">num_updates=30、accum_steps=2。每个内层 micro-batch 都 backward，但 step 在内层结束后。</p>
-            <p class="predict-q">完整实验会调用多少次 optimizer.step()？</p>
+            <p class="predict-hook">input_ids.shape=[4,8]、accum_steps=2。</p>
+            <p class="predict-q">每个 micro-batch 的 mb_input 与模型 logits shape 分别是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-sft-training-loop" value="0">
-                <span>30 次</span>
+                <span>[2,8] 与 [2,8,64]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-training-loop" value="1">
-                <span>60 次</span>
+                <span>[4,4] 与 [4,4,64]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-sft-training-loop" value="2">
-                <span>2 次</span>
+                <span>[2,64] 与 [2,8]</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="sft-training-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1312,102 +1287,66 @@ loss = criterion(
           <div class="gated" data-gated="sft-training-loop">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>input_ids 与 labels 的 batch shape 都是 [4,8]；accum_steps=2，所以每个 micro-batch 有 2 条序列。</li><li>一个 update 开始时先 zero_grad，随后两段数据各自 forward、算 loss、缩放并 backward，最后只 step 一次。</li><li>history 每个 update 追加一个 total_loss，因此 num_updates=30 时长度必须恰好是 30。</li><li>测试重复同一条样本 4 次并使用较大学习率，是为了让小模型快速过拟合；验收重点是 final_loss 小于 init_loss。</li></ul>
+              <ul><li>input_ids 与 labels 的 batch size 必须能被 accum_steps 整除；Notebook 已为非法情况抛 ValueError。</li><li>每个 update 开始先 model.train 和 optimizer.zero_grad；每个 micro-batch 都 forward、loss、backward。</li><li>每段 loss 必须除以 accum_steps，循环结束后才 optimizer.step。</li><li>history 每个 update 追加一个 Python 数值；测试要求长度等于 num_updates，并要求最终 loss 小于初始 loss。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>这一课不再发明新公式，而是把前两课接上线：切两段 batch，各自经过模型和 SFT loss，把两份缩放梯度攒起来，再更新一次。外层循环重复 30 次，history 就像 30 张训练收据，证明每次 update 都完整走过。</p>
+              <p>这一题不是再造一个新算法，而是把前两项和第 12 课的梯度累积接好：同一批重复样本经过多次更新后能被小模型记住，loss 就应下降。这个“小样本过拟合”是验证训练闭环是否真的通电的工程方法。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>update 开始</b>train 模式 + zero_grad</span>
-          <span><b>micro 0</b>切片 → logits → loss/2 → backward</span>
-          <span><b>micro 1</b>切片 → logits → loss/2 → backward</span>
-          <span><b>update 结束</b>step → history 追加一次</span>
+          <span><b>数据层</b>[4,8] 的 input_ids 与 labels</span>
+          <span><b>模型层</b>Embedding → GRU → LM head，输出 [B,T,64]</span>
+          <span><b>优化层</b>shifted SFT loss → backward → step</span>
+          <span><b>控制层</b>2 个 micro-batch、30 次 update、记录 history</span>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>循环层级</h4>
-            <div class="adv-contract">
-              <span>外层 30 次</span><strong>控制参数更新次数，history 最终长度为 30</strong>
-              <span>内层 2 次</span><strong>控制一个 update 内的 micro-batch 数量</strong>
-              <span>step 次数</span><strong>每个外层循环 1 次，总共 30 次</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>测试为什么重复同一条样本</h4>
-            <div class="adv-flow">
-              <span>同一目标 ×4</span><span>干扰更少</span><span>反复训练</span><strong>loss 应明显下降</strong>
-            </div>
-            <p>它验证的是链路能学习，不是在评估泛化能力。</p>
-          </section>
+        <div class="adv-steps">
+          <div><b>1</b><code>每个 update 清梯度</code><span>旧更新不能污染新更新</span></div>
+          <div><b>2</b><code>切 mb_input / mb_labels</code><span>两者沿 batch 维使用同一范围</span></div>
+          <div><b>3</b><code>model → compute_sft_loss</code><span>把当前 micro-batch 接进前两项函数</span></div>
+          <div><b>4</b><code>loss / accum_steps → backward</code><span>累积等价平均梯度</span></div>
+          <div><b>5</b><code>step → history.append</code><span>每轮只更新一次并记录一个数值</span></div>
         </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>变量</th><th>shape / 类型</th><th>何时变化</th></tr></thead>
-          <tbody>
-            <tr><td><code>mb_input</code></td><td><code>[2,8]</code> long</td><td>每个 idx 切出不同两行</td></tr>
-            <tr><td><code>mb_labels</code></td><td><code>[2,8]</code> long</td><td>与 mb_input 使用同一范围</td></tr>
-            <tr><td><code>logits</code></td><td><code>[2,8,64]</code> float</td><td>每次 forward 重新计算</td></tr>
-            <tr><td><code>loss</code></td><td>0 维 float Tensor</td><td>每段先除 accum_steps</td></tr>
-            <tr><td><code>history</code></td><td>Python list[float]</td><td>每个 update 只 append 一次</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-checks">
-          <span>len(history) == 30</span>
-          <span>final_loss &lt; init_loss</span>
-          <span>每个 update 只 step 一次</span>
-          <span>total_loss 不持有计算图</span>
+        <div class="adv-contract">
+          <span>测试 batch</span><strong>同一条 [8] 样本 repeat 4 次，便于快速过拟合</strong>
+          <span>训练配置</span><strong>accum_steps=2，num_updates=30，AdamW lr=0.05</strong>
+          <span>行为断言</span><strong>len(history)==30 且 final_loss&lt;init_loss</strong>
         </div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用两段图像样本组成一次 update</h4><pre><code>parts = 2
-part_size = images.size(0) // parts
-curve = []
-
-for epoch_step in range(12):
+  <div class="syntax-card"><h4>语法热身：让一个小分类器反复学习同一批图形</h4><pre><code>history = []
+for update in range(update_count):
     optimizer.zero_grad()
-    measured = 0.0
-    for part_idx in range(parts):
-        start = part_idx * part_size
-        stop = (part_idx + 1) * part_size
-        image_part = images[start:stop]
-        label_part = classes[start:stop]
-        scores = classifier(image_part)
-        scaled = classification_loss(scores, label_part) / parts
-        scaled.backward()
-        measured += scaled.detach().item()
+    reported = 0.0
+    for part_x, part_y in mini_parts:
+        logits = classifier(part_x)
+        loss = loss_fn(logits, part_y) / len(mini_parts)
+        loss.backward()
+        reported += loss.detach().item()
     optimizer.step()
-    curve.append(measured)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>images / classes</code> -&gt; <code>input_ids / labels</code>，按同一 batch 范围切成 micro-batch。</li>
-            <li><code>classifier(image_part)</code> -&gt; <code>model(mb_input)</code> 得到 logits。</li>
-            <li><code>classification_loss</code> -&gt; 前一课实现的 <code>compute_sft_loss</code>。</li>
-            <li><code>curve.append(measured)</code> -&gt; 每次参数更新后向 <code>history</code> 追加一次 total_loss。</li>
-          </ul>
-        </div>
-      </div>
+    history.append(reported)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>mini_parts</code> 对应通过 idx 与 micro_size 切出的 <code>mb_input / mb_labels</code>。</li><li><code>classifier</code> 对应 <code>model</code>，随后调用 Notebook 的 <code>compute_sft_loss</code>。</li><li><code>len(mini_parts)</code> 对应 <code>accum_steps</code>。</li><li><code>history</code> 必须每个 update 追加一次，而不是每个 micro-batch 追加一次。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>Notebook 的 final_loss &lt; init_loss 断言主要证明什么？</p>
+              <p>为什么测试使用重复样本，并只检查最终 loss 小于初始 loss？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-training-loop" value="0">
-                <span>数据、SFT loss、反传与优化器更新已经组成可学习的闭环</span>
+                <span>重复样本容易快速过拟合，可用来验证整条训练链路是否接通</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-training-loop" value="1">
-                <span>模型已经具备真实任务泛化能力</span>
+                <span>因为重复会自动修复 label mask</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-sft-training-loop" value="2">
-                <span>history 中每个值都必须严格单调下降</span>
+                <span>为了测试模型泛化能力</span>
               </label></div>
               <div class="feedback" data-feedback="sft-training-loop"></div>
             </div>
@@ -1419,19 +1358,19 @@ for epoch_step in range(12):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-training-loop-0">
-                <span>完成 TODO 3：在内层依次切 mb_input/mb_labels、前向、调用 compute_sft_loss、按 accum_steps 缩放、backward 并累计 total_loss；内层后 step，外层末 append。</span>
+                <span>完成 micro-batch 切片、forward、缩放 loss、backward、total_loss 累加，并在内层循环后 step。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-training-loop-1">
-                <span>shape/dtype/device 自检：测试中 micro 输入/标签为 [2,8] long，logits 为 [2,8,64] float；模型、输入、标签须在同一 device，history 元素用 detach().item() 变成 float。</span>
+                <span>每个 update 只向 history 追加一次 total_loss；测试传入 num_updates=30，所以返回长度必须是 30。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-training-loop-2">
-                <span>运行 test_end_to_end_finetuning：必须同时满足 len(history)==30 与 final_loss&amp;lt;init_loss，打印值只作观察。</span>
+                <span>运行 test_end_to_end_finetuning，确认 final_loss&lt;init_loss；不要依赖固定 loss 数值，因为初始化和优化过程才决定它。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-training-loop-3">
-                <span>常见错误排查：history 长度 60 查 append 是否在内层；loss 不降查 step、缩放、shift 和 label mask；NameError 查是否仍保留 pass 或漏定义 micro 变量。</span>
+                <span>错误诊断：history 长度过长时检查 append 层级；loss 不降时依次检查 labels mask、shift 方向、loss 缩放、backward 和 step。</span>
               </label>
           </div>
         </article>
@@ -1451,8 +1390,8 @@ for epoch_step in range(12):
 
   <script>
     const levelId = "13";
-    const checkpointData = {"sft-build-batch":{"answer":1,"explain":"输入可见范围与损失监督范围是两件事；mask label 不会删除模型上下文。"},"sft-next-token-loss":{"answer":2,"explain":"交叉熵需要每个样本对所有类别的分数 [N,C]，因此只合并 batch 与时间维。"},"sft-training-loop":{"answer":0,"explain":"重复样本实验只验证最小训练链路能降低目标损失，不要求每一步单调，也不证明泛化。"}};
-    const predictData = {"sft-build-batch":{"answer":0,"revealNote":"prompt 不参与监督，padding 也不参与监督，所以两部分都使用 -100。"},"sft-next-token-loss":{"answer":0,"revealNote":"只在时间维错开一位；batch 维与 vocab 维都保持不变。"},"sft-training-loop":{"answer":0,"revealNote":"accum_steps 控制每次更新前累计几段梯度，不会把参数更新次数翻倍。"}};
+    const checkpointData = {"sft-build-batch":{"answer":1,"explain":"输入上下文与监督范围是两件事；mask labels 不会删除模型看到的 token。"},"sft-next-token-loss":{"answer":2,"explain":"当前时刻预测下一时刻：保留较早的 logits，配对较晚的 labels。"},"sft-training-loop":{"answer":0,"explain":"这里验收的是最小闭环，不是下游效果；连重复样本都学不会通常说明接口或更新路径有断点。"}};
+    const predictData = {"sft-build-batch":{"answer":0,"revealNote":"prompt 与 padding 都忽略，只有 response token 4、5 保留为监督目标。"},"sft-next-token-loss":{"answer":0,"revealNote":"每条序列保留 7 个预测位置，4×7=28；类别维 64 不变。"},"sft-training-loop":{"answer":0,"revealNote":"只切 batch 维；序列长度 8 不变，模型再增加词表维 64。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
     const homeworkTotal = 12;

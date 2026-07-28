@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 39 | GPTQ and AWQ Weight Quantization</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -992,20 +992,20 @@
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
-        <span class="pill" id="status">闯关题：0 / 3</span>
-        <span class="pill" id="xp">XP 0 / 300</span>
+        <span class="pill" id="predict-count">预判 0 / 2</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 39 | 零基础导学关卡</p>
+        <h1>GPTQ and AWQ Weight Quantization</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">39_GPTQ_and_AWQ_Weight_Quantization.ipynb</span>
+          <span class="pill">GPTQ</span><span class="pill">AWQ</span><span class="pill">Weight Quantization</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">calibrate -&gt; group -&gt; protect -&gt; quantize -&gt; dequantize -&gt; check error</div>
       </div>
     </section>
 
@@ -1025,104 +1025,123 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="weight-calibration-groups-and-awq-mask">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1-3：统计输入通道重要性、计算 group 数、标记每组 top-k 敏感位置</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>先找敏感通道：RMS 校准、向上分组与 AWQ mask</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">in_features=10、group_size=4。</p>
+            <p class="predict-q">n_groups 应该是多少，最后一组有几个通道？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="0">
+                <span>3 组，最后 2 个通道</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="1">
+                <span>2 组，最后 4 个通道</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="2">
+                <span>4 组，最后 0 个通道</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="weight-calibration-groups-and-awq-mask">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="weight-calibration-groups-and-awq-mask">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>Linear 权重 shape 是 [out_features,in_features]；校准激活最后一维也必须是 in_features。</li><li>RMS 的顺序是平方、求平均、开平方；对 activations 除最后一维外的所有维度归约，才能留下每个输入通道一个分数。</li><li>向上取整分组可写成 (length + group_size - 1) // group_size，保证不足一整组的尾部也被覆盖。</li><li>torch.topk(...).indices 返回局部 group 内的下标；布尔 mask 用 True 表示该位置被保护。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>4-bit 可表示的状态很少，误差不能平均分配。Notebook 用校准激活的 RMS 估计输入通道的重要程度：某通道经常出现大激活，它对应的权重误差更容易影响输出。AWQ 教学模式在每个 group 内挑出 top-k，先做一张保护名单，再量化剩余权重。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
+          <span><b>activations</b>[样本..., in_features]</span>
+          <span><b>RMS reduce</b>只留下 [in_features]</span>
+          <span><b>ceil groups</b>覆盖最后不足一组的通道</span>
+          <span><b>top-k mask</b>每组保护高重要性位置</span>
         </div>
+
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
-            <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+            <h4>TODO 1：维度为什么这样消失</h4>
+            <table class="adv-shapes">
+              <thead><tr><th>变量</th><th>shape</th><th>动作</th></tr></thead>
+              <tbody>
+                <tr><td><code>act</code></td><td>[16,8]</td><td>校准 batch 有 16 个样本、8 个输入通道</td></tr>
+                <tr><td><code>reduce_dims</code></td><td>(0,)</td><td>只归约样本维</td></tr>
+                <tr><td><code>importance</code></td><td>[8]</td><td>每个输入通道留下一个 RMS</td></tr>
+              </tbody>
+            </table>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
-            <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+            <h4>TODO 2-3：每组独立保护</h4>
+            <div class="adv-contract">
+              <span><code>in_features=8</code></span><strong>输入通道总数</strong>
+              <span><code>group_size=4</code></span><strong>得到 n_groups=2</strong>
+              <span><code>protect_ratio=.25</code></span><strong>每个 4 元 group 保护 k=1</strong>
+              <span><code>mask[topk]=True</code></span><strong>只标记当前 group 的局部位置</strong>
+            </div>
           </section>
         </div>
-        <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+
+        <div class="adv-flow">
+          <span>权重一行<br>[8]</span>
+          <span>group 0<br>通道 0:4</span>
+          <span>group 1<br>通道 4:8</span>
+          <strong>每组各自 top-k<br>写入二维 protected_mask</strong>
+        </div>
+
+        <div class="adv-callout">这只是 AWQ 核心直觉的教学模拟，不是完整 AWQ 搜索；GPTQ 模式不会进入 method == "awq" 分支，因此 protected_mask 应全部为 False。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用传感器校准值练习 RMS 与分组 top-k</h4><pre><code>samples = torch.tensor([[3.0, 0.0, 1.0, 2.0],
+                        [4.0, 0.0, 1.0, 2.0]])
+dims = tuple(range(samples.ndim - 1))
+importance = samples.pow(2).mean(dim=dims).sqrt()  # [4]
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+width = 3
+num_groups = (importance.numel() + width - 1) // width
+first_group = importance[0:3]
+mask = torch.zeros_like(first_group, dtype=torch.bool)
+top_index = torch.topk(first_group, k=1).indices
+mask[top_index] = True</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>samples</code> -&gt; <code>activations</code>；最后一维就是 in_features。</li>
+            <li><code>dims</code> 与 RMS 表达式 -&gt; TODO 1，输出元素数必须等于 in_features。</li>
+            <li><code>num_groups</code> -&gt; TODO 2；不能用普通整除丢掉尾组。</li>
+            <li><code>mask[top_index] = True</code> -&gt; TODO 3 的 <code>mask[topk] = True</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>对 shape [batch,seq,in_features] 的 activations，RMS 应归约哪些维？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="0">
+                <span>batch 与 seq，保留最后的 in_features</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="1">
+                <span>三个维度全部归约成标量</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="2">
+                <span>只归约 in_features</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="weight-calibration-groups-and-awq-mask"></div>
             </div>
           </div>
 
@@ -1131,212 +1150,141 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-0">
+                <span>完成 TODO 1-3：先验证 importance.numel()==in_features，再确保每个 AWQ group 至少保护 1 个且不超过本组长度。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-1">
+                <span>shape/dtype/device：测试中 weight=[4,8]、acts=[16,8]，importance=[8]、protected_mask=[4,8]；fit 会 detach 并转 float，但保持原 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-2">
+                <span>测试：AWQ protect_ratio=.25、group_size=4 时 protected_mask.any() 必须为 True；GPTQ 实例的 mask 必须全 False。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-3">
+                <span>错误诊断：importance 变标量说明误归约了最后一维；scales 少一组说明用了向下整除；mask 没生效则检查 topk 下标是否写成 True。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="weight-quantize-dequantize-and-mse">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 4-6：计算分组 scale、反量化 qweight，并用 MSE 检查重构误差</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>低比特闭环：scale 只看普通通道，恢复后再盖回保护值</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">bits=4，某组普通权重 absmax=1.4。</p>
+            <p class="predict-q">Notebook 的 qmax 与 scale 分别是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="0">
+                <span>7 与 0.2</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="1">
+                <span>15 与约 0.093</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="2">
+                <span>127 与约 0.011</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="weight-quantize-dequantize-and-mse">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="weight-quantize-dequantize-and-mse">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>本课采用对称量化：qmax=2^(bits-1)-1；bits=4 时 qmax=7，int8 只是保存这些低比特整数的容器。</li><li>scale = absmax / qmax，因此量化是 round(weight / scale)，反量化必须用 q * scale。</li><li>AWQ 的保护位置没有写入正常 qweight；反量化后要用 protected_weight 覆盖 mask=True 的位置。</li><li>MSE 是 (original - reconstructed)^2 的逐元素平均，返回一个标量 Tensor。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>量化和反量化必须是一对方向相反的操作。先用一个 group 的普通权重确定步长 scale，把连续值落到有限整数格点；恢复时乘回同一步长。被保护通道绕过格点近似，最后像贴补丁一样用原浮点值盖回去。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>普通通道的对称量化</h4>
+            <div class="adv-flow">
+              <span>base.abs().max()</span>
+              <span>除以 qmax<br>得到 scale</span>
+              <span>round(w/scale)</span>
+              <strong>clamp 后存 int8</strong>
+            </div>
+            <p><code>clamp_min(eps)</code> 防止全零 group 产生除零。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>反量化与保护覆盖</h4>
+            <div class="adv-flow">
+              <span>q_group<br>转 scales.dtype</span>
+              <span>q_group * scale</span>
+              <span>mask=True<br>取 protected_weight</span>
+              <strong>恢复完整 weight</strong>
+            </div>
+          </section>
         </div>
+
+        <div class="adv-contract">
+          <span><code>qweight</code></span><strong>shape [out_features,in_features]，dtype int8</strong>
+          <span><code>scales</code></span><strong>shape [out_features,n_groups]，每行每组一个 scale</strong>
+          <span><code>dequantize()</code></span><strong>恢复 shape [out_features,in_features] 的浮点近似权重</strong>
+          <span><code>forward(x)</code></span><strong>F.linear(x, restored_weight)，[2,8] -&gt; [2,4]</strong>
+        </div>
+
         <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
+          <thead><tr><th>TODO</th><th>Notebook 表达式方向</th><th>常见反向错误</th></tr></thead>
           <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
+            <tr><td>4 scale</td><td><code>absmax / qmax</code></td><td>写成 qmax / absmax</td></tr>
+            <tr><td>5 restore</td><td><code>q_group * scale</code></td><td>再次除以 scale</td></tr>
+            <tr><td>6 MSE</td><td><code>((weight-recon)**2).mean()</code></td><td>只求差值平均，正负会抵消</td></tr>
           </tbody>
         </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-callout">第 40 课会采用另一种 scale 定义 q=round(x*scale)，所以恢复时除 scale。不要只背“量化都乘或都除”；先看当前 scale 的公式，再写互逆操作。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用一组温度权重练习对称量化闭环</h4><pre><code>values = torch.tensor([-1.0, -0.2, 0.6, 1.4])
+qmax = 7
+eps = 1e-8
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
-            </div>
+scale = (values.abs().max() / qmax).clamp_min(eps)
+codes = torch.clamp(torch.round(values / scale), -qmax, qmax)
+restored = codes * scale
+error = ((values - restored) ** 2).mean()
 
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
-              <div class="checkpoint-options">
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
-              </label>
-              <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
-              </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
-            </div>
-          </div>
-
-          <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-
-              <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
-              </label>
-          </div>
-        </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
-          <div class="lesson-top">
-            <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
-          </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
-
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
-          </div>
-
-          <div class="gated" data-gated="paged-cache-rebuild">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+assert restored.shape == values.shape
+assert error &gt;= 0</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>values</code> -&gt; TODO 4 的 <code>base</code>，也就是排除保护位置后的普通权重。</li>
+            <li><code>scale</code> -&gt; <code>scales[row,g]</code>；Notebook 每行每组都单独保存。</li>
+            <li><code>codes * scale</code> -&gt; TODO 5 的 <code>dequant</code>。</li>
+            <li><code>error</code> -&gt; TODO 6；Notebook 比较完整原权重与 <code>dequantize()</code>。</li>
+          </ul>
         </div>
-        <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
       </div>
-              <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
-
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
-
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>为什么 AWQ 反量化后还要按 protected_mask 覆盖 protected_weight？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="0">
+                <span>为了把所有 qweight 变成 bool</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="1">
+                <span>保护通道没有按普通低比特路径保存，需要恢复原浮点权重</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="2">
+                <span>为了改变输出 shape</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="weight-quantize-dequantize-and-mse"></div>
             </div>
           </div>
 
@@ -1345,16 +1293,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-0">
+                <span>完成 TODO 4-6，并在一个 group 上打印 base、scale、q_group、dequant，确认除 scale 与乘 scale 互为反向操作。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-1">
+                <span>shape/dtype/device：测试要求 qweight 为 int8、scales=[4,2]、restored=[4,8]、forward([2,8])=[2,4]；输入 x 与保存权重需位于兼容 device。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-2">
+                <span>测试：AWQ 与 GPTQ 都要完成 dequantize；MSE 只要求非负，不能把“非负”误当成精度充分的证明。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-3">
+                <span>错误诊断：输出量级异常先查乘除方向；保护位置变 0 查覆盖逻辑；forward 报 device mismatch 时确保校准权重与 x 在同一设备。</span>
               </label>
           </div>
         </article>
@@ -1362,23 +1314,23 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="38_decode_scheduling.html">上一关：L38</a>
+        <a class="primary" href="40_fp8_and_kv_cache_quantization.html">下一关：L40</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
-    const predictTotal = 3;
-    const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const levelId = "39";
+    const checkpointData = {"weight-calibration-groups-and-awq-mask":{"answer":0,"explain":"Notebook 用 tuple(range(act.ndim - 1))，也就是保留最后一维的逐通道重要性。"},"weight-quantize-dequantize-and-mse":{"answer":1,"explain":"保护位置绕开了普通量化误差；覆盖只替换数值，不改变 shape。"}};
+    const predictData = {"weight-calibration-groups-and-awq-mask":{"answer":0,"revealNote":"(10+4-1)//4=3，区间依次是 0:4、4:8、8:10。"},"weight-quantize-dequantize-and-mse":{"answer":0,"revealNote":"有符号 4-bit 教学范围使用 qmax=2^(4-1)-1=7，scale=1.4/7=0.2。"}};
+    const predictTotal = 2;
+    const checkpointTotal = 2;
+    const homeworkTotal = 8;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

@@ -55,6 +55,15 @@ const advancedStyles = `
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -81,6 +90,7 @@ const advancedStyles = `
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -224,6 +234,8 @@ const advancedStyles = `
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,

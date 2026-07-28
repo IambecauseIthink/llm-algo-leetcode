@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 35 | Quantized Inference and Deployment</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -1000,12 +1000,12 @@
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 35 | 零基础导学关卡</p>
+        <h1>Quantized Inference and Deployment</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">35_Quantized_Inference_and_Deployment.ipynb</span>
+          <span class="pill">Quantization</span><span class="pill">Deployment</span><span class="pill">Benchmark</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">deploy when efficiency improves and error &lt;= budget</div>
       </div>
     </section>
 
@@ -1025,104 +1025,113 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="quantized-benchmark-latency">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1：完成量化推理 benchmark 的 warmup、计时与平均 latency</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>量化先测端到端延迟：低 bit 不自动等于更快</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">正式 5 次推理总共耗时 0.36 秒。</p>
+            <p class="predict-q">平均 latency 是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-quantized-benchmark-latency" value="0">
+                <span>72 ms</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-quantized-benchmark-latency" value="1">
+                <span>360 ms</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-quantized-benchmark-latency" value="2">
+                <span>1800 ms</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="quantized-benchmark-latency">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="quantized-benchmark-latency">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>baseline 与 quantized 必须使用相同输入、batch、seq len、解码策略、硬件和后端。</li><li>warmup 在秒表外，iters 循环在秒表内。</li><li>perf_counter 的差值是总秒数；除以 iters 后乘 1000 得单次平均毫秒。</li><li>量化只改变数值表示或存储，并不保证 kernel 生效，也不保证瓶颈一定在权重读取。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>模型变小只是部署候选的起点。反量化、kernel 支持和数据搬运都可能抵消收益，所以必须让 baseline 与量化方案跑过同一把秒表，再讨论 latency 是否真的下降。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
-        </div>
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
-            <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+            <h4>函数契约</h4>
+            <div class="adv-contract">
+              <span>输入</span><strong>fn、warmup=2、iters=5</strong>
+              <span>预热</span><strong>执行但不计入 latency</strong>
+              <span>正式测量</span><strong>只包住 iters 次 fn()</strong>
+              <span>返回</span><strong>avg_latency_ms，非负</strong>
+            </div>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
-            <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+            <h4>同口径比较</h4>
+            <div class="adv-checks">
+              <span>相同 prompt</span>
+              <span>相同 batch / seq len</span>
+              <span>相同解码策略</span>
+              <span>相同后端与硬件</span>
+            </div>
           </section>
         </div>
-        <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+
+        <div class="adv-flow">
+          <span>baseline<br>同一 benchmark</span>
+          <span>quantized<br>同一 benchmark</span>
+          <strong>比较 latency<br>而非只看 bit 数</strong>
+        </div>
+
+        <div class="adv-callout">当前 Notebook 不执行真实模型量化，也不要求 CUDA 同步。TODO 1 只实现可复用的 CPU-first 计时模板。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用图片压缩器练习平均延迟</h4><pre><code>import time
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+def latency_ms(compress_one, warmup=2, runs=5):
+    for _ in range(warmup):
+        compress_one()
+
+    start = time.perf_counter()
+    for _ in range(runs):
+        compress_one()
+    total = time.perf_counter() - start
+    return total / runs * 1000</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>compress_one</code> 对应 <code>fn</code>，<code>runs</code> 对应 <code>iters</code>。</li>
+            <li>start、total 的写法可直接迁移；返回变量名换成 <code>avg_latency_ms</code>。</li>
+            <li>Notebook 已经写好两个循环，你只补计时与公式，不要重写函数接口。</li>
+            <li>测试的 counter 用于确认 warmup=0 时只调用两次正式轮次。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>模型权重从 16 bit 变成 8 bit 后，能否不测就断言 latency 减半？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="0">
+                <span>能，只要 VRAM 下降</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="1">
+                <span>能，bit 数和 latency 永远成正比</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="2">
+                <span>不能，kernel、反量化和真实瓶颈都会影响端到端 latency</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="quantized-benchmark-latency"></div>
             </div>
           </div>
 
@@ -1131,108 +1140,131 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="quantized-benchmark-latency-0">
+                <span>完成 TODO 1，并标注 total 是秒、avg_latency_ms 是毫秒。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="quantized-benchmark-latency-1">
+                <span>测试契约：warmup=0、iters=2 时 counter 为 2，返回平均值非负。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="quantized-benchmark-latency-2">
+                <span>列出真实量化推理比较中必须固定的四项条件。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="quantized-benchmark-latency-3">
+                <span>错误诊断：结果过小检查是否忘记乘 1000；调用次数不对检查是否在循环外额外执行 fn。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="quantized-benefit-error-budget">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 2：汇总 latency、throughput、VRAM 与 error_delta，并判断误差预算</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>性能收益和误差约束分开算：error 不是越大越好的收益</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">量化新增误差 0.025，error_budget=0.02，三项性能都改善。</p>
+            <p class="predict-q">error_within_budget 应是什么，能否仅凭性能进入部署？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-quantized-benefit-error-budget" value="0">
+                <span>False，不能</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-quantized-benefit-error-budget" value="1">
+                <span>True，可以</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-quantized-benefit-error-budget" value="2">
+                <span>False，但仍可忽略</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="quantized-benefit-error-budget">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="quantized-benefit-error-budget">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>latency 与 VRAM 越低越好，差值使用 baseline - quantized。</li><li>throughput 越高越好，差值使用 quantized - baseline。</li><li>error_delta 使用 quantized error - baseline error，它描述新增误差，不是性能改善。</li><li>error_within_budget 要比较 error_delta 与 quant_metrics['error_budget']。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>量化部署同时有两条线：性能线希望更快、更省、更高吞吐；质量线希望新增误差不超过预算。把 error_delta 也套进“正数越好”会得到危险结论，所以它必须作为约束单独判断。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
-        </div>
         <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
+          <thead><tr><th>指标</th><th>公式</th><th>测试结果</th><th>如何判断</th></tr></thead>
           <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
+            <tr><td>latency</td><td><code>base - quant</code></td><td>28 ms</td><td>大于 0 为改善</td></tr>
+            <tr><td>throughput</td><td><code>quant - base</code></td><td>40</td><td>大于 0 为改善</td></tr>
+            <tr><td>VRAM</td><td><code>base - quant</code></td><td>5000 MB</td><td>大于 0 为改善</td></tr>
+            <tr><td>error</td><td><code>quant - base</code></td><td>0.012</td><td>不超过 0.02 预算</td></tr>
           </tbody>
         </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>性能收益</h4>
+            <div class="adv-checks">
+              <span>latency 降低</span>
+              <span>throughput 提高</span>
+              <span>VRAM 降低</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>质量闸门</h4>
+            <div class="adv-contract">
+              <span><code>error_delta</code></span><strong>量化方案新增的误差</strong>
+              <span><code>error_budget</code></span><strong>部署允许的最大新增误差</strong>
+              <span>通过条件</span><strong>error_delta 不超过预算</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-callout">即使 latency、throughput、VRAM 全部改善，只要 error_within_budget 为 False，就不能直接得出“可部署”。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用图片编码方案练习收益与质量预算</h4><pre><code>original = {'size_mb': 20.0, 'quality_loss': 0.0}
+compressed = {
+    'size_mb': 8.0,
+    'quality_loss': 0.03,
+    'loss_budget': 0.02,
+}
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
+size_gain = original['size_mb'] - compressed['size_mb']
+loss_delta = compressed['quality_loss'] - original['quality_loss']
+within_budget = loss_delta &lt;= compressed['loss_budget']</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>size_gain</code> 对应 VRAM 节省，沿用低指标的减法方向。</li>
+            <li><code>loss_delta</code> 对应 <code>error_delta</code>，表示新增质量代价。</li>
+            <li><code>loss_budget</code> 对应 <code>error_budget</code>，使用小于或等于比较。</li>
+            <li>再分别按高低偏好补上 latency_delta 与 throughput_delta，并写入 summary 的固定键名。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
+              <p>为什么 error_delta 不设置 error_improved = error_delta &gt; 0？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
+                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="0">
+                <span>新增误差通常是代价，应与预算比较，而不是把变大解释为改善</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
+                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="1">
+                <span>因为浮点数不能比较大小</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
+                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="2">
+                <span>因为 baseline 永远没有 error 键</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
+              <div class="feedback" data-feedback="quantized-benefit-error-budget"></div>
             </div>
           </div>
 
@@ -1241,102 +1273,127 @@ if needs_row:
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+                <input type="checkbox" data-homework="quantized-benefit-error-budget-0">
+                <span>完成 TODO 2，特别核对 error_delta 的方向和小于等于预算的条件。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+                <input type="checkbox" data-homework="quantized-benefit-error-budget-1">
+                <span>测试契约：28.0、40.0、5000.0、0.012，三项 improved 与 error_within_budget 均为 True。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
+                <input type="checkbox" data-homework="quantized-benefit-error-budget-2">
+                <span>把 quantized error 改为 0.03，确认只有 error_within_budget 变成 False。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="quantized-benefit-error-budget-3">
+                <span>错误诊断：误差预算判断相反时检查比较符号；数值出现 0.02 而非 0.012 时检查是否误用了 budget 作为 delta。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" data-lesson="quantized-deployment-report">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
+            <span class="todo-pill">TODO 3：生成量化方案、四项指标和部署建议组成的 Markdown 报告</span>
           </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
+          <h2>部署结论要过双闸门：性能可观，误差也要合格</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
+            <p class="predict-hook">error_within_budget=False，recommendation 是“重新校准后再测”。</p>
+            <p class="predict-q">error 行与结论应怎样写？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-quantized-deployment-report" value="0">
+                <span>超出预算；重新校准后再测</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-quantized-deployment-report" value="1">
+                <span>改善；直接上线</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
+                <input type="radio" name="predict-quantized-deployment-report" value="2">
+                <span>删除 error 行；只保留性能</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="quantized-deployment-report">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-cache-rebuild">
+          <div class="gated" data-gated="quantized-deployment-report">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
+              <ul><li>quant_name 是 W8A16、INT8、4-bit 等方案名，必须来自函数参数。</li><li>rows 需要 latency、throughput、VRAM、error 四行。</li><li>前三行读取 improved 布尔键；error 行读取 error_within_budget，显示满足预算或超出预算。</li><li>recommendation 是最终部署动作，例如扩大回归、重新校准或暂缓部署。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
+              <p>部署报告不是压缩率海报。它要让读者一眼看出方案、性能收益、质量闸门和下一步。只有性能与误差同时达标，才适合进入更大样本回归或线上验证。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+          <span><b>方案名</b>量化对象与 bit 配置</span>
+          <span><b>性能三行</b>latency / throughput / VRAM</span>
+          <span><b>质量一行</b>error 是否满足预算</span>
+          <span><b>部署建议</b>扩大测试、校准或停止</span>
         </div>
-        <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>测试样例的报告信号</h4>
+            <div class="adv-checks">
+              <span>W8A16</span>
+              <span>表格 header</span>
+              <span>error 满足预算</span>
+              <span>更大样本回归测试</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>不可部署也要如实输出</h4>
+            <p>若 error_within_budget 为 False，error 行必须写“超出预算”。recommendation 应指向重新校准、调整粒度或暂缓，而不是隐藏失败。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">测试只检查几个关键片段，但四项 rows 是函数契约的一部分。不要省略 error 行，也不要把 W8A16 写死。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
-
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
-
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
+        <div class="syntax-card"><h4>语法热身：用音频压缩方案练习双闸门报告</h4><pre><code>codec = 'Codec-X'
+speed_gain = 15
+quality_ok = False
+rows = [
+    f"| speed | {speed_gain} | {'改善' if speed_gain &gt; 0 else '未改善'} |",
+    f"| quality | 0.08 | {'满足预算' if quality_ok else '超出预算'} |",
+]
+advice = '重新调整压缩等级后再测试'
+report = "\n".join(
+    [f"方案：{codec}", '| 指标 | 变化 | 判断 |', '| --- | --- | --- |']
+    + rows + [f"部署建议：{advice}。"]
+)</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>codec</code> 对应 <code>quant_name</code>。</li>
+            <li>speed 行扩展为 latency、throughput、VRAM 三个性能行。</li>
+            <li><code>quality_ok</code> 对应 <code>summary['error_within_budget']</code>。</li>
+            <li><code>advice</code> 对应 <code>recommendation</code>，返回前缀按 Notebook 改为“量化方案”和“部署建议”。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>量化报告为什么必须包含 quant_name？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-quantized-deployment-report" value="0">
+                <span>因为 error_budget 会自动从名字推导</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-quantized-deployment-report" value="1">
+                <span>不同量化方案的 bit 数、粒度与后端条件不同，指标必须可追溯</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-quantized-deployment-report" value="2">
+                <span>因为字典不能保存方案名</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="quantized-deployment-report"></div>
             </div>
           </div>
 
@@ -1345,16 +1402,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="quantized-deployment-report-0">
+                <span>完成 TODO 3，生成四项 rows、部署 conclusion，并拼入 quant_name。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="quantized-deployment-report-1">
+                <span>测试契约：报告包含 W8A16、Markdown 表头和“更大样本回归测试”。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="quantized-deployment-report-2">
+                <span>传入一个误差超预算的 summary，确认 error 行显示“超出预算”。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="quantized-deployment-report-3">
+                <span>错误诊断：报告出现 undefined 时核对 summary 键名；方案名不变化时检查是否写死；表格单行时检查换行 join。</span>
               </label>
           </div>
         </article>
@@ -1366,19 +1427,19 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="34_distributed_parallel_benchmark.html">上一关：L34</a>
+        <a class="primary" href="36_prefix_caching_and_chunked_prefill.html">下一关：L36</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
+    const levelId = "35";
+    const checkpointData = {"quantized-benchmark-latency":{"answer":2,"explain":"量化收益必须通过同口径 benchmark 验证。"},"quantized-benefit-error-budget":{"answer":0,"explain":"性能差值和质量约束的语义不同，必须分开处理。"},"quantized-deployment-report":{"answer":1,"explain":"没有方案上下文的数字无法支持部署复现和选型。"}};
+    const predictData = {"quantized-benchmark-latency":{"answer":0,"revealNote":"0.36 / 5 * 1000 = 72 ms。"},"quantized-benefit-error-budget":{"answer":0,"revealNote":"0.025 超过 0.02；质量闸门失败，性能收益不能覆盖明确的误差约束。"},"quantized-deployment-report":{"answer":0,"revealNote":"报告必须保留质量失败，并让下一步动作回应这个阻塞原因。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

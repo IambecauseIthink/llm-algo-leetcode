@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1000,110 +1025,100 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="radix-lcp-scan">
+        <article class="lesson-card inquiry" data-lesson="radix-lcp">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：_lcp_len 逐 token 计算最长公共前缀长度</span>
+            <span class="todo-pill">TODO 1：实现 _lcp_len(cached_tokens, prompt_tokens)</span>
           </div>
-          <h2>最长公共前缀：双边界向前走，第一次不同就停</h2>
+          <h2>最长公共前缀：双重边界内逐位比较，第一次不同就停止</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">缓存路径是 [7,8]，新 prompt 是 [7,8,9,10]。</p>
+            <p class="predict-hook">缓存是 [1,2,3]，新 prompt 是 [1,9,3]。</p>
             <p class="predict-q">最长公共前缀长度是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-radix-lcp-scan" value="0">
-                <span>2</span>
+                <input type="radio" name="predict-radix-lcp" value="0">
+                <span>1</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-radix-lcp-scan" value="1">
-                <span>4</span>
+                <input type="radio" name="predict-radix-lcp" value="1">
+                <span>2，因为 1 和 3 都出现</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-radix-lcp-scan" value="2">
-                <span>0</span>
+                <input type="radio" name="predict-radix-lcp" value="2">
+                <span>3</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="radix-lcp-scan">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="radix-lcp">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="radix-lcp-scan">
+          <div class="gated" data-gated="radix-lcp">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>cached_tokens 与 prompt_tokens 都是 Python token_id 列表，不是 PyTorch 张量。索引从 0 开始。</li><li>match_len 同时表示“已匹配数量”和“下一次要比较的索引”。初始为 0。</li><li>循环继续前必须同时保证 match_len 小于两个列表长度，否则较短列表会越界。</li><li>一旦同一位置 token 不相等，公共前缀已经结束，后面即使再次相等也不能计入。</li></ul>
+              <ul><li>cached_tokens 和 prompt_tokens 都是 Python token_id 序列，本题使用列表，不涉及张量 shape、dtype 或 device。</li><li>公共前缀必须从索引 0 连续开始；中间一旦不同，后面即使再次相等也不能计入。</li><li>循环条件要同时保护两个序列边界，避免一个短序列已经结束却继续索引。</li><li>match_len 同时表示当前比较索引和已经连续匹配的 token 数。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把两列 token 从左端对齐，用一根指针一起向右走。相同就把 match_len 加一；不同就立刻停止。公式先放在语义之后：最终 match_len 最大只能到 min(len(cached_tokens), len(prompt_tokens))。</p>
+              <p>LCP 不是统计两列里共有多少 token，而是数“开头连续相同了多久”。因此算法只需要一个从 0 开始的指针：两边都没结束且当前位置相等就加一，遇到第一次不同立刻停。</p>
               <div class="adv-course">
         <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>遇到不同就停</h4>
-            <div class="adv-flow">
-              <strong>1 = 1<br>长度 1</strong><strong>2 = 2<br>长度 2</strong><span>3 != 4<br>停止</span><span>后面不看</span>
-            </div>
-            <p>[1,2,3] 与 [1,2,4] 的 LCP 长度是 2。</p>
-          </section>
           <section class="adv-panel good">
-            <h4>较短列表先结束也要停</h4>
+            <h4>[1,2,3] 与 [1,2,4]</h4>
             <div class="adv-flow">
-              <strong>7 = 7</strong><strong>8 = 8</strong><span>缓存已结束</span>
-            </div>
-            <p>[7,8] 是 [7,8,9,10] 的完整前缀，所以长度是 2，不是 4。</p>
+  <span>索引0：1=1</span><strong>索引1：2=2</strong><span>索引2：3≠4</span>
+</div>
+            <p>连续命中长度为 2，第三项不同后立即停止。</p>
+          </section>
+          <section class="adv-panel blue">
+            <h4>[7,8] 与 [7,8,9,10]</h4>
+            <div class="adv-flow">
+  <span>索引0命中</span><strong>索引1命中</strong><span>缓存序列结束</span>
+</div>
+            <p>短序列整体是长序列前缀，返回 2，不会越界。</p>
           </section>
         </div>
-
         <div class="adv-contract">
-          <span><code>cached_tokens</code></span><strong>List[int]，某条已缓存路径</strong>
-          <span><code>prompt_tokens</code></span><strong>List[int]，新请求的 token 序列</strong>
-          <span><code>match_len</code></span><strong>Python int，既是下一索引，也是已匹配 token 数</strong>
-          <span>device / dtype</span><strong>本 TODO 使用 Python 列表，没有张量 dtype 或 device</strong>
-        </div>
-
-        <div class="adv-checks">
-          <span>先查缓存边界</span><span>再查 prompt 边界</span><span>相等才加一</span><span>不等立即 break</span>
-        </div>
+  <span>输入类型</span><strong>两个 Python token 序列</strong><span>match_len 初值</span><strong>0</strong><span>继续条件</span><strong>match_len 同时小于两个序列长度</strong><span>相等</span><strong>match_len += 1</strong><span>不等</span><strong>break 并返回当前 match_len</strong>
+</div>
+        <div class="adv-callout">不要用集合交集。集合会丢掉顺序和连续性，例如 [1,2,3] 与 [1,9,3] 有两个共同元素，但最长公共前缀只有 1。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：比较两条目录路径的公共开头</h4><pre><code>saved_path = ['home', 'team', 'docs']
-new_path = ['home', 'team', 'images', 'raw']
-common = 0
+  <div class="syntax-card"><h4>语法热身：比较两个路径开头连续相同的站点</h4><pre><code>saved_route = ['A', 'B', 'C']
+new_route = ['A', 'B', 'D', 'E']
+same = 0
 
-while common &lt; len(saved_path) and common &lt; len(new_path):
-    if saved_path[common] != new_path[common]:
+while same &lt; len(saved_route) and same &lt; len(new_route):
+    if saved_route[same] == new_route[same]:
+        same += 1
+    else:
         break
-    common += 1
-print(common)  # 2</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>saved_path</code> -> <code>cached_tokens</code>。</li>
-            <li><code>new_path</code> -> <code>prompt_tokens</code>。</li>
-            <li><code>common</code> -> TODO 1 的 <code>match_len</code>，同时充当索引与计数。</li>
-            <li>双长度条件与遇到不同就 break -> TODO 1 的安全扫描控制流。</li>
-          </ul>
-        </div>
-      </div>
+
+print(same)  # 2</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 TODO 1</h4>
+  <ul><li><code>saved_route</code>：对应 cached_tokens</li><li><code>new_route</code>：对应 prompt_tokens</li><li><code>same</code>：对应 match_len，既是索引也是命中长度</li><li><code>两个 len 条件</code>：分别防止缓存路径或新 prompt 越界</li><li><code>break</code>：对应第一次 token 不同后立即停止</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 while 条件必须同时检查两个列表的长度？</p>
+              <p>while 条件为什么要同时检查两个序列长度？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-lcp-scan" value="0">
-                <span>任一列表先结束都应停止，避免索引越界</span>
+                <input type="radio" name="checkpoint-radix-lcp" value="0">
+                <span>任意一个序列结束都不能再访问该索引</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-lcp-scan" value="1">
-                <span>为了让 token 自动排序</span>
+                <input type="radio" name="checkpoint-radix-lcp" value="1">
+                <span>为了把列表变成张量</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-lcp-scan" value="2">
-                <span>为了把列表转成张量</span>
+                <input type="radio" name="checkpoint-radix-lcp" value="2">
+                <span>为了自动排序 token</span>
               </label></div>
-              <div class="feedback" data-feedback="radix-lcp-scan"></div>
+              <div class="feedback" data-feedback="radix-lcp"></div>
             </div>
           </div>
 
@@ -1112,30 +1127,30 @@ print(common)  # 2</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-lcp-scan-0">
-                <span>完成 Notebook TODO 1：用 match_len 从 0 开始逐位比较，相等时增长，遇到不等或任一列表结束时停止。</span>
+                <input type="checkbox" data-homework="radix-lcp-0">
+                <span>完成 _lcp_len 的 while、相等递增和不等 break；不要使用 set、sort 或 zip 后统计全部相等项。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-lcp-scan-1">
-                <span>类型账本：cached_tokens/prompt_tokens 是 List[int]，match_len 是 Python int；本函数没有 tensor shape、dtype、device，切勿加入不必要的 torch 操作。</span>
+                <input type="checkbox" data-homework="radix-lcp-1">
+                <span>运行两个基础断言：[1,2,3] 与 [1,2,4] 返回 2；[7,8] 与更长的 [7,8,9,10] 也返回 2。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-lcp-scan-2">
-                <span>运行两条 LCP 断言：[1,2,3] 对 [1,2,4] 得 2，[7,8] 对更长列表也得 2。若 IndexError，检查双边界；若得到 3 或 4，检查是否在不等时 break。</span>
+                <input type="checkbox" data-homework="radix-lcp-2">
+                <span>额外验证空列表与完全不匹配列表都返回 0；若越界，检查 while 是否缺少任一长度条件。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="radix-best-candidate">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：遍历 self.root.children 并更新 best_match_len</span>
+            <span class="todo-pill">TODO 2：遍历 root.children 并更新 best_match_len</span>
           </div>
-          <h2>多条缓存路径：每条算局部命中，全局只保留最大值</h2>
+          <h2>遍历缓存路径：每个 child 算一次 LCP，只保留最大命中</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">三个候选路径对新 prompt 的 LCP 长度依次是 4、5、0。</p>
-            <p class="predict-q">match_prefix 最终应返回什么？</p>
+            <p class="predict-hook">第一个 child 与 prompt 命中 4 个 token，第二个 child 命中 5 个。</p>
+            <p class="predict-q">match_prefix 应返回什么？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-radix-best-candidate" value="0">
@@ -1143,11 +1158,11 @@ print(common)  # 2</code></pre></div>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-radix-best-candidate" value="1">
-                <span>4</span>
+                <span>4，因为先遇到</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-radix-best-candidate" value="2">
-                <span>0</span>
+                <span>9，把两次命中相加</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="radix-best-candidate">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1155,76 +1170,77 @@ print(common)  # 2</code></pre></div>
           <div class="gated" data-gated="radix-best-candidate">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>这个教学版 insert 会把每条完整 tokens 直接挂到 root.children；它是单层暴力匹配，不要求实现真正的树分裂。</li><li>每个 child 是 TreeNode，候选缓存路径保存在 child.key_tokens。</li><li>_lcp_len 已负责计算一条候选与 prompt_tokens 的局部 match_len。</li><li>best_match_len 是跨候选的运行最大值，初始为 0；没有 child 或全部首 token 不同都会保持 0。</li></ul>
+              <ul><li>insert(tokens) 会创建 TreeNode(tokens) 并追加到 root.children；当前教学实现只有单层候选路径。</li><li>child.key_tokens 是该候选缓存路径的 token 列表。</li><li>_lcp_len 已负责比较一个候选与新 prompt；match_prefix 只负责在多个候选结果中取最大值。</li><li>best_match_len 从 0 开始，因此没有 child 或完全无命中时会自然返回 0。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>TODO 2 是一个标准“遍历并取最大值”的归约过程。对每个缓存 child，先问它能从开头匹配几位，再把答案与当前冠军 best_match_len 比较。最终返回的不是某个节点，而是可复用 token 的最大数量。</p>
+              <p>这是一个标准的“遍历 + 累计最优值”模式：每看一个候选就计算局部分数 match_len，再与当前最好成绩比较。不要在第一次命中时提前返回，因为后面可能有更长的缓存路径。</p>
               <div class="adv-course">
-        <div class="adv-flow">
-          <span>候选 [0,1,2,3]<br>LCP=4</span><strong>候选 [0,1,2,3,4]<br>LCP=5</strong><span>候选 [9,9,9]<br>LCP=0</span><strong>best=5</strong>
+        <div class="adv-roadmap">
+          <span><b>候选 A</b>[0,1,2,3] → 命中 4</span>
+          <span><b>候选 B</b>[0,1,2,3,4] → 命中 5</span>
+          <span><b>候选 C</b>[9,9,9] → 命中 0</span>
+          <span><b>最终最大值</b>best_match_len = 5</span>
         </div>
-
         <div class="adv-grid two">
-          <section class="adv-panel neutral">
-            <h4>局部问题</h4>
-            <p>当前 child.key_tokens 与 prompt_tokens 共享多少个开头 token？交给 _lcp_len。</p>
+          <section class="adv-panel warn">
+            <h4>错误：第一次命中就 return</h4>
+            <p>候选 A 命中 4 后立即返回，会错过候选 B 的更长命中 5。</p>
           </section>
           <section class="adv-panel good">
-            <h4>全局问题</h4>
-            <p>所有局部 match_len 中最大的是多少？持续更新 best_match_len。</p>
+            <h4>正确：循环结束后 return</h4>
+            <p>每轮只更新 best_match_len，所有 child 都比较完成后再返回。</p>
           </section>
         </div>
-
-        <div class="adv-steps">
-          <div><b>1</b><code>best_match_len = 0</code><span>无命中时的正确默认值</span></div>
-          <div><b>2</b><code>遍历 root.children</code><span>本 Notebook 只检查根节点下一层</span></div>
-          <div><b>3</b><code>调用 _lcp_len</code><span>得到当前候选的局部命中长度</span></div>
-          <div><b>4</b><code>保留更大值</code><span>短候选不能覆盖此前的更长命中</span></div>
+        <div class="adv-checks">
+          <span><b>状态</b><br>best_match_len 是 Python int</span>
+          <span><b>局部值</b><br>match_len 来自 _lcp_len</span>
+          <span><b>更新</b><br>只在更大时替换</span>
+          <span><b>无命中</b><br>保持 0</span>
         </div>
-
-        <div class="adv-callout">不要在看到第一个正数命中时就 return。测试同时插入长度 4 和长度 5 的相同前缀路径，要求选择后者的 5。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：从多个候选单词中找最长公共开头</h4><pre><code>candidates = ['inter', 'internet', 'internal']
-query = 'internet cafe'
+  <div class="syntax-card"><h4>语法热身：从多条历史路线中找最长重合开头</h4><pre><code>def common_prefix_len(left, right):
+    count = 0
+    while count &lt; len(left) and count &lt; len(right):
+        if left[count] != right[count]:
+            break
+        count += 1
+    return count
+
+history = [['A', 'B'], ['A', 'B', 'C'], ['X']]
+current = ['A', 'B', 'C', 'D']
 best = 0
 
-for candidate in candidates:
-    local = 0
-    while local &lt; len(candidate) and candidate[local] == query[local]:
-        local += 1
+for route in history:
+    local = common_prefix_len(route, current)
     if local &gt; best:
         best = local
-print(best)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>candidates</code> -> <code>self.root.children</code>，每个元素是一条缓存候选。</li>
-            <li><code>candidate</code> -> <code>child.key_tokens</code>。</li>
-            <li><code>query</code> -> <code>prompt_tokens</code>。</li>
-            <li><code>local</code> -> 调用 <code>self._lcp_len</code> 得到的 match_len；<code>best</code> -> TODO 2 的 <code>best_match_len</code>。</li>
-          </ul>
-        </div>
-      </div>
+
+print(best)  # 3</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 TODO 2</h4>
+  <ul><li><code>history</code>：对应 self.root.children</li><li><code>route</code>：对应 child；实际 token 序列在 child.key_tokens</li><li><code>common_prefix_len</code>：对应 self._lcp_len</li><li><code>local</code>：对应当前候选的 match_len</li><li><code>best</code>：对应 best_match_len，循环完成后再返回</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>没有任何缓存路径首 token 与 prompt 相同时，best_match_len 应是多少？</p>
+              <p>为什么完全不匹配 [7,6,5] 时可以返回 0？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-best-candidate" value="0">
-                <span>-1</span>
+                <span>因为 root.children 会被删除</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-best-candidate" value="1">
-                <span>0</span>
+                <span>best_match_len 初始为 0，所有局部命中都不会让它变大</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-radix-best-candidate" value="2">
-                <span>prompt 的完整长度</span>
+                <span>因为 token 会自动补零</span>
               </label></div>
               <div class="feedback" data-feedback="radix-best-candidate"></div>
             </div>
@@ -1236,122 +1252,108 @@ print(best)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="radix-best-candidate-0">
-                <span>完成 Notebook TODO 2：遍历 self.root.children，对 child.key_tokens 调用 _lcp_len，并只在局部长度更大时更新 best_match_len。</span>
+                <span>完成 root.children 遍历、_lcp_len 调用和最大值更新；把 return 放在 for 循环结束之后。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="radix-best-candidate-1">
-                <span>这里仍是 Python 数据：children 是 TreeNode 列表，key_tokens 是 List[int]，两个长度是 int；无 tensor shape、dtype、device，也不要实现题目未要求的递归树。</span>
+                <span>运行多候选测试，新 prompt [0,1,2,3,4,5] 必须选择 5，而不是先遇到的 4；无命中返回 0。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="radix-best-candidate-2">
-                <span>运行多候选断言：对 [0,1,2,3,4,5] 必须命中 5，对 [7,6,5] 必须为 0。若只得 4，检查是否过早 return；若错误命中，检查是否比较前缀而非任意子序列。</span>
+                <span>若返回 4，检查是否提前 return；若返回最后一个候选的 0，检查是否每轮无条件覆盖 best_match_len。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="radix-split-hit-miss">
+        <article class="lesson-card inquiry" data-lesson="radix-split-prompt">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：调用 match_prefix，并按 hit_len 切出 hit_prefix 与 miss_suffix</span>
+            <span class="todo-pill">TODO 3：hit_len、hit_prefix、miss_suffix 与三元组返回</span>
           </div>
-          <h2>把命中长度落到数据流：前缀复用，后缀重算</h2>
+          <h2>把命中长度变成工程动作：前 H 个复用，剩余后缀重算</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_tokens=[7,6,5]，match_prefix 返回 hit_len=0。</p>
-            <p class="predict-q">两次切片会得到什么？</p>
+            <p class="predict-hook">prompt=[0,1,2,3,4,5]，match_prefix 返回 hit_len=5。</p>
+            <p class="predict-q">split_prompt 应返回什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-radix-split-hit-miss" value="0">
-                <span>hit_prefix=[]，miss_suffix=[7,6,5]</span>
+                <input type="radio" name="predict-radix-split-prompt" value="0">
+                <span>([0,1,2,3,4], [5], 5)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-radix-split-hit-miss" value="1">
-                <span>hit_prefix=[7]，miss_suffix=[6,5]</span>
+                <input type="radio" name="predict-radix-split-prompt" value="1">
+                <span>([0,1,2,3,4,5], [], 5)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-radix-split-hit-miss" value="2">
-                <span>两个列表都为空</span>
+                <input type="radio" name="predict-radix-split-prompt" value="2">
+                <span>([5], [0,1,2,3,4], 5)</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="radix-split-hit-miss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="radix-split-prompt">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="radix-split-hit-miss">
+          <div class="gated" data-gated="radix-split-prompt">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>match_prefix(prompt_tokens) 返回 Python int hit_len，表示从开头连续可复用的 token 数。</li><li>Python 切片 prompt_tokens[:hit_len] 取得前 hit_len 个元素；prompt_tokens[hit_len:] 取得余下元素。</li><li>切片不会修改原列表，而是产生新列表；返回顺序由函数签名固定为 hit_prefix、miss_suffix、hit_len。</li><li>hit_len=0 是自然回退：[:0] 得空列表，[0:] 得完整 prompt，不需要另写特殊分支。</li></ul>
+              <ul><li>match_prefix(prompt_tokens) 返回 Python int H，表示可直接复用的最长前缀 token 数。</li><li>Python 切片 prompt_tokens[:H] 取前 H 项，prompt_tokens[H:] 取从 H 开始的剩余项。</li><li>H=0 时前缀切片自然是 []，后缀自然是完整 prompt；H 等于 prompt 长度时后缀自然为空。</li><li>函数返回顺序必须严格是 hit_prefix、miss_suffix、hit_len，测试会按这个顺序解包。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>前两课只算出了一个数字，这一课把数字变成真正的工作边界。切片点左边的 token 已有 KV Cache，可以复用；切片点右边的 token 没命中，需要模型重新计算。命中为 0 时，同一套切片自动退化为“无前缀、全量重算”。</p>
+              <p>前两步只算出了一个数字 H，这一步才把 H 变成推理系统的工作划分：前 H 个 token 的 KV Cache 可以复用，H 之后的 token 必须送给模型重新计算。切片正好表达这条边界。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>prompt</b>[0,1,2,3,4,5]</span>
-          <span><b>hit_len</b>最长命中为 5</span>
-          <span><b>hit_prefix</b>[0,1,2,3,4] 可复用</span>
-          <span><b>miss_suffix</b>[5] 待重算</span>
-        </div>
-
         <div class="adv-grid two">
           <section class="adv-panel good">
-            <h4>有命中</h4>
-            <div class="adv-flow"><strong>前 5 个 token<br>复用缓存</strong><span>最后 1 个 token<br>重新计算</span></div>
+            <h4>命中 H=5</h4>
+            <div class="adv-flow">
+  <span>prompt [0,1,2,3,4,5]</span><strong>hit [0,1,2,3,4]</strong><span>miss [5]</span>
+</div>
+            <p>前五个 token 复用缓存，只计算最后一个 token。</p>
           </section>
           <section class="adv-panel neutral">
-            <h4>无命中</h4>
-            <div class="adv-flow"><span>空前缀 []</span><strong>完整 prompt<br>全部重算</strong></div>
+            <h4>无命中 H=0</h4>
+            <div class="adv-flow">
+  <span>prompt [7,6,5]</span><span>hit []</span><strong>miss [7,6,5]</strong>
+</div>
+            <p>没有可复用缓存，完整 prompt 都进入重算后缀。</p>
           </section>
         </div>
-
         <div class="adv-contract">
-          <span><code>hit_len</code></span><strong>int，满足 0 &lt;= hit_len &lt;= len(prompt_tokens)</strong>
-          <span><code>hit_prefix</code></span><strong>List[int]，长度等于 hit_len</strong>
-          <span><code>miss_suffix</code></span><strong>List[int]，长度等于 len(prompt_tokens)-hit_len</strong>
-          <span>拼回检查</span><strong>hit_prefix + miss_suffix 必须等于原 prompt_tokens</strong>
-        </div>
-
-        <div class="adv-checks">
-          <span>返回顺序正确</span><span>前缀长度等于 hit_len</span><span>后缀从 hit_len 开始</span><span>无命中自然回退</span>
-        </div>
+  <span>hit_len</span><strong>match_prefix(prompt_tokens) 的返回值</strong><span>hit_prefix</span><strong>prompt_tokens[:hit_len]</strong><span>miss_suffix</span><strong>prompt_tokens[hit_len:]</strong><span>返回顺序</span><strong>(hit_prefix, miss_suffix, hit_len)</strong><span>系统含义</span><strong>前缀复用 KV，后缀重新执行模型计算</strong>
+</div>
+        <div class="adv-callout">不要从某个 child.key_tokens 直接返回前缀。测试契约要求拆分当前 prompt_tokens；这样返回内容一定保持新请求本身的 token 序列。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：按书签把章节拆成已读和未读</h4><pre><code>chapters = ['intro', 'tensor', 'cache', 'serving']
-bookmark = 2
-read_part = chapters[:bookmark]
-unread_part = chapters[bookmark:]
+  <div class="syntax-card"><h4>语法热身：按已下载长度拆分文件任务</h4><pre><code>all_parts = ['p0', 'p1', 'p2', 'p3']
+cached_count = 3
+reused = all_parts[:cached_count]
+remaining = all_parts[cached_count:]
 
-assert len(read_part) == bookmark
-assert read_part + unread_part == chapters
-print(read_part, unread_part)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -> Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>chapters</code> -> <code>prompt_tokens</code>。</li>
-            <li><code>bookmark</code> -> TODO 3 中调用 <code>match_prefix</code> 得到的 <code>hit_len</code>。</li>
-            <li><code>read_part</code> -> <code>hit_prefix</code>，使用从开头到切片点的切片。</li>
-            <li><code>unread_part</code> -> <code>miss_suffix</code>，使用从切片点到末尾的切片。</li>
-          </ul>
-        </div>
-      </div>
+result = (reused, remaining, cached_count)
+print(result)  # (['p0','p1','p2'], ['p3'], 3)</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 TODO 3</h4>
+  <ul><li><code>all_parts</code>：对应 prompt_tokens</li><li><code>cached_count</code>：对应 hit_len，由 match_prefix 计算</li><li><code>reused</code>：对应 hit_prefix，切片终点不包含 hit_len</li><li><code>remaining</code>：对应 miss_suffix，从 hit_len 开始</li><li><code>result</code>：对应函数的三元组返回顺序</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>哪个关系能同时检查切分没有丢 token、也没有改变顺序？</p>
+              <p>hit_len=0 时为什么不需要额外 if 分支？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-split-hit-miss" value="0">
-                <span>len(hit_prefix) &gt; len(prompt_tokens)</span>
+                <input type="radio" name="checkpoint-radix-split-prompt" value="0">
+                <span>因为 0 会自动变成 None</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-split-hit-miss" value="1">
-                <span>hit_len == -1</span>
+                <input type="radio" name="checkpoint-radix-split-prompt" value="1">
+                <span>因为 match_prefix 会抛异常</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-radix-split-hit-miss" value="2">
-                <span>hit_prefix + miss_suffix == prompt_tokens</span>
+                <input type="radio" name="checkpoint-radix-split-prompt" value="2">
+                <span>Python 的 [:0] 自动得到空列表，[0:] 自动得到完整列表</span>
               </label></div>
-              <div class="feedback" data-feedback="radix-split-hit-miss"></div>
+              <div class="feedback" data-feedback="radix-split-prompt"></div>
             </div>
           </div>
 
@@ -1360,16 +1362,16 @@ print(read_part, unread_part)</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-split-hit-miss-0">
-                <span>完成 Notebook TODO 3：先调用 match_prefix 得 hit_len，再以同一个切片点得到 hit_prefix 和 miss_suffix，按函数已有顺序返回三者。</span>
+                <input type="checkbox" data-homework="radix-split-prompt-0">
+                <span>完成 hit_len 调用、两个切片和三元组返回，严格保持返回顺序。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-split-hit-miss-1">
-                <span>三个序列都是 List[int]，hit_len 是 int；本 TODO 没有 tensor shape、dtype、device。额外自检 len(hit_prefix)==hit_len 且两段拼回原 prompt。</span>
+                <input type="checkbox" data-homework="radix-split-prompt-1">
+                <span>运行命中与无命中测试：H=5 时返回五项前缀和单项后缀；H=0 时返回空前缀和完整后缀。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="radix-split-hit-miss-2">
-                <span>运行有命中和无命中全部断言：前者应为 [0,1,2,3,4]、[5]、5，后者应为 []、[7,6,5]、0。若错位，检查切片冒号方向或返回元组顺序。</span>
+                <input type="checkbox" data-homework="radix-split-prompt-2">
+                <span>若前缀多一项，检查切片是否误写成 :hit_len+1；若解包内容错位，检查 return 三项顺序。</span>
               </label>
           </div>
         </article>
@@ -1389,8 +1391,8 @@ print(read_part, unread_part)</code></pre></div>
 
   <script>
     const levelId = "24";
-    const checkpointData = {"radix-lcp-scan":{"answer":0,"explain":"比较需要读取两个列表的同一索引，只要一边没有该位置，就不能继续。"},"radix-best-candidate":{"answer":1,"explain":"0 表示没有任何可复用 token，也是初始化值；测试明确检查无命中返回 0。"},"radix-split-hit-miss":{"answer":2,"explain":"把两段按原顺序拼回去应精确得到原 prompt；同时前缀长度应等于 hit_len。"}};
-    const predictData = {"radix-lcp-scan":{"answer":0,"revealNote":"较短列表的两个 token 都匹配后，它已经结束；公共前缀长度受较短长度限制。"},"radix-best-candidate":{"answer":0,"revealNote":"函数寻找所有缓存路径中的最长命中，因此运行最大值依次变成 4、5，并保持 5。"},"radix-split-hit-miss":{"answer":0,"revealNote":"[:0] 是空列表，[0:] 从开头取到末尾，因此无需为无命中另写分支。"}};
+    const checkpointData = {"radix-lcp":{"answer":0,"explain":"完整前缀命中时，一个序列可能更短；双边界能安全返回短序列长度。"},"radix-best-candidate":{"answer":1,"explain":"0 正好表示没有可复用前缀，也让后续切片自然得到空前缀和完整后缀。"},"radix-split-prompt":{"answer":2,"explain":"切片天然覆盖无命中边界，使实现既短又与测试契约一致。"}};
+    const predictData = {"radix-lcp":{"answer":0,"revealNote":"索引 1 已经出现 2≠9，公共前缀在这里终止，后面的 3 不再计入。"},"radix-best-candidate":{"answer":0,"revealNote":"目标是所有缓存路径中的最长公共前缀，取最大值而不是第一项或总和。"},"radix-split-prompt":{"answer":0,"revealNote":"[:5] 取索引 0 到 4，[5:] 从索引 5 开始，返回顺序是前缀、后缀、长度。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
     const homeworkTotal = 9;

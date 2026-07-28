@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1003,26 +1028,26 @@
         <article class="lesson-card inquiry" data-lesson="attention-backward-output-branch">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 + TODO 2：由 out = P @ V 求 dV 与 dP</span>
+            <span class="todo-pill">TODO 1 + TODO 2：计算 dV 与 dP</span>
           </div>
-          <h2>从 dout 分叉：先求 dV，再求 dP</h2>
+          <h2>从 out=P@V 分出 dV 与 dP 两条梯度支路</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">dout 是 [B,N,d]，v.transpose(-2,-1) 是 [B,d,N]。</p>
-            <p class="predict-q">两者做批量矩阵乘法后，dp 的 shape 是什么？</p>
+            <p class="predict-hook">p.shape=[2,8,8]、v.shape=[2,8,16]、dout.shape=[2,8,16]。</p>
+            <p class="predict-q">dv 与 dp 的 shape 分别是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-output-branch" value="0">
-                <span>[B,N,N]</span>
+                <span>[2,8,16] 与 [2,8,8]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-output-branch" value="1">
-                <span>[B,d,d]</span>
+                <span>[2,8,8] 与 [2,8,16]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-output-branch" value="2">
-                <span>[N,B,N]</span>
+                <span>[8,16] 与 [8,8]</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="attention-backward-output-branch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1030,81 +1055,56 @@
           <div class="gated" data-gated="attention-backward-output-branch">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>前向保存了 q、k、v、p；backward 收到的 dout 是损失对 out 的上游梯度。</li><li>Notebook 使用批量矩阵乘法，q、k、v、dout 都是 [B,N,d]，p 是 [B,N,N]。</li><li>transpose(-2, -1) 只交换最后两个维度，保留最前面的 batch 维。</li><li>矩阵乘法反向会沿两条支路传播：out 对 V 的支路产生 dV，out 对 P 的支路产生 dP。</li></ul>
+              <ul><li>前向中 q/k/v.shape=[B,N,d]，scores/p.shape=[B,N,N]，out/dout.shape=[B,N,d]。</li><li>矩阵乘法反向会使用转置：out=P@V，所以 dV=P^T@dout，dP=dout@V^T。</li><li>transpose(-2,-1) 只交换最后两个矩阵维，保留 batch 维。</li><li>ctx.saved_tensors 按 forward 保存顺序取回 q、k、v、p；它们的 dtype/device 与前向一致。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>先别急着穿过 Softmax。把最后一步 out=P@V 单独看成一台混合器：P 决定每行取多少 V，dout 告诉我们输出要怎样改变。沿 V 插口倒推得到 dV，沿 P 插口倒推得到 dP。</p>
+              <p>out 的每个值同时依赖注意力概率 P 和内容 V。上游梯度 dout 到达矩阵乘法后分成两路：一路告诉 V 应怎样变化，另一路告诉 P 应怎样变化；之后 P 的梯度还要继续穿过 Softmax。</p>
               <div class="adv-course">
         <div class="adv-flow">
-          <span>P [B,N,N]</span><span>V [B,N,d]</span><strong>out [B,N,d]</strong><span>dout [B,N,d]</span>
+          <span>out = P @ V</span><strong>dout [B,N,d]</strong>
+          <span>P 支路：dP=dout@Vᵀ</span><span>V 支路：dV=Pᵀ@dout</span>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>回到 V 支路</h4>
-            <div class="adv-flow">
-              <span>P 转置 [B,N,N]</span><span>dout [B,N,d]</span><strong>dV [B,N,d]</strong>
-            </div>
-            <p>P 的最后两维交换，是因为每个 value 收集所有输出位置传回来的贡献。</p>
-          </section>
-          <section class="adv-panel blue">
-            <h4>回到 P 支路</h4>
-            <div class="adv-flow">
-              <span>dout [B,N,d]</span><span>V 转置 [B,d,N]</span><strong>dP [B,N,N]</strong>
-            </div>
-            <p>每个注意力概率都需要知道：改变它会怎样改变 d 个输出特征。</p>
-          </section>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>目标</th><th>左因子</th><th>右因子</th><th>结果</th></tr></thead>
+          <thead><tr><th>计算</th><th>左输入</th><th>右输入</th><th>结果</th></tr></thead>
           <tbody>
-            <tr><td><code>dV</code></td><td><code>P^T [B,N,N]</code></td><td><code>dout [B,N,d]</code></td><td><code>[B,N,d]</code></td></tr>
-            <tr><td><code>dP</code></td><td><code>dout [B,N,d]</code></td><td><code>V^T [B,d,N]</code></td><td><code>[B,N,N]</code></td></tr>
+            <tr><td><code>dV=Pᵀ@dout</code></td><td><code>[B,N,N]</code></td><td><code>[B,N,d]</code></td><td><code>[B,N,d]</code></td></tr>
+            <tr><td><code>dP=dout@Vᵀ</code></td><td><code>[B,N,d]</code></td><td><code>[B,d,N]</code></td><td><code>[B,N,N]</code></td></tr>
           </tbody>
         </table>
-
-        <div class="adv-callout">这里的转置不是把整个三维张量倒序。使用 transpose(-2, -1) 才能固定 B，只交换参与矩阵乘法的两个轴。</div>
+        <div class="adv-callout">不要使用 .T；对三维 Tensor，.T 的行为不等同于只转置矩阵最后两维。这里明确使用 transpose(-2,-1)。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用批量加权汇总练两条反向支路</h4><pre><code>weights = torch.randn(3, 4, 6)   # [batch, query, item]
-items = torch.randn(3, 6, 5)     # [batch, item, feature]
-upstream = torch.randn(3, 4, 5)  # 与输出同 shape
+  <div class="syntax-card"><h4>语法热身：手算批量矩阵乘法的两条反向支路</h4><pre><code>weights = torch.randn(3, 4, 5)
+values = torch.randn(3, 5, 2)
+grad_output = torch.randn(3, 4, 2)
 
-grad_items = torch.matmul(weights.transpose(-2, -1), upstream)
-grad_weights = torch.matmul(upstream, items.transpose(-2, -1))
-print(grad_items.shape)    # [3, 6, 5]
-print(grad_weights.shape)  # [3, 4, 6]</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>weights</code> -&gt; <code>p</code>，都是归一化后的混合权重。</li>
-            <li><code>items</code> -&gt; <code>v</code>，都是被加权汇总的特征。</li>
-            <li><code>upstream</code> -&gt; <code>dout</code>。</li>
-            <li><code>grad_items</code> -&gt; TODO 1 的 <code>dv</code>；<code>grad_weights</code> -&gt; TODO 2 的 <code>dp</code>。</li>
-            <li>例子 query 数与 item 数不同，能更清楚看出转置究竟发生在哪个轴。</li>
-          </ul>
-        </div>
-      </div>
+grad_values = weights.transpose(-2, -1) @ grad_output
+grad_weights = grad_output @ values.transpose(-2, -1)
+print(grad_values.shape, grad_weights.shape)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>weights / values / grad_output</code> 对应 <code>p / v / dout</code>。</li><li><code>grad_values</code> 对应 <code>dv</code>，shape 跟 v 一致。</li><li><code>grad_weights</code> 对应 <code>dp</code>，shape 跟 p 一致。</li><li>例子故意使用非方形矩阵，帮助你从维度而不是死记位置判断转置。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为了得到与 v 同 shape 的 dv，应该转置哪个张量的最后两维？</p>
+              <p>dP 为什么使用 dout @ v.transpose(-2,-1)？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-output-branch" value="0">
-                <span>v</span>
+                <span>因为 Softmax 只接受二维 Tensor</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-output-branch" value="1">
-                <span>dout</span>
+                <span>为了把 batch 维移到最后</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-output-branch" value="2">
-                <span>p</span>
+                <span>因为 out=P@V，对左矩阵 P 求梯度要把右矩阵 V 转置乘回去</span>
               </label></div>
               <div class="feedback" data-feedback="attention-backward-output-branch"></div>
             </div>
@@ -1116,41 +1116,45 @@ print(grad_weights.shape)  # [3, 4, 6]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-output-branch-0">
-                <span>完成 TODO 1/2：dv 为 [B,N,d]，dp 为 [B,N,N]；dtype/device 必须与 float64 的 q、k、v、dout 一致。</span>
+                <span>完成 dv 与 dp，检查 dv.shape==v.shape、dp.shape==p.shape，且 dtype/device 与输入一致。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-output-branch-1">
-                <span>每个 matmul 前写出最后两维，确认只用 transpose(-2,-1) 交换矩阵轴，没有打乱 batch 维。</span>
+                <span>在纸上写出 [B,N,N]@[B,N,d] 和 [B,N,d]@[B,d,N] 的维度消去过程。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-output-branch-2">
-                <span>Notebook 先用 allclose 检查固定的 forward，随后 gradcheck 才检查你的 backward；若 shape 报错，先分别打印 p、v、dout、dv、dp 的 shape。</span>
+                <span>错误诊断：batch 维丢失时检查是否误用 .T；matmul 维度报错时检查转置对象和先后顺序。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-output-branch-3">
+                <span>先不要处理 scale；它来自 scores=QK^T×scale，只影响之后的 dQ/dK。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="attention-backward-softmax">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：由 dP 求 dp_mul_p、row_sum 与 dS</span>
+            <span class="todo-pill">TODO 3：计算 dp_mul_p、row_sum 与 dS</span>
           </div>
-          <h2>穿过 Softmax：用逐行修正代替巨大雅可比</h2>
+          <h2>穿过 Softmax：用逐行修正替代完整雅可比</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">如果某一行 dp 的三个值完全相同，例如 [5,5,5]，改变任一 score 只是在概率间重新分配，但所有位置收到同样的收益信号。</p>
-            <p class="predict-q">这时该行 ds 应是什么？</p>
+            <p class="predict-hook">dp_mul_p.shape=[2,8,8]。</p>
+            <p class="predict-q">沿 dim=-1 求和并 keepdim=True 后，row_sum.shape 是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-softmax" value="0">
-                <span>全 0</span>
+                <span>[2,8,1]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-softmax" value="1">
-                <span>等于 p</span>
+                <span>[2,8]</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-attention-backward-softmax" value="2">
-                <span>全 5</span>
+                <span>[2,1,8]</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="attention-backward-softmax">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1158,77 +1162,59 @@ print(grad_weights.shape)  # [3, 4, 6]</code></pre></div>
           <div class="gated" data-gated="attention-backward-softmax">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>p 的每一行都是 scores 对最后一维做 Softmax 得到的概率，行内元素和为 1。</li><li>dp 是损失对这些概率的梯度，shape 与 p 都是 [B,N,N]。</li><li>逐元素乘法 dp*p 不会收缩维度；sum(dim=-1) 才会聚合每一行。</li><li>keepdim=True 把行统计量保留成 [B,N,1]，这样它能沿最后一维广播回 [B,N,N]。</li></ul>
+              <ul><li>Softmax 沿 dim=-1 逐行计算，因此反向修正项也必须沿最后一维求和。</li><li>dp 与 p 都是 [B,N,N]；逐元素乘法 dp*p 不改变 shape。</li><li>sum(dim=-1,keepdim=True) 得到 [B,N,1]，可广播回 [B,N,N]。</li><li>公式是 ds=p*(dp-row_sum)，括号与乘法顺序不能随意改变。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>Softmax 的一行概率彼此牵连：抬高一个 score 会挤压同一行的其他概率。所以不能只做 dp*p，还要减掉这整行共同承担的加权平均影响。row_sum 就是这条“行内联动”的修正量。</p>
+              <p>Softmax 一行中的概率相互耦合：提高一个分数会挤压同一行其他概率。row_sum 汇总这行共同的影响，再从每个 dp 中减去，最后乘 p，得到真正回到 score 的梯度。</p>
               <div class="adv-course">
         <div class="adv-steps">
-          <div><b>1</b><code>dp_mul_p</code><span>每个概率先乘自己收到的上游信号</span></div>
-          <div><b>2</b><code>row_sum</code><span>最后一维求和，得到每一行的共同修正</span></div>
-          <div><b>3</b><code>ds</code><span>每个位置减去行修正，再乘回自己的概率</span></div>
+          <div><b>1</b><code>dp_mul_p = dp * p</code><span>先计算每个位置的加权上游梯度</span></div>
+          <div><b>2</b><code>row_sum = ...sum(-1, keepdim=True)</code><span>得到每行一个共享修正量</span></div>
+          <div><b>3</b><code>ds = p * (dp - row_sum)</code><span>利用广播把修正量应用到整行</span></div>
         </div>
-
         <div class="adv-grid two">
-          <section class="adv-panel neutral">
-            <h4>广播契约</h4>
-            <div class="adv-contract">
-              <span><code>dp, p</code></span><strong><code>[B,N,N]</code></strong>
-              <span><code>row_sum</code></span><strong><code>[B,N,1]</code></strong>
-              <span><code>dp-row_sum</code></span><strong><code>[B,N,N]</code></strong>
-              <span><code>ds</code></span><strong><code>[B,N,N]</code></strong>
-            </div>
-          </section>
           <section class="adv-panel good">
-            <h4>一个重要自检</h4>
-            <p>Softmax 对整行同时加同一个常数不会变化，因此正确的 dS 每一行求和应接近 0。</p>
-            <div class="adv-flow">
-              <span>dS 一行</span><span>沿最后维求和</span><strong>约等于 0</strong>
-            </div>
+            <h4>keepdim=True</h4>
+            <p>row_sum 为 [B,N,1]，可自然广播到每一列。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>漏掉 keepdim</h4>
+            <p>row_sum 变成 [B,N]，在一般 batch/sequence shape 下可能广播错轴或直接报错。</p>
           </section>
         </div>
-
-        <div class="adv-callout">最常见错误是 row_sum 得到 [B,N]。它没有保留最后的单例维，与 [B,N,N] 对齐时可能广播失败，或者在某些恰好相等的维度上悄悄沿错方向。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用一组分类权重练 Softmax 的向量-雅可比积</h4><pre><code>scores = torch.tensor([[0.4, -0.1, 1.2]], dtype=torch.float64)
-weights = torch.softmax(scores, dim=-1)
-grad_weights = torch.tensor([[2.0, -1.0, 0.5]], dtype=torch.float64)
+  <div class="syntax-card"><h4>语法热身：对一批类别概率手写 Softmax 向量积</h4><pre><code>prob = torch.softmax(torch.randn(2, 5), dim=-1)
+grad_prob = torch.randn(2, 5)
 
-weighted = grad_weights * weights
-baseline = weighted.sum(dim=-1, keepdim=True)
-grad_scores = weights * (grad_weights - baseline)
-print(grad_scores.sum(dim=-1))  # 接近 0</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>weights</code> -&gt; 前向保存的 <code>p</code>。</li>
-            <li><code>grad_weights</code> -&gt; TODO 2 得到的 <code>dp</code>。</li>
-            <li><code>weighted</code> -&gt; <code>dp_mul_p</code>。</li>
-            <li><code>baseline</code> -&gt; <code>row_sum</code>，必须沿 dim=-1 且 keepdim=True。</li>
-            <li><code>grad_scores</code> -&gt; <code>ds</code>，shape 不变。</li>
-          </ul>
-        </div>
-      </div>
+weighted = grad_prob * prob
+shared = weighted.sum(dim=-1, keepdim=True)
+grad_score = prob * (grad_prob - shared)
+print(grad_score.shape)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>prob / grad_prob</code> 对应 <code>p / dp</code>。</li><li><code>weighted / shared / grad_score</code> 对应 <code>dp_mul_p / row_sum / ds</code>。</li><li>独立例子是 [2,5]，Notebook 是 [B,N,N]；只要始终沿最后一维，公式可直接泛化。</li><li>keepdim=True 是让 shared 正确广播的语法关键。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>p 和 dp 是 [2,8,8] 时，正确的 row_sum shape 是什么？</p>
+              <p>Softmax backward 为什么不直接写 ds=dp*p？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-softmax" value="0">
-                <span>[2,8,1]</span>
+                <span>同一行概率相互耦合，还要减去行级共享修正项</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-softmax" value="1">
-                <span>[2,1,8]</span>
+                <span>因为 Softmax 没有梯度</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-attention-backward-softmax" value="2">
-                <span>[2,8]</span>
+                <span>因为 dp 与 p 的 dtype 不同</span>
               </label></div>
               <div class="feedback" data-feedback="attention-backward-softmax"></div>
             </div>
@@ -1240,124 +1226,103 @@ print(grad_scores.sum(dim=-1))  # 接近 0</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-softmax-0">
-                <span>完成 TODO 3：dp_mul_p、ds 是 [B,N,N]，row_sum 是 [B,N,1]；全部保持 float64 和原 device，不要新建 CPU 常量张量。</span>
+                <span>按顺序完成 dp_mul_p、row_sum 与 ds，并确认三个关键 shape 分别为 [B,N,N]、[B,N,1]、[B,N,N]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-softmax-1">
-                <span>严格沿 dim=-1 聚合并使用 keepdim=True；可临时检查 ds.sum(dim=-1) 是否在浮点误差内接近 0。</span>
+                <span>不要显式构造 [N,N] 的 Softmax 雅可比；Notebook 要的是高效的雅可比向量积公式。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-softmax-2">
-                <span>若 gradcheck 报 Softmax 相关梯度不一致，排查是否漏乘 p、row_sum 是否来自 dp*p，以及减法括号是否是 p*(dp-row_sum)。</span>
+                <span>错误诊断：广播报错时查 dim/keepdim；gradcheck 数值偏差时查 ds 公式括号和 p 是否乘了两次。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-softmax-3">
+                <span>可检查 ds 每行求和应接近 0，这是 Softmax shift-invariance 带来的有用自检。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="attention-backward-qk-and-gradcheck">
+        <article class="lesson-card inquiry" data-lesson="attention-backward-qk-gradcheck">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 4：由 dS 求 dQ、dK，并按顺序返回梯度</span>
+            <span class="todo-pill">TODO 4：计算 dQ、dK 并按输入顺序返回</span>
           </div>
-          <h2>回到 Q 和 K：补上 scale，交给 gradcheck 验收</h2>
+          <h2>回到 Q/K：补回 scale，并让 gradcheck 做最终裁判</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">前向 score 除以 sqrt(d)，但 backward 里的 dq、dk 都忘了乘 scale。</p>
-            <p class="predict-q">forward allclose 与 gradcheck 最可能分别怎样？</p>
+            <p class="predict-hook">dq、dk 的矩阵乘法都正确，但漏乘了 scale。</p>
+            <p class="predict-q">forward allclose 与 gradcheck 最可能怎样？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="0">
+                <input type="radio" name="predict-attention-backward-qk-gradcheck" value="0">
                 <span>forward 通过，gradcheck 失败</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="1">
+                <input type="radio" name="predict-attention-backward-qk-gradcheck" value="1">
                 <span>两者都通过</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-attention-backward-qk-and-gradcheck" value="2">
+                <input type="radio" name="predict-attention-backward-qk-gradcheck" value="2">
                 <span>forward 失败，gradcheck 通过</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="attention-backward-qk-and-gradcheck">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="attention-backward-qk-gradcheck">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="attention-backward-qk-and-gradcheck">
+          <div class="gated" data-gated="attention-backward-qk-gradcheck">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>前向 scores=(q @ k^T)*scale，其中 scale=1/sqrt(d)，所以这条常数因子也必须出现在反向。</li><li>ds 是 [B,N,N]，q 和 k 都是 [B,N,d]。</li><li>对 q 支路使用 ds @ k；对 k 支路要先交换 ds 的最后两维，再乘 q。</li><li>自定义 Function 的 backward 返回值必须与 forward 输入顺序一一对应：q、k、v。</li></ul>
+              <ul><li>scores=Q@K^T×scale，scale=1/sqrt(d) 已保存在 ctx.scale。</li><li>由矩阵乘法可得 dq=ds@k×scale，dk=ds^T@q×scale。</li><li>CustomAttention.forward 的输入顺序是 q、k、v，所以 backward 必须返回 dq、dk、dv。</li><li>gradcheck 使用 float64、eps=1e-6、atol=1e-4，将解析梯度与有限差分数值梯度比较。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>现在 dS 已经表示每个 query-key 分数应该怎样变化。固定 K 看，dS 把变化汇回每个 query 得到 dQ；固定 Q 看，需要把 query-key 方向反过来，才能汇回每个 key 得到 dK。最后别把前向的缩放因子落在路上。</p>
+              <p>dS 已经到达打分矩阵，最后沿 QK^T 的两条支路回传。前向把 score 缩小了 scale，链式法则要求两条输入梯度也各乘一次同样的 scale；返回顺序则决定 Autograd 把梯度交给谁。</p>
               <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>Q 支路</h4>
-            <div class="adv-flow">
-              <span>dS [B,N,N]</span><span>K [B,N,d]</span><strong>dQ [B,N,d]</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>K 支路</h4>
-            <div class="adv-flow">
-              <span>dS^T [B,N,N]</span><span>Q [B,N,d]</span><strong>dK [B,N,d]</strong>
-            </div>
-          </section>
+        <div class="adv-flow">
+          <span>ds [B,N,N]</span><strong>ds@k×scale → dq [B,N,d]</strong>
+          <span>dsᵀ [B,N,N]</span><strong>dsᵀ@q×scale → dk [B,N,d]</strong>
         </div>
-
         <div class="adv-contract">
-          <span>前向常数</span><strong><code>scale = 1 / sqrt(d)</code></strong>
-          <span>影响范围</span><strong>dQ 与 dK 都乘 scale；dV 不经过 scores，不乘 scale</strong>
-          <span>返回顺序</span><strong><code>dq, dk, dv</code> 对齐 <code>q, k, v</code></strong>
+          <span>前向验收</span><strong>custom_out 与原生 attention ref_out allclose</strong>
+          <span>反向验收</span><strong>torch.autograd.gradcheck(CustomAttention.apply,...)</strong>
+          <span>测试输入</span><strong>B=2、N=8、d=16、dtype=float64、requires_grad=True</strong>
+          <span>返回契约</span><strong>return dq, dk, dv</strong>
         </div>
-
-        <div class="adv-checks">
-          <span><strong>forward allclose</strong><br>固定前向等于原生实现</span>
-          <span><strong>float64</strong><br>数值差分更精确</span>
-          <span><strong>eps=1e-6</strong><br>用微小扰动估计导数</span>
-          <span><strong>atol=1e-4</strong><br>比较解析与数值梯度</span>
-        </div>
-
-        <div class="adv-callout">gradcheck 不只看“有没有梯度”，而是逐个输入比较你的解析反向与有限差分。漏 scale、转置错轴或返回顺序错，通常都会被它抓住。</div>
+        <div class="adv-callout">forward allclose 通过不代表 backward 正确。漏 scale、转置错或返回顺序错，都只能由 gradcheck 揭示。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用非方形双线性打分练左右输入梯度</h4><pre><code>left = torch.randn(2, 3, 5, dtype=torch.float64)
-right = torch.randn(2, 7, 5, dtype=torch.float64)
-grad_score = torch.randn(2, 3, 7, dtype=torch.float64)
-factor = 0.25
+  <div class="syntax-card"><h4>语法热身：为缩放双线性打分手写两侧梯度</h4><pre><code>left = torch.randn(2, 3, 4)
+right = torch.randn(2, 5, 4)
+grad_score = torch.randn(2, 3, 5)
+factor = 0.5
 
-grad_left = torch.matmul(grad_score, right) * factor
-grad_right = torch.matmul(grad_score.transpose(-2, -1), left) * factor
-print(grad_left.shape, grad_right.shape)  # [2,3,5], [2,7,5]</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>left</code> / <code>right</code> -&gt; <code>q</code> / <code>k</code>。</li>
-            <li><code>grad_score</code> -&gt; TODO 3 得到的 <code>ds</code>。</li>
-            <li><code>grad_left</code> / <code>grad_right</code> -&gt; <code>dq</code> / <code>dk</code>。</li>
-            <li><code>factor</code> -&gt; ctx 中保存的 <code>scale</code>；Notebook 的具体数值由 d 决定。</li>
-            <li>非方形例子显示：K 支路转置的是 grad_score，不是把 q 或 k 的 batch 轴移动。</li>
-          </ul>
-        </div>
-      </div>
+grad_left = grad_score @ right * factor
+grad_right = grad_score.transpose(-2, -1) @ left * factor</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>left / right</code> 对应 <code>q / k</code>。</li><li><code>grad_score</code> 对应 <code>ds</code>，<code>factor</code> 对应 <code>scale</code>。</li><li><code>grad_left / grad_right</code> 对应 <code>dq / dk</code>。</li><li>Notebook 最后还要把前一任务的 dv 按 q、k、v 顺序一起返回。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>CustomAttention.forward(ctx, q, k, v) 对应的 backward 正确返回顺序是什么？</p>
+              <p>正确的 backward 返回顺序是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="0">
-                <span>dv, dk, dq</span>
+                <input type="radio" name="checkpoint-attention-backward-qk-gradcheck" value="0">
+                <span>ds, dp, dout</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="1">
+                <input type="radio" name="checkpoint-attention-backward-qk-gradcheck" value="1">
                 <span>dq, dk, dv</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-attention-backward-qk-and-gradcheck" value="2">
-                <span>ds, dp, dout</span>
+                <input type="radio" name="checkpoint-attention-backward-qk-gradcheck" value="2">
+                <span>dv, dk, dq</span>
               </label></div>
-              <div class="feedback" data-feedback="attention-backward-qk-and-gradcheck"></div>
+              <div class="feedback" data-feedback="attention-backward-qk-gradcheck"></div>
             </div>
           </div>
 
@@ -1366,16 +1331,20 @@ print(grad_left.shape, grad_right.shape)  # [2,3,5], [2,7,5]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-0">
-                <span>完成 TODO 4：dq、dk 都是 [B,N,d]、float64、与输入同 device，并各自乘一次 ctx.scale；dv 不乘该 scale。</span>
+                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-0">
+                <span>完成 dq 与 dk，两者都乘一次 ctx.scale；确认 dq/dk/dv 分别与 q/k/v shape、dtype、device 一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-1">
-                <span>确认 backward 最后按 q、k、v 的输入顺序返回 dq、dk、dv，然后运行 forward allclose 与完整 gradcheck。</span>
+                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-1">
+                <span>按 q、k、v 的前向输入顺序返回 dq、dk、dv。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-and-gradcheck-2">
-                <span>gradcheck 失败时按顺序查：TODO 1/2 的转置、TODO 3 的 keepdim 与括号、TODO 4 的 scale 和返回顺序；不要通过放宽 atol 掩盖公式错误。</span>
+                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-2">
+                <span>运行前向 allclose 和完整 gradcheck；不要通过放宽测试容差掩盖公式错误。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-3">
+                <span>排错顺序：dV/dP 的转置 → Softmax 的 keepdim 与括号 → dQ/dK 的 scale → 返回顺序。</span>
               </label>
           </div>
         </article>
@@ -1395,11 +1364,11 @@ print(grad_left.shape, grad_right.shape)  # [2,3,5], [2,7,5]</code></pre></div>
 
   <script>
     const levelId = "17";
-    const checkpointData = {"attention-backward-output-branch":{"answer":2,"explain":"P^T @ dout 把输出位置的梯度收集回每个 value；dout 或 v 的转置无法得到所需乘法契约。"},"attention-backward-softmax":{"answer":0,"explain":"沿最后一维归约并保留维度，才能把每个 query 行的修正量广播到该行所有 key。"},"attention-backward-qk-and-gradcheck":{"answer":1,"explain":"Autograd 按 forward 的输入位置接收梯度，返回顺序错会把数值正确的梯度交给错误变量。"}};
-    const predictData = {"attention-backward-output-branch":{"answer":0,"revealNote":"中间的 d 被消去，两个 N 分别来自输出位置和 value 位置。"},"attention-backward-softmax":{"answer":0,"revealNote":"row_sum 等于 5×sum(p)=5，所以 dp-row_sum 全为 0；共同平移式信号不会改变 Softmax 前的 score。"},"attention-backward-qk-and-gradcheck":{"answer":0,"revealNote":"forward 代码本来就包含 scale，不受 TODO 4 影响；gradcheck 会发现解析梯度比真实梯度大 sqrt(d) 倍。"}};
+    const checkpointData = {"attention-backward-output-branch":{"answer":2,"explain":"这是批量矩阵乘法的链式法则，转置只发生在最后两个矩阵维。"},"attention-backward-softmax":{"answer":0,"explain":"逐元素项只是雅可比向量积的一部分；row_sum 体现同一行概率总和为 1 的耦合。"},"attention-backward-qk-gradcheck":{"answer":1,"explain":"Autograd 按 forward 参数位置接收梯度，顺序错误会把正确数值交给错误输入。"}};
+    const predictData = {"attention-backward-output-branch":{"answer":0,"revealNote":"每个输入梯度必须与对应输入 shape 相同；batch 维也保留。"},"attention-backward-softmax":{"answer":0,"revealNote":"最后一维被压成长度 1，batch 与 query 行维保留。"},"attention-backward-qk-gradcheck":{"answer":0,"revealNote":"TODO 只影响 backward；解析梯度会比真实梯度大 sqrt(d) 倍。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

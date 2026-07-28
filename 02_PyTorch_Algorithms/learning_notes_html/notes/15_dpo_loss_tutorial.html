@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1003,26 +1028,26 @@
         <article class="lesson-card inquiry" data-lesson="dpo-implicit-rewards">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 + TODO 2：chosen / rejected 的 log-ratio 与隐式奖励</span>
+            <span class="todo-pill">TODO 1 + TODO 2：两组 policy-reference log-ratio</span>
           </div>
-          <h2>先做四列减法：Policy 相对 Reference 改变了多少</h2>
+          <h2>先与参考模型比较：得到 chosen 与 rejected 的隐式奖励</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">某条 chosen 回复的 policy logps=-1.2，reference logps=-2.0，beta=0.1。</p>
-            <p class="predict-q">它的 chosen_rewards 是多少？</p>
+            <p class="predict-hook">policy_chosen=-1.0、reference_chosen=-2.0、beta=0.1。</p>
+            <p class="predict-q">chosen_rewards 的该元素是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-implicit-rewards" value="0">
-                <span>0.08</span>
+                <span>0.1</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-implicit-rewards" value="1">
-                <span>-0.08</span>
+                <span>-0.1</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-implicit-rewards" value="2">
-                <span>0.32</span>
+                <span>1.0</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="dpo-implicit-rewards">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1030,89 +1055,61 @@
           <div class="gated" data-gated="dpo-implicit-rewards">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>四个输入都是 [batch_size]：每个元素已经是一整段回复的 token log probability 之和，不需要在本函数里再按 token 求和。</li><li>chosen 表示偏好数据中更好的回复，rejected 表示同一 prompt 下较差的回复；两者必须按 batch 行一一配对。</li><li>Policy 是正在训练的模型，Reference 是冻结的对照模型。log policy - log reference 表示 Policy 相对参考分布提高或降低了这段回复的倾向。</li><li>beta 是 Python float；乘上 [B] 的 log-ratio 后得到 [B] 浮点隐式奖励，不会改变 shape 或 device。</li></ul>
+              <ul><li>四个输入都是 shape [batch_size] 的序列级 log probability 总和，同一索引属于同一个 prompt 的 chosen/rejected 对。</li><li>policy-reference 的对数差表示当前策略相对参考策略提高或降低了某个回答的概率。</li><li>beta 是标量温度系数；Notebook 先算 log-ratio，再分别乘 beta 得到两个 reward Tensor。</li><li>输出奖励仍是 [batch_size]，不应在这里 mean。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>先别急着比较 chosen 与 rejected。对每条回复先问一个更基础的问题：当前 Policy 相比 Reference，更愿意还是更不愿意生成它？chosen 做一次 Policy-Reference，rejected 也做一次，得到两条站在同一参考线上的分数。</p>
+              <p>DPO 不先训练单独的奖励模型，而是把参考模型当基线：当前策略比参考模型更愿意生成某回答，隐式奖励就偏正；更不愿意，奖励就偏负。chosen 与 rejected 必须分别比较自己的参考概率。</p>
               <div class="adv-course">
         <div class="adv-grid two">
           <section class="adv-panel good">
-            <h4>chosen 分支</h4>
-            <div class="adv-flow">
-              <span>policy chosen logps [B]</span><span>减 reference chosen logps [B]</span><strong>chosen log-ratio [B]</strong>
-            </div>
+            <h4>Chosen 支路</h4>
+            <p><code>policy_chosen - reference_chosen</code></p>
+            <p>再乘 beta 得到 chosen_rewards。</p>
           </section>
           <section class="adv-panel warn">
-            <h4>rejected 分支</h4>
-            <div class="adv-flow">
-              <span>policy rejected logps [B]</span><span>减 reference rejected logps [B]</span><strong>rejected log-ratio [B]</strong>
-            </div>
+            <h4>Rejected 支路</h4>
+            <p><code>policy_rejected - reference_rejected</code></p>
+            <p>再乘 beta 得到 rejected_rewards。</p>
           </section>
         </div>
-
-        <div class="adv-steps">
-          <div><b>1</b><code>chosen log-ratio</code><span>Policy chosen - Reference chosen</span></div>
-          <div><b>2</b><code>rejected log-ratio</code><span>Policy rejected - Reference rejected</span></div>
-          <div><b>3</b><code>implicit rewards</code><span>两个 log-ratio 分别乘 beta</span></div>
+        <div class="adv-flow">
+          <span>四个 [B] logps</span><span>两条 policy-reference 差</span><span>分别乘 beta</span><strong>两个 [B] rewards</strong>
         </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>测试首样本</th><th>Policy</th><th>Reference</th><th>beta=0.1 后</th></tr></thead>
-          <tbody>
-            <tr><td>chosen</td><td>-1.0</td><td>-2.0</td><td>0.1 × (1.0) = 0.1</td></tr>
-            <tr><td>rejected</td><td>-3.0</td><td>-2.0</td><td>0.1 × (-1.0) = -0.1</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-contract">
-          <span>正 log-ratio</span><strong>Policy 比 Reference 更偏爱这条回复</strong>
-          <span>零 log-ratio</span><strong>Policy 与 Reference 对这条回复倾向相同</strong>
-          <span>负 log-ratio</span><strong>Policy 比 Reference 更不偏爱这条回复</strong>
-          <span><code>beta</code></span><strong>统一缩放两条分支，得到用于比较的隐式奖励</strong>
-        </div>
-
-        <div class="adv-callout">不要交叉相减：policy_chosen 必须对 reference_chosen，policy_rejected 必须对 reference_rejected。先建立同类对照，下一课才做 chosen-rejected 偏好比较。</div>
+        <div class="adv-callout">不要先做 chosen-rejected。第一层比较是“同一个回答的 policy 与 reference”；第二层才比较 chosen reward 与 rejected reward。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：比较新版与基线对两种文案的倾向</h4><pre><code>new_preferred = torch.tensor([-0.6, -1.4, -0.9])
-new_skipped = torch.tensor([-2.1, -1.8, -2.5])
-base_preferred = torch.tensor([-1.0, -1.0, -1.0])
-base_skipped = torch.tensor([-1.7, -1.7, -1.7])
-temperature = 0.25
+  <div class="syntax-card"><h4>语法热身：比较新旧评分器对两版摘要的偏好变化</h4><pre><code>new_good = torch.tensor([-0.8, -1.1])
+old_good = torch.tensor([-1.3, -1.2])
+new_bad = torch.tensor([-2.0, -1.8])
+old_bad = torch.tensor([-1.5, -1.6])
+temperature = 0.2
 
-preferred_change = new_preferred - base_preferred
-skipped_change = new_skipped - base_skipped
-preferred_score = temperature * preferred_change
-skipped_score = temperature * skipped_change</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>new_preferred / new_skipped</code> -&gt; Policy 的 chosen / rejected logps。</li>
-            <li><code>base_preferred / base_skipped</code> -&gt; Reference 的 chosen / rejected logps。</li>
-            <li><code>preferred_change / skipped_change</code> -&gt; TODO 1/2 的两条 <code>pi_logratios</code>。</li>
-            <li><code>temperature</code> -&gt; <code>beta</code>；Notebook 已在 TODO 后写好两次乘法。</li>
-          </ul>
-        </div>
-      </div>
+good_reward = temperature * (new_good - old_good)
+bad_reward = temperature * (new_bad - old_bad)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>new_good / old_good</code> 对应 policy/reference chosen logps。</li><li><code>new_bad / old_bad</code> 对应 policy/reference rejected logps。</li><li><code>temperature</code> 对应 <code>beta</code>。</li><li>两个 reward 都保留 batch 维，下一任务才做成对差值。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>TODO 1 的 chosen log-ratio 应比较哪两个量？</p>
+              <p>DPO 的第一层比较应该怎样配对？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-rewards" value="0">
-                <span>policy_chosen_logps - reference_chosen_logps</span>
+                <span>policy chosen 对 reference chosen；policy rejected 对 reference rejected</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-rewards" value="1">
-                <span>policy_chosen_logps - policy_rejected_logps</span>
+                <span>policy chosen 对 policy rejected</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-implicit-rewards" value="2">
-                <span>reference_rejected_logps - policy_chosen_logps</span>
+                <span>reference chosen 对 policy rejected</span>
               </label></div>
               <div class="feedback" data-feedback="dpo-implicit-rewards"></div>
             </div>
@@ -1124,45 +1121,45 @@ skipped_score = temperature * skipped_change</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-implicit-rewards-0">
-                <span>完成 TODO 1/2：分别做 chosen 同类相减与 rejected 同类相减；beta 乘法已在 Notebook 后续代码中，不要重复乘。</span>
+                <span>完成两个 pi_logratios，并确认 chosen/rejected 两条支路没有交叉配错。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-implicit-rewards-1">
-                <span>shape/dtype/device 自检：四个输入、两条 log-ratio、chosen_rewards、rejected_rewards 都应为 [batch_size]=[4] 浮点 Tensor，并保持同 device。</span>
+                <span>保留 Notebook 已写好的 beta 乘法；chosen_rewards、rejected_rewards 的 shape 都应为 [B]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-implicit-rewards-2">
-                <span>运行前先手算测试首项：chosen reward=0.1、rejected reward=-0.1；测试会用 torch.allclose 精确核对这两项。</span>
+                <span>用测试第 0 项手算：chosen reward=0.1、rejected reward=-0.1。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-implicit-rewards-3">
-                <span>常见错误排查：符号相反查减法顺序；结果多一个 0.1 因子查是否重复乘 beta；shape 变标量查是否误加 mean/sum；样本错配查 chosen/rejected 分支。</span>
+                <span>错误诊断：奖励符号相反时检查减法顺序；shape 变成标量时检查是否误加 mean/sum。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="dpo-pairwise-loss">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：DPO logits 与逐样本 losses；读懂全部断言</span>
+            <span class="todo-pill">TODO 3：chosen-rejected logits 与 -F.logsigmoid</span>
           </div>
-          <h2>再做偏好比较：chosen 奖励减 rejected 奖励</h2>
+          <h2>再比较好坏回答：逐样本得到稳定的 DPO loss</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">chosen_reward=0.4，rejected_reward=-0.2。</p>
-            <p class="predict-q">若把二者差距继续拉大为 chosen=0.8、rejected=-0.4，DPO loss 会怎样？</p>
+            <p class="predict-hook">某一对回答的 chosen reward 提高，而 rejected reward 不变。</p>
+            <p class="predict-q">该样本的 DPO loss 通常怎样变化？</p>
             <div class="predict-options">
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-pairwise-loss" value="0">
-                <span>变小，因为正的偏好 margin 更大</span>
+                <span>减小</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-pairwise-loss" value="1">
-                <span>变大，因为 reward 绝对值更大</span>
+                <span>增大</span>
               </label>
               <label class="predict-option">
                 <input type="radio" name="predict-dpo-pairwise-loss" value="2">
-                <span>保持不变，因为 shape 没变</span>
+                <span>shape 变成标量</span>
               </label></div>
             <div class="predict-feedback" data-predict-feedback="dpo-pairwise-loss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
@@ -1170,93 +1167,53 @@ skipped_score = temperature * skipped_change</code></pre></div>
           <div class="gated" data-gated="dpo-pairwise-loss">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>chosen_rewards 与 rejected_rewards 都是 [batch_size]，同一个下标属于同一个 prompt 的一对回复。</li><li>DPO logits 是 chosen 隐式奖励减 rejected 隐式奖励；正值表示当前模型相对参考模型更符合偏好顺序。</li><li>F.logsigmoid(logits) 稳定地计算 log(sigmoid(logits))；取负后得到要最小化的非负损失。</li><li>本函数返回逐样本 losses [B]，不能在函数内 mean，因为 Notebook 明确断言 shape==(batch_size,)。</li></ul>
+              <ul><li>chosen_rewards 与 rejected_rewards 都是 [B]，逐元素相减会得到每对回答的偏好 margin。</li><li>margin 越大，表示当前策略相对参考模型更偏向 chosen，DPO loss 应越小。</li><li>F.logsigmoid 比 torch.log(torch.sigmoid(...)) 数值更稳定。</li><li>函数契约返回 losses、chosen_rewards、rejected_rewards 三个 [B] Tensor；Notebook 不要求在函数内 mean。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>DPO 把每对回答变成一道二选一题：chosen 应该排在 rejected 前面。两者奖励差越大且为正，模型答对得越有把握，损失越小；差值为负，说明排序反了，损失会变大并推动 Policy 修正。</p>
+              <p>每条偏好数据像一道二选一题。DPO 关心 chosen reward 比 rejected reward 高多少；把差值送进 sigmoid，相当于把它解释成“chosen 胜出”的可信度，再取负对数作为惩罚。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>两条隐式奖励</b>chosen [B] 与 rejected [B]</span>
-          <span><b>逐样本相减</b>logits = chosen - rejected</span>
-          <span><b>映射成把握度</b>sigmoid(logits)</span>
-          <span><b>训练损失</b>-logsigmoid，仍保留 [B]</span>
+          <span><b>成对 margin</b>chosen_rewards - rejected_rewards</span>
+          <span><b>映射可信度</b>sigmoid(margin)</span>
+          <span><b>稳定负对数</b>-F.logsigmoid(margin)</span>
+          <span><b>保留 batch</b>返回每一对的 loss</span>
         </div>
-
-        <div class="adv-grid three">
-          <section class="adv-panel good">
-            <h4>logits &gt; 0</h4>
-            <p>chosen 排在 rejected 前，损失小于 logits=0 时。</p>
-          </section>
-          <section class="adv-panel neutral">
-            <h4>logits = 0</h4>
-            <p>两条回复无法区分，sigmoid=0.5，loss 约为 0.693。</p>
-          </section>
-          <section class="adv-panel warn">
-            <h4>logits &lt; 0</h4>
-            <p>偏好顺序颠倒，损失更大。</p>
-          </section>
-        </div>
-
-        <div class="adv-steps">
-          <div><b>1</b><code>logits = chosen_rewards - rejected_rewards</code><span>[B]，每一项是一对回复的奖励间隔</span></div>
-          <div><b>2</b><code>losses = -logsigmoid(logits)</code><span>[B]，每对偏好样本各保留一个损失</span></div>
-          <div><b>3</b><code>return three vectors</code><span>losses、chosen_rewards、rejected_rewards 都是 [B]</span></div>
-        </div>
-
         <div class="adv-contract">
-          <span>首样本奖励</span><strong>chosen=0.1，rejected=-0.1</strong>
-          <span>首样本 logits</span><strong>0.1 - (-0.1) = 0.2</strong>
-          <span>首样本期望损失</span><strong>-F.logsigmoid(0.2)</strong>
-          <span>函数内是否 mean</span><strong>否；测试要求 losses.shape == (4,)</strong>
+          <span>测试 shape</span><strong>losses、c_rewards、r_rewards 都是 (4,)</strong>
+          <span>测试数值</span><strong>第 0 项 margin=0.1-(-0.1)=0.2</strong>
+          <span>期望 loss</span><strong>-F.logsigmoid(torch.tensor(0.2))</strong>
         </div>
-
-        <div class="adv-checks">
-          <span>losses.shape == (4,)</span>
-          <span>chosen_rewards.shape == (4,)</span>
-          <span>rejected_rewards.shape == (4,)</span>
-          <span>首样本三个数值通过 allclose</span>
-        </div>
-
-        <div class="adv-callout">训练循环可以在函数外对 losses.mean() 再 backward，但这个 TODO 的返回契约是逐样本损失。提前 mean 会让数值看似合理，却直接破坏 shape 断言。</div>
+        <div class="adv-callout">本函数返回逐样本 losses，不要自行 mean。上层训练循环可以决定如何聚合；这里的测试明确保留 batch 维。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：把每位评审的 A/B 排序变成损失</h4><pre><code>score_a = torch.tensor([0.35, -0.10, 0.60])
-score_b = torch.tensor([-0.20, 0.25, 0.10])
-preference_margin = score_a - score_b
-per_reviewer_loss = -F.logsigmoid(preference_margin)
-print(per_reviewer_loss.shape)  # [3]
-
-# 真正训练时可由外部决定如何聚合
-training_loss = per_reviewer_loss.mean()</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>score_a / score_b</code> -&gt; <code>chosen_rewards / rejected_rewards</code>。</li>
-            <li><code>preference_margin</code> -&gt; TODO 3 的 <code>logits</code>，相减顺序是 chosen 减 rejected。</li>
-            <li><code>per_reviewer_loss</code> -&gt; 函数应返回的逐样本 <code>losses</code>。</li>
-            <li>例子最后的外部 mean -&gt; Notebook 函数内不要照搬；它说明逐样本返回后，调用者仍可自行聚合。</li>
-          </ul>
-        </div>
-      </div>
+  <div class="syntax-card"><h4>语法热身：把两版方案的相对评分变成逐对损失</h4><pre><code>preferred = torch.tensor([0.4, -0.1, 0.8])
+other = torch.tensor([-0.2, 0.3, 0.1])
+margin = preferred - other
+pair_losses = -F.logsigmoid(margin)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>preferred / other</code> 对应 <code>chosen_rewards / rejected_rewards</code>。</li><li><code>margin</code> 对应 Notebook 的 <code>logits</code>，它仍是 [B]。</li><li><code>pair_losses</code> 对应 <code>losses</code>；不要对它 mean。</li><li>最终按契约返回 losses 以及前一任务得到的两组 rewards。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 dpo_loss 不能在返回前对 losses 调用 mean()？</p>
+              <p>为什么 Notebook 不在 dpo_loss 内对 losses 求 mean？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-pairwise-loss" value="0">
-                <span>mean 会改变浮点 dtype 为整数</span>
+                <span>因为 beta 必须是 Tensor</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-pairwise-loss" value="1">
-                <span>Notebook 契约要求每个偏好对一个 loss，测试断言 shape 为 [batch_size]</span>
+                <span>函数契约要求返回每个样本的 [B] loss，测试也检查该 shape</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-dpo-pairwise-loss" value="2">
-                <span>F.logsigmoid 只能处理二维张量</span>
+                <span>因为 mean 不支持梯度</span>
               </label></div>
               <div class="feedback" data-feedback="dpo-pairwise-loss"></div>
             </div>
@@ -1268,19 +1225,19 @@ training_loss = per_reviewer_loss.mean()</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-pairwise-loss-0">
-                <span>完成 TODO 3：用 chosen_rewards 与 rejected_rewards 构造逐样本 logits，再用数值稳定的 F.logsigmoid 得到逐样本 losses；保留已有三返回值。</span>
+                <span>完成 logits=chosen_rewards-rejected_rewards，以及 losses=-F.logsigmoid(logits)。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-pairwise-loss-1">
-                <span>shape/dtype/device 自检：logits、losses、chosen_rewards、rejected_rewards 都应为 [4] 浮点 Tensor，device 与四个输入一致；不要创建额外 CPU 常量张量。</span>
+                <span>按顺序返回 losses、chosen_rewards、rejected_rewards，并保持三个 shape 都为 [batch_size]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-pairwise-loss-2">
-                <span>测试目标：运行 test_dpo_loss，先过三个 shape 断言，再过首样本 chosen=0.1、rejected=-0.1、loss=-F.logsigmoid(0.2) 的数值断言。</span>
+                <span>运行 test_dpo_loss，核对第 0 项两个 reward 与 expected_loss_0。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-pairwise-loss-3">
-                <span>常见错误排查：loss 偏大且排序反向查 logits 减法顺序；shape=[] 查是否提前 mean；数值不稳查是否手写 log(sigmoid)；奖励错位回到 TODO 1/2 检查同类相减。</span>
+                <span>错误诊断：loss 数值相反时检查 margin 顺序；shape 为 [] 时删除误加的 mean；出现数值不稳时确认使用 F.logsigmoid。</span>
               </label>
           </div>
         </article>
@@ -1300,8 +1257,8 @@ training_loss = per_reviewer_loss.mean()</code></pre></div>
 
   <script>
     const levelId = "15";
-    const checkpointData = {"dpo-implicit-rewards":{"answer":0,"explain":"隐式奖励先衡量同一回复在 Policy 与 Reference 下的相对倾向。"},"dpo-pairwise-loss":{"answer":1,"explain":"本页返回逐样本向量；聚合可以由外部训练循环决定。"}};
-    const predictData = {"dpo-implicit-rewards":{"answer":0,"revealNote":"先算 -1.2-(-2.0)=0.8，再乘 0.1 得到 0.08。"},"dpo-pairwise-loss":{"answer":0,"revealNote":"margin 从 0.6 增加到 1.2，sigmoid 更接近 1，负对数因此变小。"}};
+    const checkpointData = {"dpo-implicit-rewards":{"answer":0,"explain":"先对同一回答做策略相对参考的变化，才能得到可比较的隐式奖励。"},"dpo-pairwise-loss":{"answer":1,"explain":"聚合策略由调用方决定；本题明确验收逐样本损失。"}};
+    const predictData = {"dpo-implicit-rewards":{"answer":0,"revealNote":"policy-reference=(-1)-(-2)=1，再乘 0.1 得 0.1。"},"dpo-pairwise-loss":{"answer":0,"revealNote":"margin 变大，logsigmoid 更接近 0，负号后的损失下降。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 8;

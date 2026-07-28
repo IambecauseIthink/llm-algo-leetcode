@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 33 | Profiling-Driven End-to-End Optimization</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -1000,12 +1000,12 @@
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 33 | 零基础导学关卡</p>
+        <h1>Profiling-Driven End-to-End Optimization</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">33_Profiling_Driven_End_to_End_Optimization.ipynb</span>
+          <span class="pill">Profiling</span><span class="pill">Optimization</span><span class="pill">Benchmark</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">baseline -&gt; profile -&gt; one change -&gt; remeasure -&gt; report</div>
       </div>
     </section>
 
@@ -1025,104 +1025,115 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="profiling-benchmark-baseline">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1：完成 benchmark_fn 的计时区间、秒到毫秒换算与平均值</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>先固定测量尺：warmup 不计时，正式轮次才求平均</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">warmup=3、iters=10，正式 10 次总共耗时 0.05 秒。</p>
+            <p class="predict-q">benchmark_fn 应返回多少毫秒？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="0">
+                <span>5 ms</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="1">
+                <span>50 ms</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="2">
+                <span>500 ms</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="profiling-benchmark-baseline">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="profiling-benchmark-baseline">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>函数也是一个值：参数 fn 保存的是“稍后要调用的函数”，写 fn() 才会真正执行它。</li><li>range(n) 会产生 0 到 n-1 共 n 个整数，所以 for _ in range(iters) 会调用 fn 恰好 iters 次。</li><li>time.perf_counter() 返回高精度时间点；结束时间减开始时间才是经过的秒数。</li><li>warmup 只负责预热，不应落在 start 和 total 之间；正式计时结果要除以 iters，再乘 1000 转成毫秒。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>性能优化先要有一把稳定的尺。预热像运动前热身，它让初始化和缓存抖动先发生；真正比赛开始时才按下秒表。若把 warmup 也计入，或只跑一轮，baseline 和 tuned 的比较就可能是在比较偶然噪声。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
+          <span><b>预热</b>调用 warmup 次，不纳入统计</span>
+          <span><b>记开始点</b>start = perf_counter()</span>
+          <span><b>正式执行</b>调用 iters 次</span>
+          <span><b>算平均毫秒</b>(end - start) / iters * 1000</span>
         </div>
+
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
-            <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+            <h4>变量契约</h4>
+            <div class="adv-contract">
+              <span><code>fn</code></span><strong>一个无参数、可重复调用的函数</strong>
+              <span><code>warmup</code></span><strong>计时前的预热次数</strong>
+              <span><code>iters</code></span><strong>正式测量次数</strong>
+              <span>返回值</span><strong>单次平均耗时，单位 ms，且应非负</strong>
+            </div>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
+            <h4>计时边界</h4>
             <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+              <span>warmup loop<br>不计时</span>
+              <span>start</span>
+              <span>iters loop<br>正式计时</span>
+              <strong>total / iters<br>再转 ms</strong>
+            </div>
+            <p>Notebook 测试把 warmup 设为 0、iters 设为 2，因此 counter 必须正好增加 2。</p>
           </section>
         </div>
-        <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+
+        <div class="adv-callout">TODO 1 是 CPU-first 模板。真实 GPU kernel 常常异步执行，工程中还要在计时边界同步 CUDA；不要把这项额外要求擅自加进当前 Notebook。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用文件解析任务练习“预热后计时”</h4><pre><code>import time
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+def measure(parser, warmup=1, repeats=4):
+    for _ in range(warmup):
+        parser()
+
+    begin = time.perf_counter()
+    for _ in range(repeats):
+        parser()
+    elapsed_seconds = time.perf_counter() - begin
+    return elapsed_seconds / repeats * 1000</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>parser</code> 对应 <code>fn</code>，都要用括号调用。</li>
+            <li><code>begin</code> 对应 TODO 的 <code>start</code>；<code>elapsed_seconds</code> 对应 <code>total</code>。</li>
+            <li><code>repeats</code> 对应 <code>iters</code>；先除次数，再乘 1000，得到 <code>avg_time_ms</code>。</li>
+            <li>把三行迁回 TODO 时保留 Notebook 已有的两个循环，不要再额外调用一次 <code>fn()</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>start 最合理的位置在哪里？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="0">
+                <span>warmup 循环之后、正式 iters 循环之前</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="1">
+                <span>warmup 循环之前</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="2">
+                <span>正式 iters 循环之后</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="profiling-benchmark-baseline"></div>
             </div>
           </div>
 
@@ -1131,108 +1142,140 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="profiling-benchmark-baseline-0">
+                <span>完成 TODO 1，并口头解释 start、total、avg_time_ms 三个变量各自的单位。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="profiling-benchmark-baseline-1">
+                <span>测试契约：warmup=0、iters=2 时 fn 必须调用 2 次，返回值必须大于或等于 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="profiling-benchmark-baseline-2">
+                <span>边界诊断：若 counter 变成 3，检查是否在循环外又调用了 fn；若结果放大 1000 倍，检查秒与毫秒的换算顺序。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-benchmark-baseline-3">
+                <span>举一反三：把独立例子的 repeats 改成 8，验证总耗时增长时平均值为什么不一定成倍增长。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="profiling-metric-direction">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 2：汇总 step time、peak memory、throughput 的差值与改善布尔值</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>再统一正负号：低指标用 baseline - tuned，高指标反过来</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">baseline throughput=100，tuned throughput=92。</p>
+            <p class="predict-q">按 Notebook 的统一约定，throughput_delta 和 improved 应是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-profiling-metric-direction" value="0">
+                <span>-8，False</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-profiling-metric-direction" value="1">
+                <span>8，True</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-profiling-metric-direction" value="2">
+                <span>-8，True</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="profiling-metric-direction">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="profiling-metric-direction">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>Python 字典用方括号按键取值，例如 metrics['step_time_ms']。</li><li>step time 和 peak memory 越低越好，所以 baseline 减 tuned 为正时表示改善。</li><li>throughput 越高越好，所以必须用 tuned 减 baseline，正数才仍表示改善。</li><li>round(value, 2) 只负责把结果保留两位小数；判断改善应基于原始差值变量。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>报告最容易埋下的错误不是算错数字，而是同一个正号表达了相反含义。解决办法是先统一约定：summary 里所有性能差值都让“正数 = tuned 更好”。然后根据指标是越低越好还是越高越好，决定减法方向。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
+        <div class="adv-grid three">
+          <section class="adv-panel blue">
+            <h4>step time</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越低越好</strong>
+              <span>公式</span><strong>base - tuned</strong>
+              <span>Notebook</span><strong>120 - 96 = 24 ms</strong>
+            </div>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>peak memory</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越低越好</strong>
+              <span>公式</span><strong>base - tuned</strong>
+              <span>Notebook</span><strong>8192 - 7168 = 1024 MB</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>throughput</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越高越好</strong>
+              <span>公式</span><strong>tuned - base</strong>
+              <span>Notebook</span><strong>100 - 80 = 20</strong>
+            </div>
+          </section>
         </div>
+
         <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
+          <thead><tr><th>输出键</th><th>数值来源</th><th>布尔判断</th><th>测试期望</th></tr></thead>
           <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
+            <tr><td><code>step_time_delta_ms</code></td><td><code>time_delta</code></td><td><code>time_delta &gt; 0</code></td><td>24.0 / true</td></tr>
+            <tr><td><code>peak_mem_delta_mb</code></td><td><code>memory_delta</code></td><td><code>memory_delta &gt; 0</code></td><td>1024.0 / true</td></tr>
+            <tr><td><code>throughput_delta</code></td><td><code>throughput_delta</code></td><td><code>throughput_delta &gt; 0</code></td><td>20.0 / true</td></tr>
           </tbody>
         </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-callout">先在纸上给每个指标写“越低/越高”，再写减法。不要从三个测试答案倒推硬编码数字；函数必须适用于任意 baseline 和 tuned 字典。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用配送方案练习统一“正数代表改善”</h4><pre><code>old = {'minutes': 42.0, 'orders_per_hour': 18.0}
+new = {'minutes': 35.0, 'orders_per_hour': 24.0}
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
+time_gain = old['minutes'] - new['minutes']
+capacity_gain = new['orders_per_hour'] - old['orders_per_hour']
+
+result = {
+    'time_gain': round(time_gain, 2),
+    'capacity_gain': round(capacity_gain, 2),
+    'time_improved': time_gain &gt; 0,
+    'capacity_improved': capacity_gain &gt; 0,
+}</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>old/new</code> 对应 <code>base_metrics/tuned_metrics</code>。</li>
+            <li><code>minutes</code> 对应 step time 或 memory，沿用 <code>base - tuned</code>。</li>
+            <li><code>orders_per_hour</code> 对应 throughput，沿用 <code>tuned - base</code>。</li>
+            <li>最后把三个差值写入 Notebook 已给出的 summary 键，不要更名，否则测试按键读取会失败。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
+              <p>为什么 memory_delta 使用 baseline - tuned？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="0">
+                <span>因为 round 只接受正数</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="1">
+                <span>显存越低越好，这样 tuned 更省显存时差值为正</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="2">
+                <span>因为所有指标都必须固定用 baseline - tuned</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
+              <div class="feedback" data-feedback="profiling-metric-direction"></div>
             </div>
           </div>
 
@@ -1241,102 +1284,131 @@ if needs_row:
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+                <input type="checkbox" data-homework="profiling-metric-direction-0">
+                <span>完成 TODO 2，并为三个差值各写一句“为什么这样减”。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+                <input type="checkbox" data-homework="profiling-metric-direction-1">
+                <span>测试契约：24.0、1024.0、20.0 三个差值及三个改善布尔值都必须与测试一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
+                <input type="checkbox" data-homework="profiling-metric-direction-2">
+                <span>反例测试：自行构造 tuned 更慢、更占显存、吞吐更低的字典，确认三个差值均为负、三个布尔值均为 False。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-metric-direction-3">
+                <span>错误诊断：数值绝对值正确但布尔值相反，优先检查减法方向；KeyError 则检查字典键的拼写。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" data-lesson="profiling-report-loop">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
+            <span class="todo-pill">TODO 3：生成指标行，并把 bottleneck 与 next_action 写入优化报告</span>
           </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
+          <h2>最后让数字变成行动：列表生成表格，结论回扣瓶颈</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
+            <p class="predict-hook">time_improved=False，但 step_time_delta_ms=-3.5。</p>
+            <p class="predict-q">step time 表格行的判断文字应该是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-profiling-report-loop" value="0">
+                <span>未改善</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-profiling-report-loop" value="1">
+                <span>改善</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
+                <input type="radio" name="predict-profiling-report-loop" value="2">
+                <span>无法生成</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="profiling-report-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-cache-rebuild">
+          <div class="gated" data-gated="profiling-report-loop">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
+              <ul><li>f-string 用大括号把变量值嵌进字符串，例如 f'耗时：{value}'。</li><li>条件表达式写成 A if condition else B，可在表格中选择“改善”或“未改善”。</li><li>rows 是字符串列表；[header, sep] + rows + [conclusion] 会拼成一个更长的列表。</li><li>'\n'.join(lines) 会在每两行之间插入换行符，适合生成 Markdown 表格。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
+              <p>profiling 的闭环不是停在“快了 24 ms”。一份可执行报告必须同时保留证据、瓶颈判断和下一步动作。表格回答发生了什么，结论回答为什么以及下一轮做什么。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+          <span><b>header + sep</b>建立 Markdown 表头</span>
+          <span><b>rows</b>把三项差值逐行格式化</span>
+          <span><b>conclusion</b>串联瓶颈与下一步</span>
+          <span><b>join</b>输出一个多行字符串</span>
         </div>
-        <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>报告必须出现的内容</h4>
+            <div class="adv-checks">
+              <span>step time<br>变化与判断</span>
+              <span>peak memory<br>变化与判断</span>
+              <span>throughput<br>变化与判断</span>
+              <span>bottleneck<br>next_action</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>闭环不等于全都改善</h4>
+            <p>某项布尔值为 False 时，表格应如实显示“未改善”。优化可以带来取舍，报告不能为了好看隐藏代价。</p>
+            <div class="adv-contract">
+              <span>瓶颈</span><strong>backward kernel 占比过高</strong>
+              <span>下一步</span><strong>保留混合精度并检查 optimizer</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-callout">测试只检查关键子串，但你的实现仍应完整生成三行指标。不要把 bottleneck 或 next_action 写死为测试样例，它们是函数参数。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
+        <div class="syntax-card"><h4>语法热身：用学习复盘练习生成 Markdown 报告</h4><pre><code>score = 8
+passed = score &gt;= 6
+rows = [
+    f"| 得分 | {score} | {'通过' if passed else '未通过'} |",
+]
+next_step = '复习错题并再测一次'
+conclusion = f"下一步：{next_step}。"
 
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
-
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
+report = "\n".join([
+    '| 项目 | 数值 | 判断 |',
+    '| --- | --- | --- |',
+] + rows + [conclusion])</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>score/passed</code> 对应 summary 中的一组差值和 improved 布尔值。</li>
+            <li>单行 <code>rows</code> 扩成 step time、peak memory、throughput 三行。</li>
+            <li><code>next_step</code> 对应 <code>next_action</code>；结论中还要加入 <code>bottleneck</code>。</li>
+            <li>保留 Notebook 已给出的 <code>header</code> 与 <code>sep</code>，最终仍用换行符 join。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>为什么报告末尾还要写 bottleneck 和 next_action？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-profiling-report-loop" value="0">
+                <span>为了让字符串更长</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-profiling-report-loop" value="1">
+                <span>因为 Markdown 表格不能单独显示数字</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-profiling-report-loop" value="2">
+                <span>让指标变化能连接到原因判断和下一轮可执行动作</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="profiling-report-loop"></div>
             </div>
           </div>
 
@@ -1345,16 +1417,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="profiling-report-loop-0">
+                <span>完成 TODO 3：生成三行 rows 和一个 conclusion，并通过 join 返回完整报告。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="profiling-report-loop-1">
+                <span>测试契约：报告中必须包含表头、传入的 bottleneck 文本和 next_action 文本。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="profiling-report-loop-2">
+                <span>自行构造一项未改善的 summary，确认报告能同时展示改善项与未改善项。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-report-loop-3">
+                <span>错误诊断：若表格挤在一行，检查是否使用 '\n'.join；若出现 NameError，检查 rows 和 conclusion 是否在 return 前赋值。</span>
               </label>
           </div>
         </article>
@@ -1366,19 +1442,19 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="32_training_performance_analysis.html">上一关：L32</a>
+        <a class="primary" href="34_distributed_parallel_benchmark.html">下一关：L34</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
+    const levelId = "33";
+    const checkpointData = {"profiling-benchmark-baseline":{"answer":0,"explain":"这样 total 只覆盖需要比较的正式轮次，预热开销不会污染平均耗时。"},"profiling-metric-direction":{"answer":1,"explain":"减法方向由指标偏好决定；throughput 恰好需要相反方向。"},"profiling-report-loop":{"answer":2,"explain":"优化报告的价值在于支持决策，而不只是保存一组测量数字。"}};
+    const predictData = {"profiling-benchmark-baseline":{"answer":0,"revealNote":"0.05 / 10 = 0.005 秒；乘 1000 后是 5 ms。warmup 不进入这段总耗时。"},"profiling-metric-direction":{"answer":0,"revealNote":"高指标用 tuned - baseline：92 - 100 = -8；负数表示吞吐退步。"},"profiling-report-loop":{"answer":0,"revealNote":"显示文字由布尔键决定；负差值也应该原样保留，帮助读者看到退步幅度。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

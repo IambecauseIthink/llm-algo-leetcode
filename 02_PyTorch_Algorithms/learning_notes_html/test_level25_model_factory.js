@@ -172,7 +172,7 @@ assert.ok(factoryHtml.includes("to(x.dtype)"));
 assert.ok(factoryCss.includes("@media (max-width: 640px)"));
 assert.ok(factoryCss.includes("@media (prefers-reduced-motion: reduce)"));
 assert.ok(!notebookText.includes("反量化时再把 INT8 乘回"));
-assert.ok(notebookText.includes("反量化时把 INT8 除以同一个"));
-assert.ok(notebookText.includes("不能写死 FP16"));
+assert.ok(notebookText.includes("除以 self.scale 恢复其数值范围"));
+assert.ok(notebookText.includes("weight_int8.to(x.dtype)"));
 
 console.log(`Level 25 model factory checks passed (cosine=${cosine.toFixed(6)})`);

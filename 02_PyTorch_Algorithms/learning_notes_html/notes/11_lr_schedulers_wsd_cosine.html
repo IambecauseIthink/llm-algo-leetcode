@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -710,15 +723,278 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -748,247 +1024,409 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card inquiry" data-lesson="wsd-warmup-stable">
+
+        <article class="lesson-card inquiry" data-lesson="wsd-warmup-step-semantics">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">TODO 1：从 0 线性升到 base_lr</span>
           </div>
-          <h2>Warmup + Stable：先热车再巡航，别一脚油门冲飞</h2>
+          <h2>Warmup：先弄清 scheduler 眼中的 step</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">大模型训练一上来不敢用最大学习率，非要先花几千步把 lr 从 0 慢慢升上去（Warmup）。</p>
-            <p class="predict-q">先判断：Warmup 主要在防什么？</p>
+            <p class="predict-hook">base_lr=3e-4，warmup_steps=1000，step=500。</p>
+            <p class="predict-q">Warmup 线性公式得到的 current_lr 是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-warmup-stable" value="0">
-                <span>防开局崩：随机初始化梯度乱、AdamW 方差还没攒稳，直接用大 lr 会让 loss 直接 NaN</span>
+                <input type="radio" name="predict-wsd-warmup-step-semantics" value="0">
+                <span>1.5e-4</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-warmup-stable" value="1">
-                <span>防止显存溢出</span>
+                <input type="radio" name="predict-wsd-warmup-step-semantics" value="1">
+                <span>3e-4</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-warmup-stable" value="2">
-                <span>让 batch size 可以设更大</span>
+                <input type="radio" name="predict-wsd-warmup-step-semantics" value="2">
+                <span>0</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="wsd-warmup-stable">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="wsd-warmup-step-semantics">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="wsd-warmup-stable">
+          <div class="gated" data-gated="wsd-warmup-step-semantics">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>学习率(lr)控制每步参数更新的步长。步长太大，模型容易被冲飞(loss 变 NaN)；太小，学得慢。</li><li>为什么要 Warmup：① 模型刚随机初始化时梯度又大又乱，一上来就用大 lr 会瞬间崩；② AdamW 的分母(二阶动量/方差)开局还没攒够数据、非常小，除以它会让实际步长失控。Warmup 给优化器几千步时间“热身”。</li><li>Warmup 做法：lr 从 0 线性升到 base_lr。Stable 做法：保持 base_lr 不动，吃掉大部分训练数据。</li><li>本关继承 PyTorch 的 LRScheduler，实现 get_lr()，用 step 判断当前在哪个阶段。</li></ul>
+              <ul><li>WSD_Scheduler 继承 LRScheduler，base_lrs 来自 optimizer 初始化时每个参数组的学习率。</li><li>当前实现使用 step = self._step_count - 1；构造 scheduler 时父类会初始化一次，因此测试收集到的第一个 optimizer lr 必须是 0。</li><li>Warmup 条件是 step &lt; num_warmup_steps，当前学习率按 step/num_warmup_steps 线性增长。</li><li>get_lr() 必须为每个 base_lr 计算一个 current_lr，追加到 lrs 列表后返回。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把训练想成开长途车：Warmup 是低速热车（lr 从 0 慢慢升上来，别让冷引擎/乱梯度把车干坏），Stable 是上高速匀速巡航（保持最高 lr，高效吃数据）。这一关写前两段——线性升 + 恒定，都是很直白的分段函数。</p>
-              
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 先看整条曲线的形状（本关做前两段）</strong>
-              <p>WSD = Warmup（爬坡）→ Stable（平台）→ Decay（下坡）。本关负责爬坡和平台，下一关负责下坡。</p>
-              <svg viewBox="0 0 460 130" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12">
-                  <line x1="40" y1="100" x2="430" y2="100" stroke="#cbd5e1"></line>
-                  <line x1="40" y1="20" x2="40" y2="100" stroke="#cbd5e1"></line>
-                  <text x="20" y="30" fill="#657184">lr</text>
-                  <polyline points="40,100 110,30" fill="none" stroke="#2f7fc4" stroke-width="3"></polyline>
-                  <polyline points="110,30 300,30" fill="none" stroke="#12805c" stroke-width="3"></polyline>
-                  <path d="M300 30 Q 360 32, 400 88" fill="none" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5 4"></path>
-                  <text x="60" y="118" fill="#2f7fc4">Warmup</text>
-                  <text x="180" y="118" fill="#12805c">Stable</text>
-                  <text x="345" y="118" fill="#94a3b8">Decay(下关)</text>
-                  <text x="112" y="24" fill="#657184" font-size="11">base_lr</text>
-                </g>
-              </svg>
+              <p>Warmup 像逐步打开水龙头：第 0 步先关闭，随后按完成的预热步数比例打开。这里最容易错的不是乘法，而是 step 从哪里开始。Notebook 的测试明确把 lrs[0] 当作 0，所以实现必须服从当前 _step_count 的时序。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>线性比例</h4>
+            <div class="adv-contract">
+              <span><code>step=0</code></span><strong>0 / warmup = 0，lr=0</strong>
+              <span><code>step=250</code></span><strong>完成 25%，lr=0.25×base_lr</strong>
+              <span><code>step=999</code></span><strong>接近 base_lr</strong>
+              <span><code>step=1000</code></span><strong>进入 Stable，恰好 base_lr</strong>
             </div>
-            <div class="story-arrow">TODO 1：Warmup 段，从 0 线性升到 base_lr</div>
-            <div class="story-panel">
-              <strong>1. 线性爬坡：lr = base_lr × step / warmup_steps</strong>
-              <p>step=0 时 lr=0（引擎最冷、最保守），step 走到 warmup_steps 时正好等于 base_lr。中间按比例线性插值。</p>
-              <div class="curve-legend"><span>step 0 → 0</span><span>step 半程 → base_lr/2</span><strong>step=warmup → base_lr</strong></div>
-              <details class="think">
-                <summary>想一想：不要 warmup、一开始就用 base_lr，最坏会发生什么？</summary>
-                <div class="think-body">
-                  <p>随机初始化的模型梯度方向基本是噪声，幅度还大。直接用最大 lr，第一步就可能把权重推到极端区域，loss 直接飙成 NaN——这就是训练日志里最常见的“loss spike / 开局就崩”。</p>
-                  <p>再叠加 AdamW 的问题：它用梯度平方的移动平均当分母，开局这个值极小，<code>lr / (√小数)</code> 让实际步长爆炸。warmup 这几千步就是等这个分母把方差“攒稳”，同时让 lr 慢慢加上来，双保险。</p>
-                </div>
-              </details>
+          </section>
+          <section class="adv-panel warn">
+            <h4>测试的调用顺序</h4>
+            <div class="adv-flow">
+              <span>记录当前 optimizer lr</span>
+              <span>optimizer.step()</span>
+              <span>scheduler.step()</span>
+              <strong>下一轮再记录</strong>
             </div>
-            <div class="story-arrow">TODO 2：Stable 段，锁定 base_lr</div>
-            <div class="story-panel">
-              <strong>2. 平台巡航：lr = base_lr（一行）</strong>
-              <p>warmup 结束到 decay 开始之间，lr 恒等于 base_lr。这是训练时间最长、loss 下降最主力的阶段。</p>
-              <div class="mini-flow"><span>step < warmup</span><span>线性升</span><strong>warmup ≤ step < warmup+stable → base_lr</strong></div>
-            </div>
-            <div class="field-note">
-              <div class="fn-title">行业视角：Warmup 不是玄学，是被 loss spike 教育出来的</div>
-              <p>GPT-3、LLaMA 系列全部带 warmup，典型是总步数的 1%~5%（比如训 10 万步、warmup 1000~5000 步）。它几乎不花额外成本，却能挡住“开局炸炉”这种最昂贵的事故——一次千卡训练崩了重启，烧的是真金白银。所以你看任何大模型训练配置，warmup_steps 都是必填项。</p>
-            </div>
-          </div>
-              <div class="syntax-card"><h4>语法热身：get_lr 里用 if/elif 分段</h4><pre><code>step = self._step_count - 1
-if step &lt; self.num_warmup_steps:                 # Warmup：线性升
-    current_lr = base_lr * step / self.num_warmup_steps
-elif step &lt; self.num_warmup_steps + self.num_stable_steps:
-    current_lr = base_lr                          # Stable：恒定
-else:
-    ...                                           # Decay：下一关</code></pre></div>
+            <p>因此测试数组索引与 scheduler 内部 step 的边界要一起理解，不能只凭“第几步”口头猜测。</p>
+          </section>
+        </div>
+
+        <div class="adv-roadmap">
+          <span><b>Warmup</b>0 ≤ step &lt; 1000</span>
+          <span><b>Stable</b>1000 ≤ step &lt; 8000</span>
+          <span><b>Decay</b>step ≥ 8000</span>
+          <span><b>Total</b>10000 次记录</span>
+        </div>
+
+        <div class="adv-callout">不要照搬其他调度器常见的 <code>(step+1)/warmup</code> 写法。本 Notebook 的断言要求第一条记录严格为 0，并在索引 warmup 处进入 base_lr。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：把音量在 4 个预热刻度中线性打开</h4><pre><code>max_volume = 0.8
+warmup_steps = 4
+
+for step in range(warmup_steps):
+    current = max_volume * step / warmup_steps
+    print(step, current)
+# step=0 -&gt; 0.0
+# step=2 -&gt; 0.4</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>max_volume</code> 对应当前循环中的 <code>base_lr</code>。</li>
+            <li><code>warmup_steps</code> 对应 <code>self.num_warmup_steps</code>。</li>
+            <li><code>current</code> 对应 TODO 1 的 <code>current_lr</code>。</li>
+            <li>Notebook 可以直接用同一线性公式；保留当前外层对每个 base_lr 的循环。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>动手算：base_lr=0.01、warmup_steps=100，走到 step=50 时线性 warmup 的 lr 是多少？</p>
+              <p>为什么 step=1000 时不再执行 warmup 分支？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-warmup-stable" value="0">
-                <span>0.05</span>
+                <input type="radio" name="checkpoint-wsd-warmup-step-semantics" value="0">
+                <span>因为 total_steps 已结束</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-warmup-stable" value="1">
-                <span>0.01</span>
+                <input type="radio" name="checkpoint-wsd-warmup-step-semantics" value="1">
+                <span>因为 min_lr_ratio 为 0.1</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-warmup-stable" value="2">
-                <span>0.005</span>
+                <input type="radio" name="checkpoint-wsd-warmup-step-semantics" value="2">
+                <span>条件是 step &lt; num_warmup_steps，边界 1000 进入 Stable 并使用完整 base_lr</span>
               </label></div>
-              <div class="feedback" data-feedback="wsd-warmup-stable"></div>
+              <div class="feedback" data-feedback="wsd-warmup-step-semantics"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-warmup-stable-0">
-                <span>TODO 1：step &lt; warmup_steps 时 current_lr = base_lr * step / num_warmup_steps（step=0 得 0）。</span>
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-0">
+                <span>完成 TODO 1：在 warmup 分支中按当前 step 比例计算 current_lr，确保 step=0 时为 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-warmup-stable-1">
-                <span>TODO 2：进入 stable 区间时 current_lr = base_lr。</span>
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-1">
+                <span>边界自检：step=0、500、999、1000 分别应为 0、半程、接近最大、最大值。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-warmup-stable-2">
-                <span>跑测试：lrs[0]≈0，lrs[warmup] 应等于 max_lr，stable 段维持 max_lr。</span>
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-2">
+                <span>多参数组自检：代码必须使用 for 循环里的 base_lr，而不是硬编码测试 max_lr。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-3">
+                <span>错误诊断：lrs[0] 非 0 时检查是否误加 1；warmup 边界不等于 max_lr 时检查分支条件与 Stable 赋值。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="wsd-cosine-decay">
+        <article class="lesson-card inquiry" data-lesson="wsd-stable-window">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3</span>
+            <span class="todo-pill">TODO 2：保持 base_lr</span>
           </div>
-          <h2>Decay：最后一程用半条余弦曲线平滑降落</h2>
+          <h2>Stable：用累计边界守住主要学习窗口</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">Decay 段的余弦因子写成 cosine = 0.5 × (1 + cos(π·ratio))，那个“0.5×(1+…)”看着有点多余。</p>
-            <p class="predict-q">先判断：为什么不直接用 cos(π·ratio) 当衰减因子？</p>
+            <p class="predict-hook">warmup=1000、stable=7000，当前 step=7500。</p>
+            <p class="predict-q">当前属于哪个阶段，current_lr 应是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-cosine-decay" value="0">
-                <span>因为 cos 的范围是 [1,−1]，直接用会让 lr 出现负数；0.5·(1+cos) 把它规整到干净的 [1,0]</span>
+                <input type="radio" name="predict-wsd-stable-window" value="0">
+                <span>Stable，等于 base_lr</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-cosine-decay" value="1">
-                <span>因为 0.5 能让计算更快</span>
+                <input type="radio" name="predict-wsd-stable-window" value="1">
+                <span>Decay，接近 min_lr</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-wsd-cosine-decay" value="2">
-                <span>因为 PyTorch 要求因子必须带系数</span>
+                <input type="radio" name="predict-wsd-stable-window" value="2">
+                <span>Warmup，等于 0.75×base_lr</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="wsd-cosine-decay">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="wsd-stable-window">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="wsd-cosine-decay">
+          <div class="gated" data-gated="wsd-stable-window">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>Decay 是 WSD 的最后一段：在训练尾部把 lr 从 base_lr 平滑降到 min_lr，帮模型在最优解附近“精细收拢”。</li><li>先算已走过 decay 的比例 decay_ratio = (step − warmup − stable) / decay_steps，范围 0→1。</li><li>余弦因子 cosine = 0.5·(1 + cos(π·decay_ratio))：ratio=0 时=1，ratio=1 时=0，中间是平滑的 S 形下降。</li><li>最终 lr = min_lr + (base_lr − min_lr)·cosine：把 [0,1] 的因子映射到 [min_lr, base_lr]。</li></ul>
+              <ul><li>Stable 从 num_warmup_steps 开始，到 num_warmup_steps + num_stable_steps 之前结束。</li><li>elif 分支只有在 warmup 条件已失败时进入，因此不需要重复写下界。</li><li>稳定期 current_lr 就是当前参数组的 base_lr，不做比例、余弦或 min_lr 限制。</li><li>Notebook 测试检查 lrs[warmup] 与 lrs[warmup+stable-1] 都等于 max_lr。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>训练收尾不能急刹车（lr 突然归零会让模型抖动、丢掉刚学的东西），而是沿着半条余弦曲线平滑滑降。开头降得慢（还在高位多学一会），越接近终点降得越快，最后停在 min_lr。这一关就是把这个余弦公式写对。</p>
-              
-          <div class="shape-story">
-            <div class="story-panel">
-              <strong>0. 为什么用余弦而不是直线降？</strong>
-              <p>余弦下降在两端“平、中间陡”：起点附近 lr 还维持在高位，让模型多吃一会儿；临近终点快速压到 min_lr，帮助收敛。比直线更“先松后紧”，实践中收敛更稳。</p>
-              <svg viewBox="0 0 460 130" width="100%" style="max-width:620px;border:1px solid #dce2e8;border-radius:8px;background:#fff;padding:8px">
-                <g font-size="12">
-                  <line x1="40" y1="100" x2="430" y2="100" stroke="#cbd5e1"></line>
-                  <line x1="40" y1="20" x2="40" y2="100" stroke="#cbd5e1"></line>
-                  <path d="M40 25 Q 235 30, 250 60 Q 265 90, 420 95" fill="none" stroke="#2f7fc4" stroke-width="3"></path>
-                  <text x="46" y="20" fill="#657184" font-size="11">base_lr</text>
-                  <text x="390" y="90" fill="#657184" font-size="11">min_lr</text>
-                  <text x="150" y="120" fill="#2f7fc4">cosine decay（半条余弦）</text>
-                </g>
-              </svg>
+              <p>Stable 不是“什么都没做”，而是刻意给模型一段持续吸收数据的固定更新强度。代码上最重要的是用累计步数当右边界：warmup=1000、stable=7000，Stable 结束点是 8000，而不是 7000。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>用绝对 step 划区间</h4>
+            <div class="adv-contract">
+              <span>左边界</span><strong>num_warmup_steps = 1000</strong>
+              <span>右边界</span><strong>warmup + stable = 8000</strong>
+              <span>有效 step</span><strong>1000 ... 7999</strong>
+              <span>学习率</span><strong>始终为 base_lr</strong>
             </div>
-            <div class="story-arrow">TODO 3：先算进度，再套余弦</div>
-            <div class="story-panel">
-              <strong>1. 三步：进度 → 余弦因子 → 映射到 lr</strong>
-              <div class="mini-flow"><span>decay_ratio = (step−warmup−stable)/decay_steps</span><span>cosine = 0.5(1+cos(π·ratio))</span><strong>lr = min_lr + (base−min)·cosine</strong></div>
-              <p>验证端点：ratio=0 → cos(0)=1 → cosine=1 → lr=base_lr（decay 刚开始，接住 stable 的高位）；ratio=1 → cos(π)=−1 → cosine=0 → lr=min_lr（终点）。</p>
-              <details class="think">
-                <summary>想一想：为什么因子要写成 0.5·(1+cos(...))，而不是直接 cos(...)？</summary>
-                <div class="think-body">
-                  <p>cos(π·ratio) 本身的取值范围是 [1, −1]，直接拿它当因子会出现负数——lr 会被压到 min_lr 以下甚至变负，非法。</p>
-                  <p>+1 把范围抬到 [2, 0]，再 ×0.5 压成 [1, 0]。这样因子是干净的“从 1 平滑降到 0”，乘上 (base−min) 再加 min，就稳稳落在 [min_lr, base_lr] 区间。这个 0.5·(1+cos) 是余弦退火的标准写法，记下来。</p>
-                </div>
-              </details>
+          </section>
+          <section class="adv-panel warn">
+            <h4>常见边界错误</h4>
+            <div class="adv-contract">
+              <span>误写 <code>step &lt; stable</code></span><strong>会在 7000 就提前进入 Decay</strong>
+              <span>误写 <code>&lt;=</code></span><strong>会多保留一个 Stable step</strong>
+              <span>误用 min_lr</span><strong>Stable 不应该提前衰减</strong>
             </div>
-            <div class="field-note">
-              <div class="fn-title">行业视角：WSD 为什么正在取代 Cosine（LLaMA-3 的选择）</div>
-              <p>传统 Cosine 退火必须一开始就定死总步数、从头到尾一路下降。麻烦在于：如果训练中途想“加数据继续训”(continued pre-training)，此时 lr 早已降到底，模型几乎学不动新知识了。</p>
-              <p>WSD 把“稳定期”和“退火期”解耦：想加数据就无限延长 Stable 段（lr 一直是高位），真正要收尾时才进入这最后 10%~20% 的 Decay。这种灵活性正是 LLaMA-3 等现代持续预训练采用 WSD 的原因——而 Decay 段的余弦公式，就是你这一关写的。</p>
-            </div>
-          </div>
-              <div class="syntax-card"><h4>语法热身：Decay 段：余弦退火到 min_lr</h4><pre><code>min_lr = base_lr * self.min_lr_ratio
-decay_step = step - self.num_warmup_steps - self.num_stable_steps
-decay_ratio = decay_step / self.num_decay_steps        # 0 → 1
-cosine = 0.5 * (1 + math.cos(math.pi * decay_ratio))   # 1 → 0
-current_lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
+          </section>
+        </div>
+
+        <div class="adv-checks">
+          <span>lrs[1000] = 3e-4</span>
+          <span>lrs[7999] = 3e-4</span>
+          <span>step=8000 进入 Decay</span>
+          <span>延长 Stable 只需增大步数配置</span>
+        </div>
+
+        <div class="adv-callout">Stable 右边界是两个阶段长度之和。调度器的 step 是从训练开头累计的，不会在每个阶段自动清零。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用累计时间判断恒速巡航阶段</h4><pre><code>warmup = 3
+cruise = 5
+speed = 80
+
+for step in range(10):
+    if step &lt; warmup:
+        current = speed * step / warmup
+    elif step &lt; warmup + cruise:
+        current = speed
+    else:
+        current = None  # 后续减速阶段
+    print(step, current)</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>warmup + cruise</code> 对应 <code>self.num_warmup_steps + self.num_stable_steps</code>。</li>
+            <li><code>speed</code> 对应每个参数组的 <code>base_lr</code>。</li>
+            <li><code>current</code> 对应 TODO 2 的 <code>current_lr</code>。</li>
+            <li>Notebook 已给好 elif 条件，只需正确设置值，不要重算局部 step。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>理解：cosine = 0.5·(1+cos(π·ratio))，当 decay_ratio=1（decay 走完）时，lr 等于多少？</p>
+              <p>为什么 Stable 的条件使用 warmup + stable，而不是只用 stable？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-cosine-decay" value="0">
-                <span>min_lr（cos(π)=−1 → 因子=0）</span>
+                <input type="radio" name="checkpoint-wsd-stable-window" value="0">
+                <span>step 是从训练开始累计的绝对步数，Stable 要接在 Warmup 后</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-cosine-decay" value="1">
-                <span>0（因子无意义）</span>
+                <input type="radio" name="checkpoint-wsd-stable-window" value="1">
+                <span>因为 base_lr 要相加</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-wsd-cosine-decay" value="2">
-                <span>base_lr（因子=1）</span>
+                <input type="radio" name="checkpoint-wsd-stable-window" value="2">
+                <span>因为 LRScheduler 只接受偶数</span>
               </label></div>
-              <div class="feedback" data-feedback="wsd-cosine-decay"></div>
+              <div class="feedback" data-feedback="wsd-stable-window"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-cosine-decay-0">
-                <span>TODO 3：decay_ratio =(step−warmup−stable)/decay_steps；cosine=0.5*(1+cos(π·ratio))；lr=min_lr+(base−min)*cosine。</span>
+                <input type="checkbox" data-homework="wsd-stable-window-0">
+                <span>完成 TODO 2：Stable 分支直接令 current_lr 等于当前 base_lr。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-cosine-decay-1">
-                <span>端点自检：ratio=0 应得 base_lr，ratio=1 应得 min_lr(=base_lr*min_lr_ratio)。</span>
+                <input type="checkbox" data-homework="wsd-stable-window-1">
+                <span>边界自检：测试配置下 step=1000 与 step=7999 都是最大值，step=8000 才进入 Decay。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="wsd-cosine-decay-2">
-                <span>跑测试并看曲线：应是“升—平—余弦降”三段，末端落在 max_lr*0.1。</span>
+                <input type="checkbox" data-homework="wsd-stable-window-2">
+                <span>检查分支使用累计边界 warmup+stable，不要把 stable 当作从训练开头计数的终点。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-stable-window-3">
+                <span>错误诊断：平台期提前结束时检查是否漏加 warmup；平台期值变化时检查是否误用了 Warmup/Decay 的比例。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="wsd-cosine-decay-and-test">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 3：从 base_lr 余弦降到 min_lr</span>
+          </div>
+          <h2>Decay：把阶段进度映射到余弦退火</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">Decay 刚开始时 decay_step=0。</p>
+            <p class="predict-q">此时 cosine_decay 与 current_lr 分别应是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-wsd-cosine-decay-and-test" value="0">
+                <span>1 与 base_lr</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-wsd-cosine-decay-and-test" value="1">
+                <span>0 与 min_lr</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-wsd-cosine-decay-and-test" value="2">
+                <span>0.5 与两者中点</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="wsd-cosine-decay-and-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="wsd-cosine-decay-and-test">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Decay 的局部步数是全局 step 减去 warmup 与 stable 两段长度；这样进入 Decay 的第一步局部进度为 0。</li><li>decay_ratio=decay_step/num_decay_steps，把当前局部步数映射到 0 到接近 1。</li><li>0.5*(1+cos(pi*ratio)) 会从 1 平滑降到 0；再用 min_lr + (base_lr-min_lr)*cosine_decay 映射到实际学习率区间。</li><li>min_lr=base_lr*min_lr_ratio。Notebook 的当前参考实现和测试都是余弦衰减；末尾文字中的线性公式与代码不一致，不作为本 TODO 合同。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>先不要直接背完整公式。分三小步：把全局 step 变成 Decay 内部的进度，把进度送进从 1 降到 0 的余弦系数，再把系数拉伸到 [min_lr, base_lr]。每一步都有清楚的输入输出区间。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>全局 step</b>减去前两段长度</span>
+          <span><b>decay_ratio</b>局部进度 0 → 1</span>
+          <span><b>cosine_decay</b>系数 1 → 0</span>
+          <span><b>current_lr</b>base_lr → min_lr</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>三个关键位置</h4>
+            <div class="adv-contract">
+              <span>ratio=0</span><strong>cos(0)=1，lr=base_lr</strong>
+              <span>ratio=0.5</span><strong>cos(pi/2)=0，系数=0.5，lr 在中点</strong>
+              <span>ratio=1</span><strong>cos(pi)=-1，系数=0，lr=min_lr</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>Notebook 最后一条记录</h4>
+            <p>循环共记录 total 次，最后记录对应 Decay 的末端。测试要求它在 1e-8 内等于 max_lr×0.1，说明边界公式和 scheduler 调用时序必须共同对齐。</p>
+            <div class="adv-contract">
+              <span>base_lr</span><strong>3e-4</strong>
+              <span>min_lr_ratio</span><strong>0.1</strong>
+              <span>期望 min_lr</span><strong>3e-5</strong>
+            </div>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>断言位置</th><th>期望学习率</th><th>失败时检查</th></tr></thead>
+          <tbody>
+            <tr><td><code>lrs[0]</code></td><td>0</td><td>Warmup step 起点</td></tr>
+            <tr><td><code>lrs[warmup]</code></td><td>base_lr</td><td>Warmup/Stable 边界</td></tr>
+            <tr><td><code>lrs[warmup+stable-1]</code></td><td>base_lr</td><td>Stable 累计边界</td></tr>
+            <tr><td><code>lrs[-1]</code></td><td>base_lr×0.1</td><td>Decay 进度、余弦映射与调用时序</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">不要把 cosine_decay 直接乘 base_lr；那会降到 0。Notebook 要降到非零 min_lr，所以必须先缩放区间宽度 base_lr-min_lr，再加回 min_lr。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：把 0→1 的进度映射成平滑减速系数</h4><pre><code>start_speed = 80.0
+end_speed = 8.0
+decay_steps = 100
+local_step = 50
+
+ratio = local_step / decay_steps
+cosine_factor = 0.5 * (1 + math.cos(math.pi * ratio))
+speed = end_speed + (start_speed - end_speed) * cosine_factor
+print(ratio)         # 0.5
+print(cosine_factor) # 0.5</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>local_step</code> 对应全局 step 减去 warmup 与 stable 的 <code>decay_step</code>。</li>
+            <li><code>ratio</code> 对应 <code>decay_ratio</code>，分母使用 <code>self.num_decay_steps</code>。</li>
+            <li><code>start_speed / end_speed</code> 对应 <code>base_lr / min_lr</code>。</li>
+            <li>完成后把得到的 <code>current_lr</code> 留给已有 <code>lrs.append(current_lr)</code>，不要在分支中提前 return。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 current_lr 公式最后要加 min_lr？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-wsd-cosine-decay-and-test" value="0">
+                <span>为了替代 math.cos</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-wsd-cosine-decay-and-test" value="1">
+                <span>把 0 到区间宽度的结果整体平移，使最低点是 min_lr 而不是 0</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-wsd-cosine-decay-and-test" value="2">
+                <span>让 step 变成整数</span>
+              </label></div>
+              <div class="feedback" data-feedback="wsd-cosine-decay-and-test"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-0">
+                <span>完成 TODO 3：计算 Decay 局部步数、0–1 进度、余弦系数，再把它映射到 [min_lr,base_lr]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-1">
+                <span>手算自检：ratio=0、0.5、1 时，current_lr 分别是 base_lr、区间中点、min_lr。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-2">
+                <span>运行完整测试：首项、Warmup 边界、Stable 末端和最后 min_lr 四个断言都要通过；绘图单元会创建后关闭图像。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-3">
+                <span>错误诊断：末值到 0 时检查是否漏加 min_lr；一进入 Decay 就骤降时检查是否忘减前两段；曲线方向相反时检查余弦系数公式。</span>
               </label>
           </div>
         </article>
@@ -996,7 +1434,7 @@ current_lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1008,11 +1446,11 @@ current_lr = min_lr + (base_lr - min_lr) * cosine</code></pre></div>
 
   <script>
     const levelId = "11";
-    const checkpointData = {"wsd-warmup-stable":{"answer":2,"explain":"lr = base_lr × step/warmup_steps = 0.01 × 50/100 = 0.005，正好是一半。"},"wsd-cosine-decay":{"answer":0,"explain":"ratio=1 → cos(π)=−1 → 0.5·(1−1)=0 → lr=min_lr+(base−min)·0=min_lr，正好落到最低学习率。"}};
-    const predictData = {"wsd-warmup-stable":{"answer":0,"revealNote":"对。两个原因叠加：初始梯度又大又乱 + AdamW 分母(方差)开局过小导致实际步长失控。Warmup 用几千步让 lr 缓升、让优化器攒够统计量。"},"wsd-cosine-decay":{"answer":0,"revealNote":"对。cos(π·ratio) 从 1 降到 −1，负半段会把 lr 压到 min_lr 以下甚至为负。+1 变 [2,0]、×0.5 变 [1,0]，才是合法的“从满降到零”因子。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"wsd-warmup-step-semantics":{"answer":2,"explain":"严格小于把 0..999 留给 Warmup；1000 是 Stable 的第一步。"},"wsd-stable-window":{"answer":0,"explain":"阶段长度要转换成累计边界：第二段右边界等于第一段长度加第二段长度。"},"wsd-cosine-decay-and-test":{"answer":1,"explain":"余弦系数降到 0 时，乘法项消失；加上的 min_lr 就成为最终下限。"}};
+    const predictData = {"wsd-warmup-step-semantics":{"answer":0,"revealNote":"完成比例 500/1000=0.5，因此学习率是 base_lr 的一半。"},"wsd-stable-window":{"answer":0,"revealNote":"Stable 的绝对区间是 [1000,8000)，7500 仍在其中。"},"wsd-cosine-decay-and-test":{"answer":0,"revealNote":"ratio=0，cos(0)=1，所以余弦系数为 1，区间映射回 base_lr。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

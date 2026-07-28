@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -710,15 +723,278 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
@@ -748,309 +1024,399 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card inquiry" data-lesson="moe-balance-token-frequency">
+
+        <article class="lesson-card inquiry" data-lesson="load-balance-probability-mass">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 2</span>
+            <span class="todo-pill">TODO 1：计算 P_i</span>
           </div>
-          <h2>f_i：先学会“数人头”——每个专家实际接了多少活</h2>
+          <h2>先累计 P_i：每位专家平均拿到多少路由权重</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">router 自己其实“知道”谁该被多选——它输出了每个专家的打分。可负载均衡损失偏偏还要我们再手动统计一遍 f_i（实际被选中的比例）。</p>
-            <p class="predict-q">先判断：为什么不能只用 router 的打分，而要额外统计 f_i？</p>
+            <p class="predict-hook">有 2 个 token、top_k=2，每个 token 的两个权重之和为 1。</p>
+            <p class="predict-q">所有专家的累计权重总和除以 total_tokens 后，P_i.sum() 应接近多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-token-frequency" value="0">
-                <span>因为打分是“连续偏好”，可微分可优化；f_i 是“离散计数”，由 argmax/Top-K 选出，本身不可导，但能真实反映拥堵</span>
+                <input type="radio" name="predict-load-balance-probability-mass" value="0">
+                <span>1</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-token-frequency" value="1">
-                <span>因为 router 的打分在反向传播时会被清零</span>
+                <input type="radio" name="predict-load-balance-probability-mass" value="1">
+                <span>2</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-token-frequency" value="2">
-                <span>因为 f_i 只是用来打印日志，对训练没有作用</span>
+                <input type="radio" name="predict-load-balance-probability-mass" value="2">
+                <span>top_k 的平方</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="moe-balance-token-frequency">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="load-balance-probability-mass">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="moe-balance-token-frequency">
+          <div class="gated" data-gated="load-balance-probability-mass">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>回忆 MoE：每个 token 不再走同一个 FFN，而是由一个 router 打分，挑出 Top-K 个“专家”（小 FFN）去处理它。</li><li>麻烦在于 router 会“偷懒”：训练早期它可能发现专家 0、1 还不错，就把几乎所有 token 都塞给这两个，剩下的专家从没被训练到——这叫路由崩塌 (Router Collapse)。</li><li>f_i = 第 i 个专家被选中的次数 ÷ 总的选择次数。它衡量“实际工作量”，是后面惩罚项的一半。</li><li>F.one_hot(ids, num_classes=E)：把每个专家 id 变成一个长度为 E 的向量，命中的那一位是 1、其余是 0。把它们加起来，就数出每个专家被点名几次。</li></ul>
+              <ul><li>函数收到的是稀疏 Top-K 结果：routing_weights 和 selected_experts 都是 [total_tokens, top_k]，不是 [T,E] 的稠密概率表。</li><li>同一个位置的 routing_weights[t,k] 与 selected_experts[t,k] 配对：前者是权重，后者是要把这份权重加给哪位专家。</li><li>flatten() 会把 T×K 次选择排成一列；两个张量必须一起 flatten，配对关系才不会被打乱。</li><li>scatter_add_(0, index, src) 会按 index 指定的目标位置，把 src 中的值累加到长度为 E 的统计向量。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把 E 个专家想成食堂的 E 个打饭窗口。router 是带位员，selected_experts 记录了每个 token 被带到了哪个窗口。f_i 就是“第 i 号窗口排了几个人 ÷ 总人次”。如果某个窗口排爆了、别的窗口空着，就说明负载不均——这一关只做一件事：把这张“人头统计表”用 one_hot 数出来。</p>
-              
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>0. 先读输入输出合同</strong>
-                <p><code>selected_experts</code> 是 [tokens, top_k]。每一行是一枚 token，里面 K 个数字是它选中的专家编号。TODO 2 的目标，是把它统计成长度为 E 的 <code>f_i</code>。</p>
-                <div class="learn-kv">
-                  <span>输入</span><strong>selected_experts [T,K]</strong>
-                  <span>中间</span><strong>one_hot [T,K,E]</strong>
-                  <span>输出</span><strong>f_i [E], sum(f_i)=1</strong>
-                </div>
-              </div>
-              <div class="learn-card accent">
-                <strong>为什么先“数人头”</strong>
-                <p>Router 的概率只说明“偏好”，但真正拥不拥堵，要看 Top-K 之后每个专家实际被选了多少次。<code>f_i</code> 就是这张真实排队表。</p>
-                <div class="learn-mini">
-                  <span>专家0<br>3票</span>
-                  <span>专家1<br>1票</span>
-                  <span>专家2<br>2票</span>
-                  <strong>专家3<br>0票</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="story-arrow">主线：专家 id 不能直接相加，先 one_hot 成可计数的票</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>selected</b>[[0,2],[0,1],[0,2]]</span>
-                <span><b>one_hot</b>[T,K,E]</span>
-                <span><b>sum</b>dim=(0,1)</span>
-                <span><b>counts</b>[3,1,2,0]</span>
-                <strong><b>divide</b>f_i = counts / (T*K)</strong>
-              </div>
-              <p>读法很简单：把每个专家编号变成一张投票单，再沿 token 维和 top_k 维一起求和。</p>
-            </div>
-
-            <div class="learn-grid">
-              <div class="learn-card good">
-                <strong>1. one_hot 的作用是“让 id 可以计票”</strong>
-                <p>专家 id 本身没有可加意义，<code>0 + 2</code> 不是“专家 0 和专家 2 各一票”。one_hot 后，每一位都对应一个专家，相加才变成计数。</p>
-                <div class="learn-kv">
-                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
-                  <span>[0,1]</span><strong>[1,1,0,0]</strong>
-                  <span>[0,2]</span><strong>[1,0,1,0]</strong>
-                </div>
-              </div>
-              <div class="learn-card warn">
-                <strong>2. 分母是总票数，不是 token 数</strong>
-                <p>top_k=2 时，每个 token 投 2 票。3 个 token 的总票数是 6，所以 <code>f=[3,1,2,0]/6</code>，不是除以 3。</p>
-                <div class="learn-note">自检口诀：所有 <code>f_i</code> 加起来必须接近 1；如果接近 top_k，分母就写错了。</div>
-              </div>
-            </div>
-
-            <div class="field-note">
-              <div class="fn-title">行业视角：路由崩塌是真金白银的损失</div>
-              <p>Mixtral、DeepSeek-MoE 这类模型的专家常分散在多张 GPU 上。如果 token 都挤给少数专家，少数 GPU 排长队甚至 OOM，多数 GPU 空转。<code>f_i</code> 不是学术装饰，它直接对应集群利用率。</p>
-              <p>数好这张人头表，是下一步设计惩罚项、把负载摊平的前提。</p>
-            </div>
-          </div>
-              <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：one_hot 计票 + 归一化</h4><pre><code>ids = torch.tensor([
-    [0, 2],
-    [0, 1],
-    [0, 2],
-])
-hot = F.one_hot(ids, num_classes=4)
-counts = hot.sum(dim=(0, 1)).float()
-total_votes = ids.shape[0] * ids.shape[1]
-f_i = counts / total_votes</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：搬回 notebook</h4>
-            <div class="learn-kv">
-              <span>ids</span><strong>selected_experts</strong>
-              <span>num_classes=4</span><strong>num_experts</strong>
-              <span>dim=(0,1)</span><strong>沿 token 和 top_k 一起计票</strong>
-              <span>total_votes</span><strong>total_tokens * top_k</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：先 one_hot 让专家编号变成票，再对前两维求和，最后除以总票数。</p>
-          </div>
+              <p>想象每个 token 有 K 张带权选票。selected_experts 写着投给谁，routing_weights 写着票有多重。P_i 的第一步是把所有投给专家 i 的票重相加，第二步再除以 token 数 T，得到每个 token 平均贡献给专家 i 的概率质量。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>[T,K]</b>每个 token 的 K 次选择</span>
+          <span><b>flatten</b>排成 T×K 对“编号+权重”</span>
+          <span><b>scatter_add</b>按专家编号累加</span>
+          <span><b>/ T</b>得到 P_i，shape [E]</span>
         </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>编号和权重必须同位置配对</h4>
+            <div class="adv-contract">
+              <span><code>selected</code></span><strong>[[0,2],[1,2]]</strong>
+              <span><code>weights</code></span><strong>[[0.7,0.3],[0.4,0.6]]</strong>
+              <span>专家 2 收到</span><strong>0.3 + 0.6 = 0.9</strong>
+              <span>专家 0 收到</span><strong>0.7</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>P_i 的合同</h4>
+            <div class="adv-contract">
+              <span>初始化</span><strong>长度 E、dtype/device 跟 routing_weights 一致的零向量</strong>
+              <span>累加后</span><strong>每位专家在整个 batch 收到的权重总和</strong>
+              <span>除以</span><strong>total_tokens，不是 total_tokens×top_k</strong>
+              <span>最终和</span><strong>每个 token 的 Top-K 权重和为 1 时，P_i 总和也为 1</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-callout">Notebook 的 P_i 基于传入的稀疏 Top-K 权重统计。不要在函数里重新 softmax，也不要虚构一个 [T,E] 输入。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：按柜台编号累计每笔金额</h4><pre><code>counter_ids = torch.tensor([2, 0, 2, 1])
+amounts = torch.tensor([3.0, 7.0, 6.0, 4.0])
+
+totals = torch.zeros(
+    3, dtype=amounts.dtype, device=amounts.device
+)
+totals.scatter_add_(0, counter_ids, amounts)
+averages = totals / 2  # 这里有 2 位顾客
+print(totals)          # [7, 4, 9]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>counter_ids</code> 对应展平后的 <code>selected_experts</code>。</li>
+            <li><code>amounts</code> 对应展平后的 <code>routing_weights</code>。</li>
+            <li><code>3</code> 个柜台对应 <code>num_experts</code>。</li>
+            <li><code>2</code> 位顾客对应 <code>total_tokens</code>；累计完成后除它得到 <code>P_i</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>动手算：top_k=2，4 个 token 选中 [[0,1],[0,2],[0,1],[0,3]]，专家 0 的 f_i 是多少？</p>
+              <p>为什么 P_i 的零向量要显式继承 routing_weights 的 dtype 和 device？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="0">
-                <span>0.25</span>
+                <input type="radio" name="checkpoint-load-balance-probability-mass" value="0">
+                <span>只为了打印更漂亮</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="1">
-                <span>0.5</span>
+                <input type="radio" name="checkpoint-load-balance-probability-mass" value="1">
+                <span>scatter_add_ 的目标和源需要类型、设备兼容</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-token-frequency" value="2">
-                <span>4.0</span>
+                <input type="radio" name="checkpoint-load-balance-probability-mass" value="2">
+                <span>这样 selected_experts 会自动变成浮点</span>
               </label></div>
-              <div class="feedback" data-feedback="moe-balance-token-frequency"></div>
+              <div class="feedback" data-feedback="load-balance-probability-mass"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-token-frequency-0">
-                <span>TODO 2：用 F.one_hot(selected_experts, num_classes=num_experts) 把专家 id 变成可计数的指示向量。</span>
+                <input type="checkbox" data-homework="load-balance-probability-mass-0">
+                <span>完成 TODO 1：创建长度为 num_experts 的零向量，把展平后的权重按展平后的专家编号累加，再除以 total_tokens。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-token-frequency-1">
-                <span>沿 token 维和 top_k 维一起 sum，得到每个专家的总票数 tokens_per_expert。</span>
+                <input type="checkbox" data-homework="load-balance-probability-mass-1">
+                <span>shape/dtype/device 自检：P_i 是 [num_experts]，dtype/device 与 routing_weights 一致。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-token-frequency-2">
-                <span>除以 (total_tokens * top_k) 得到 f_i；自检所有 f_i 之和≈1。</span>
+                <input type="checkbox" data-homework="load-balance-probability-mass-2">
+                <span>数值自检：当前输入每个 token 的权重和为 1，因此 P_i.sum() 应接近 1。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-probability-mass-3">
+                <span>错误诊断：若 shape 不匹配，检查两个输入是否都 flatten；若专家统计错位，检查 index 和 src 是否接反。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="moe-balance-prob-loss">
+        <article class="lesson-card inquiry" data-lesson="load-balance-selection-frequency">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 1 / TODO 3</span>
+            <span class="todo-pill">TODO 2：expert_mask、tokens_per_expert、f_i</span>
           </div>
-          <h2>P_i × f_i：把“偏好”和“实际”相乘，逼出均匀分配</h2>
+          <h2>再统计 f_i：每位专家被选中的次数占比</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">损失是 α·E·Σ(f_i·P_i)——f 和 P 逐专家相乘再相加。优化器拼命想让它变小。</p>
-            <p class="predict-q">先判断：优化器为了最小化这个乘积和，会把 token 的分配推向什么状态？</p>
+            <p class="predict-hook">selected_experts.shape=[1000,2]，每一行都有两个合法专家编号。</p>
+            <p class="predict-q">tokens_per_expert.sum() 应等于多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-prob-loss" value="0">
-                <span>推向均匀分配——所有专家 f_i、P_i 都趋近 1/E，乘积和取到理论最小</span>
+                <input type="radio" name="predict-load-balance-selection-frequency" value="0">
+                <span>2000</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-prob-loss" value="1">
-                <span>推向极端集中——把所有 token 都给一个专家</span>
+                <input type="radio" name="predict-load-balance-selection-frequency" value="1">
+                <span>1000</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-moe-balance-prob-loss" value="2">
-                <span>推向随机——每步都换不同的专家</span>
+                <input type="radio" name="predict-load-balance-selection-frequency" value="2">
+                <span>8</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="moe-balance-prob-loss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="load-balance-selection-frequency">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="moe-balance-prob-loss">
+          <div class="gated" data-gated="load-balance-selection-frequency">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>P_i = 第 i 个专家的“平均路由概率”——把所有 token 给它的 router 权重加起来再平均。它是“软偏好”，可导。</li><li>f_i = 上一关数出的“实际被选比例”——“硬计数”，反映真实拥堵，不可导。</li><li>scatter_add_(0, idx, src)：按 idx 给出的位置，把 src 的值累加到目标向量上——正好用来把每个 token 的权重加到它选中的专家槽位里。</li><li>最终公式：L_aux = α · E · Σ(f_i · P_i)。α 很小(如0.01)，E 是专家数。</li></ul>
+              <ul><li>P_i 统计带权概率质量；f_i 只统计被选中的次数，不关心该次权重是 0.9 还是 0.1。</li><li>F.one_hot(selected_experts, num_classes=num_experts) 会把 [T,K] 的整数编号变成 [T,K,E]。</li><li>在 one-hot 张量上沿 dim=(0,1) 求和，就是把所有 token 与所有 Top-K 槽位都统计掉，只留下 E 位专家。</li><li>Top-K 路由共有 T×K 次选择，所以 f_i 的分母必须是 total_tokens * top_k。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>P_i 像“问卷调查的偏好分”，f_i 像“真实排队人数”。损失把两者逐专家相乘再求和：只要某个专家既被偏好(P高)又被挤爆(f高)，乘积就大、惩罚就重。优化器为了降低它，会主动把 token 往冷门专家赶。神奇之处：当大家都均匀(都=1/E)时，这个乘积和取到理论最小值。</p>
-              
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>0. 先分清 P_i 和 f_i</strong>
-                <div class="learn-kv">
-                  <span>P_i</span><strong>router 权重按专家累加，可导，负责把梯度传回 router</strong>
-                  <span>f_i</span><strong>Top-K 真实计数，不可导，负责指出哪个专家拥堵</strong>
-                </div>
-              </div>
-              <div class="learn-card accent">
-                <strong>为什么要相乘</strong>
-                <p><code>f_i</code> 像“哪里堵”的标签，<code>P_i</code> 像“能被优化器调整的偏好”。乘起来后，拥堵专家对应的概率会被更重地压下去。</p>
-              </div>
+              <p>P_i 像统计每个柜台收到的业务量，f_i 像统计每个柜台被叫号多少次。一次叫号无论业务大小都算 1 次。one-hot 把专家编号翻译成一排只有一个 1 的记分卡，沿 token 和槽位两维求和就得到每位专家的次数。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>one-hot 多出专家维</h4>
+            <div class="adv-flow">
+              <span>selected<br>[T,K]</span>
+              <span>one_hot<br>[T,K,E]</span>
+              <span>sum dim=(0,1)</span>
+              <strong>counts<br>[E]</strong>
             </div>
-
-            <div class="story-arrow">TODO 1：用 scatter_add_ 把每张票的权重倒进对应专家桶</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>zero bucket</b>P_i = zeros(E)</span>
-                <span><b>index</b>selected_experts.flatten()</span>
-                <span><b>source</b>routing_weights.flatten()</span>
-                <span><b>scatter_add</b>按专家 id 累加</span>
-                <strong><b>average</b>P_i / (T*K)</strong>
-              </div>
-              <p>读法：每个 Top-K 槽位都有一个“专家 id”和一个“概率权重”，把权重加到它对应专家的桶里。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>分母为什么是 T×K</h4>
+            <p>T=1000、K=2 时，Router 一共做了 2000 次专家选择。若仍只除以 1000，<code>f_i.sum()</code> 会变成 2，而不是概率分布需要的 1。</p>
+            <div class="adv-contract">
+              <span>次数总和</span><strong>T×K</strong>
+              <span>归一化分母</span><strong>total_tokens * top_k</strong>
+              <span>f_i 总和</span><strong>1</strong>
             </div>
-
-            <div class="story-arrow">TODO 3：把偏好和真实拥堵组合成辅助损失</div>
-            <div class="learn-grid">
-              <div class="learn-card good">
-                <strong>1. 公式只做一件事：惩罚“又热门又拥堵”</strong>
-                <div class="learn-kv">
-                  <span>核心</span><strong>aux_loss = alpha * E * sum(f_i * P_i)</strong>
-                  <span>集中</span><strong>某专家 f_i 高且 P_i 高，乘积大，被重罚</strong>
-                  <span>均匀</span><strong>各专家接近平均，乘积和最小</strong>
-                </div>
-              </div>
-              <div class="learn-card warn">
-                <strong>2. f_i 不可导也没关系</strong>
-                <p>反向传播真正走的是 <code>P_i</code>。<code>f_i</code> 只作为常数权重，告诉优化器“这个专家已经太忙了，压低它的概率”。</p>
-                <div class="learn-note">测试线索：均匀时理论最小值约为 <code>alpha / top_k</code>。</div>
-              </div>
-            </div>
-
-            <div class="field-note">
-              <div class="fn-title">行业视角：一个系数 alpha 的拿捏</div>
-              <p>alpha 太大，模型会为了摊平负载牺牲主任务效果；alpha 太小，又压不住路由崩塌。真实训练会把这个 aux loss 加到主 CrossEntropy 上，目标是在效果和吞吐之间找平衡。</p>
-            </div>
-          </div>
-              <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：scatter_add 求 P_i，再组合损失</h4><pre><code>P_i = torch.zeros(
-    num_experts,
-    device=routing_weights.device,
-)
-P_i.scatter_add_(
-    0,
-    selected_experts.flatten(),
-    routing_weights.flatten(),
-)
-P_i = P_i / (total_tokens * top_k)
-aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：读 scatter_add 的三个位置</h4>
-            <div class="learn-kv">
-              <span>目标桶</span><strong>P_i, 长度是 num_experts</strong>
-              <span>index</span><strong>selected_experts.flatten()</strong>
-              <span>src</span><strong>routing_weights.flatten()</strong>
-              <span>除法分母</span><strong>total_tokens * top_k</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：上一关数“票数”得 f_i，这一关累加“票的权重”得 P_i；最后逐专家相乘再求和。</p>
-          </div>
+          </section>
         </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>统计量</th><th>看什么</th><th>是否使用 routing_weights</th><th>归一化分母</th></tr></thead>
+          <tbody>
+            <tr><td><code>P_i</code></td><td>平均权重</td><td>使用</td><td><code>T</code></td></tr>
+            <tr><td><code>f_i</code></td><td>选择次数占比</td><td>不使用</td><td><code>T*K</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">tokens_per_expert 要转为浮点再做除法，这样 f_i 才是可与 P_i 相乘的比例向量。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：统计每轮被选中的活动类别</h4><pre><code>chosen = torch.tensor([
+    [0, 2],
+    [1, 2],
+])
+
+# 2 轮、每轮 2 个选择、共 3 个类别
+marks = F.one_hot(chosen, num_classes=3)
+counts = marks.sum(dim=(0, 1)).float()
+fractions = counts / (2 * 2)
+print(counts)          # [1, 1, 2]
+print(fractions.sum()) # 1</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>chosen</code> 对应 <code>selected_experts</code>。</li>
+            <li><code>num_classes=3</code> 对应 <code>num_classes=num_experts</code>。</li>
+            <li><code>counts</code> 对应 <code>tokens_per_expert</code>，沿前两维求和。</li>
+            <li><code>2*2</code> 对应 <code>total_tokens * top_k</code>，归一化后得到 <code>f_i</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>理解：某专家 P_i 高（router 很偏爱）且 f_i 也高（实际接了很多 token），辅助损失会怎么对待它？</p>
+              <p>为什么计算 f_i 时不能用 routing_weights 的数值？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="0">
-                <span>认为 softmax 失效并跳过它</span>
+                <input type="radio" name="checkpoint-load-balance-selection-frequency" value="0">
+                <span>routing_weights 没有 device</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="1">
-                <span>判定它是最优专家，给予奖励</span>
+                <input type="radio" name="checkpoint-load-balance-selection-frequency" value="1">
+                <span>one_hot 只能处理浮点权重</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-moe-balance-prob-loss" value="2">
-                <span>乘积 f_i·P_i 很大，被重罚，逼 router 给它降温</span>
+                <input type="radio" name="checkpoint-load-balance-selection-frequency" value="2">
+                <span>f_i 定义的是被选中次数占比，每次选择都记 1</span>
               </label></div>
-              <div class="feedback" data-feedback="moe-balance-prob-loss"></div>
+              <div class="feedback" data-feedback="load-balance-selection-frequency"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-prob-loss-0">
-                <span>TODO 1：用 scatter_add_ 把 routing_weights 按 selected_experts 累加到 P_i，再除以 (total_tokens*top_k)。</span>
+                <input type="checkbox" data-homework="load-balance-selection-frequency-0">
+                <span>完成 TODO 2：one-hot 编码专家编号，沿 token 与 Top-K 槽位求和，转浮点并除以 T×K。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-prob-loss-1">
-                <span>TODO 3：按 aux_loss = alpha * num_experts * (f_i * P_i).sum() 组合（f_i 来自上一关）。</span>
+                <input type="checkbox" data-homework="load-balance-selection-frequency-1">
+                <span>shape 自检：expert_mask 为 [T,K,E]，tokens_per_expert 与 f_i 都为 [E]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="moe-balance-prob-loss-2">
-                <span>跑测试：不均衡的 loss 应明显大于均匀；均匀时应≈ alpha/top_k（0.01/2=0.005）。</span>
+                <input type="checkbox" data-homework="load-balance-selection-frequency-2">
+                <span>数值自检：tokens_per_expert.sum() 等于 T×K，f_i.sum() 接近 1。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-selection-frequency-3">
+                <span>错误诊断：若 f_i.sum() 等于 K，说明分母漏乘 top_k；若 one_hot 报错，检查 selected_experts 是否仍是整数索引。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="load-balance-auxiliary-loss">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">TODO 3：计算 aux_loss</span>
+          </div>
+          <h2>最后点乘两种偏好，读懂均匀与塌缩测试</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">E=8，完全均匀时 f_i=P_i=1/8，alpha=0.01。</p>
+            <p class="predict-q">按 Notebook 公式计算，均匀分配的 aux_loss 应是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-load-balance-auxiliary-loss" value="0">
+                <span>0.01</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-load-balance-auxiliary-loss" value="1">
+                <span>0.00125</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-load-balance-auxiliary-loss" value="2">
+                <span>0.08</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="load-balance-auxiliary-loss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="load-balance-auxiliary-loss">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>P_i 和 f_i 都是长度 E 的比例向量，且在本 Notebook 定义下各自总和为 1。</li><li>逐元素乘法 f_i * P_i 表示同一位专家的“实际频率 × 平均权重”；sum() 再把 E 位专家的贡献合起来。</li><li>公式是 alpha * num_experts * sum(f_i * P_i)，返回值应是 0 维浮点 Tensor。</li><li>均匀分布时 f_i=P_i=1/E，因此最终理论值是 alpha；测试还要求严重偏向专家 0、1 时的 loss 大于均匀值的两倍。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>如果 Router 在权重上偏爱某些专家，同时实际也反复选择它们，那么 P_i 和 f_i 会在同一位置一起变大，点积随之升高。优化器为了减小辅助损失，会避免“想选谁”和“总选谁”长期集中在同一小撮专家上。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>完全均匀</h4>
+            <div class="adv-contract">
+              <span><code>f_i</code></span><strong>[1/E, ..., 1/E]</strong>
+              <span><code>P_i</code></span><strong>[1/E, ..., 1/E]</strong>
+              <span>点积</span><strong>E × 1/E² = 1/E</strong>
+              <span>aux loss</span><strong>alpha × E × 1/E = alpha</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>严重塌缩</h4>
+            <p>测试让所有 token 都选择专家 0 和 1，且各占 0.5。两种统计同时集中在前两位，点积明显变大，因此辅助损失必须高于均匀分配。</p>
+            <div class="adv-flow">
+              <span>选择集中</span>
+              <span>权重集中</span>
+              <strong>惩罚升高</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span>函数输出</span><strong>单个标量 Tensor，可加到主任务 loss</strong>
+          <span>均匀测试</span><strong>loss_good 接近 alpha=0.01，atol=1e-4</strong>
+          <span>塌缩测试</span><strong>loss_bad &gt; loss_good * 2</strong>
+          <span>工程用法</span><strong>total_loss = task_loss + aux_loss</strong>
+        </div>
+
+        <div class="adv-callout">本课只实现辅助项，不要在函数里创建 CrossEntropyLoss，也不要把 alpha 再乘一次到主任务 loss 上。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：把两个类别分布按同位置点乘</h4><pre><code>visit_fraction = torch.tensor([0.5, 0.3, 0.2])
+interest_mass = torch.tensor([0.4, 0.4, 0.2])
+coefficient = 0.01
+categories = 3
+
+overlap = (visit_fraction * interest_mass).sum()
+penalty = coefficient * categories * overlap
+print(penalty.ndim) # 0，标量 Tensor</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>visit_fraction</code> 对应实际分配比例 <code>f_i</code>。</li>
+            <li><code>interest_mass</code> 对应平均路由权重 <code>P_i</code>。</li>
+            <li><code>categories</code> 对应 <code>num_experts</code>，<code>coefficient</code> 对应 <code>alpha</code>。</li>
+            <li>保持逐元素乘法后再 <code>.sum()</code>，不要误写成矩阵乘法得到不同 shape。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>若均匀测试通过，但 loss_bad 与 loss_good 几乎一样，最应该先检查哪两项？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-load-balance-auxiliary-loss" value="0">
+                <span>P_i 是否按专家累加、f_i 是否按选择次数统计</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-load-balance-auxiliary-loss" value="1">
+                <span>是否创建了 optimizer</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-load-balance-auxiliary-loss" value="2">
+                <span>matplotlib 是否安装</span>
+              </label></div>
+              <div class="feedback" data-feedback="load-balance-auxiliary-loss"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-auxiliary-loss-0">
+                <span>完成 TODO 3：严格按 alpha、num_experts、f_i、P_i 的公式返回标量 aux_loss。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-auxiliary-loss-1">
+                <span>先验证均匀输入：loss_good 应在 1e-4 容差内接近 0.01。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-auxiliary-loss-2">
+                <span>再验证塌缩输入：loss_bad 必须大于 loss_good 的两倍。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="load-balance-auxiliary-loss-3">
+                <span>错误诊断：均匀值多一个 K 时回查 f_i 分母；P_i.sum() 不为 1 时回查 scatter_add 与除数；返回 shape 非标量时检查是否漏掉 sum()。</span>
               </label>
           </div>
         </article>
@@ -1058,7 +1424,7 @@ aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1070,11 +1436,11 @@ aux_loss = alpha * num_experts * (f_i * P_i).sum()</code></pre></div>
 
   <script>
     const levelId = "07";
-    const checkpointData = {"moe-balance-token-frequency":{"answer":1,"explain":"专家 0 被选 4 次，总票数 = 4 token × 2 = 8，f_0 = 4/8 = 0.5。"},"moe-balance-prob-loss":{"answer":2,"explain":"负载均衡要的是雨露均沾。又偏爱又拥堵的专家乘积最大、惩罚最重，梯度会压低它的 P_i。"}};
-    const predictData = {"moe-balance-token-frequency":{"answer":0,"revealNote":"对：Top-K 这步“选谁”是不可导的，梯度传不回去。损失里用可导的 P_i 去“代表”这次分配，再乘上真实的 f_i 当权重——下一关就拼这个公式。"},"moe-balance-prob-loss":{"answer":0,"revealNote":"对。两个总和固定的正向量，逐项相乘求和在“都摊平”时最小、在“集中”时最大。所以最小化它 = 逼出均匀分配，正好对抗路由崩塌。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const checkpointData = {"load-balance-probability-mass":{"answer":1,"explain":"统计向量是 scatter_add_ 的目标。若一个在 CPU、一个在 GPU，或 dtype 不兼容，运算会失败。"},"load-balance-selection-frequency":{"answer":2,"explain":"权重大小属于 P_i 的视角；f_i 的职责是统计实际分配频率。"},"load-balance-auxiliary-loss":{"answer":0,"explain":"辅助损失的区分能力来自两种专家分布；统计对象或归一化写错，会抹平塌缩与均匀之间的差异。"}};
+    const predictData = {"load-balance-probability-mass":{"answer":0,"revealNote":"每个 token 总共贡献 1 的概率质量；T 个 token 共贡献 T，除以 T 后总和为 1。"},"load-balance-selection-frequency":{"answer":0,"revealNote":"共有 1000×2 次选择；one-hot 求和会逐次计数，所以总次数是 2000。"},"load-balance-auxiliary-loss":{"answer":0,"revealNote":"点积是 1/E，再乘 E 抵消，最终正好等于 alpha。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

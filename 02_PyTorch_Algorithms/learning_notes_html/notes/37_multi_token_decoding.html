@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 37 | Multi-Token Decoding</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -1000,12 +1000,12 @@
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 37 | 零基础导学关卡</p>
+        <h1>Multi-Token Decoding</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">37_Multi_Token_Decoding.ipynb</span>
+          <span class="pill">Multi-Token Decoding</span><span class="pill">Verification</span><span class="pill">Rollback</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">propose -&gt; verify in order -&gt; accept prefix -&gt; rollback suffix</div>
       </div>
     </section>
 
@@ -1025,104 +1025,113 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="multi-token-propose">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1：实现 propose，返回最多 max_proposal_len 个候选 token</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>提议阶段只做两件事：统一为 list，再截取本轮上限</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">max_proposal_len=3，draft_tokens=(10,20,30,31)。</p>
+            <p class="predict-q">propose 返回什么类型和内容？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-multi-token-propose" value="0">
+                <span>list [10,20,30]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-multi-token-propose" value="1">
+                <span>tuple (10,20,30)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-multi-token-propose" value="2">
+                <span>list [10,20,30,31]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="multi-token-propose">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="multi-token-propose">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>Sequence[int] 可以是 list 或 tuple；list(draft_tokens) 把它统一成普通列表。</li><li>values[:n] 取前 n 个元素；当原列表不足 n 个时，Python 会返回全部元素而不报错。</li><li>max_proposal_len 在 __init__ 中已验证为正数。</li><li>propose 只决定本轮候选序列，不读取概率，也不做接受判断。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>多 token 解码先控制尝试规模。提议太长可能增加验证和回退成本，因此每轮只拿草稿序列的一个前缀。这里先把“提出哪些 token”和“是否接受”拆开，后面的控制流会更容易验证。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
-        </div>
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
-            <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+            <h4>输入输出契约</h4>
+            <div class="adv-contract">
+              <span>输入</span><strong>draft_tokens: Sequence[int]</strong>
+              <span>配置</span><strong>self.max_proposal_len</strong>
+              <span>输出</span><strong>List[int]，长度不超过上限</strong>
+              <span>不负责</span><strong>概率比较、验证、回退</strong>
+            </div>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
+            <h4>测试数据流</h4>
             <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+              <span>草稿<br>[10,20,30,31]</span>
+              <span>上限<br>3</span>
+              <strong>proposed<br>[10,20,30]</strong>
+            </div>
           </section>
         </div>
-        <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel neutral">
+            <h4>候选少于上限</h4>
+            <p><code>[4,5][:3]</code> 返回 <code>[4,5]</code>，切片不会补 token。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>不要在这里验证</h4>
+            <p>propose 没有 draft_probs 和 target_probs 参数；擅自读取概率会破坏方法职责。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">候选序列具有前缀顺序。不要用 set 去重，也不要排序；token 的位置决定后续概率矩阵使用哪一行。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用待办队列练习截取本轮处理上限</h4><pre><code>def propose_tasks(task_ids, max_tasks):
+    normalized = list(task_ids)
+    proposed = normalized[:max_tasks]
+    return proposed
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+print(propose_tasks((7, 4, 9, 2), 3))
+# [7, 4, 9]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>task_ids</code> 对应 <code>draft_tokens</code>。</li>
+            <li><code>max_tasks</code> 对应实例属性 <code>self.max_proposal_len</code>。</li>
+            <li>两步可以合并成 <code>list(draft_tokens)[: self.max_proposal_len]</code>。</li>
+            <li>把结果赋给 Notebook 已给出的 <code>proposed</code> 并返回。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>为什么 propose 不能把 draft_tokens 排序后再截取？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-multi-token-propose" value="0">
+                <span>因为 Python 不支持整数排序</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-multi-token-propose" value="1">
+                <span>候选顺序对应自回归位置和概率矩阵行，排序会改变语义</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-multi-token-propose" value="2">
+                <span>因为 max_proposal_len 只能用于 tuple</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="multi-token-propose"></div>
             </div>
           </div>
 
@@ -1131,108 +1140,136 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="multi-token-propose-0">
+                <span>完成 TODO 1，并分别传入 list、tuple、少于上限的短序列。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="multi-token-propose-1">
+                <span>测试契约：上限 3 时 [10,20,30,31] 返回 [10,20,30]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="multi-token-propose-2">
+                <span>确认返回值是新 list，不会把原 draft_tokens 改写。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="multi-token-propose-3">
+                <span>错误诊断：返回 4 个 token 时检查是否漏了切片；返回 tuple 时检查是否漏了 list(...)。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="multi-token-verify-first-rejection">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 2-3：实现接受阈值与逐 token 验证调用</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>验证要沿位置走：取出候选概率，达到比例才接受，首次拒绝立刻停止</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">draft_prob=0.5，target_prob=0.31，min_accept_ratio=0.6。</p>
+            <p class="predict-q">_accept_token 应返回什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-multi-token-verify-first-rejection" value="0">
+                <span>True</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-multi-token-verify-first-rejection" value="1">
+                <span>False</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-multi-token-verify-first-rejection" value="2">
+                <span>None</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="multi-token-verify-first-rejection">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="multi-token-verify-first-rejection">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>二维概率张量用 tensor[row, column] 取单个值；这里 row=i，column=token_id。</li><li>float(tensor_scalar) 把零维 Tensor 转成 Python 浮点数，便于普通条件判断。</li><li>正常接受条件是 target_prob 不低于 draft_prob * min_accept_ratio。</li><li>accepted_tokens 只保存连续通过的前缀；第一次 False 时记录 rejected_at=i 并 break。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>第 i 个候选建立在前 i-1 个候选都成立的上下文上。一旦某个位置被目标模型拒绝，后续候选的前缀基础就失效，所以不能跳过它继续接受后面的 token。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
+        <div class="adv-roadmap">
+          <span><b>位置 i</b>读取 proposed[i]</span>
+          <span><b>二维索引</b>probs[i, token_id]</span>
+          <span><b>比例阈值</b>target 对比 draft * ratio</span>
+          <span><b>首次拒绝</b>记录 i，立即 break</span>
         </div>
+
         <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
+          <thead><tr><th>位置 i</th><th>token_id</th><th>draft_prob</th><th>target_prob</th><th>结果</th></tr></thead>
           <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
+            <tr><td>0</td><td>10</td><td>0.5</td><td>0.8</td><td>接受</td></tr>
+            <tr><td>1</td><td>20</td><td>0.5</td><td>0.8</td><td>接受</td></tr>
+            <tr><td>2</td><td>30</td><td>0.5</td><td>0.2</td><td>拒绝并停止</td></tr>
           </tbody>
         </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>正常分支</h4>
+            <div class="adv-contract">
+              <span>ratio</span><strong>0.6</strong>
+              <span>阈值</span><strong>0.5 * 0.6 = 0.3</strong>
+              <span>0.31</span><strong>达到阈值，True</strong>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>零草稿概率边界</h4>
+            <p>draft_prob 不大于 0 时，Notebook 已写好特殊返回：target_prob 大于 0 才接受。TODO 2 不要覆盖这段分支。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">draft_probs 和 target_probs 的 shape 在测试中都是 [4,40]：行表示候选位置，列表示 vocabulary token id。不要误写成 probs[token_id, i]。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用质量抽检练习比例阈值与首次失败</h4><pre><code>draft_scores = [0.8, 0.6, 0.5]
+review_scores = [0.7, 0.4, 0.2]
+ratio = 0.6
+accepted_indices = []
+rejected_at = None
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
+for i, draft_score in enumerate(draft_scores):
+    accepted = review_scores[i] &gt;= draft_score * ratio
+    if accepted:
+        accepted_indices = accepted_indices + [i]
+    else:
+        rejected_at = i
+        break</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>draft_score/review_scores[i]</code> 对应单个位置的 draft_prob/target_prob。</li>
+            <li>TODO 2 把比例条件赋给 <code>accepted</code>；保留已有的零概率提前返回。</li>
+            <li>TODO 3 不重写条件，调用 <code>self._accept_token(draft_prob, target_prob)</code>。</li>
+            <li>Notebook 已写好追加、rejected_at 和 break 分支；只补方法调用，避免重复控制流。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
+              <p>为什么位置 2 首次拒绝后不能继续验证位置 3 并直接接受？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
+                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="0">
+                <span>因为 accepted_tokens 必须总是偶数长度</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
+                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="1">
+                <span>因为 tensor 只能索引三行</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
+                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="2">
+                <span>位置 3 的候选依赖包含位置 2 的前缀，前缀已不再成立</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
+              <div class="feedback" data-feedback="multi-token-verify-first-rejection"></div>
             </div>
           </div>
 
@@ -1241,102 +1278,134 @@ if needs_row:
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+                <input type="checkbox" data-homework="multi-token-verify-first-rejection-0">
+                <span>完成 TODO 2-3，先单测 _accept_token(0.5,0.31) 与 (0.5,0.2)。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+                <input type="checkbox" data-homework="multi-token-verify-first-rejection-1">
+                <span>测试契约：前两个 token 接受，第三个拒绝，返回 accepted=[10,20]、rejected_at=2。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
+                <input type="checkbox" data-homework="multi-token-verify-first-rejection-2">
+                <span>检查 shape/dtype：测试概率表是 float Tensor [4,40]，索引后显式转为 Python float。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="multi-token-verify-first-rejection-3">
+                <span>错误诊断：IndexError 先查 [i, token_id] 顺序；错误接受后续 token 时检查拒绝分支是否 break。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" data-lesson="multi-token-decode-rollback-history">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
+            <span class="todo-pill">TODO 4：根据 rejected_at 生成 rejected_suffix，并保持 result/history 契约</span>
           </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
+          <h2>汇总阶段切开两段：接受前缀进入结果，拒绝位置起整段回退</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
+            <p class="predict-hook">proposed=[10,20,30]，第 0 个 token 就被拒绝。</p>
+            <p class="predict-q">rejected_suffix 应是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-multi-token-decode-rollback-history" value="0">
+                <span>[10,20,30]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-multi-token-decode-rollback-history" value="1">
+                <span>[]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
+                <input type="radio" name="predict-multi-token-decode-rollback-history" value="2">
+                <span>[20,30]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="multi-token-decode-rollback-history">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-cache-rebuild">
+          <div class="gated" data-gated="multi-token-decode-rollback-history">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
+              <ul><li>rejected_at 是整数索引或 None；None 表示所有 proposed token 都被接受。</li><li>判断 None 应写 is not None，避免把合法索引 0 当成 False。</li><li>proposed[rejected_at:] 从首次拒绝位置开始保留整个后缀，包含被拒绝 token 本身。</li><li>decode 返回 dict，并把同一个 result 追加到 self.history；测试会检查 history 长度。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
+              <p>验证结束后要把控制流变成可消费的状态：连续接受的前缀可以推进解码，首次拒绝及其后续候选都不再可靠。全接受时没有回退；第一个就拒绝时则整个 proposed 都属于回退后缀。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+        <div class="adv-grid two">
+          <section class="adv-panel warn">
+            <h4>发生首次拒绝</h4>
+            <div class="adv-flow">
+              <span>proposed<br>[10,20,30]</span>
+              <strong>accepted<br>[10,20]</strong>
+              <span>rejected_at<br>2</span>
+              <span>suffix<br>[30]</span>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>全部接受</h4>
+            <div class="adv-flow">
+              <span>proposed<br>[10,20,30]</span>
+              <strong>accepted<br>[10,20,30]</strong>
+              <span>rejected_at<br>None</span>
+              <span>suffix<br>[]</span>
+            </div>
+          </section>
         </div>
+
         <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
+          <span><code>proposed_tokens</code></span><strong>本轮最多 max_proposal_len 个候选</strong>
+          <span><code>accepted_tokens</code></span><strong>从左到右连续通过的前缀</strong>
+          <span><code>accepted_len</code></span><strong>len(accepted_tokens)</strong>
+          <span><code>rejected_at</code></span><strong>首次拒绝索引或 None</strong>
+          <span><code>rejected_suffix</code></span><strong>从拒绝索引开始的 proposed 后缀</strong>
+        </div>
+
+        <div class="adv-callout">不能写 <code>if rejected_at</code>：当第 0 个 token 被拒绝时 rejected_at=0，Python 会把 0 当作 False，错误地产生空后缀。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
+        <div class="syntax-card"><h4>语法热身：用批量审批练习 None 与索引 0</h4><pre><code>proposed = ['A', 'B', 'C']
+rejected_at = 0
 
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
-
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
+rejected_suffix = (
+    proposed[rejected_at:]
+    if rejected_at is not None
+    else []
+)
+result = {
+    'rejected_at': rejected_at,
+    'rejected_suffix': rejected_suffix,
+}
+# rejected_suffix 是 ['A', 'B', 'C']</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>proposed</code> 对应 decode 已经取得的 <code>proposed</code>。</li>
+            <li>条件必须保留 <code>rejected_at is not None</code>，正确覆盖索引 0。</li>
+            <li>TODO 4 只补 <code>rejected_suffix</code>；result 字典和 history.append 已经写好。</li>
+            <li>测试样例 rejected_at=2，因此后缀应从 token 30 开始，即 [30]。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>全部候选通过时，rejected_at=None，应返回什么 rejected_suffix？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="0">
+                <span>[]</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="1">
+                <span>None</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="2">
+                <span>完整 proposed</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="multi-token-decode-rollback-history"></div>
             </div>
           </div>
 
@@ -1345,16 +1414,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="multi-token-decode-rollback-history-0">
+                <span>完成 TODO 4，并运行 test_multi_token_decoder。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="multi-token-decode-rollback-history-1">
+                <span>测试契约：result 的五个键值与测试一致，且一次 decode 后 len(sim.history)==1。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="multi-token-decode-rollback-history-2">
+                <span>补测三个边界：全部接受、第 0 个拒绝、候选短于 max_proposal_len。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="multi-token-decode-rollback-history-3">
+                <span>错误诊断：第 0 个拒绝却返回空列表时检查是否误用 truthy 判断；history 长度错误时不要删除已有 append。</span>
               </label>
           </div>
         </article>
@@ -1366,19 +1439,19 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="36_prefix_caching_and_chunked_prefill.html">上一关：L36</a>
+        <a class="primary" href="38_decode_scheduling.html">下一关：L38</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
+    const levelId = "37";
+    const checkpointData = {"multi-token-propose":{"answer":1,"explain":"多 token 候选是有顺序的前缀，不是无序集合。"},"multi-token-verify-first-rejection":{"answer":2,"explain":"自回归候选存在前缀依赖，首次拒绝后的整个后缀都需要回退。"},"multi-token-decode-rollback-history":{"answer":0,"explain":"没有首次拒绝位置，就没有需要回退的后缀；返回类型仍保持 List[int]。"}};
+    const predictData = {"multi-token-propose":{"answer":0,"revealNote":"先 list 转换，再取前三个，因此类型是 list，长度为 3。"},"multi-token-verify-first-rejection":{"answer":0,"revealNote":"阈值是 0.5 * 0.6 = 0.3，0.31 大于等于 0.3。"},"multi-token-decode-rollback-history":{"answer":0,"revealNote":"切片从 rejected_at=0 开始，整个提议都需要回退。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

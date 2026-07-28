@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 34 | Distributed Parallel Benchmark</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -1000,12 +1000,12 @@
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 34 | 零基础导学关卡</p>
+        <h1>Distributed Parallel Benchmark</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">34_Distributed_Parallel_Benchmark.ipynb</span>
+          <span class="pill">Distributed</span><span class="pill">Parallelism</span><span class="pill">Benchmark</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">parallel value = memory/throughput gain - communication/scheduling cost</div>
       </div>
     </section>
 
@@ -1025,104 +1025,114 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="parallel-benchmark-fairness">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1：完成分布式并行 benchmark 的 warmup 与平均 latency 计时</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>公平比较从计时开始：同一 workload、同一单位、同一轮次</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">warmup=0、iters=2，fn 每调用一次就让 counter 加 1。</p>
+            <p class="predict-q">函数返回前 counter 应该是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="0">
+                <span>2</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="1">
+                <span>0</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="2">
+                <span>4</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="parallel-benchmark-fairness">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="parallel-benchmark-fairness">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>并行策略比较必须固定模型、输入、global batch、硬件数量和后端，否则差异无法归因。</li><li>warmup 调用不计时，正式 iters 调用才构成 total。</li><li>time.perf_counter() 的差值单位是秒，报告中的 latency 使用毫秒。</li><li>本 Notebook 是 CPU-first 最小模板，不会真的启动 ZeRO、Pipeline 或 Tensor Parallel 多卡进程。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>选择并行策略像比较三种运输方案：货物、路程和车辆数量都相同，时间才有可比性。代码里的 benchmark_fn 只是共同秒表；真正的公平性还来自 Step 1 固定 workload 的实验纪律。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
-        </div>
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
+            <h4>代码层计时契约</h4>
             <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+              <span>warmup 次<br>不统计</span>
+              <span>perf_counter<br>开始</span>
+              <span>iters 次<br>正式运行</span>
+              <strong>平均 latency<br>ms</strong>
+            </div>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
-            <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+            <h4>实验层公平契约</h4>
+            <div class="adv-checks">
+              <span>模型与输入一致</span>
+              <span>global batch 一致</span>
+              <span>GPU 数与拓扑一致</span>
+              <span>运行后端一致</span>
+            </div>
           </section>
         </div>
+
         <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+          <span><code>fn</code></span><strong>待测的一次完整工作负载</strong>
+          <span><code>warmup=2</code></span><strong>默认先运行两次，不进入平均值</strong>
+          <span><code>iters=5</code></span><strong>默认正式运行五次</strong>
+          <span><code>avg_time_ms</code></span><strong>每次平均耗时，非负浮点数</strong>
+        </div>
+
+        <div class="adv-callout">真实 GPU 多卡 benchmark 还需要同步、通信 trace 和稳定性检查。当前 TODO 只要求实现 CPU 计时骨架，先通过它建立可复用的评测入口。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用排序算法练习统一计时入口</h4><pre><code>import time
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+def average_ms(task, warmup=2, trials=5):
+    for _ in range(warmup):
+        task()
+
+    start = time.perf_counter()
+    for _ in range(trials):
+        task()
+    total_seconds = time.perf_counter() - start
+    return total_seconds / trials * 1000</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>task/trials</code> 对应 <code>fn/iters</code>。</li>
+            <li><code>total_seconds</code> 对应 TODO 的 <code>total</code>，其单位仍是秒。</li>
+            <li>返回表达式对应 <code>avg_time_ms</code>：除以正式轮次，再乘 1000。</li>
+            <li>测试用 counter 验证调用次数，因此不能把 warmup 循环移动到正式计时循环内部。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>只把 TP 的 batch size 调大后，能否把它和原 baseline 直接比较来证明 TP 更快？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="0">
+                <span>能，因为 benchmark_fn 会自动修正 batch 差异</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="1">
+                <span>不能，workload 同时变化，收益无法只归因于 TP</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="2">
+                <span>能，只要 throughput 更高</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="parallel-benchmark-fairness"></div>
             </div>
           </div>
 
@@ -1131,108 +1141,129 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="parallel-benchmark-fairness-0">
+                <span>完成 TODO 1，并确认结果单位是单次平均毫秒。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="parallel-benchmark-fairness-1">
+                <span>测试契约：warmup=0、iters=2 时 counter 为 2，avg 大于或等于 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="parallel-benchmark-fairness-2">
+                <span>写下比较 ZeRO、Pipeline、TP 时必须固定的四个 workload 条件。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-benchmark-fairness-3">
+                <span>错误诊断：调用次数错误先查循环边界；数值异常偏大先查是否忘记除以 iters。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="parallel-four-metric-ledger">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 2：计算四项 baseline / parallel 差值及改善判断</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>四本账一起看：显存、吞吐、延迟、通信都统一为正收益</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">baseline communication=20 ms，parallel communication=32 ms。</p>
+            <p class="predict-q">communication_delta 与 communication_improved 是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="0">
+                <span>-12，False</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="1">
+                <span>12，True</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="2">
+                <span>-12，True</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="parallel-four-metric-ledger">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="parallel-four-metric-ledger">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>peak_mem_mb、latency_ms、communication_ms 越低越好，使用 baseline - parallel。</li><li>throughput 越高越好，使用 parallel - baseline。</li><li>通信时间下降为正收益；若并行方案引入更多通信，communication_delta 会是负数。</li><li>summary 的键名是后续报告和测试的接口，必须逐字保留。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>并行方案经常用一项资源换另一项资源：更省显存，却增加通信；吞吐变高，却让单请求延迟变差。四项指标放在同一张账本里，才不会把局部收益误判成整体胜利。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
-        </div>
         <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
+          <thead><tr><th>指标</th><th>偏好</th><th>差值公式</th><th>测试数据</th></tr></thead>
           <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
+            <tr><td>peak memory</td><td>低</td><td><code>base - parallel</code></td><td>12000 - 9000 = 3000 MB</td></tr>
+            <tr><td>throughput</td><td>高</td><td><code>parallel - base</code></td><td>100 - 80 = 20</td></tr>
+            <tr><td>latency</td><td>低</td><td><code>base - parallel</code></td><td>120 - 96 = 24 ms</td></tr>
+            <tr><td>communication</td><td>低</td><td><code>base - parallel</code></td><td>30 - 24 = 6 ms</td></tr>
           </tbody>
         </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-grid three">
+          <section class="adv-panel blue">
+            <h4>ZeRO 常看</h4>
+            <p>训练状态切分后的单卡显存，以及 Reduce-Scatter / All-Gather 代价。</p>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>Pipeline 常看</h4>
+            <p>按层切分后的显存、吞吐、stage 等待和 bubble ratio。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>TP 常看</h4>
+            <p>单层矩阵分摊后的显存与计算，以及 All-Reduce / All-Gather 开销。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">四个 improved 都由对应 delta 是否大于 0 得出。不要让“communication overhead 本来是代价”扰乱公式：这里比较的是代价减少了多少。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用数据库方案练习多指标取舍</h4><pre><code>base = {'memory': 64, 'queries': 120, 'latency': 18}
+candidate = {'memory': 48, 'queries': 150, 'latency': 21}
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
+memory_gain = base['memory'] - candidate['memory']
+query_gain = candidate['queries'] - base['queries']
+latency_gain = base['latency'] - candidate['latency']
+
+tradeoff = {
+    'memory_improved': memory_gain &gt; 0,
+    'queries_improved': query_gain &gt; 0,
+    'latency_improved': latency_gain &gt; 0,
+}</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>memory</code> 对应 <code>peak_mem_mb</code>，低者更好。</li>
+            <li><code>queries</code> 对应 <code>throughput</code>，高者更好。</li>
+            <li><code>latency</code> 对应 <code>latency_ms</code>；再用同样模式加入 <code>communication_ms</code>。</li>
+            <li>将四个原始差值写入已给出的 summary，数值统一 <code>round(..., 2)</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
+              <p>某方案显存下降 3000 MB，但 communication_delta=-15 ms。正确解读是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="0">
+                <span>四项指标都改善</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="1">
+                <span>通信指标应取绝对值后判定改善</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="2">
+                <span>它省显存，但通信时间增加了 15 ms，需要权衡</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
+              <div class="feedback" data-feedback="parallel-four-metric-ledger"></div>
             </div>
           </div>
 
@@ -1241,102 +1272,128 @@ if needs_row:
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+                <input type="checkbox" data-homework="parallel-four-metric-ledger-0">
+                <span>完成 TODO 2，确保四个差值的正号都代表 parallel 更好。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+                <input type="checkbox" data-homework="parallel-four-metric-ledger-1">
+                <span>测试契约：依次得到 3000.0、20.0、24.0、6.0，四个 improved 均为 True。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
+                <input type="checkbox" data-homework="parallel-four-metric-ledger-2">
+                <span>构造“显存改善但通信恶化”的样例，确认 summary 能同时出现 True 和 False。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-four-metric-ledger-3">
+                <span>错误诊断：若只有 throughput 符号错，检查它是否误用了 base - parallel；若 KeyError，核对 communication_ms 拼写。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" data-lesson="parallel-selection-report">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
+            <span class="todo-pill">TODO 3：生成并行策略 Markdown 报告与 recommendation 结论</span>
           </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
+          <h2>报告不是排行榜：策略名、四项取舍与推荐条件缺一不可</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
+            <p class="predict-hook">summary 中 memory_improved=True，latency_improved=False。</p>
+            <p class="predict-q">报告应如何呈现？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-parallel-selection-report" value="0">
+                <span>memory 写改善，latency 写未改善</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-parallel-selection-report" value="1">
+                <span>只保留改善的 memory 行</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
+                <input type="radio" name="predict-parallel-selection-report" value="2">
+                <span>两行都写改善</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="parallel-selection-report">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-cache-rebuild">
+          <div class="gated" data-gated="parallel-selection-report">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
+              <ul><li>format_parallel_report 接收 strategy_name、summary、recommendation，不能依赖函数外的固定变量。</li><li>rows 要覆盖 memory、throughput、latency、communication 四项。</li><li>每一行既展示 delta，也根据对应布尔键展示改善或未改善。</li><li>返回字符串的第一行先写策略名，再接 Markdown 表格和推荐结论。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
+              <p>并行选型没有脱离 workload 的冠军。报告要把策略是谁、改善了什么、牺牲了什么、为什么推荐写在一起。这样同事才能知道这条建议只适用于当前模型规模和通信条件。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+          <span><b>策略名</b>ZeRO / Pipeline / TP</span>
+          <span><b>四项 rows</b>收益和代价同屏</span>
+          <span><b>recommendation</b>说明适用条件</span>
+          <span><b>下一轮</b>指出需继续观察的开销</span>
         </div>
-        <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>Notebook 测试要看到</h4>
+            <div class="adv-checks">
+              <span>Tensor Parallelism</span>
+              <span>Markdown 表头</span>
+              <span>四项指标变化</span>
+              <span>All-Reduce 建议</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>推荐要有边界</h4>
+            <p>“优先保留 TP”不是永恒结论；样例理由是当前单层矩阵较大，同时还要继续观察 All-Reduce。换 workload 后应重新测量。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">测试会搜索字符串，但不要只拼测试关键字。完整四行让报告在指标不全都改善时仍可用于真实决策。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
+        <div class="syntax-card"><h4>语法热身：用存储方案练习参数化报告</h4><pre><code>plan_name = '分片存储'
+saved_gb = 12
+saved = saved_gb &gt; 0
+rows = [
+    f"| 容量 | {saved_gb} GB | {'改善' if saved else '未改善'} |",
+]
+advice = '适合容量瓶颈，继续观察网络读取'
 
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
-
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
+report = "\n".join(
+    [f"方案：{plan_name}", '| 指标 | 变化 | 判断 |', '| --- | --- | --- |']
+    + rows
+    + [f"推荐结论：{advice}。"]
+)</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>plan_name</code> 对应 <code>strategy_name</code>，必须来自函数参数。</li>
+            <li>容量单行扩展成 memory、throughput、latency、communication 四行。</li>
+            <li><code>advice</code> 对应 <code>recommendation</code>。</li>
+            <li>第一行前缀改成 Notebook 规定的“策略：”，结论前缀改成“推荐结论：”。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>为什么 strategy_name 必须出现在报告里？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-parallel-selection-report" value="0">
+                <span>否则同一份指标无法知道对应 ZeRO、Pipeline 还是 TP</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-parallel-selection-report" value="1">
+                <span>因为 join 只能处理带策略名的列表</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-parallel-selection-report" value="2">
+                <span>因为测试不允许中文结论</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="parallel-selection-report"></div>
             </div>
           </div>
 
@@ -1345,16 +1402,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="parallel-selection-report-0">
+                <span>完成 TODO 3，依次生成四个 rows、conclusion，并返回带策略名的多行字符串。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="parallel-selection-report-1">
+                <span>测试契约：结果包含 Tensor Parallelism、指定表头和 recommendation 中的 All-Reduce。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="parallel-selection-report-2">
+                <span>分别传入 ZeRO、Pipeline、TP 三个名字，确认函数不会把策略写死。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-selection-report-3">
+                <span>错误诊断：缺少一行先查 rows 列表；字符串没有换行先查 join；推荐没变化则检查是否使用了 recommendation 参数。</span>
               </label>
           </div>
         </article>
@@ -1366,19 +1427,19 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="33_profiling_driven_end_to_end_optimization.html">上一关：L33</a>
+        <a class="primary" href="35_quantized_inference_and_deployment.html">下一关：L35</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
+    const levelId = "34";
+    const checkpointData = {"parallel-benchmark-fairness":{"answer":1,"explain":"统一计时函数不会替你固定实验条件，公平性仍需由 benchmark 设计保证。"},"parallel-four-metric-ledger":{"answer":2,"explain":"负差值是有价值的代价证据，不能取绝对值把退步伪装成收益。"},"parallel-selection-report":{"answer":0,"explain":"指标离开策略和 workload 上下文就无法支持选型。"}};
+    const predictData = {"parallel-benchmark-fairness":{"answer":0,"revealNote":"没有预热调用，正式循环执行两次，测试正是用它排查额外调用。"},"parallel-four-metric-ledger":{"answer":0,"revealNote":"低指标用 baseline - parallel：20 - 32 = -12，说明并行方案增加了通信等待。"},"parallel-selection-report":{"answer":0,"revealNote":"报告要保留完整取舍，不能隐藏不利指标。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

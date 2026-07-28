@@ -157,8 +157,8 @@
         <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
-          <div class="stat"><strong>33</strong><span>Notebook 关卡</span></div>
-          <div class="stat"><strong>3</strong><span>每关学习模块</span></div>
+          <div class="stat"><strong>43</strong><span>Notebook 关卡</span></div>
+          <div class="stat"><strong>2–4</strong><span>每关学习模块</span></div>
         </div>
       </div>
       <div class="map-art" aria-label="学习流程">
@@ -513,6 +513,106 @@
           <p>把训练 step 拆成数据、前向、反向和优化器阶段，定位真正的性能与显存瓶颈。</p>
           <div class="chips"><span class="chip">Profiling</span><span class="chip">Training</span><span class="chip">Memory</span></div>
           <a class="start" href="notes/32_training_performance_analysis.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="33">
+          <div class="level-head">
+            <span class="badge">L33</span>
+            <span class="status" data-status="33">待挑战</span>
+          </div>
+          <h2>Profiling-Driven End-to-End Optimization</h2>
+          <p>把性能优化做成可复现闭环：固定 baseline、定位瓶颈、只改一个变量、复测并形成报告。</p>
+          <div class="chips"><span class="chip">Profiling</span><span class="chip">Optimization</span><span class="chip">Benchmark</span></div>
+          <a class="start" href="notes/33_profiling_driven_end_to_end_optimization.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="34">
+          <div class="level-head">
+            <span class="badge">L34</span>
+            <span class="status" data-status="34">待挑战</span>
+          </div>
+          <h2>Distributed Parallel Benchmark</h2>
+          <p>用统一 workload 比较分布式并行策略的显存、吞吐、延迟和通信代价，再输出选型结论。</p>
+          <div class="chips"><span class="chip">Distributed</span><span class="chip">Parallelism</span><span class="chip">Benchmark</span></div>
+          <a class="start" href="notes/34_distributed_parallel_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="35">
+          <div class="level-head">
+            <span class="badge">L35</span>
+            <span class="status" data-status="35">待挑战</span>
+          </div>
+          <h2>Quantized Inference and Deployment</h2>
+          <p>从速度、吞吐、显存、误差和部署复杂度共同判断量化方案是否值得上线。</p>
+          <div class="chips"><span class="chip">Quantization</span><span class="chip">Deployment</span><span class="chip">Benchmark</span></div>
+          <a class="start" href="notes/35_quantized_inference_and_deployment.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="36">
+          <div class="level-head">
+            <span class="badge">L36</span>
+            <span class="status" data-status="36">待挑战</span>
+          </div>
+          <h2>Prefix Caching and Chunked Prefill</h2>
+          <p>实现最小前缀缓存管理器：登记共享前缀、寻找最长命中并把未命中 prompt 切成 prefill 块。</p>
+          <div class="chips"><span class="chip">Prefix Cache</span><span class="chip">Chunked Prefill</span><span class="chip">KV Cache</span></div>
+          <a class="start" href="notes/36_prefix_caching_and_chunked_prefill.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="37">
+          <div class="level-head">
+            <span class="badge">L37</span>
+            <span class="status" data-status="37">待挑战</span>
+          </div>
+          <h2>Multi-Token Decoding</h2>
+          <p>模拟一次提出多个 token、逐个验证、首次拒绝即停止并回退后缀的多 Token 解码闭环。</p>
+          <div class="chips"><span class="chip">Multi-Token Decoding</span><span class="chip">Verification</span><span class="chip">Rollback</span></div>
+          <a class="start" href="notes/37_multi_token_decoding.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="38">
+          <div class="level-head">
+            <span class="badge">L38</span>
+            <span class="status" data-status="38">待挑战</span>
+          </div>
+          <h2>Decode Scheduling</h2>
+          <p>模拟请求入队、按优先级与 cache 命中排序、从 prefill 切到 decode 并持续运行到完成。</p>
+          <div class="chips"><span class="chip">Decode</span><span class="chip">Scheduling</span><span class="chip">Prefill</span></div>
+          <a class="start" href="notes/38_decode_scheduling.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="39">
+          <div class="level-head">
+            <span class="badge">L39</span>
+            <span class="status" data-status="39">待挑战</span>
+          </div>
+          <h2>GPTQ and AWQ Weight Quantization</h2>
+          <p>模拟校准、分组量化、AWQ 敏感通道保护、反量化和重构误差检查。</p>
+          <div class="chips"><span class="chip">GPTQ</span><span class="chip">AWQ</span><span class="chip">Weight Quantization</span></div>
+          <a class="start" href="notes/39_gptq_and_awq_weight_quantization.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="40">
+          <div class="level-head">
+            <span class="badge">L40</span>
+            <span class="status" data-status="40">待挑战</span>
+          </div>
+          <h2>FP8 and KV Cache Quantization</h2>
+          <p>用对称低精度量化模拟 FP8 张量，并按最后一维分组压缩与恢复 KV Cache。</p>
+          <div class="chips"><span class="chip">FP8</span><span class="chip">KV Cache</span><span class="chip">Quantization</span></div>
+          <a class="start" href="notes/40_fp8_and_kv_cache_quantization.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="41">
+          <div class="level-head">
+            <span class="badge">L41</span>
+            <span class="status" data-status="41">待挑战</span>
+          </div>
+          <h2>KV Cache Scheduling</h2>
+          <p>根据复用次数、最近访问时间和缓存大小计算优先级，在容量约束下刷新队列并驱逐缓存。</p>
+          <div class="chips"><span class="chip">KV Cache</span><span class="chip">Scheduling</span><span class="chip">Eviction</span></div>
+          <a class="start" href="notes/41_kv_cache_scheduling.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="42">
+          <div class="level-head">
+            <span class="badge">L42</span>
+            <span class="status" data-status="42">待挑战</span>
+          </div>
+          <h2>Communication Profiling with NCCL</h2>
+          <p>记录计算与通信时间线，判断 overlap，并按 NCCL 算子汇总次数、耗时和数据量。</p>
+          <div class="chips"><span class="chip">NCCL</span><span class="chip">Communication</span><span class="chip">Profiling</span></div>
+          <a class="start" href="notes/42_communication_profiling_with_nccl.html">进入关卡</a>
         </article>
     </section>
   </main>

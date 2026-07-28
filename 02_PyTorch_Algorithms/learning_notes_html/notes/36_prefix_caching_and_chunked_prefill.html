@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 22 | vLLM PagedAttention</title>
+  <title>Level 36 | Prefix Caching and Chunked Prefill</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -1000,12 +1000,12 @@
 
     <section class="hero">
       <div class="card hero-main">
-        <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention</h1>
+        <p class="eyebrow">Level 36 | 零基础导学关卡</p>
+        <h1>Prefix Caching and Chunked Prefill</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
-          <span class="pill">22_vLLM_PagedAttention.ipynb</span>
-          <span class="pill">PagedAttention</span><span class="pill">KV Cache</span><span class="pill">Block Table</span>
+          <span class="pill">36_Prefix_Caching_and_Chunked_Prefill.ipynb</span>
+          <span class="pill">Prefix Cache</span><span class="pill">Chunked Prefill</span><span class="pill">KV Cache</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1015,7 +1015,7 @@
           <div class="map-step">图解原理</div>
           <div class="map-step">巩固 + 作业</div>
         </div>
-        <div class="formula">logical block → block table → physical KV block</div>
+        <div class="formula">prompt = longest_cached_prefix + suffix_to_prefill</div>
       </div>
     </section>
 
@@ -1025,104 +1025,113 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" data-lesson="prefix-normalize-and-chunk">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">当前练习 TODO 1–2：needed_blocks、OOM 检查与 block_table 分配</span>
+            <span class="todo-pill">TODO 1-2：实现 _normalize 与 _chunk_tokens</span>
           </div>
-          <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
+          <h2>先把输入变整齐：统一成 list，再按步长切成 tuple 块</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
-            <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
+            <p class="predict-hook">tokens=[1,2,3,4,5]，block_size=2。</p>
+            <p class="predict-q">_chunk_tokens 应返回什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="0">
-                <span>需要 2 块，分配前直接抛 RuntimeError(&quot;OOM&quot;)</span>
+                <input type="radio" name="predict-prefix-normalize-and-chunk" value="0">
+                <span>[(1,2),(3,4),(5,)]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="1">
-                <span>只分 1 块并忽略最后一个 token</span>
+                <input type="radio" name="predict-prefix-normalize-and-chunk" value="1">
+                <span>[(1,2),(3,4)]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-prefill" value="2">
-                <span>先拿走 1 块再返回成功</span>
+                <input type="radio" name="predict-prefix-normalize-and-chunk" value="2">
+                <span>[[1,2],[3,4],[5,0]]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="prefix-normalize-and-chunk">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-prefill">
+          <div class="gated" data-gated="prefix-normalize-and-chunk">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
+              <ul><li>Sequence[int] 表示可按顺序读取的整数序列，传入值可以是 list 或 tuple。</li><li>list(tokens) 会创建普通列表，让后续切片和比较使用同一种表示。</li><li>range(0, len(tokens), block_size) 从 0 开始，每次跨 block_size 个位置。</li><li>tokens[i:i+block_size] 是左闭右开的切片；尾部不足一个块时也会保留下来，再用 tuple(...) 固定块表示。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把物理块当成固定容量的箱子。Prompt 要一次性装完：先算需要几个箱子，再确认库存足够，最后才逐个拿走。先检查完整容量能避免分到一半才 OOM，留下 block_table 和 free_blocks 不一致的半更新状态。</p>
+              <p>缓存管理先要消除表示差异：同样的 token，不能因为一个是 list、一个是 tuple 就让代码到处加特殊分支。统一输入后，再像把长句按固定字数装盒，最后一盒不满也照样保留。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>需求</b>req.seq_len 个 token</span>
-          <span><b>容量</b>每块 block_size 个位置</span>
-          <span><b>取整</b>(seq_len + size - 1) // size</span>
-          <span><b>分配</b>free_blocks → req.block_table</span>
+          <span><b>接收 Sequence</b>list 或 tuple 都可以</span>
+          <span><b>normalize</b>统一得到 list[int]</span>
+          <span><b>按步长切片</b>0, block_size, 2*block_size...</span>
+          <span><b>块转 tuple</b>得到稳定的缓存块列表</span>
         </div>
+
         <div class="adv-grid two">
           <section class="adv-panel blue">
-            <h4>长度 6、block_size 4</h4>
+            <h4>block_size=2 的 shape / 状态流</h4>
             <div class="adv-flow">
-  <span>token 0..3：第一块</span><strong>token 4..5：第二块</strong>
-</div>
-            <p>6 // 4 只得到 1，会漏掉尾部两个 token；向上取整得到 2。</p>
+              <span>输入<br>[1,2,3,4,5]</span>
+              <span>切片 0:2<br>[1,2]</span>
+              <span>切片 2:4<br>[3,4]</span>
+              <strong>尾块 4:6<br>(5,)</strong>
+            </div>
           </section>
           <section class="adv-panel good">
-            <h4>块表只记录地址</h4>
-            <div class="adv-flow">
-  <span>逻辑块 0 → 物理 ID 7</span><strong>逻辑块 1 → 物理 ID 2</strong>
-</div>
-            <p>物理 ID 可以不连续，列表顺序负责表达逻辑顺序。</p>
+            <h4>返回类型契约</h4>
+            <div class="adv-contract">
+              <span><code>_normalize</code></span><strong>List[int]</strong>
+              <span><code>_chunk_tokens</code></span><strong>List[Tuple[int, ...]]</strong>
+              <span>空输入</span><strong>range 不进入，返回空列表</strong>
+              <span>尾块</span><strong>允许小于 block_size</strong>
+            </div>
           </section>
         </div>
-        <div class="adv-contract">
-  <span>needed_blocks</span><strong>Python int；必须覆盖全部 req.seq_len</strong><span>free_blocks</span><strong>List[int]；每次 pop 后长度减一</strong><span>req.block_table</span><strong>List[int]；按逻辑块顺序 append</strong><span>不足分支</span><strong>抛 RuntimeError("OOM")</strong><span>可见用例</span><strong>长度 6、块大小 4 → 2 块，10 块池剩 8 块</strong>
-</div>
+
+        <div class="adv-callout">单元素 tuple 必须写成 <code>(5,)</code>，逗号决定它是 tuple。测试期望最后一块正是 <code>(5,)</code>，不能补零凑满。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给订单分配固定容量的货箱</h4><pre><code>item_count = 11
-box_capacity = 5
-boxes_needed = (item_count + box_capacity - 1) // box_capacity
-available = [20, 7, 31, 9]
-assigned = []
+        <div class="syntax-card"><h4>语法热身：用订单编号练习统一表示与分组</h4><pre><code>def group_orders(order_ids, group_size):
+    normalized = list(order_ids)
+    groups = [
+        tuple(normalized[i : i + group_size])
+        for i in range(0, len(normalized), group_size)
+    ]
+    return groups
 
-if len(available) &lt; boxes_needed:
-    raise RuntimeError('FULL')
-for _ in range(boxes_needed):
-    assigned.append(available.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到当前练习</h4>
-  <ul><li><code>item_count</code>：对应 req.seq_len</li><li><code>box_capacity</code>：对应 self.block_size</li><li><code>boxes_needed</code>：对应 TODO 1 的 needed_blocks</li><li><code>available</code>：对应 self.free_blocks</li><li><code>assigned</code>：对应 req.block_table；异常文本要按 Notebook 写成 OOM</li></ul>
-</div>
-</div>
+print(group_orders((7, 8, 9, 10, 11), 2))
+# [(7, 8), (9, 10), (11,)]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>order_ids</code> 对应 <code>tokens</code>，<code>group_size</code> 对应 <code>self.block_size</code>。</li>
+            <li>TODO 1 只取 <code>list(tokens)</code> 并返回，不负责切块。</li>
+            <li>TODO 2 先调用 <code>self._normalize(tokens)</code>，再把列表推导式赋给 <code>chunks</code>。</li>
+            <li>块的 tuple 表示与 Notebook 的 <code>chunked_prefixes</code>、prefill plan 契约一致。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么应在 for 循环 pop 之前检查 len(free_blocks)？</p>
+              <p>为什么 _chunk_tokens 要先调用 _normalize？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="0">
-                <span>为了让 block_id 变成浮点数</span>
+                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="0">
+                <span>让 list/tuple 等输入沿同一条切片逻辑处理</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="1">
-                <span>避免失败时已经拿走部分块，造成半更新状态</span>
+                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="1">
+                <span>为了改变 token 的数值</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-prefill" value="2">
-                <span>为了把 seq_len 清零</span>
+                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="2">
+                <span>因为 tuple 不能保存整数</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-prefill"></div>
+              <div class="feedback" data-feedback="prefix-normalize-and-chunk"></div>
             </div>
           </div>
 
@@ -1131,108 +1140,131 @@ for _ in range(boxes_needed):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+                <input type="checkbox" data-homework="prefix-normalize-and-chunk-0">
+                <span>完成 TODO 1-2，并分别用 list、tuple 输入验证返回结果相同。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-1">
-                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+                <input type="checkbox" data-homework="prefix-normalize-and-chunk-1">
+                <span>测试契约：block_size=2 时 [1,2,3] 必须切成 [(1,2),(3,)]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-prefill-2">
-                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
+                <input type="checkbox" data-homework="prefix-normalize-and-chunk-2">
+                <span>边界练习：传入空列表和恰好 4 个 token，预测并验证结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="prefix-normalize-and-chunk-3">
+                <span>错误诊断：尾块丢失时检查 range 的终点；返回嵌套 list 时检查是否漏了 tuple(...)。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" data-lesson="prefix-register-and-longest-match">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">当前练习 TODO 3：is_new_block_needed 与按需追加一个物理块</span>
+            <span class="todo-pill">TODO 3-4：保存前缀块并实现最长前缀匹配</span>
           </div>
-          <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
+          <h2>缓存只登记一次，命中只认开头，并且选择最长前缀</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
-            <p class="predict-q">这一步是否需要新 Block？</p>
+            <p class="predict-hook">缓存有 [1,2] 与 [1,2,3]，prompt 是 [1,2,3,4]。</p>
+            <p class="predict-q">match_prefix 应返回多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="0">
-                <span>需要，因为 9 % 4 == 1</span>
+                <input type="radio" name="predict-prefix-register-and-longest-match" value="0">
+                <span>3</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="1">
-                <span>不需要，因为 8 % 4 == 0</span>
+                <input type="radio" name="predict-prefix-register-and-longest-match" value="1">
+                <span>2</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-decode" value="2">
-                <span>需要一次分配 4 个 Block</span>
+                <input type="radio" name="predict-prefix-register-and-longest-match" value="2">
+                <span>4</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="prefix-register-and-longest-match">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-decode">
+          <div class="gated" data-gated="prefix-register-and-longest-match">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
+              <ul><li>tuple(list_value) 把完整前缀变成可稳定比较的 tuple。</li><li>if prefix not in cached_prefixes 用于去重；只有新前缀才同时追加完整表示和分块表示。</li><li>prompt[:n] 只取 prompt 开头 n 个 token，适合判断“是不是以前缀开头”。</li><li>best_len = max(best_len, candidate_len) 会在多个命中候选中保留最长长度。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>不要孤立背取模公式，先画位置：长度从 4 加到 5 时，新 token 落在第二块第一个位置，所以补块；从 5 加到 6 时仍在第二块，不补；从 8 加到 9 时再补第三块。</p>
+              <p>Prefix Cache 不是查找任意相同片段。只有从新 prompt 第一个 token 开始连续相同，已有 KV 状态才处在正确上下文上；多个缓存都命中时，复用最长的那个能少算最多后缀。</p>
               <div class="adv-course">
-        <div class="adv-steps">
-          <div><b>1</b><code>req.seq_len += 1</code><span>Notebook 已经把本轮新 token 计入长度</span></div>
-          <div><b>2</b><code>seq_len % block_size</code><span>检查新 token 在当前逻辑块中的位置</span></div>
-          <div><b>3</b><code>余数 == 1</code><span>表示刚进入新块的第一个位置</span></div>
-          <div><b>4</b><code>pop + append</code><span>只有跨界时才申请一个新物理块</span></div>
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>登记时维护两份同步视图</h4>
+            <div class="adv-contract">
+              <span><code>cached_prefixes</code></span><strong>完整 tuple 前缀，用于匹配</strong>
+              <span><code>chunked_prefixes</code></span><strong>同一前缀的块列表，用于管理</strong>
+              <span>去重条件</span><strong>完整前缀尚未出现</strong>
+              <span>顺序约束</span><strong>两个列表相同下标描述同一前缀</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>最长命中状态流</h4>
+            <div class="adv-flow">
+              <span>prompt<br>[1,2,3,9]</span>
+              <span>缓存 [1,2]<br>命中 2</span>
+              <span>缓存 [1,2,3]<br>命中 3</span>
+              <strong>best_len<br>3</strong>
+            </div>
+          </section>
         </div>
-        <table class="adv-shapes">
-          <thead><tr><th>加一后的长度</th><th>余数（block_size=4）</th><th>动作</th></tr></thead>
-          <tbody>
-            <tr><td>7</td><td>3</td><td>继续使用现有块</td></tr>
-            <tr><td>8</td><td>0</td><td>现有块刚好填满，不提前分配</td></tr>
-            <tr><td>9</td><td>1</td><td>进入新块，追加一个 block_id</td></tr>
-          </tbody>
-        </table>
-        <div class="adv-callout">常见偏一位错误是判断余数等于 0。这里长度已经先加一；余数 0 表示新 token 填满旧块，余数 1 才表示它进入下一块。</div>
+
+        <div class="adv-steps">
+          <div><b>1</b><code>长度过滤</code><span>缓存比 prompt 长时不可能完整命中，直接 continue</span></div>
+          <div><b>2</b><code>开头切片比较</code><span>prompt 前 n 个 token 与完整 cached_prefix 比较</span></div>
+          <div><b>3</b><code>更新 best_len</code><span>只有命中时才保留更长值</span></div>
+        </div>
+
+        <div class="adv-callout">[8,1,2,3] 中间包含缓存 [1,2,3]，但命中长度仍应为 0。前缀缓存必须从位置 0 开始。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：给连续座位按排扩容</h4><pre><code>seats_per_row = 4
-current_people = 8
-current_people += 1
+        <div class="syntax-card"><h4>语法热身：用路径路由练习最长开头匹配</h4><pre><code>known_routes = [('api',), ('api', 'v2'), ('docs',)]
+request = ['api', 'v2', 'users']
+best_len = 0
 
-needs_row = (current_people % seats_per_row) == 1
-free_rows = [12, 13]
-assigned_rows = [4, 9]
-if needs_row:
-    if not free_rows:
-        raise RuntimeError('FULL')
-    assigned_rows.append(free_rows.pop(0))</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 3</h4>
-  <ul><li><code>current_people += 1</code>：对应已经写好的 req.seq_len += 1</li><li><code>seats_per_row</code>：对应 self.block_size</li><li><code>needs_row</code>：对应 is_new_block_needed</li><li><code>free_rows</code>：对应 self.free_blocks；为空时异常文本改为 OOM</li><li><code>assigned_rows</code>：对应 req.block_table，只在跨界时 append 一个 ID</li></ul>
-</div>
-</div>
+for route in known_routes:
+    if len(route) &gt; len(request):
+        continue
+    is_match = request[: len(route)] == list(route)
+    if is_match:
+        best_len = max(best_len, len(route))
+
+print(best_len)  # 2</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>known_routes/request</code> 对应 <code>self.cached_prefixes/prompt</code>。</li>
+            <li>TODO 3 先调用 <code>self._chunk_tokens(prefix)</code>，保证两份缓存视图同步追加。</li>
+            <li>TODO 4 的 <code>is_match</code> 可直接沿用“开头切片等于候选列表”的写法。</li>
+            <li>循环结束返回长度而非前缀本身，后续 split_prompt 会用这个下标切片。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>长度 6 连续调用三次 decode 后，为什么第 9 个 token 才让块表从 2 块变成 3 块？</p>
+              <p>prompt=[1,2,0]，缓存=[1,2,3] 时为什么先跳过？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="0">
-                <span>因为 block_id 必须是 9</span>
+                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="0">
+                <span>因为 token 0 不能匹配</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="1">
-                <span>因为每三次调用固定扩容</span>
+                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="1">
+                <span>缓存长度大于 prompt，不可能被 prompt 完整包含为前缀</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-decode" value="2">
-                <span>长度 7、8 仍在第二块，长度 9 才进入第三块</span>
+                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="2">
+                <span>因为缓存只能有偶数长度</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-decode"></div>
+              <div class="feedback" data-feedback="prefix-register-and-longest-match"></div>
             </div>
           </div>
 
@@ -1241,102 +1273,135 @@ if needs_row:
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+                <input type="checkbox" data-homework="prefix-register-and-longest-match-0">
+                <span>完成 TODO 3-4，重复 add 同一前缀后确认两个缓存列表都没有新增项。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-1">
-                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+                <input type="checkbox" data-homework="prefix-register-and-longest-match-1">
+                <span>测试契约：两条长度为 3 的缓存分别命中对应 prompt；[1,2,0] 返回 0。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-decode-2">
-                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
+                <input type="checkbox" data-homework="prefix-register-and-longest-match-2">
+                <span>额外加入短前缀 [1,2]，确认 [1,2,3,9] 仍选择长度 3。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="prefix-register-and-longest-match-3">
+                <span>错误诊断：中间子串也命中时检查是否比较了整个 prompt；总返回最后候选长度时检查是否使用 max。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" data-lesson="prefix-split-and-prefill-plan">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">当前练习 TODO 5：blocks、torch.cat(dim=0) 与 [:req.seq_len]</span>
+            <span class="todo-pill">TODO 5-6：拆分 reusable_prefix / suffix，并生成 chunked prefill plan</span>
           </div>
-          <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
+          <h2>把命中长度变成工作量：前半复用，后半重算，计划复用同一切块函数</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
-            <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
+            <p class="predict-hook">prompt=[1,2,3,9]，最长命中 hit_len=3。</p>
+            <p class="predict-q">split_prompt 的三个返回值是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="0">
-                <span>每块 [4,8]；拼接 [8,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="0">
+                <span>[1,2,3]、[9]、3</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="1">
-                <span>每块 [4,8]；拼接 [2,4,8]；返回 [5,8]</span>
+                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="1">
+                <span>[1,2,3,9]、[]、4</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-paged-cache-rebuild" value="2">
-                <span>每块 [8]；拼接 [16]；返回 [5]</span>
+                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="2">
+                <span>[1,2]、[3,9]、2</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="prefix-split-and-prefill-plan">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="paged-cache-rebuild">
+          <div class="gated" data-gated="prefix-split-and-prefill-plan">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
+              <ul><li>若 hit_len=3，prompt[:3] 取索引 0、1、2，prompt[3:] 从索引 3 一直取到末尾。</li><li>match_prefix 返回 0 时，前缀切片是空列表，suffix 是完整 prompt。</li><li>chunked_prefill_plan 应调用 _chunk_tokens，而不是复制一份新的切块算法。</li><li>split_prompt 返回三元组 (reusable_prefix, suffix, hit_len)，顺序必须与类型标注和测试一致。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>物理地址可以跳来跳去，但 block_table 的列表顺序就是逻辑顺序。先按表把每个二维块取出来，再沿 token 方向接成长序列；最后裁掉尾块未使用的槽位，才能得到请求真正拥有的 KV 长度。</p>
+              <p>命中长度本身只是数字，真正的系统收益来自它把 prompt 划成了两段：已缓存部分不再 prefill，后缀继续计算。执行计划再把需要处理的 token 按统一 block_size 切开，避免缓存组织和调度组织各说一套规则。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>块表 [7,2,9]</b>定义逻辑块顺序</span>
-          <span><b>逐块索引</b>每块 [block_size, head_dim]</span>
-          <span><b>cat dim=0</b>拼成逻辑 token 序列</span>
-          <span><b>[:seq_len]</b>裁掉尾块空槽</span>
+          <span><b>normalize</b>prompt 统一为 list</span>
+          <span><b>match</b>得到 hit_len=3</span>
+          <span><b>split</b>[1,2,3] + [9]</span>
+          <span><b>plan</b>按 block_size 复用切块逻辑</span>
         </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>命中时</h4>
+            <div class="adv-flow">
+              <span>prompt<br>[1,2,3,9]</span>
+              <strong>reusable<br>[1,2,3]</strong>
+              <span>suffix<br>[9]</span>
+            </div>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>未命中时</h4>
+            <div class="adv-flow">
+              <span>prompt<br>[1,2,0]</span>
+              <span>reusable<br>[]</span>
+              <strong>suffix<br>[1,2,0]</strong>
+            </div>
+          </section>
+        </div>
+
         <div class="adv-contract">
-  <span>物理池</span><strong>[num_blocks, block_size, head_dim]</strong><span>单个 blocks 元素</span><strong>[block_size, head_dim]</strong><span>cat_blocks</span><strong>[块表长度 × block_size, head_dim]</strong><span>返回 cache</span><strong>[req.seq_len, head_dim]</strong><span>可见边界</span><strong>长度 5、块大小 4 → 两块拼成 8 行，再截成 5 行</strong>
-</div>
-        <div class="adv-callout">不能直接返回 physical_kv_cache[req.block_table]：它保留三维 [num_used_blocks, block_size, head_dim]，而测试要求逻辑连续的二维 [seq_len, head_dim]。</div>
+          <span>测试 split</span><strong>[1,2,3,9] -&gt; [1,2,3]、[9]、3</strong>
+          <span>测试 plan</span><strong>[1,2,3,4,5] -&gt; [(1,2),(3,4),(5,)]</strong>
+          <span>一致性原则</span><strong>缓存分块与 prefill 计划都走 _chunk_tokens</strong>
+        </div>
+
+        <div class="adv-callout">Notebook 的 chunked_prefill_plan 对传入的 prompt_tokens 整体切块。不要擅自让它先调用 split_prompt 只切 suffix，这会改变当前函数与测试契约。</div>
       </div>
               <div class="adv-practice">
-  <div class="syntax-card"><h4>语法热身：按目录顺序拼接分散的数据页</h4><pre><code>import torch
+        <div class="syntax-card"><h4>语法热身：用已下载章节练习切分复用与待处理部分</h4><pre><code>chapters = ['A', 'B', 'C', 'D', 'E']
+downloaded_count = 3
 
-pages = torch.arange(5 * 3 * 2).reshape(5, 3, 2)
-page_table = [3, 0]
-ordered_pages = [pages[page_id] for page_id in page_table]
-continuous = torch.cat(ordered_pages, dim=0)
-used_rows = continuous[:5]
+reusable = chapters[:downloaded_count]
+remaining = chapters[downloaded_count:]
 
-print(continuous.shape)  # [6,2]
-print(used_rows.shape)   # [5,2]</code></pre></div>
-  <div class="adv-map">
-  <h4>从语法例子迁移到 TODO 5</h4>
-  <ul><li><code>pages</code>：对应 self.physical_kv_cache</li><li><code>page_table</code>：对应 req.block_table，顺序不能排序或去重</li><li><code>ordered_pages</code>：对应 blocks 列表，每项是一个物理缓存块</li><li><code>continuous</code>：对应 cat_blocks，沿 dim=0 拼接 token</li><li><code>used_rows</code>：对应返回值 cat_blocks[:req.seq_len]</li></ul>
-</div>
-</div>
+batch_size = 2
+plan = [
+    tuple(chapters[i : i + batch_size])
+    for i in range(0, len(chapters), batch_size)
+]</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>chapters</code> 对应 normalize 后的 <code>prompt</code>。</li>
+            <li><code>downloaded_count</code> 对应 <code>hit_len</code>。</li>
+            <li><code>reusable/remaining</code> 对应 TODO 5 的 <code>reusable_prefix/suffix</code>。</li>
+            <li>TODO 6 不重写列表推导式，直接把 <code>self._chunk_tokens(prompt_tokens)</code> 赋给 <code>plan</code>。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 blocks 的读取顺序必须服从 req.block_table？</p>
+              <p>为什么 chunked_prefill_plan 要复用 _chunk_tokens？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="0">
-                <span>列表位置表达逻辑块顺序，物理 ID 本身可能不连续</span>
+                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="0">
+                <span>因为类方法之间不能重复变量名</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="1">
-                <span>因为 head_dim 是 block_id</span>
+                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="1">
+                <span>为了让 plan 总是只包含 suffix</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-paged-cache-rebuild" value="2">
-                <span>因为 torch.cat 会自动排序</span>
+                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="2">
+                <span>保证缓存块和执行计划使用同一 block_size 与尾块规则</span>
               </label></div>
-              <div class="feedback" data-feedback="paged-cache-rebuild"></div>
+              <div class="feedback" data-feedback="prefix-split-and-prefill-plan"></div>
             </div>
           </div>
 
@@ -1345,16 +1410,20 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+                <input type="checkbox" data-homework="prefix-split-and-prefill-plan-0">
+                <span>完成 TODO 5-6，并运行完整 test_prefix_cache_manager。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-1">
-                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+                <input type="checkbox" data-homework="prefix-split-and-prefill-plan-1">
+                <span>测试契约：split 返回 [1,2,3]、[9]、3；plan 返回三个 tuple 块，尾块为 (5,)。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="paged-cache-rebuild-2">
-                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
+                <input type="checkbox" data-homework="prefix-split-and-prefill-plan-2">
+                <span>手工测试无缓存命中，确认 reusable_prefix 为空、suffix 等于完整 prompt。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="prefix-split-and-prefill-plan-3">
+                <span>错误诊断：prefix/suffix 重叠或丢 token 时检查切片边界；plan 类型错误时确认调用的是 _chunk_tokens。</span>
               </label>
           </div>
         </article>
@@ -1366,19 +1435,19 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
-        <a class="ghost" href="21_decoding_strategies.html">上一关：L21</a>
-        <a class="primary" href="23_speculative_decoding.html">下一关：L23</a>
+        <a class="ghost" href="35_quantized_inference_and_deployment.html">上一关：L35</a>
+        <a class="primary" href="37_multi_token_decoding.html">下一关：L37</a>
       </div>
     </section>
   </main>
 
   <script>
-    const levelId = "22";
-    const checkpointData = {"paged-prefill":{"answer":1,"explain":"容量检查先于状态修改，OOM 时两个列表都能保持原样。"},"paged-decode":{"answer":2,"explain":"扩容由块边界决定，不由调用次数固定决定。"},"paged-cache-rebuild":{"answer":0,"explain":"块表就是逻辑到物理的映射；按物理 ID 排序会打乱请求的 token 顺序。"}};
-    const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
+    const levelId = "36";
+    const checkpointData = {"prefix-normalize-and-chunk":{"answer":0,"explain":"统一表示降低后续比较与切片的分支复杂度，不改变 token 内容。"},"prefix-register-and-longest-match":{"answer":1,"explain":"长度过滤既避免无意义比较，也明确要求缓存前缀必须完整命中。"},"prefix-split-and-prefill-plan":{"answer":2,"explain":"单一切块逻辑避免同一个 manager 出现两套不一致的块边界。"}};
+    const predictData = {"prefix-normalize-and-chunk":{"answer":0,"revealNote":"切片不会丢掉尾部，也不会自动补零；每个块按契约转成 tuple。"},"prefix-register-and-longest-match":{"answer":0,"revealNote":"两个候选都从开头命中，best_len 应保留更长的 3。"},"prefix-split-and-prefill-plan":{"answer":0,"revealNote":"切片边界正好是 hit_len：边界之前复用，边界及之后继续 prefill。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

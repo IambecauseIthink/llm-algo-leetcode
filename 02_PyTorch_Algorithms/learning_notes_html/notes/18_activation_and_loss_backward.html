@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1003,13 +1028,13 @@
         <article class="lesson-card inquiry" data-lesson="relu-backward-gate">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：构造 ReLU 反向门控 mask</span>
+            <span class="todo-pill">TODO 1：构造 x&gt;0 的 mask</span>
           </div>
-          <h2>ReLU 反向是一扇门：正数放行，其余归零</h2>
+          <h2>ReLU 反向是一扇逐元素的门</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">x=[2,-1]，grad_out=[-4,7]。第一个上游梯度虽然是负数，但对应 x 是正数。</p>
+            <p class="predict-hook">x=[2,-1]，grad_out=[-4,7]。</p>
             <p class="predict-q">relu_backward 应返回什么？</p>
             <div class="predict-options">
               <label class="predict-option">
@@ -1030,70 +1055,49 @@
           <div class="gated" data-gated="relu-backward-gate">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>grad_out 是后续计算传回来的上游梯度，x 是 ReLU 前的输入；二者在 Notebook 中 shape 都是 [5]。</li><li>比较 x&gt;0 会得到布尔 Tensor：正输入位置是 True，0 和负输入位置是 False。</li><li>PyTorch 在 x=0 处采用导数 0，因此判断条件必须是严格大于 0。</li><li>乘法前把布尔 mask 转成 grad_out.dtype，可让返回梯度保持期望的浮点类型和 device。</li></ul>
+              <ul><li>grad_out 是后续层传回的上游梯度，x 是 ReLU 前输入；Notebook 中两者 shape 都是 [5]。</li><li>x&gt;0 返回布尔 Tensor；PyTorch 对 x=0 选择局部导数 0，所以不能写 x&gt;=0。</li><li>mask.to(grad_out.dtype) 把布尔门转成与上游梯度相同的浮点类型。</li><li>逐元素相乘保留原 shape 与 device；门只决定放行或阻断，不改变被放行梯度的符号。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>前向 ReLU 把非正数挡住。反向时不需要再算一次复杂函数，只要回看原输入 x：当时通过门的正数位置保留 grad_out，没通过的位置把梯度变成 0。</p>
+              <p>前向时，ReLU 只让正输入通过；反向时回看原输入 x，正数位置把 grad_out 原样放行，零和负数位置把梯度关成 0。即使上游梯度是负数，只要 x&gt;0，也应该保留这个负值。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>看原输入 x</b>不是看 grad_out 的正负</span>
-          <span><b>生成布尔门</b>x 正数位置为 True</span>
-          <span><b>对齐 dtype</b>布尔门转成浮点门</span>
-          <span><b>逐元素相乘</b>输出 shape 不变</span>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>x</th><th>ReLU 前向</th><th>局部导数</th><th>grad_out=3 时 grad_in</th></tr></thead>
+          <thead><tr><th>x</th><th>x&gt;0</th><th>grad_out</th><th>grad_in</th></tr></thead>
           <tbody>
-            <tr><td><code>-2</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr>
-            <tr><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr>
-            <tr><td><code>4</code></td><td><code>4</code></td><td><code>1</code></td><td><code>3</code></td></tr>
+            <tr><td><code>-2</code></td><td><code>False</code></td><td><code>5</code></td><td><code>0</code></td></tr>
+            <tr><td><code>0</code></td><td><code>False</code></td><td><code>-3</code></td><td><code>0</code></td></tr>
+            <tr><td><code>4</code></td><td><code>True</code></td><td><code>-2</code></td><td><code>-2</code></td></tr>
           </tbody>
         </table>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>正确的数据流</h4>
-            <div class="adv-flow">
-              <span>x [5]</span><span>mask [5]</span><span>grad_out [5]</span><strong>grad_in [5]</strong>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>两个常见误会</h4>
-            <p>门由 x 决定，不由 grad_out 决定；上游梯度可以是负数，正输入位置仍应原样放行它。</p>
-            <p>使用 x&gt;=0 会让 x=0 的梯度变成 1，与 Notebook 中 F.relu 的自动求导不一致。</p>
-          </section>
+        <div class="adv-roadmap">
+          <span><b>看 x</b>决定哪些位置开门</span>
+          <span><b>比较 x&gt;0</b>得到 bool mask</span>
+          <span><b>对齐 dtype</b>转成 grad_out.dtype</span>
+          <span><b>逐元素乘</b>返回与输入同 shape 的梯度</span>
         </div>
+        <div class="adv-callout">mask 由 x 决定，不由 grad_out 的正负决定；写 grad_out&gt;0 会错误删除合法的负梯度。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用传感器阈值门练逐元素反向</h4><pre><code>preactivation = torch.tensor([-1.5, 0.0, 2.5])
-flow = torch.tensor([4.0, -3.0, 0.5])
-
-gate = (preactivation &gt; 0).to(flow.dtype)
-grad_input = flow * gate
-print(grad_input)  # [0.0, -0.0, 0.5]</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>preactivation</code> -&gt; <code>x</code>，门的开关只由它决定。</li>
-            <li><code>flow</code> -&gt; <code>grad_out</code>，它是从后面传来的梯度。</li>
-            <li><code>gate</code> -&gt; TODO 1 的 <code>mask</code>。</li>
-            <li><code>grad_input</code> -&gt; 函数当前 return 表达式的结果。</li>
-            <li>例子故意在正输入处放了 0.5，说明门只决定放行或阻断，不把梯度强行改成 1。</li>
-          </ul>
-        </div>
-      </div>
+  <div class="syntax-card"><h4>语法热身：用阈值门控制传感器梯度</h4><pre><code>preactivation = torch.tensor([-1.5, 0.0, 2.5])
+upstream = torch.tensor([4.0, -3.0, -0.5])
+gate = (preactivation &gt; 0).to(upstream.dtype)
+grad_input = upstream * gate
+print(grad_input)  # [0.0, -0.0, -0.5]</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>preactivation</code> 对应 <code>x</code>，它决定门的开关。</li><li><code>upstream</code> 对应 <code>grad_out</code>。</li><li><code>gate</code> 对应 TODO 的 <code>mask</code>。</li><li>函数现有 return 已经完成逐元素乘法，只需正确构造 mask。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>为什么 mask 使用 x&gt;0 而不是 x&gt;=0？</p>
+              <p>为什么使用 x&gt;0 而不是 x&gt;=0？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-relu-backward-gate" value="0">
-                <span>要与 PyTorch 在 x=0 处选择导数 0 的约定一致</span>
+                <span>要与 PyTorch 在 x=0 处采用梯度 0 的约定一致</span>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-relu-backward-gate" value="1">
@@ -1101,7 +1105,7 @@ print(grad_input)  # [0.0, -0.0, 0.5]</code></pre></div>
               </label>
               <label class="checkpoint-option">
                 <input type="radio" name="checkpoint-relu-backward-gate" value="2">
-                <span>为了把 mask 变成 float64</span>
+                <span>为了把 dtype 变成 long</span>
               </label></div>
               <div class="feedback" data-feedback="relu-backward-gate"></div>
             </div>
@@ -1113,87 +1117,78 @@ print(grad_input)  # [0.0, -0.0, 0.5]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="relu-backward-gate-0">
-                <span>完成 TODO 1：mask 与 x/grad_out 都是 [5]，转成 grad_out.dtype，并保持原 device；返回梯度也应是 [5] 浮点 Tensor。</span>
+                <span>完成 mask=(x&gt;0).to(grad_out.dtype)，返回值应与 x/grad_out 都是 shape [5]。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="relu-backward-gate-1">
-                <span>运行测试中包含 -2、-0.5、0、1、3 的边界样本，确认手写结果与 F.relu 自动求导 allclose。</span>
+                <span>运行测试，确认包含 -2、-0.5、0、1、3 的手写梯度与 F.relu 自动求导 allclose。</span>
               </label>
               <label class="homework-item">
                 <input type="checkbox" data-homework="relu-backward-gate-2">
-                <span>若 x=0 位置不一致，检查是否误写 &gt;=；若 dtype 异常，检查是否忘了 .to(grad_out.dtype)；若负上游梯度被抹掉，检查是否错误地用 grad_out 构造 mask。</span>
+                <span>错误诊断：0 位置不一致时检查 &gt;=；dtype 异常时检查 .to；负上游梯度消失时检查是否误用 grad_out 构造门。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="relu-backward-gate-3">
+                <span>确认实现不原地修改 x 或 grad_out。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="softmax-cross-entropy-backward">
+        <article class="lesson-card inquiry" data-lesson="softmax-ce-loss-grad">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
             <span class="todo-pill">TODO 2：计算 probs、one_hot、loss 与 grad</span>
           </div>
-          <h2>分类损失反向：概率减 one-hot，再除 batch</h2>
+          <h2>从分类误差得到 logits 梯度：probs-one_hot</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">某个样本的预测概率是 [0.7,0.2,0.1]，正确类别是第 0 类，batch size=2。</p>
-            <p class="predict-q">这个样本对 logits 的批量平均梯度行是什么？</p>
+            <p class="predict-hook">某样本 probs=[0.7,0.2,0.1]，正确类是 0，batch size=2。</p>
+            <p class="predict-q">该样本对应的批量平均 logits 梯度行是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-softmax-cross-entropy-backward" value="0">
+                <input type="radio" name="predict-softmax-ce-loss-grad" value="0">
                 <span>[-0.15,0.10,0.05]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-softmax-cross-entropy-backward" value="1">
+                <input type="radio" name="predict-softmax-ce-loss-grad" value="1">
                 <span>[-0.30,0.20,0.10]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-softmax-cross-entropy-backward" value="2">
+                <input type="radio" name="predict-softmax-ce-loss-grad" value="2">
                 <span>[0.35,0.10,0.05]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="softmax-cross-entropy-backward">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="softmax-ce-loss-grad">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="softmax-cross-entropy-backward">
+          <div class="gated" data-gated="softmax-ce-loss-grad">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>logits 是 [B,C] 浮点分数，B 是样本数、C 是类别数；labels 是 [B] 的整数类别下标。</li><li>Softmax 必须沿类别维 dim=-1，使每个样本一行的概率和为 1。</li><li>scatter_ 需要 labels.unsqueeze(1) 把索引从 [B] 变成 [B,1]，再沿 dim=1 写入 one-hot。</li><li>Notebook 的 loss 对 batch 使用 mean，所以 logits 梯度不仅是 probs-one_hot，还要除以 B。</li></ul>
+              <ul><li>logits.shape=[B,C] 是浮点类别分数，labels.shape=[B] 是 long 类别下标。</li><li>Softmax 沿 dim=-1 计算，使每个样本的一行概率和为 1。</li><li>zeros_like(probs) 创建同 shape/dtype/device 的 one_hot 容器；scatter_ 需要 labels.unsqueeze(1) 提供 [B,1] 索引。</li><li>Notebook 的 loss 对 batch 取 mean，因此梯度是 (probs-one_hot)/B，而不是只做 probs-one_hot。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>每个样本先得到一行类别概率。one-hot 在正确类别放 1，其他位置放 0；probs-one_hot 就是在说“预测比目标多出来多少”。因为最终 loss 是 B 个样本的平均，每个样本对总 loss 只贡献 1/B。</p>
+              <p>one_hot 是目标分布，probs 是模型分布。两者相减表示每个类别预测多了还是少了；正确类别通常得到负梯度，其他类别得到正梯度。因为总 loss 是 B 个样本的平均，每行贡献还要除以 B。</p>
               <div class="adv-course">
         <div class="adv-steps">
-          <div><b>1</b><code>probs</code><span>每行 logits 沿类别维变成概率</span></div>
-          <div><b>2</b><code>one_hot</code><span>把 labels 转成与 probs 同 shape 的目标表</span></div>
-          <div><b>3</b><code>loss</code><span>取正确类别负对数，先按类求和再按 batch 求均值</span></div>
-          <div><b>4</b><code>grad</code><span>probs 减 one_hot，并除以 batch size</span></div>
+          <div><b>1</b><code>probs=softmax(logits,dim=-1)</code><span>[B,C]，每行和为 1</span></div>
+          <div><b>2</b><code>one_hot.scatter_(1,labels[:,None],1)</code><span>[B,C]，每行正确类为 1</span></div>
+          <div><b>3</b><code>负对数似然再 mean</code><span>得到 shape [] 的批量平均 loss</span></div>
+          <div><b>4</b><code>(probs-one_hot)/B</code><span>得到与 logits 同 shape 的手写梯度</span></div>
         </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>变量</th><th>Notebook shape</th><th>dtype</th><th>语义</th></tr></thead>
+          <thead><tr><th>对象</th><th>Notebook shape</th><th>dtype</th><th>关键性质</th></tr></thead>
           <tbody>
-            <tr><td><code>logits</code></td><td><code>[2,3]</code></td><td>float</td><td>两个样本、三个类别的原始分数</td></tr>
-            <tr><td><code>labels</code></td><td><code>[2]</code></td><td>long</td><td>每个样本的正确类别下标</td></tr>
-            <tr><td><code>probs, one_hot, grad</code></td><td><code>[2,3]</code></td><td>跟随 logits</td><td>逐类别概率、目标和梯度</td></tr>
-            <tr><td><code>loss</code></td><td><code>[]</code></td><td>跟随 logits</td><td>批量平均标量</td></tr>
+            <tr><td><code>logits</code></td><td><code>[2,3]</code></td><td>float</td><td>requires_grad=True</td></tr>
+            <tr><td><code>labels</code></td><td><code>[2]</code></td><td>long</td><td>值为 0 与 2</td></tr>
+            <tr><td><code>probs/one_hot/grad</code></td><td><code>[2,3]</code></td><td>跟随 logits</td><td>每行 grad 和接近 0</td></tr>
+            <tr><td><code>loss</code></td><td><code>[]</code></td><td>跟随 logits</td><td>对 batch 求 mean</td></tr>
           </tbody>
         </table>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>每行梯度和应接近 0</h4>
-            <p>probs 一行和为 1，one_hot 一行和也为 1，所以两者相减后行和为 0；再除 B 仍为 0。</p>
-          </section>
-          <section class="adv-panel warn">
-            <h4>测试覆盖与盲点</h4>
-            <p>Notebook 直接把 manual_grad 与 F.cross_entropy 的自动梯度比较，但只打印手写 loss，没有断言它等于 ce。loss 仍要按给定公式正确实现。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">log 里的小常数只用于避免概率极小时出现 log(0)。它加在 probs 上，不加在 logits 上；grad 仍使用化简后的 (probs-one_hot)/B。</div>
+        <div class="adv-callout">log(probs+1e-12) 中的小常数只防止 log(0)；手写 grad 仍使用化简后的 (probs-one_hot)/B。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用三条天气样本练四分类交叉熵</h4><pre><code>scores = torch.tensor([[1.2, 0.1, -0.4, 0.7],
+  <div class="syntax-card"><h4>语法热身：为三条天气样本手写四分类损失与梯度</h4><pre><code>scores = torch.tensor([[1.2, 0.1, -0.4, 0.7],
                        [0.0, 0.5, 1.4, -0.2],
                        [-0.5, 1.1, 0.3, 0.2]])
 targets = torch.tensor([3, 2, 1])
@@ -1201,39 +1196,32 @@ targets = torch.tensor([3, 2, 1])
 dist = torch.softmax(scores, dim=-1)
 indicator = torch.zeros_like(dist)
 indicator.scatter_(1, targets.unsqueeze(1), 1.0)
-per_item = -(indicator * torch.log(dist + 1e-12)).sum(dim=1)
-objective = per_item.mean()
-dscore = (dist - indicator) / scores.size(0)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>scores</code> / <code>targets</code> -&gt; <code>logits</code> / <code>labels</code>。</li>
-            <li><code>dist</code> -&gt; <code>probs</code>，Softmax 沿类别维。</li>
-            <li><code>indicator</code> -&gt; <code>one_hot</code>，先 zeros_like 再 scatter_。</li>
-            <li><code>objective</code> -&gt; <code>loss</code>；<code>dscore</code> -&gt; <code>grad</code>。</li>
-            <li>例子 batch=3、类别数=4；Notebook 改成 batch=2、类别数=3，写法不依赖固定数字。</li>
-          </ul>
-        </div>
-      </div>
+loss = -(indicator * torch.log(dist + 1e-12)).sum(dim=1).mean()
+grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>scores / targets</code> 对应 <code>logits / labels</code>。</li><li><code>dist / indicator</code> 对应 <code>probs / one_hot</code>。</li><li><code>loss / grad_scores</code> 对应函数返回的 <code>loss / grad</code>。</li><li>例子 B=3、C=4；Notebook B=2、C=3，所以 batch 除数必须用 logits.size(0)，不能写死。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>labels 是 [B] 时，为什么 scatter_ 前要 labels.unsqueeze(1)？</p>
+              <p>labels.unsqueeze(1) 的作用是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="0">
+                <input type="radio" name="checkpoint-softmax-ce-loss-grad" value="0">
                 <span>把标签转成浮点概率</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="1">
-                <span>把索引变成 [B,1]，让每一行沿类别维写入一个 1</span>
+                <input type="radio" name="checkpoint-softmax-ce-loss-grad" value="1">
+                <span>把 [B] 类别索引变成 [B,1]，让 scatter_ 沿类别维逐行写入 1</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-softmax-cross-entropy-backward" value="2">
-                <span>把 batch size 翻倍</span>
+                <input type="radio" name="checkpoint-softmax-ce-loss-grad" value="2">
+                <span>把类别数扩大一倍</span>
               </label></div>
-              <div class="feedback" data-feedback="softmax-cross-entropy-backward"></div>
+              <div class="feedback" data-feedback="softmax-ce-loss-grad"></div>
             </div>
           </div>
 
@@ -1242,16 +1230,20 @@ dscore = (dist - indicator) / scores.size(0)</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="softmax-cross-entropy-backward-0">
-                <span>完成 TODO 2：probs、one_hot、grad 都是 [B,C]，loss 是 shape []；labels 保持 long，其他张量跟随 logits 的浮点 dtype 与 device。</span>
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-0">
+                <span>完成 probs、one_hot、loss、grad；确认前三个矩阵 shape 为 [B,C]，loss 为 0 维标量。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="softmax-cross-entropy-backward-1">
-                <span>按顺序实现 Softmax、zeros_like+scatter_、逐样本负对数后 mean、以及除以 logits.size(0) 的梯度；不要把 batch 大小写死成 2。</span>
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-1">
+                <span>one_hot 使用 zeros_like 与 scatter_；loss 先按类别求和，再按 batch mean；grad 除以 logits.size(0)。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="softmax-cross-entropy-backward-2">
-                <span>运行 Notebook 测试，让 manual_grad 与 F.cross_entropy 自动梯度做 atol=1e-6 比较；若差固定为 B 倍，检查是否漏除 batch，若类别错位，检查 dim 和 unsqueeze，若 loss 为 Inf，检查 log 的小常数。</span>
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-2">
+                <span>运行测试，让 manual_grad 与 F.cross_entropy 自动梯度在 atol=1e-6 内一致。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-3">
+                <span>错误诊断：差固定 B 倍时检查除 batch；类别错位时检查 Softmax dim、scatter dim 和 unsqueeze；loss 为 Inf 时检查 1e-12。</span>
               </label>
           </div>
         </article>
@@ -1271,11 +1263,11 @@ dscore = (dist - indicator) / scores.size(0)</code></pre></div>
 
   <script>
     const levelId = "18";
-    const checkpointData = {"relu-backward-gate":{"answer":0,"explain":"两种比较都能用于 Tensor，但边界导数约定不同；测试中的 x 包含 0，会检查出这个差别。"},"softmax-cross-entropy-backward":{"answer":1,"explain":"scatter_ 沿 dim=1 写类别位置，需要每行提供一个二维列索引；unsqueeze 不改变标签值或 dtype。"}};
-    const predictData = {"relu-backward-gate":{"answer":0,"revealNote":"门看 x：第一个位置放行原值 -4，第二个位置阻断为 0。"},"softmax-cross-entropy-backward":{"answer":0,"revealNote":"先做 probs-one_hot 得 [-0.3,0.2,0.1]，再除以 B=2。"}};
+    const checkpointData = {"relu-backward-gate":{"answer":0,"explain":"测试输入明确包含 0，会检查边界位置是否与 F.relu 自动求导一致。"},"softmax-ce-loss-grad":{"answer":1,"explain":"unsqueeze 只增加长度为 1 的维度，不改变标签值或 long dtype。"}};
+    const predictData = {"relu-backward-gate":{"answer":0,"revealNote":"第一个位置 x>0，负梯度 -4 仍原样通过；第二个位置被门阻断。"},"softmax-ce-loss-grad":{"answer":0,"revealNote":"probs-one_hot=[-0.3,0.2,0.1]，再除以 B=2。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const homeworkTotal = 8;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

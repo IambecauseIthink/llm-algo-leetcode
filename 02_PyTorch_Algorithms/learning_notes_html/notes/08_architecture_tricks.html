@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -708,6 +721,269 @@
       .shell { width: min(100% - 22px, 1120px); }
       .top { display: grid; }
       .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
     }
   </style>
 </head>
@@ -748,291 +1024,281 @@
 
 
     <section class="lessons">
-      
-        <article class="lesson-card inquiry" data-lesson="gemma-rmsnorm-plus-one">
+
+        <article class="lesson-card inquiry" data-lesson="gemma-rmsnorm-one-plus-weight">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1</span>
+            <span class="todo-pill">TODO 1：output = normalized × (1 + weight)</span>
           </div>
-          <h2>Gemma 的 (1+w) 缩放：一个 +1 为何能稳住训练</h2>
+          <h2>Gemma RMSNorm：从纯归一化开始学习缩放</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">Gemma 把 RMSNorm 的缩放从 x·w 改成 x·(1+w)，而且 weight 还是初始化成 0。看着只是个 +1。</p>
-            <p class="predict-q">先判断：这个 +1 最主要解决什么问题？</p>
+            <p class="predict-hook">self.weight 初始化为全 0，但 forward 仍执行了 RMS 归一化。</p>
+            <p class="predict-q">此时 output 最准确的描述是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-gemma-rmsnorm-plus-one" value="0">
-                <span>让 weight=0 的初始时刻等价于“纯归一化、原样通过”，使训练早期梯度平滑、不被清零</span>
+                <input type="radio" name="predict-gemma-rmsnorm-one-plus-weight" value="0">
+                <span>等于 x_norm，而不一定等于原始 x</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-gemma-rmsnorm-plus-one" value="1">
-                <span>让 RMSNorm 的计算量翻倍，从而更精确</span>
+                <input type="radio" name="predict-gemma-rmsnorm-one-plus-weight" value="1">
+                <span>等于全 0</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-gemma-rmsnorm-plus-one" value="2">
-                <span>把输出强行限制在 0~1 之间</span>
+                <input type="radio" name="predict-gemma-rmsnorm-one-plus-weight" value="2">
+                <span>等于 2*x_norm</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="gemma-rmsnorm-plus-one">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="gemma-rmsnorm-one-plus-weight">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="gemma-rmsnorm-plus-one">
+          <div class="gated" data-gated="gemma-rmsnorm-one-plus-weight">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>回忆 RMSNorm：先把向量按它自己的均方根归一化到稳定尺度，再乘一个可学习的缩放向量 weight，让模型微调每一维的强弱。</li><li>PyTorch 里 weight 常初始化成 0（或极小值）。标准写法 y = x_norm · w，此时 w=0 → 输出被乘成 0，等于把这一层“掐断”了。</li><li>Gemma 改成 y = x_norm · (1 + w)。w=0 时 (1+0)=1，相当于“先什么都不缩放、原样通过”。</li><li>工程细节：统计量要在 FP32 下算，最后 type_as(x) 转回原精度，避免半精度数值不稳。</li></ul>
+              <ul><li>x 的 shape 是 [batch_size, seq_len, hidden_size]；RMSNorm 只沿最后的 hidden_size 维计算均方。</li><li>variance = x.float().pow(2).mean(-1, keepdim=True) 得到 [B,S,1]，再通过广播作用到 [B,S,H]。</li><li>x_norm 已经是 FP32 的归一化结果；self.weight 是长度 H 的可训练参数，会沿 B、S 两维广播。</li><li>Gemma 的 weight 初始化为 0，所以真正的缩放因子 1 + weight 初始为 1；return 时必须用 type_as(x) 恢复输入 dtype。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>把缩放因子的“默认值”从 0 挪到 1。标准写法里参数学的是“我要把这维放大到多少”（从 0 起步很尴尬）；Gemma 写法里参数学的是“我要在默认 1 的基础上，多一点还是少一点”。训练刚开始 w≈0，整层就是一个老老实实的纯归一化，梯度平滑、不会一上来就把信号清零。</p>
-              
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card warn">
-                <strong>0. 先看坑点：标准写法会把信号清零</strong>
-                <div class="learn-kv">
-                  <span>x_norm * w</span><strong>w=0 时 scale=0，输出被掐断</strong>
-                  <span>x_norm * (1+w)</span><strong>w=0 时 scale=1，纯归一化原样通过</strong>
-                </div>
-              </div>
-              <div class="learn-card good">
-                <strong>Gemma 的参数语义</strong>
-                <p><code>weight</code> 不再表示“绝对缩放值”，而表示“相对默认 1 的偏移”。初始化为 0 时就是健康默认。</p>
-                <div class="learn-mini">
-                  <span>w=0</span>
-                  <span>scale=1</span>
-                  <strong>训练平滑启动</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="story-arrow">TODO 主线：FP32 归一化已经算好，只补最后的 (1 + weight) 缩放</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>x</b>输入 dtype</span>
-                <span><b>x.float()</b>稳定算统计量</span>
-                <span><b>x_norm</b>RMS 归一化</span>
-                <span><b>scale</b>1 + self.weight</span>
-                <strong><b>output</b>type_as(x)</strong>
-              </div>
-              <p>notebook 里前面的归一化已经帮你铺好；TODO 只需要把缩放写对，并转回输入精度。</p>
-            </div>
-
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>1. 为什么不直接初始化成 1</strong>
-                <p>写成 <code>1+w</code> 后，参数仍能从 0 开始学习偏移，weight decay 拉向 0 时也代表“回到默认 scale=1”，不会把层拉向清零。</p>
-              </div>
-              <div class="learn-card accent">
-                <strong>2. 测试应该怎么反查</strong>
-                <p>当 <code>self.weight=0</code>，输出应该等于纯 RMSNorm 结果；如果输出接近 0，说明你写成了 <code>x_norm * weight</code>。</p>
-              </div>
-            </div>
-
-            <div class="field-note">
-              <div class="fn-title">行业视角：训练稳定性是大模型的隐形成本</div>
-              <p>Gemma 的 <code>1+w</code>、LLaMA 的 Pre-Norm、各种初始化技巧，目标都一样：让训练早期别突然发散。一个小小的 +1，背后是大模型训练不要崩在前几千步的工程要求。</p>
-            </div>
-          </div>
-              <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：把基准 1 写进公式</h4><pre><code>gain = nn.Parameter(torch.zeros(4))
-scale = 1.0 + gain
-y = x_norm * scale
-y = y.type_as(x)</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：搬回 TODO 1</h4>
-            <div class="learn-kv">
-              <span>gain</span><strong>self.weight</strong>
-              <span>x_norm</span><strong>前面 FP32 算出的归一化结果</strong>
-              <span>scale</span><strong>1 + self.weight</strong>
-              <span>返回 dtype</span><strong>.type_as(x)</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：Gemma 不是乘 weight，而是乘 <code>1 + weight</code>；最后把 dtype 还给输入。</p>
-          </div>
+              <p>标准缩放参数若直接乘 weight，就需要把 weight 初始化为 1。Gemma 换一种参数化：保存从 1 的偏移量，实际乘 (1+w)。当 w=0 时，层先只做 RMS 归一化；训练再学习每个隐藏特征应该从 1 向上或向下调整多少。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>x</b>[B,S,H]，保留原 dtype</span>
+          <span><b>x.float()</b>用 FP32 统计平方均值</span>
+          <span><b>x_norm</b>每个 token 的 RMS 归一化</span>
+          <span><b>1 + weight</b>按隐藏特征缩放</span>
         </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>shape 与广播</h4>
+            <div class="adv-contract">
+              <span><code>variance</code></span><strong>[B,S,1]</strong>
+              <span><code>x_norm</code></span><strong>[B,S,H]，FP32</strong>
+              <span><code>weight</code></span><strong>[H]，每个隐藏特征一个缩放偏移</strong>
+              <span><code>output</code></span><strong>[B,S,H]，返回时恢复 x.dtype</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>初始化时发生什么</h4>
+            <div class="adv-flow">
+              <span>weight = 0</span>
+              <span>1 + weight = 1</span>
+              <strong>output = x_norm</strong>
+            </div>
+            <p>这不是恒等映射 <code>output=x</code>；它仍然做了 RMS 归一化，只是没有额外改变归一化后的特征缩放。</p>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>测试</th><th>期望</th><th>它证明什么</th></tr></thead>
+          <tbody>
+            <tr><td>weight=0</td><td>out 等于手算的 x_norm</td><td>正确使用了 1+w</td></tr>
+            <tr><td>weight 非零</td><td>out2 与 out 不同</td><td>可训练缩放真正生效</td></tr>
+            <tr><td>FP16 输入</td><td>FP16 输出</td><td>最后恢复了原 dtype</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">TODO 只需在已有 x_norm 上应用 Gemma 缩放。不要重新计算 variance，也不要在乘法前把 self.weight 强制改成不可训练数据。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：从基准亮度 1 学习每个通道的偏移</h4><pre><code>normalized_pixels = torch.tensor([
+    [0.5, -1.0, 0.25],
+])
+channel_offset = torch.tensor([0.0, 0.2, -0.1])
+
+scale = 1 + channel_offset
+adjusted = normalized_pixels * scale
+print(scale)    # [1.0, 1.2, 0.9]
+print(adjusted.shape)</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>normalized_pixels</code> 对应已经算好的 <code>x_norm</code>。</li>
+            <li><code>channel_offset</code> 对应可训练的 <code>self.weight</code>。</li>
+            <li><code>adjusted</code> 对应 TODO 要创建的 <code>output</code>。</li>
+            <li>Notebook 的 return 已负责 <code>type_as(x)</code>，因此 TODO 保持 FP32 运算即可。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>判断：Gemma RMSNorm 中 weight 初始化为 0 时，实际作用在归一化结果上的缩放是多少？</p>
+              <p>为什么 variance 使用 keepdim=True？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="0">
-                <span>0（输出被清零）</span>
+                <input type="radio" name="checkpoint-gemma-rmsnorm-one-plus-weight" value="0">
+                <span>让 variance 变成长整型</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="1">
-                <span>hidden_size</span>
+                <input type="radio" name="checkpoint-gemma-rmsnorm-one-plus-weight" value="1">
+                <span>为了增加一个 batch</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-gemma-rmsnorm-plus-one" value="2">
-                <span>1（等价于不额外缩放，原样通过）</span>
+                <input type="radio" name="checkpoint-gemma-rmsnorm-one-plus-weight" value="2">
+                <span>保留 [B,S,1]，便于 rsqrt 结果广播乘回 [B,S,H]</span>
               </label></div>
-              <div class="feedback" data-feedback="gemma-rmsnorm-plus-one"></div>
+              <div class="feedback" data-feedback="gemma-rmsnorm-one-plus-weight"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-0">
-                <span>TODO 1：在已算好的 x_norm 上实现 output = x_norm * (1 + self.weight)。</span>
+                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-0">
+                <span>完成 TODO 1：把 x_norm 与 Gemma 的 (1 + self.weight) 缩放结合，赋给 output。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-1">
-                <span>记得 .type_as(x) 把结果转回输入精度（前面是 FP32 计算的）。</span>
+                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-1">
+                <span>shape/dtype 自检：output 与 x shape 相同；FP16 输入经过 return 后仍是 FP16。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-plus-one-2">
-                <span>跑测试：weight=0 时输出应与“无缩放纯归一化”结果一致。</span>
+                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-2">
+                <span>测试目标：weight=0 时等于测试手算的 expected；weight 改成非零后输出发生变化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-3">
+                <span>错误诊断：初始化测试差很多时检查是否漏加 1；FP16 测试失败时检查是否改坏了 type_as(x) 返回路径。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="qwen-tie-embeddings">
+        <article class="lesson-card inquiry" data-lesson="qwen-tied-embedding-parameter">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2</span>
+            <span class="todo-pill">TODO 2：lm_head.weight 指向 embed_tokens.weight</span>
           </div>
-          <h2>权重绑定：输入查表和输出预测，共用同一张词表</h2>
+          <h2>Qwen 权重绑定：让两个模块持有同一个 Parameter</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">embed_tokens（读词）和 lm_head（猜词）的权重形状一模一样，都是 [vocab, hidden]。Qwen 干脆让它们共用同一块参数。</p>
-            <p class="predict-q">先判断：权重绑定（weight tying）带来的最直接收益是？</p>
+            <p class="predict-hook">两个 [V,H] 参数的数值通过 copy_ 变得完全相同。</p>
+            <p class="predict-q">仅凭 torch.allclose 为 True，能否证明权重已经绑定？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-qwen-tie-embeddings" value="0">
-                <span>省掉一整张 [vocab, hidden] 的参数，词表越大省得越多；且输入/输出梯度共同更新词向量</span>
+                <input type="radio" name="predict-qwen-tied-embedding-parameter" value="0">
+                <span>不能，还要检查 data_ptr 或对象引用</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-qwen-tie-embeddings" value="1">
-                <span>让模型推理速度翻倍</span>
+                <input type="radio" name="predict-qwen-tied-embedding-parameter" value="1">
+                <span>能，数值相等就一定共享内存</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-qwen-tie-embeddings" value="2">
-                <span>把 vocab_size 自动缩小一半</span>
+                <input type="radio" name="predict-qwen-tied-embedding-parameter" value="2">
+                <span>只有在 CPU 上能证明</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="qwen-tie-embeddings">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="qwen-tied-embedding-parameter">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="qwen-tie-embeddings">
+          <div class="gated" data-gated="qwen-tied-embedding-parameter">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>embed_tokens：把 token id 查成向量，权重形状 [vocab_size, hidden]。</li><li>lm_head：把 hidden 向量映射回每个词的分数(logits)，权重形状 [vocab_size, hidden]——和 embedding 一模一样！</li><li>正因为两者形状相同、语义相关（都是“词 ↔ 向量”的对应表），可以让它们共用同一块参数。</li><li>关键区分：相等(==，值一样) ≠ 共享(is，同一个对象)。绑定要的是“同一块内存”。</li></ul>
+              <ul><li>nn.Embedding(vocab_size, hidden_size) 的 weight shape 是 [V,H]；nn.Linear(hidden_size, vocab_size, bias=False) 的 weight 也是 [V,H]。</li><li>shape 相同只说明可以共享，不代表它们已经共享。两个模块刚创建时默认各有一块独立参数内存。</li><li>权重绑定是对象引用赋值，不是复制数值；赋值后两个属性指向同一个 nn.Parameter。</li><li>测试用 data_ptr() 验证权重和梯度的物理内存地址，而不只是用 allclose 验证数值相等。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>模型开头“读词”（id→向量）和结尾“猜词”（向量→打分）其实在用同一套“词 ↔ 向量”的对应关系。与其各学一张大表，不如共用一张：参数省一半，而且训练时输入端和输出端的梯度都更新到同一张表，让词向量学得更充分。实现只有一行——让 lm_head.weight 直接指向 embed_tokens.weight。</p>
-              
-          <div class="shape-story">
-            <div class="learn-grid">
-              <div class="learn-card">
-                <strong>0. 先看为什么能绑</strong>
-                <p><code>embed_tokens</code> 负责 id 到向量，<code>lm_head</code> 负责 hidden 到 vocab logits。两者的权重形状都是 [vocab, hidden]，都在描述“词和向量的对应关系”。</p>
-                <div class="learn-kv">
-                  <span>输入表</span><strong>embed_tokens.weight [vocab, hidden]</strong>
-                  <span>输出表</span><strong>lm_head.weight [vocab, hidden]</strong>
-                  <span>目标</span><strong>两者指向同一个 Parameter</strong>
-                </div>
-              </div>
-              <div class="learn-card accent">
-                <strong>绑定不是复制</strong>
-                <p>TODO 2 不是让两张表数值相等，而是让两个属性指向同一块内存。复制一份权重，测试仍会判错。</p>
-                <div class="learn-note">要写赋值，不要写 <code>clone()</code>、<code>copy_()</code> 或重新创建 Parameter。</div>
-              </div>
+              <p>Embedding 用矩阵按 token id 查行，LM Head 用同一矩阵把 hidden state 投影回词表。绑定不是每次手动同步两张表，而是给同一张表贴上两个入口标签：从任何入口更新，看到的都是同一份参数与同一份梯度。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>为什么 shape 正好匹配</h4>
+            <div class="adv-contract">
+              <span>Embedding weight</span><strong>[vocab_size, hidden_size]</strong>
+              <span>LM Head weight</span><strong>[vocab_size, hidden_size]</strong>
+              <span>输入方向</span><strong>token id -&gt; 查出 hidden 向量</strong>
+              <span>输出方向</span><strong>hidden 向量 -&gt; vocab logits</strong>
             </div>
-
-            <div class="story-arrow">主线：两个名字，指向同一个 Parameter</div>
-            <div class="story-panel">
-              <div class="learn-flow">
-                <span><b>before</b>两张独立表</span>
-                <span><b>assign</b>lm_head.weight = embed.weight</span>
-                <strong><b>after</b>同一块参数</strong>
-              </div>
-              <p>从此输入端和输出端的梯度都会更新同一张词表；词表越大，省下的参数越明显。</p>
+          </section>
+          <section class="adv-panel warn">
+            <h4>复制与绑定不是一回事</h4>
+            <div class="adv-contract">
+              <span>复制数值</span><strong>当前数值相同，未来更新仍各走各的</strong>
+              <span>绑定参数</span><strong>两个 weight 属性就是同一个 Parameter</strong>
+              <span>测试证据</span><strong>weight.data_ptr() 相同，grad.data_ptr() 也相同</strong>
             </div>
-
-            <div class="learn-grid">
-              <div class="learn-card good">
-                <strong>1. 怎么验真共享</strong>
-                <div class="learn-kv">
-                  <span>对象级</span><strong>lm_head.weight is embed_tokens.weight</strong>
-                  <span>内存级</span><strong>lm_head.weight.data_ptr() == embed_tokens.weight.data_ptr()</strong>
-                  <span>不可靠</span><strong>shape 相同或数值相等</strong>
-                </div>
-              </div>
-              <div class="learn-card">
-                <strong>2. 参数账</strong>
-                <p>词表 V、隐藏维 H，一张表就是 V*H 个参数。绑定后两张变一张，直接省下 V*H；大词表模型能省下好几 GB 显存。</p>
-                <div class="learn-mini">
-                  <span>不绑定<br>2*V*H</span>
-                  <strong>绑定<br>1*V*H</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="field-note">
-              <div class="fn-title">行业视角：绑不绑，是容量与成本的权衡</div>
-              <p>Qwen、GPT-2 绑定权重，省参数且让词向量获得输入/输出两端监督；超大模型有时解绑，让输入表征和输出预测各自特化。能讲清这个权衡，比只会写一行赋值更重要。</p>
-            </div>
-          </div>
-              <div class="practice-grid">
-          <div class="syntax-card"><h4>语法热身：让两个属性指向同一块权重</h4><pre><code>emb = nn.Embedding(100, 16)
-head = nn.Linear(16, 100, bias=False)
-head.weight = emb.weight
-assert head.weight is emb.weight
-assert head.weight.data_ptr() == emb.weight.data_ptr()</code></pre></div>
-          <div class="syntax-card">
-            <h4>举一反三：搬回 TODO 2</h4>
-            <div class="learn-kv">
-              <span>emb</span><strong>self.embed_tokens</strong>
-              <span>head</span><strong>self.lm_head</strong>
-              <span>正确动作</span><strong>self.lm_head.weight = self.embed_tokens.weight</strong>
-              <span>检查</span><strong>is 或 data_ptr()</strong>
-            </div>
-            <p class="syntax-tip">迁移口诀：绑定是“同一块内存”，不是“复制一份一样的值”。</p>
-          </div>
+          </section>
         </div>
+
+        <div class="adv-roadmap">
+          <span><b>创建 Embedding</b>得到参数 [V,H]</span>
+          <span><b>创建 bias=False Linear</b>得到兼容的 [V,H]</span>
+          <span><b>重新指向</b>LM Head 使用 Embedding 参数</span>
+          <span><b>backward</b>两条路径的梯度汇入同一 weight.grad</span>
+        </div>
+
+        <div class="adv-checks">
+          <span>权重指针相同</span>
+          <span>修改 Embedding 后 Head 同步</span>
+          <span>两端都有 grad</span>
+          <span>梯度指针相同</span>
+        </div>
+
+        <div class="adv-callout">不要写 <code>lm_head.weight.data = embed_tokens.weight.data.clone()</code>。clone 明确创建了新内存，无法通过指针共享测试。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：让两个模块共享同一个可训练温度参数</h4><pre><code>class SharedTemperature(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder_scale = nn.Parameter(torch.ones(4))
+        self.decoder_scale = self.encoder_scale
+
+module = SharedTemperature()
+assert module.encoder_scale.data_ptr() == \
+       module.decoder_scale.data_ptr()</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移回 Notebook</h4>
+          <ul>
+            <li><code>encoder_scale</code> 对应 <code>self.embed_tokens.weight</code>。</li>
+            <li><code>decoder_scale</code> 对应 <code>self.lm_head.weight</code>。</li>
+            <li>TODO 位于 <code>__init__</code>：让后者属性直接引用前者的 Parameter。</li>
+            <li>完成后删掉占位的 <code>raise NotImplementedError</code>，否则构造对象时仍会提前中断。</li>
+          </ul>
+        </div>
+      </div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>判断权重是否真的绑定（共享同一块内存），最可靠的检查是？</p>
+              <p>绑定后，为什么 Embedding 路径与 LM Head 路径的梯度会出现在同一个 weight.grad 中？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="0">
-                <span>lm_head.weight is embed_tokens.weight（或 data_ptr 相等）</span>
+                <input type="radio" name="checkpoint-qwen-tied-embedding-parameter" value="0">
+                <span>两条计算路径引用同一个 nn.Parameter，autograd 会把贡献累加到它的 grad</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="1">
-                <span>两个模块的变量名相似</span>
+                <input type="radio" name="checkpoint-qwen-tied-embedding-parameter" value="1">
+                <span>因为 data_ptr 会自动调用 optimizer</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-qwen-tie-embeddings" value="2">
-                <span>两者 .shape 相等</span>
+                <input type="radio" name="checkpoint-qwen-tied-embedding-parameter" value="2">
+                <span>因为 bias=False 会复制梯度</span>
               </label></div>
-              <div class="feedback" data-feedback="qwen-tie-embeddings"></div>
+              <div class="feedback" data-feedback="qwen-tied-embedding-parameter"></div>
             </div>
           </div>
 
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tie-embeddings-0">
-                <span>TODO 2：在 __init__ 里写 self.lm_head.weight = self.embed_tokens.weight（直接赋值，不要 clone/copy）。</span>
+                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-0">
+                <span>完成 TODO 2：在 __init__ 中让 lm_head.weight 直接指向 embed_tokens.weight，并移除异常占位。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tie-embeddings-1">
-                <span>用 is 或 data_ptr() 验证两者共享内存；更新 embedding 后确认 lm_head 同步变化。</span>
+                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-1">
+                <span>shape 自检：两边权重都应为 [vocab_size, hidden_size]；LM Head 保持 bias=False。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tie-embeddings-2">
-                <span>确认 forward 的 logits 形状仍是 [..., vocab_size]，没被绑定影响。</span>
+                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-2">
+                <span>测试目标：权重 data_ptr 相同，修改任一入口时另一端同步，backward 后 grad data_ptr 也相同。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-3">
+                <span>错误诊断：数值相同但指针不同，说明做了 copy/clone；构造对象直接失败，说明未删掉 NotImplementedError。</span>
               </label>
           </div>
         </article>
@@ -1052,11 +1318,11 @@ assert head.weight.data_ptr() == emb.weight.data_ptr()</code></pre></div>
 
   <script>
     const levelId = "08";
-    const checkpointData = {"gemma-rmsnorm-plus-one":{"answer":2,"explain":"实际缩放是 1 + weight = 1 + 0 = 1，所以初始等价于纯归一化层。"},"qwen-tie-embeddings":{"answer":0,"explain":"shape 相等只说明形状一样，复制品也满足；is / data_ptr 才能确认指向同一个对象、同一块内存。"}};
-    const predictData = {"gemma-rmsnorm-plus-one":{"answer":0,"revealNote":"对。w 初始为 0 时，标准写法 ×0 会掐断信号；(1+w) 让它 ×1 原样通过，参数转为“学相对默认的偏移”，早期训练稳得多。"},"qwen-tie-embeddings":{"answer":0,"revealNote":"对。词表动辄十几万，一张表就是几亿参数。共用一张省一半参数、省显存，还让词向量同时接受“读”和“猜”两端的监督。"}};
+    const checkpointData = {"gemma-rmsnorm-one-plus-weight":{"answer":2,"explain":"RMS 是每个 token 一个标量。保留最后一维后，它可以自然广播到该 token 的 H 个特征。"},"qwen-tied-embedding-parameter":{"answer":0,"explain":"共享的是 Parameter 本身，所以它只有一份 grad 存储；两条路径的反向贡献都累积到这里。"}};
+    const predictData = {"gemma-rmsnorm-one-plus-weight":{"answer":0,"revealNote":"1+0=1，所以缩放不改变 x_norm；RMS 归一化本身仍然存在。"},"qwen-tied-embedding-parameter":{"answer":0,"revealNote":"独立 Tensor 可以拥有相同数值。Notebook 特意检查 data_ptr，要求物理内存级共享。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
+    const homeworkTotal = 8;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";

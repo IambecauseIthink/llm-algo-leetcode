@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1000,129 +1025,105 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="checkpoint-recompute-state-flow">
+        <article class="lesson-card inquiry" data-lesson="checkpoint-call-contract">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">核心机制：理解 run_with_checkpointing 要改变什么</span>
+            <span class="todo-pill">唯一核心 TODO：在循环中更新 x = checkpoint(block, x, use_reentrant=False)</span>
           </div>
-          <h2>先看显存账本：少保存激活，反向时再重算</h2>
+          <h2>先读调用契约：把每个 Block 的前向交给 checkpoint</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">同一个 block 的参数、输入和随机状态都不变，只把普通前向换成 checkpoint 管理。</p>
-            <p class="predict-q">最终 block 输出的 shape 应怎样变化？</p>
+            <p class="predict-hook">循环已经来到第 3 个 Transformer Block，当前变量 x 是前两个 Block 更新后的状态。</p>
+            <p class="predict-q">哪种写法既执行当前 Block，又把结果继续传给下一层？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="0">
-                <span>不变，仍与该 block 原输出一致</span>
+                <input type="radio" name="predict-checkpoint-call-contract" value="0">
+                <span>x = checkpoint(block, x, use_reentrant=False)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="1">
-                <span>隐藏维度自动减半</span>
+                <input type="radio" name="predict-checkpoint-call-contract" value="1">
+                <span>checkpoint(x, block, use_reentrant=False)</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-recompute-state-flow" value="2">
-                <span>输出被搬到 CPU</span>
+                <input type="radio" name="predict-checkpoint-call-contract" value="2">
+                <span>checkpoint(block(x), use_reentrant=False)</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="checkpoint-recompute-state-flow">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="checkpoint-call-contract">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="checkpoint-recompute-state-flow">
+          <div class="gated" data-gated="checkpoint-call-contract">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>训练前向不仅产生最终输出，还会为 backward 保存中间激活；层数、batch、序列长度和隐藏维度都会放大这部分显存。</li><li>checkpoint 不删除模型参数，也不关闭梯度；它主要减少被长期保存的中间激活。</li><li>反向走到被 checkpoint 包裹的区域时，会从保存的输入重新执行该区域前向，恢复求梯度需要的值。</li><li>Activation Offload 是把激活搬到 CPU 等存储层，checkpointing 是丢掉后重算；本 Notebook 的唯一 TODO 实现的是后者。</li></ul>
+              <ul><li>blocks 是 nn.ModuleList；循环中的 block 是一个可调用的 nn.Module，调用 block(x) 会返回下一层输入。</li><li>x 是需要梯度的浮点张量。Checkpoint 不改变它的逻辑 shape；本题的测试输入是 [2, 2048, 2048]，device 是 CUDA。</li><li>checkpoint 的第一个位置参数是要执行的函数，后面的位置参数是传给该函数的输入；use_reentrant=False 是本 Notebook 要求的关键字参数。</li><li>循环必须把返回值重新赋给 x，否则后面的 Block 仍会收到旧状态，网络就没有按层向前传播。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>普通训练像把每一步草稿都留在 GPU 上，反向直接查草稿。Checkpoint 只留下某段的入口 x，段内草稿前向后可以不长期保留；反向需要时，用入口再算一遍。省下的是空间，付出的是重复计算时间。</p>
+              <p>普通循环写的是 x = block(x)。Checkpoint 版本没有换模型，也没有跳过计算，只是在 block 外面加了一个“反向时可以重算”的包装器。因此最稳的解题方式是先写出普通调用，再把 block(x) 改写成 checkpoint(block, x, ...)。</p>
               <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>输入检查点</b>保存这一段开始时的 x</span>
+          <span><b>前向执行</b>仍然调用当前 block</span>
+          <span><b>少存激活</b>中间结果不全部长期保留</span>
+          <span><b>反向重算</b>需要梯度时再次执行该段前向</span>
+        </div>
         <div class="adv-grid two">
           <section class="adv-panel neutral">
-            <h4>普通执行的状态流</h4>
+            <h4>普通版本</h4>
             <div class="adv-flow">
-              <span>block 输入</span><span>Norm 激活</span><span>FFN 扩张激活</span><strong>block 输出</strong>
-            </div>
-            <p>为了反向，段内多个中间值会在前向结束后继续占据显存。</p>
+  <span>x</span><span>block(x)</span><strong>新的 x</strong>
+</div>
+            <p>Autograd 为反向传播保留 Block 内部需要的中间激活。</p>
           </section>
           <section class="adv-panel good">
-            <h4>Checkpoint 的状态流</h4>
+            <h4>Checkpoint 版本</h4>
             <div class="adv-flow">
-              <strong>保留 block 输入</strong><span>段内值不长期保留</span><span>反向时重算</span><strong>计算参数梯度</strong>
-            </div>
-            <p>函数输出数值和梯度目标不变，变化的是保存与重算策略。</p>
+  <span>x</span><span>checkpoint(block, x, ...)</span><strong>同形状的新 x</strong>
+</div>
+            <p>数学前向不变，变化的是 Autograd 保存与重算中间量的策略。</p>
           </section>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>Checkpointing</h4>
-            <div class="adv-contract">
-              <span>动作</span><strong>丢弃部分中间激活</strong>
-              <span>取回方式</span><strong>反向时重新计算</strong>
-              <span>主要代价</span><strong>额外计算时间</strong>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>Activation Offload</h4>
-            <div class="adv-contract">
-              <span>动作</span><strong>把激活搬离 GPU</strong>
-              <span>取回方式</span><strong>需要时再传回 GPU</strong>
-              <span>主要代价</span><strong>设备间传输时间</strong>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>Notebook 对象</th><th>shape</th><th>设备</th><th>checkpoint 后是否改变</th></tr></thead>
-          <tbody>
-            <tr><td><code>x_input</code></td><td><code>[2,2048,2048]</code></td><td>CUDA</td><td>输出接口不改变</td></tr>
-            <tr><td>FFN 中间激活</td><td><code>[2,2048,8192]</code></td><td>CUDA</td><td>不再全部长期保存</td></tr>
-            <tr><td>block 输出</td><td><code>[2,2048,2048]</code></td><td>CUDA</td><td>继续传给下一 block</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">本题以 Transformer Block 为 checkpoint 单位。不要把它误解成每个 Linear、ReLU 都要单独包裹，也不要在 TODO 中实现 CPU offload。</div>
+        <div class="adv-contract">
+  <span>函数</span><strong>run_with_checkpointing(blocks: nn.ModuleList, x: torch.Tensor)</strong><span>循环输入</span><strong>当前 block 和上一层返回的 x</strong><span>循环输出</span><strong>新的 x，继续传给下一个 block</strong><span>关键参数</span><strong>use_reentrant=False</strong><span>最终返回</span><strong>最后一个 Block 的输出张量</strong>
+</div>
+        <div class="adv-callout">不要把 checkpoint 写成 checkpoint(block(x), ...)。第一个参数必须是“稍后可以重新调用的函数”，而不是已经算完的张量。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用手工重算理解为何只需保留段入口</h4><pre><code>def expensive_segment(seed):
-    hidden = torch.sin(seed) * 3
-    return hidden.square() + seed
+  <div class="syntax-card"><h4>语法热身：用一个不同的小函数练“函数和参数分开传入”</h4><pre><code>import torch
+from torch.utils.checkpoint import checkpoint
 
-checkpoint_input = torch.tensor([0.2, 0.8], requires_grad=True)
-first_output = expensive_segment(checkpoint_input)
-# 概念上丢掉段内 hidden；反向需要时从 checkpoint_input 重算
-restored_output = expensive_segment(checkpoint_input)</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>expensive_segment</code> -&gt; 一个 <code>block</code> 的前向函数。</li>
-            <li><code>checkpoint_input</code> -&gt; 当前循环中的 <code>x</code>。</li>
-            <li><code>hidden</code> -&gt; block 内 Norm、ReLU、FFN 产生的中间激活。</li>
-            <li>手工第二次调用 -&gt; checkpoint 在 backward 期间自动完成的 recomputation。</li>
-            <li>Notebook TODO 不手工写第二次前向，而是交给 PyTorch 的 checkpoint API 管理。</li>
-          </ul>
-        </div>
-      </div>
+def add_bias(values, bias):
+    return values + bias
+
+values = torch.randn(4, requires_grad=True)
+bias = torch.ones(4, requires_grad=True)
+result = checkpoint(add_bias, values, bias, use_reentrant=False)
+result.sum().backward()</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 Notebook</h4>
+  <ul><li><code>add_bias</code>：对应循环中的 block；二者都是可以稍后再次调用的 callable</li><li><code>values</code>：对应当前 x；它是传给 callable 的输入张量</li><li><code>result</code>：对应 checkpoint 返回的新 x，必须接住并继续向后传</li><li><code>use_reentrant=False</code>：原样映射到 TODO，不能误当成 block 的参数</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>哪一句最准确地区分 checkpointing 与 activation offload？</p>
+              <p>为什么 TODO 中不能只写 checkpoint(block, x, use_reentrant=False) 而不赋值？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="0">
-                <span>两者都会停止参数求梯度</span>
+                <input type="radio" name="checkpoint-checkpoint-call-contract" value="0">
+                <span>因为 x 会自动变成 CPU 张量</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="1">
-                <span>前者用重计算换显存，后者用设备间搬运换 GPU 显存</span>
+                <input type="radio" name="checkpoint-checkpoint-call-contract" value="1">
+                <span>后续 Block 会继续使用旧 x，层间数据流被截断</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-recompute-state-flow" value="2">
-                <span>两者都要求把模型权重移到 CPU</span>
+                <input type="radio" name="checkpoint-checkpoint-call-contract" value="2">
+                <span>因为 checkpoint 只能返回 Python 列表</span>
               </label></div>
-              <div class="feedback" data-feedback="checkpoint-recompute-state-flow"></div>
+              <div class="feedback" data-feedback="checkpoint-call-contract"></div>
             </div>
           </div>
 
@@ -1131,131 +1132,117 @@ restored_output = expensive_segment(checkpoint_input)</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-0">
-                <span>先在 TODO 旁标注：循环进入和离开每个 block 的 x 都是 [B,S,D]，dtype 不变、device 仍是 CUDA，requires_grad 路径必须保留。</span>
+                <input type="checkbox" data-homework="checkpoint-call-contract-0">
+                <span>先把 TODO 改写成普通等价式 x = block(x)，确认自己能指出函数、输入和返回值，再替换为 checkpoint 调用。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-1">
-                <span>用一句话解释为什么 checkpoint 后输出数值不应改变，以及为什么 backward 会增加计算；确认没有把 offload 或 detach 混入实现。</span>
+                <input type="checkbox" data-homework="checkpoint-call-contract-1">
+                <span>完成唯一核心 TODO，并逐项核对参数顺序：block 在前、x 在后、use_reentrant=False 是关键字参数。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-recompute-state-flow-2">
-                <span>Notebook 的显存测试仅在 CUDA 可用时执行；若被跳过，先做 CPU 小模型的输出/梯度自检。若参数梯度为空，检查是否用了 no_grad/detach；若输出 device 变成 CPU，说明误做了 offload。</span>
+                <input type="checkbox" data-homework="checkpoint-call-contract-2">
+                <span>若报“Tensor object is not callable”，检查是否误把 block(x) 的结果放在第一个参数；若输出链路不对，检查是否忘记给 x 重新赋值。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="checkpoint-api-loop-and-gpu-test">
+        <article class="lesson-card inquiry" data-lesson="checkpoint-memory-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO：在循环内调用 checkpoint，关注 use_reentrant=False</span>
+            <span class="todo-pill">测试契约：正常前向与 checkpoint 前向都执行 backward，并比较 max_memory_allocated</span>
           </div>
-          <h2>把每个 block 交给 checkpoint，并读懂 GPU 测试</h2>
+          <h2>再读测试：结果要能 backward，收益看 CUDA 峰值</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">循环里调用 checkpoint 得到了新输出，却没有把它重新赋给 x。</p>
-            <p class="predict-q">下一轮 block 会收到什么？</p>
+            <p class="predict-hook">你只运行了 run_with_checkpointing(blocks, x)，没有调用 backward。</p>
+            <p class="predict-q">此时为什么还不能完整观察 checkpoint 的机制？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="0">
-                <span>旧 x，网络状态没有向前推进</span>
+                <input type="radio" name="predict-checkpoint-memory-test" value="0">
+                <span>因为反向阶段的重计算尚未发生</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="1">
-                <span>自动收到 checkpoint 的返回值</span>
+                <input type="radio" name="predict-checkpoint-memory-test" value="1">
+                <span>因为 forward 会自动删除模型参数</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-checkpoint-api-loop-and-gpu-test" value="2">
-                <span>一个 CPU Tensor</span>
+                <input type="radio" name="predict-checkpoint-memory-test" value="2">
+                <span>因为 checkpoint 只支持整数张量</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="checkpoint-api-loop-and-gpu-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="checkpoint-memory-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="checkpoint-api-loop-and-gpu-test">
+          <div class="gated" data-gated="checkpoint-memory-test">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>checkpoint 的第一个位置参数是要执行的函数或 nn.Module，后面的位置参数是传给它的输入。</li><li>一个 SimpleTransformerBlock 接收 x 并返回新的 x，所以包装后的返回值必须重新赋给循环状态。</li><li>Notebook 已从 torch.utils.checkpoint 导入 checkpoint，不需要改 import，也不需要自己写 autograd.Function。</li><li>use_reentrant=False 是当前 Notebook 明确要求的调用模式；应作为关键字参数传入，不能误传给 block.forward。</li></ul>
+              <ul><li>Checkpoint 是训练期优化，只有执行 backward 才会触发重算；只看一次 forward 不能验证完整机制。</li><li>测试先运行普通版本并记录 mem_normal，再清理输出、梯度和 CUDA 缓存，随后记录 mem_ckpt。</li><li>输入 x_input 设置 requires_grad=True，最终对 out.sum() 调用 backward；这保证梯度链路必须保持完整。</li><li>本节的显存测试明确要求 NVIDIA GPU；没有 CUDA 时 Notebook 会跳过，而不是说明实现已经通过。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>循环仍然是一条 block 接 block 的流水线。唯一变化是每次不直接调用 block(x)，而是让 checkpoint 代为调用，然后把结果继续交给下一个 block。赋值不能漏，否则后面的层拿到的仍是旧状态。</p>
+              <p>这道题不是测试“输出数值变小”，而是测试“同一条可求导计算，在少保存激活的情况下仍能完成反向”。评价顺序应是：先保证梯度链路正确，再比较峰值显存，最后讨论时间换空间是否值得。</p>
               <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>取当前 block</b>来自 ModuleList 循环</span>
-          <span><b>包装调用</b>函数是 block，输入是 x</span>
-          <span><b>选择模式</b>use_reentrant=False</span>
-          <span><b>更新流水状态</b>返回值重新赋给 x</span>
+        <div class="adv-steps">
+          <div><b>1</b><code>run_without_checkpointing</code><span>完成 forward + backward，记录 mem_normal</span></div>
+          <div><b>2</b><code>清理状态</code><span>删除旧输出、清空 x_input.grad、重置峰值统计</span></div>
+          <div><b>3</b><code>run_with_checkpointing</code><span>再次完成 forward + backward，记录 mem_ckpt</span></div>
+          <div><b>4</b><code>比较峰值</code><span>可见断言接受 mem_ckpt 不大于 mem_normal</span></div>
         </div>
-
-        <div class="adv-contract">
-          <span>函数位置</span><strong>当前 <code>block</code>，可直接调用的 nn.Module</strong>
-          <span>输入位置</span><strong>当前 <code>x [B,S,D]</code></strong>
-          <span>关键字</span><strong><code>use_reentrant=False</code></strong>
-          <span>返回值</span><strong>下一轮循环使用的新 <code>x [B,S,D]</code></strong>
-        </div>
-
         <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>GPU 测试真正测了什么</h4>
-            <div class="adv-checks">
-              <span>普通路径 forward + backward</span>
-              <span>记录 mem_normal 峰值</span>
-              <span>checkpoint 路径 forward + backward</span>
-              <span>比较 mem_ckpt 与 mem_normal</span>
-            </div>
+          <section class="adv-panel blue">
+            <h4>空间从哪里省</h4>
+            <p>前向不长期保存每个 Block 内的所有中间激活，只保留重算所需的边界输入。</p>
           </section>
           <section class="adv-panel warn">
-            <h4>测试有两个盲点</h4>
-            <p>没有 CUDA 时函数直接 return，“忽略测试”不代表 TODO 正确。</p>
-            <p>显存比较使用 if 打印而非 assert；空循环甚至可能因少做计算而显示更省显存，所以还必须核对输出和参数梯度。</p>
+            <h4>时间花到哪里</h4>
+            <p>反向传播需要恢复激活时，会重新执行对应 Block 的前向计算。</p>
           </section>
         </div>
-
-        <div class="adv-flow">
-          <span>x0</span><strong>checkpoint(block0, x0)</strong><span>x1</span><strong>checkpoint(block1, x1)</strong><span>x2</span>
+        <div class="adv-checks">
+          <span><b>shape</b><br>前后都保持 [B,S,D]</span>
+          <span><b>device</b><br>测试张量和 Blocks 都在 CUDA</span>
+          <span><b>梯度</b><br>x_input.requires_grad=True</span>
+          <span><b>指标</b><br>峰值 allocated memory</span>
         </div>
-
-        <div class="adv-callout">完成 TODO 后要删掉 pass。保留 pass 本身不会执行 block，返回的只是原始输入；这不是 checkpointing，而是跳过了整个模型。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用图像处理 stage 练 checkpoint 调用签名</h4><pre><code>stage = nn.Sequential(nn.Linear(6, 12), nn.ReLU(), nn.Linear(12, 6))
-stage_input = torch.randn(4, 6, requires_grad=True)
+  <div class="syntax-card"><h4>语法热身：用小网络练峰值统计的调用顺序</h4><pre><code>import torch
+import torch.nn as nn
 
-wrapped_output = checkpoint(stage, stage_input, use_reentrant=False)
-loss = wrapped_output.square().mean()
-loss.backward()
-print(wrapped_output.shape)  # [4, 6]</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>stage</code> -&gt; for 循环当前的 <code>block</code>。</li>
-            <li><code>stage_input</code> -&gt; 当前的 <code>x</code>。</li>
-            <li><code>wrapped_output</code> -&gt; 更新后的 <code>x</code>，要继续传给下一层。</li>
-            <li><code>use_reentrant=False</code> -&gt; Notebook 提示要求关注的关键字参数。</li>
-            <li>例子只演示一个 stage；TODO 要把同一调用模式放在已有 blocks 循环内部。</li>
-          </ul>
-        </div>
-      </div>
+tiny_stage = nn.Linear(32, 32).cuda()
+torch.cuda.empty_cache()
+torch.cuda.reset_peak_memory_stats()
+
+sample = torch.randn(8, 32, device='cuda', requires_grad=True)
+result = tiny_stage(sample)
+result.sum().backward()
+
+peak_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+print(peak_mb)</code></pre></div>
+  <div class="adv-map">
+  <h4>从语法例子迁移到 Notebook 测试</h4>
+  <ul><li><code>tiny_stage(sample)</code>：对应 run_without_checkpointing 或 run_with_checkpointing 的一次完整前向</li><li><code>result.sum().backward()</code>：对应测试中触发 Autograd 和 checkpoint 重算的动作</li><li><code>reset_peak_memory_stats</code>：必须在每种策略开始前调用，避免沿用上一轮峰值</li><li><code>peak_mb</code>：对应 mem_normal 或 mem_ckpt，单位从 byte 换算为 MB</li></ul>
+</div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>Notebook 的 TODO 中，use_reentrant=False 应传给谁？</p>
+              <p>本地没有 CUDA，测试打印“忽略测试”时，最准确的结论是什么？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="0">
-                <span>SimpleTransformerBlock.forward，作为位置参数</span>
+                <input type="radio" name="checkpoint-checkpoint-memory-test" value="0">
+                <span>实现一定错误</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="1">
-                <span>torch.cuda.max_memory_allocated</span>
+                <input type="radio" name="checkpoint-checkpoint-memory-test" value="1">
+                <span>实现一定正确</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-checkpoint-api-loop-and-gpu-test" value="2">
-                <span>checkpoint 函数，作为关键字参数</span>
+                <input type="radio" name="checkpoint-checkpoint-memory-test" value="2">
+                <span>当前环境没有验证真实显存峰值，需要在 GPU 环境再跑</span>
               </label></div>
-              <div class="feedback" data-feedback="checkpoint-api-loop-and-gpu-test"></div>
+              <div class="feedback" data-feedback="checkpoint-memory-test"></div>
             </div>
           </div>
 
@@ -1264,16 +1251,16 @@ print(wrapped_output.shape)  # [4, 6]</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-0">
-                <span>完成唯一 TODO：在已有 for block in blocks 循环中包装当前 block 与 x，使用 use_reentrant=False，并把返回的 [B,S,D] CUDA 浮点 Tensor 重新赋给 x；删除 pass。</span>
+                <input type="checkbox" data-homework="checkpoint-memory-test-0">
+                <span>在 GPU 环境运行可见测试，确认普通版本和 checkpoint 版本都能完成 backward，而不只是函数能返回张量。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-1">
-                <span>有 NVIDIA GPU 时运行 Notebook：两条路径都要完成 forward、sum().backward()，并人工确认 mem_ckpt &lt;= mem_normal 的成功分支；无 GPU 的跳过信息不算验证通过。</span>
+                <input type="checkbox" data-homework="checkpoint-memory-test-1">
+                <span>若 mem_ckpt 反而更高，先确认两轮之间是否删除旧输出、清空 input.grad 并重置峰值统计，再检查 TODO 是否真的包裹了每个 block。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-api-loop-and-gpu-test-2">
-                <span>额外自检同一小模型的普通输出与 checkpoint 输出 allclose，并确认各 block 参数 grad 非空；若显存看似极低但输出等于原始输入，检查是否仍保留 pass 或忘了调用 block。</span>
+                <input type="checkbox" data-homework="checkpoint-memory-test-2">
+                <span>用一句话写出本节边界：checkpoint 优化的是训练激活显存，不等同于 activation offload，也不会减少参数或优化器状态本身。</span>
               </label>
           </div>
         </article>
@@ -1293,8 +1280,8 @@ print(wrapped_output.shape)  # [4, 6]</code></pre></div>
 
   <script>
     const levelId = "19";
-    const checkpointData = {"checkpoint-recompute-state-flow":{"answer":1,"explain":"本 Notebook 实现的是重计算；offload 只作为工程对比出现，没有对应 TODO。"},"checkpoint-api-loop-and-gpu-test":{"answer":2,"explain":"它控制 checkpoint 的实现模式，不是 block 业务输入，也与显存统计函数无关。"}};
-    const predictData = {"checkpoint-recompute-state-flow":{"answer":0,"revealNote":"checkpoint 改的是 Autograd 保存中间值的策略，不改 block 的数学函数、shape 或输出设备。"},"checkpoint-api-loop-and-gpu-test":{"answer":0,"revealNote":"Python 不会自动替换变量。checkpoint 返回普通 Tensor，必须显式更新循环状态。"}};
+    const checkpointData = {"checkpoint-call-contract":{"answer":1,"explain":"checkpoint 返回当前 Block 的输出。循环状态要靠 x = ... 显式向前更新。"},"checkpoint-memory-test":{"answer":2,"explain":"跳过只说明环境条件不满足。代码语法可以检查，但显存收益仍需 CUDA 测试。"}};
+    const predictData = {"checkpoint-call-contract":{"answer":0,"revealNote":"checkpoint 的第一个参数是函数，后面才是函数输入；返回值必须重新保存到 x。"},"checkpoint-memory-test":{"answer":0,"revealNote":"Checkpoint 的时间开销和激活恢复主要发生在 backward；只跑 forward 看不到完整训练闭环。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
     const homeworkTotal = 6;

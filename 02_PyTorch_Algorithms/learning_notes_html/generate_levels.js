@@ -3,7 +3,6 @@ const path = require("path");
 const lessonOverrides = require("./lesson_overrides");
 const curriculumV2 = require("./curriculum_v2");
 const enhanceFoundationLessons = require("./foundation_enhancements");
-const renderLevel25ModelFactory = require("./level_25_model_factory");
 
 const root = __dirname;
 const notesDir = path.join(root, "notes");
@@ -1864,6 +1863,7 @@ function lessonLevelPage(level, prev, next) {
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -1876,6 +1876,8 @@ function lessonLevelPage(level, prev, next) {
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -1995,6 +1997,16 @@ function lessonLevelPage(level, prev, next) {
       background: #eef2f7;
       border-radius: 5px;
       padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     @media (max-width: 920px) {
       .hero,
@@ -2398,7 +2410,7 @@ function indexPage() {
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
           <div class="stat"><strong>${levels.length}</strong><span>Notebook 关卡</span></div>
-          <div class="stat"><strong>3</strong><span>每关学习模块</span></div>
+          <div class="stat"><strong>2–4</strong><span>每关学习模块</span></div>
         </div>
       </div>
       <div class="map-art" aria-label="学习流程">
@@ -2471,14 +2483,8 @@ const cleanGeneratedHtml = (html) => html.replace(/[ \t]+$/gm, "");
 levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
   const page = levelPage(level, levels[index - 1], levels[index + 1]);
-  const preserveLegacyWhitespace = Number(level.id) <= 11;
+  const preserveLegacyWhitespace = Number(level.id) <= 5;
   fs.writeFileSync(filePath, preserveLegacyWhitespace ? page : cleanGeneratedHtml(page));
-  if (level.id === "25") {
-    fs.writeFileSync(
-      path.join(notesDir, "25_quantization_model_factory.html"),
-      cleanGeneratedHtml(renderLevel25ModelFactory(level, levels[index - 1], levels[index + 1], slug))
-    );
-  }
 });
 
 const expectedPages = new Set([...levels.map(slug), "25_quantization_model_factory.html"]);

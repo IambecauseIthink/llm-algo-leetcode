@@ -564,6 +564,7 @@
     }
     .freq-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 12px 0;
       background: #fff;
@@ -576,6 +577,8 @@
       border: 1px solid var(--line);
       padding: 10px;
       text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .freq-table th {
       background: var(--soft-blue);
@@ -696,6 +699,16 @@
       border-radius: 5px;
       padding: 2px 5px;
     }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     @media (max-width: 920px) {
       .hero,
       .channel-stack,
@@ -745,6 +758,15 @@
       display: grid;
       gap: 14px;
       margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
     }
     .adv-course h4,
     .adv-practice h4 {
@@ -771,6 +793,7 @@
       border-right: 1px solid #cdd9ef;
       color: #42516b;
       line-height: 1.45;
+      overflow-wrap: anywhere;
     }
     .adv-roadmap > span:last-child { border-right: 0; }
     .adv-roadmap b {
@@ -914,6 +937,8 @@
       color: #74400d;
       line-height: 1.6;
       font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .adv-map { background: #f7f9fc; }
     .adv-map ul,
@@ -1000,122 +1025,93 @@
 
     <section class="lessons">
 
-        <article class="lesson-card inquiry" data-lesson="grpo-group-relative-advantages">
+        <article class="lesson-card inquiry" data-lesson="grpo-group-advantages">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：计算组内相对优势</span>
+            <span class="todo-pill">TODO 1：按 group_ids 计算标准化 advantages</span>
           </div>
-          <h2>先在组内比较：把奖励变成相对优势</h2>
+          <h2>先在每个 prompt 组内建立相对坐标</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">某一组只有两个奖励 2 和 4。减去均值 3 后得到 -1 和 1，总体标准差正好是 1。</p>
-            <p class="predict-q">这一组写回 advantages 的两个值是什么？</p>
+            <p class="predict-hook">同一组 rewards=[4,4]，eps=1e-6。</p>
+            <p class="predict-q">标准化后的 advantages 应是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-group-relative-advantages" value="0">
-                <span>[-1, 1]</span>
+                <input type="radio" name="predict-grpo-group-advantages" value="0">
+                <span>[0,0]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-group-relative-advantages" value="1">
-                <span>[2, 4]</span>
+                <input type="radio" name="predict-grpo-group-advantages" value="1">
+                <span>[NaN,NaN]</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-group-relative-advantages" value="2">
-                <span>[-0.5, 0.5]</span>
+                <input type="radio" name="predict-grpo-group-advantages" value="2">
+                <span>[4,4]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="grpo-group-relative-advantages">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="grpo-group-advantages">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="grpo-group-relative-advantages">
+          <div class="gated" data-gated="grpo-group-advantages">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>rewards 是每个候选答案得到的浮点奖励；group_ids 是同长度的整数标签，相同标签表示这些候选来自同一个 prompt。</li><li>布尔 mask 既能从一维张量里选出某一组，也能把结果写回原来的样本位置。</li><li>标准化要先减本组均值，再除本组标准差。这里使用总体标准差，也就是 std(unbiased=False)。</li><li>eps 不是额外奖励，而是分母下限；当一组只有一个样本或所有奖励相同时，它负责避免除以 0。</li></ul>
+              <ul><li>rewards 与 group_ids 都是 shape [N]；相同 group_id 表示候选回答来自同一个 prompt。</li><li>group_ids.unique(sorted=True) 给出实际出现的组编号；布尔 mask 可选出一组 reward。</li><li>std(unbiased=False) 使用总体标准差，和 Notebook 给出的公式及参考实现一致。</li><li>clamp_min(eps) 防止同组奖励完全相同、标准差为 0 时除零。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>GRPO 不先问一个奖励在全世界算不算高，而是问它在同一 prompt 的候选答案里排得怎样。组内减均值把比较中心移到 0，除以标准差再把不同组的奖励尺度拉到可比范围。</p>
+              <p>不同 prompt 的奖励刻度可能不同，所以不能直接全局比较。GRPO 先在每个 prompt 的候选组里算均值和标准差：高于组均值就是正 advantage，低于组均值就是负 advantage。</p>
               <div class="adv-course">
         <div class="adv-roadmap">
-          <span><b>1. 按组取样本</b>group_ids 决定谁和谁比较</span>
-          <span><b>2. 本组去中心</b>reward 减去本组 mean</span>
-          <span><b>3. 本组缩放</b>除以 std 的安全下限</span>
-          <span><b>4. 写回原位置</b>advantages 与 rewards 对齐</span>
+          <span><b>找组</b>遍历 unique group id</span>
+          <span><b>选成员</b>mask = group_ids == gid</span>
+          <span><b>去均值</b>reward - group mean</span>
+          <span><b>除尺度</b>除总体 std，并写回原位置</span>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel neutral">
-            <h4>变量先对号入座</h4>
-            <div class="adv-contract">
-              <span>rewards</span><strong><code>[num_samples]</code> 浮点奖励</strong>
-              <span>group_ids</span><strong><code>[num_samples]</code> 整数组号</strong>
-              <span>mask</span><strong><code>[num_samples]</code> 布尔选择器</strong>
-              <span>advantages</span><strong>同 shape、同位置的相对分数</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>两组不能混在一起算</h4>
-            <p>组 A 的奖励是 10 和 12，组 B 的奖励是 1 和 3。虽然绝对数值不同，两组里更好的候选都应得到正优势，更差的候选都应得到负优势。</p>
-            <div class="adv-flow">
-              <span>A: 10, 12</span><strong>中心 11</strong><span>负, 正</span>
-              <span>B: 1, 3</span><strong>中心 2</strong><span>负, 正</span>
-            </div>
-          </section>
-        </div>
-
         <table class="adv-shapes">
-          <thead><tr><th>步骤</th><th>输入 shape</th><th>输出 shape</th><th>含义</th></tr></thead>
+          <thead><tr><th>Notebook 组</th><th>rewards</th><th>组均值</th><th>相对优势性质</th></tr></thead>
           <tbody>
-            <tr><td>布尔选择</td><td><code>rewards [S]</code></td><td><code>group_rewards [G]</code></td><td>只看当前组的 G 个候选</td></tr>
-            <tr><td>均值与标准差</td><td><code>group_rewards [G]</code></td><td>两个标量</td><td>每一组都有自己的中心和尺度</td></tr>
-            <tr><td>写回</td><td><code>normalized [G]</code></td><td><code>advantages [S]</code></td><td>恢复为原样本顺序</td></tr>
+            <tr><td><code>gid=0</code></td><td><code>[1.0,2.0]</code></td><td><code>1.5</code></td><td>一负一正，均值接近 0</td></tr>
+            <tr><td><code>gid=1</code></td><td><code>[0.5,1.5]</code></td><td><code>1.0</code></td><td>一负一正，均值接近 0</td></tr>
           </tbody>
         </table>
-
-        <div class="adv-callout">不要对全部 rewards 一次性标准化。那样比较的是不同 prompt 之间的绝对奖励，破坏了“group relative”这四个字最核心的语义。</div>
+        <div class="adv-callout">不要用 rewards.mean() 做全局归一化；那会让不同 prompt 的奖励尺度相互污染，失去“group relative”的含义。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用班级内成绩练布尔分组与总体标准差</h4><pre><code>scores = torch.tensor([62., 82., 110., 130.])
+  <div class="syntax-card"><h4>语法热身：按班级标准化学生的组内表现</h4><pre><code>scores = torch.tensor([70.0, 90.0, 60.0, 80.0])
 class_ids = torch.tensor([3, 3, 8, 8])
-z_scores = torch.zeros_like(scores)
+relative = torch.zeros_like(scores)
 
 for class_id in class_ids.unique(sorted=True):
-    chosen = class_ids == class_id
-    local = scores[chosen]
-    centered = local - local.mean()
-    scale = local.std(unbiased=False).clamp_min(1e-5)
-    z_scores[chosen] = centered / scale</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>scores</code> -&gt; <code>rewards</code>：都保存待比较的浮点数。</li>
-            <li><code>class_ids</code> -&gt; <code>group_ids</code>：都用相同整数标出同一组。</li>
-            <li><code>chosen</code> -&gt; Notebook 的组内布尔 <code>mask</code>。</li>
-            <li><code>z_scores</code> -&gt; <code>advantages</code>：先按输入创建，再分组写回。</li>
-            <li><code>1e-5</code> -&gt; 函数参数 <code>eps</code>，不要在 TODO 中另写一个固定常量。</li>
-          </ul>
-        </div>
-      </div>
+    mask = class_ids == class_id
+    group = scores[mask]
+    centered = group - group.mean()
+    scale = group.std(unbiased=False).clamp_min(1e-6)
+    relative[mask] = centered / scale</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>scores / class_ids</code> 对应 <code>rewards / group_ids</code>。</li><li><code>relative</code> 对应先用 <code>zeros_like(rewards)</code> 创建的 advantages。</li><li><code>unbiased=False</code> 与 <code>clamp_min(eps)</code> 都是 Notebook 契约的一部分。</li><li>布尔 mask 写回可保持 advantages 与原 rewards 的样本顺序一致。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>如果某组只有一个奖励 7，按 Notebook 的 eps 保护后，它的优势应是什么？</p>
+              <p>测试为什么检查 adv[group_ids==0].mean() 接近 0？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-group-relative-advantages" value="0">
-                <span>NaN，因为标准差为 0</span>
+                <input type="radio" name="checkpoint-grpo-group-advantages" value="0">
+                <span>因为所有 reward 必须为 0</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-group-relative-advantages" value="1">
-                <span>0，因为 centered 为 0</span>
+                <input type="radio" name="checkpoint-grpo-group-advantages" value="1">
+                <span>组内去均值后再除同组尺度，组内平均应保持为 0</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-group-relative-advantages" value="2">
-                <span>7，因为只有一个样本</span>
+                <input type="radio" name="checkpoint-grpo-group-advantages" value="2">
+                <span>因为 ratio 会被清零</span>
               </label></div>
-              <div class="feedback" data-feedback="grpo-group-relative-advantages"></div>
+              <div class="feedback" data-feedback="grpo-group-advantages"></div>
             </div>
           </div>
 
@@ -1124,131 +1120,109 @@ for class_id in class_ids.unique(sorted=True):
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-relative-advantages-0">
-                <span>完成 TODO 1：让 advantages 与 rewards 都是 [num_samples]，并保持 rewards 的 dtype 与 device；group_ids 应为同 device 的整数张量。</span>
+                <input type="checkbox" data-homework="grpo-group-advantages-0">
+                <span>初始化 zeros_like(rewards)，逐 unique gid 取 mask、centered 和总体 std，并把结果写回 advantages[mask]。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-relative-advantages-1">
-                <span>先用 group_ids.unique(...) 遍历组，再通过 mask 选取、计算 mean 与 std(unbiased=False)，最后写回原位置；不要做全局标准化。</span>
+                <input type="checkbox" data-homework="grpo-group-advantages-1">
+                <span>确认 advantages.shape=[N]、dtype/device 与 rewards 一致；group_ids 只用于索引，不参与浮点计算。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-relative-advantages-2">
-                <span>运行 Notebook 测试并关注组 0 优势均值 atol=1e-6 的断言；若出现 NaN，检查 eps 是否用于分母下限，若均值不为 0，检查是否漏了按组计算或写回。</span>
+                <input type="checkbox" data-homework="grpo-group-advantages-2">
+                <span>运行组 0 的均值断言；再用一组相同 rewards 检查 clamp_min(eps) 是否避免 NaN。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="grpo-group-advantages-3">
+                <span>错误诊断：组均值不为 0 时检查是否误用全局 mean；两元素组幅度异常时检查 unbiased 是否写成 True。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="grpo-ratio-and-clipped-surrogates">
+        <article class="lesson-card inquiry" data-lesson="grpo-clipped-objective">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：计算策略比率、surr1 与 surr2</span>
+            <span class="todo-pill">TODO 2：计算 ratio、surr1 与 surr2</span>
           </div>
-          <h2>再限制更新幅度：从 log-prob 到两个 surrogate</h2>
+          <h2>把组内优势接入 PPO 式策略护栏</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">一个好候选的优势 A=2，当前 ratio=1.5，而 clip_range=0.2。</p>
-            <p class="predict-q">两个 surrogate 分别是多少？</p>
+            <p class="predict-hook">log_new-log_old=0，advantage=-1。</p>
+            <p class="predict-q">ratio 与 surr1 分别是多少？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-ratio-and-clipped-surrogates" value="0">
-                <span>surr1=3.0，surr2=2.4</span>
+                <input type="radio" name="predict-grpo-clipped-objective" value="0">
+                <span>1 与 -1</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-ratio-and-clipped-surrogates" value="1">
-                <span>surr1=2.4，surr2=3.0</span>
+                <input type="radio" name="predict-grpo-clipped-objective" value="1">
+                <span>0 与 0</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-ratio-and-clipped-surrogates" value="2">
-                <span>两者都是 2.0</span>
+                <input type="radio" name="predict-grpo-clipped-objective" value="2">
+                <span>-1 与 1</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="grpo-ratio-and-clipped-surrogates">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="grpo-clipped-objective">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="grpo-ratio-and-clipped-surrogates">
+          <div class="gated" data-gated="grpo-clipped-objective">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>log_probs_new 与 log_probs_old 都是每个候选答案的对数概率，shape 与 advantages 相同。</li><li>对数相减再取 exp 等价于概率相除：exp(log p_new - log p_old) = p_new / p_old。</li><li>ratio=1 表示新旧策略给出的概率相同；大于 1 表示新策略提高了该候选的概率。</li><li>clip_range=0.2 时，裁剪区间是 [0.8, 1.2]，但最终是否真的受裁剪还要结合优势正负和 minimum 判断。</li></ul>
+              <ul><li>log_probs_new、log_probs_old、advantages 都是 shape [N]，同一位置对应同一个候选回答。</li><li>ratio=exp(log_new-log_old) 衡量策略概率变化，必须保持到 log_probs_new 的梯度路径。</li><li>surr1 使用原 ratio，surr2 使用 clamp 到 [1-clip_range,1+clip_range] 的 ratio。</li><li>advantages 在上一任务已完成组内标准化，本任务不能再次全局归一化。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>优势告诉我们希望某个候选的概率往哪边走，ratio 告诉我们新策略已经走了多远。GRPO 同时算一条不设限的路线和一条把 ratio 限在安全区间的路线，下一课再从两条路线里选更保守的收益。</p>
+              <p>组内 advantage 说明向哪里走，ratio 说明已经走了多远。GRPO 借用 PPO 的两条 surrogate：一条观察真实变化，一条把变化限制在护栏内。</p>
               <div class="adv-course">
+        <div class="adv-flow">
+          <span>log_new-log_old</span><strong>exp → ratio [N]</strong>
+          <span>ratio×advantage</span><strong>surr1 [N]</strong>
+          <span>clamp(ratio)×advantage</span><strong>surr2 [N]</strong>
+        </div>
         <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>ratio 的语义</h4>
-            <div class="adv-contract">
-              <span><code>ratio = 1.0</code></span><strong>新旧概率不变</strong>
-              <span><code>ratio = 1.25</code></span><strong>新概率是旧概率的 1.25 倍</strong>
-              <span><code>ratio = 0.70</code></span><strong>新概率降到旧概率的 70%</strong>
-            </div>
+          <section class="adv-panel good">
+            <h4>正 advantage</h4>
+            <p>鼓励提高组内较好候选的概率，但 ratio 上升过多时受 clip 限制。</p>
           </section>
           <section class="adv-panel warn">
-            <h4>为什么在 log 空间做差</h4>
-            <p>模型通常直接输出 log-prob。先相减再 exp，既贴合输入语义，也避免手工把两个很小的概率相除。</p>
-            <div class="adv-flow">
-              <span>log new</span><span>减 log old</span><strong>exp 得 ratio</strong>
-            </div>
+            <h4>负 advantage</h4>
+            <p>鼓励降低组内较差候选的概率，但 ratio 下降过多时同样受限制。</p>
           </section>
         </div>
-
-        <div class="adv-steps">
-          <div><b>1</b><code>ratio</code><span>度量新策略相对旧策略的概率变化</span></div>
-          <div><b>2</b><code>surr1</code><span>原始 ratio 乘组内优势，保留实际更新幅度</span></div>
-          <div><b>3</b><code>surr2</code><span>先把 ratio 限在安全区间，再乘同一个优势</span></div>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>变量</th><th>shape</th><th>dtype/device</th><th>容易写错</th></tr></thead>
-          <tbody>
-            <tr><td><code>ratio</code></td><td><code>[S]</code></td><td>跟随 log_probs_new</td><td>忘记 exp，只留下 log-ratio</td></tr>
-            <tr><td><code>surr1</code></td><td><code>[S]</code></td><td>浮点、可连回 new</td><td>误用 old log-prob 直接乘优势</td></tr>
-            <tr><td><code>surr2</code></td><td><code>[S]</code></td><td>浮点、可求梯度</td><td>裁剪 advantages 而不是 ratio</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">clamp 只改变数值，不应该 detach。梯度必须仍能从后续 loss 回到 log_probs_new，这正是 Notebook 最后调用 backward() 要检查的路径。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用广告策略的新旧 log-score 练 ratio 与边界</h4><pre><code>after = torch.tensor([-0.7, -1.8], requires_grad=True)
-before = torch.tensor([-0.9, -1.5])
-preference = torch.tensor([0.6, -0.4])
-limit = 0.15
+  <div class="syntax-card"><h4>语法热身：给两组方案的相对得分加更新护栏</h4><pre><code>log_current = torch.tensor([-0.7, -1.2, -0.4])
+log_previous = torch.tensor([-0.8, -1.0, -0.5])
+relative_quality = torch.tensor([1.0, -1.0, 0.5])
+epsilon = 0.2
 
-multiplier = torch.exp(after - before)
-free_value = multiplier * preference
-safe_multiplier = torch.clamp(multiplier, 1 - limit, 1 + limit)
-safe_value = safe_multiplier * preference</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>after</code> / <code>before</code> -&gt; <code>log_probs_new</code> / <code>log_probs_old</code>。</li>
-            <li><code>multiplier</code> -&gt; <code>ratio</code>，由 log-prob 差取指数得到。</li>
-            <li><code>preference</code> -&gt; TODO 1 得到的 <code>advantages</code>。</li>
-            <li><code>free_value</code> / <code>safe_value</code> -&gt; <code>surr1</code> / <code>surr2</code>。</li>
-            <li><code>limit</code> -&gt; 函数参数 <code>clip_range</code>。</li>
-          </ul>
-        </div>
-      </div>
+ratio = torch.exp(log_current - log_previous)
+raw = ratio * relative_quality
+bounded = torch.clamp(ratio, 1-epsilon, 1+epsilon) * relative_quality</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>log_current / log_previous</code> 对应 new/old log probabilities。</li><li><code>relative_quality</code> 对应上一任务算出的 <code>advantages</code>。</li><li><code>raw / bounded</code> 对应 <code>surr1 / surr2</code>。</li><li>所有结果保持 [N]，下一任务才聚合成标量。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>当 A=-1、ratio=0.5、clip_range=0.2 时，torch.min(surr1, surr2) 选中哪个值？</p>
+              <p>GRPO 与本 Notebook 的 PPO clip 思路在哪一步相同？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-ratio-and-clipped-surrogates" value="0">
-                <span>0.8</span>
+                <input type="radio" name="checkpoint-grpo-clipped-objective" value="0">
+                <span>都把 rewards 直接当 loss</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-ratio-and-clipped-surrogates" value="1">
-                <span>-0.5</span>
+                <input type="radio" name="checkpoint-grpo-clipped-objective" value="1">
+                <span>都必须训练显式 Critic</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-ratio-and-clipped-surrogates" value="2">
-                <span>-0.8</span>
+                <input type="radio" name="checkpoint-grpo-clipped-objective" value="2">
+                <span>都用原 ratio 和截断 ratio 分别乘 advantage</span>
               </label></div>
-              <div class="feedback" data-feedback="grpo-ratio-and-clipped-surrogates"></div>
+              <div class="feedback" data-feedback="grpo-clipped-objective"></div>
             </div>
           </div>
 
@@ -1257,126 +1231,106 @@ safe_value = safe_multiplier * preference</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-ratio-and-clipped-surrogates-0">
-                <span>完成 TODO 2，并逐行确认 ratio、surr1、surr2 都是 [num_samples] 浮点张量，device 与 log_probs_new 一致，计算图没有被 detach。</span>
+                <input type="checkbox" data-homework="grpo-clipped-objective-0">
+                <span>完成 ratio、surr1、surr2，确认三个 Tensor 都是 [N] 且 finite。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-ratio-and-clipped-surrogates-1">
-                <span>ratio 必须来自 new-old 的 log-prob 差再取 exp；clamp 的上下界使用 1-clip_range 与 1+clip_range，裁剪对象是 ratio。</span>
+                <input type="checkbox" data-homework="grpo-clipped-objective-1">
+                <span>不要 detach log_probs_new；测试随后会调用 loss.backward 检查梯度。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-ratio-and-clipped-surrogates-2">
-                <span>运行 Notebook 测试；若 backward 后 log_new.grad 为空，沿 loss -&gt; minimum -&gt; surrogate -&gt; ratio -&gt; log_probs_new 反查；常见错误是转成 Python 数值、使用 no_grad 或误把 new 替换成 old。</span>
+                <input type="checkbox" data-homework="grpo-clipped-objective-2">
+                <span>用 ratio 超过 1.2 与低于 0.8 的例子手算 clamp 是否正确。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="grpo-clipped-objective-3">
+                <span>错误诊断：梯度为空时检查 detach/item；ratio 非正时检查是否漏 exp；shape 变标量时检查是否提前 mean。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="grpo-conservative-loss-and-tests">
+        <article class="lesson-card inquiry" data-lesson="grpo-loss-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：计算最终 loss 并返回 loss、advantages</span>
+            <span class="todo-pill">TODO 3：返回标量 loss 与逐样本 advantages</span>
           </div>
-          <h2>最后收成一个 loss：逐样本保守选择再求均值</h2>
+          <h2>保守聚合并读懂 GRPO 的四个测试信号</h2>
 
           <div class="lesson-section predict">
             <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">逐元素较小值是 [0.5, -0.6]。</p>
-            <p class="predict-q">加负号并求均值后的 loss 是多少？</p>
+            <p class="predict-hook">最终 loss 被错误写成 -torch.min(surr1,surr2)，没有 mean。</p>
+            <p class="predict-q">最先失败的测试是什么？</p>
             <div class="predict-options">
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-conservative-loss-and-tests" value="0">
-                <span>0.05</span>
+                <input type="radio" name="predict-grpo-loss-test" value="0">
+                <span>loss.ndim==0</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-conservative-loss-and-tests" value="1">
-                <span>-0.05</span>
+                <input type="radio" name="predict-grpo-loss-test" value="1">
+                <span>组内 advantage 均值</span>
               </label>
               <label class="predict-option">
-                <input type="radio" name="predict-grpo-conservative-loss-and-tests" value="2">
-                <span>0.55</span>
+                <input type="radio" name="predict-grpo-loss-test" value="2">
+                <span>group_ids 的 dtype</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="grpo-conservative-loss-and-tests">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="grpo-loss-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
           </div>
 
-          <div class="gated" data-gated="grpo-conservative-loss-and-tests">
+          <div class="gated" data-gated="grpo-loss-test">
             <div class="lesson-section">
               <h3>先补的知识</h3>
-              <ul><li>surr1 和 surr2 都是 [num_samples]，每个位置对应同一个候选答案的两种收益估计。</li><li>torch.min(a, b) 在两个同 shape 张量之间逐元素取较小值；它不同于只对一个张量做全局 min。</li><li>优化器执行梯度下降，所以要在希望最大化的 surrogate 前加负号，把问题改写为最小化 loss。</li><li>mean 会把每个候选的值聚合成零维标量，同时对应批量平均的训练目标。</li></ul>
+              <ul><li>torch.min(surr1,surr2) 是逐元素保守选择，随后 mean 得到标量。</li><li>前置负号把最大化 surrogate 转为最小化 loss。</li><li>函数必须同时返回 loss 与 advantages，分别是 shape [] 和 [N]。</li><li>测试不仅看数值 finite，还会 backward 并确认 log_new.grad 不为 None。</li></ul>
             </div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
-              <p>对每个候选先在原始路线与裁剪路线之间拿较悲观的收益，再把所有候选平均。前面的负号只是在适配“优化器最小化 loss”这条约定，不会改变我们希望提高好候选、压低差候选的方向。</p>
+              <p>一个正确的 GRPO 函数既要有合理统计性质，也要能训练：组内 advantage 均值接近 0，loss 是有限标量，且从 loss 能沿 ratio 回到新策略 log probability。</p>
               <div class="adv-course">
+        <div class="adv-contract">
+          <span>断言 1</span><strong>loss.ndim == 0：优化目标是标量</strong>
+          <span>断言 2</span><strong>torch.isfinite(loss)：没有除零或数值爆炸</strong>
+          <span>断言 3</span><strong>组 0 advantage 均值在 atol=1e-6 内为 0</strong>
+          <span>断言 4</span><strong>loss.backward 后 log_new.grad 不是 None</strong>
+        </div>
         <div class="adv-roadmap">
-          <span><b>逐位置比较</b>surr1[i] 对 surr2[i]</span>
-          <span><b>保守收益</b>每个位置取较小值</span>
-          <span><b>批量聚合</b>对所有候选求 mean</span>
-          <span><b>改成最小化</b>最外层加负号</span>
+          <span><b>组内统计</b>rewards → advantages</span>
+          <span><b>策略变化</b>log probs → ratio</span>
+          <span><b>保守选择</b>min(surr1,surr2)</span>
+          <span><b>可训练输出</b>负均值 loss + advantages</span>
         </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>shape 收缩过程</h4>
-            <div class="adv-flow">
-              <span>surr1 [S]</span><span>surr2 [S]</span><span>minimum [S]</span><strong>loss []</strong>
-            </div>
-            <p><code>[]</code> 表示零维 Tensor。它仍然能保存 grad_fn，并不是 Python float。</p>
-          </section>
-          <section class="adv-panel warn">
-            <h4>返回值有两个用途</h4>
-            <div class="adv-contract">
-              <span>loss</span><strong>用于 backward，必须是有限标量</strong>
-              <span>advantages</span><strong>用于检查组内均值和理解样本方向</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-checks">
-          <span><strong>loss.ndim == 0</strong><br>聚合成标量</span>
-          <span><strong>isfinite(loss)</strong><br>没有 NaN 或 Inf</span>
-          <span><strong>组 0 mean 约为 0</strong><br>分组标准化正确</span>
-          <span><strong>log_new.grad 存在</strong><br>计算图连通</span>
-        </div>
-
-        <div class="adv-callout">只通过现有断言还不等于所有数学细节都正确。测试只显式检查组 0 的均值，没有逐元素核对优势；你仍要确认每个组都使用自己的总体标准差。</div>
       </div>
               <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用两个候选估计练逐元素保守聚合</h4><pre><code>estimate_a = torch.tensor([0.7, -0.3], requires_grad=True)
-estimate_b = torch.tensor([0.5, -0.6], requires_grad=True)
+  <div class="syntax-card"><h4>语法热身：验证一个可训练的保守目标</h4><pre><code>raw = torch.tensor([0.8, -0.6], requires_grad=True)
+bounded = torch.tensor([0.7, -0.7])
+objective = -torch.min(raw, bounded).mean()
 
-pessimistic = torch.minimum(estimate_a, estimate_b)
-objective = -pessimistic.mean()
+assert objective.ndim == 0
+assert torch.isfinite(objective)
 objective.backward()
-print(objective.ndim)  # 0</code></pre></div>
-        <div class="adv-map">
-          <h4>例子中的变量 -&gt; Notebook TODO 变量/操作</h4>
-          <ul>
-            <li><code>estimate_a</code> / <code>estimate_b</code> -&gt; <code>surr1</code> / <code>surr2</code>。</li>
-            <li><code>torch.minimum</code> -&gt; Notebook 可使用的逐元素 <code>torch.min</code> 语义。</li>
-            <li><code>pessimistic.mean()</code> -&gt; 对全部候选聚合，而不是只取一个全局最小样本。</li>
-            <li><code>objective</code> -&gt; 返回的 <code>loss</code>，应保留梯度连接。</li>
-          </ul>
-        </div>
-      </div>
+assert raw.grad is not None</code></pre></div>
+  <div class="adv-map">
+    <h4>把独立例子迁移回 Notebook</h4>
+    <ul><li><code>raw / bounded</code> 对应 <code>surr1 / surr2</code>。</li><li><code>objective</code> 对应最终 <code>loss</code>。</li><li>Notebook 还需把第一任务的 <code>advantages</code> 一起返回。</li><li>梯度检查要求 loss 的路径不能被 detach 或 item 截断。</li></ul>
+  </div>
+</div>
             </div>
 
             <div class="lesson-section checkpoint">
               <h3>巩固一下</h3>
-              <p>哪种写法能同时满足 Notebook 的标量断言并保留到 log_probs_new 的梯度？</p>
+              <p>哪组返回 shape 与 Notebook 契约一致？</p>
               <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-conservative-loss-and-tests" value="0">
-                <span>对逐元素 minimum 求 mean，并保留 Tensor</span>
+                <input type="radio" name="checkpoint-grpo-loss-test" value="0">
+                <span>loss: []，advantages: [N]</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-conservative-loss-and-tests" value="1">
-                <span>只返回 surr1[0]</span>
+                <input type="radio" name="checkpoint-grpo-loss-test" value="1">
+                <span>两者都是 []</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-grpo-conservative-loss-and-tests" value="2">
-                <span>调用 .item() 后返回 Python 数字</span>
+                <input type="radio" name="checkpoint-grpo-loss-test" value="2">
+                <span>loss: [N]，advantages: []</span>
               </label></div>
-              <div class="feedback" data-feedback="grpo-conservative-loss-and-tests"></div>
+              <div class="feedback" data-feedback="grpo-loss-test"></div>
             </div>
           </div>
 
@@ -1385,16 +1339,20 @@ print(objective.ndim)  # 0</code></pre></div>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-conservative-loss-and-tests-0">
-                <span>完成 TODO 3：loss 必须是 shape [] 的浮点 Tensor，dtype/device 跟随 surrogate，并与 log_probs_new 保持可微连接；按函数签名同时返回 advantages。</span>
+                <input type="checkbox" data-homework="grpo-loss-test-0">
+                <span>完成 loss=-torch.min(surr1,surr2).mean()，并返回 loss、advantages。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-conservative-loss-and-tests-1">
-                <span>依次跑完 Notebook 测试的四项检查：标量、有限值、组 0 均值接近 0、backward 后 log_new.grad 非空。</span>
+                <input type="checkbox" data-homework="grpo-loss-test-1">
+                <span>运行 test_grpo_loss，依次确认标量、finite、组均值与梯度四类条件。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-conservative-loss-and-tests-2">
-                <span>若 loss shape 是 [S]，检查是否漏了 mean；若 backward 报错，检查是否调用 item/detach；若 loss 非有限，回到 TODO 1 检查零标准差保护和 rewards dtype。</span>
+                <input type="checkbox" data-homework="grpo-loss-test-2">
+                <span>错误诊断：NaN 时检查 std 的 clamp_min；grad None 时检查 detach；组均值失败时检查是否按 group_ids 分组。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="grpo-loss-test-3">
+                <span>用一句话比较 DPO 与 GRPO：前者比较 chosen/rejected 对，后者先比较同 prompt 的候选组。</span>
               </label>
           </div>
         </article>
@@ -1414,11 +1372,11 @@ print(objective.ndim)  # 0</code></pre></div>
 
   <script>
     const levelId = "16";
-    const checkpointData = {"grpo-group-relative-advantages":{"answer":1,"explain":"先减本组均值得到 0；标准差虽然为 0，但 clamp_min(eps) 让分母有效，因此结果是 0。"},"grpo-ratio-and-clipped-surrogates":{"answer":2,"explain":"surr1=-0.5，裁剪 ratio 为 0.8 后 surr2=-0.8；minimum 选择更小、更保守的 -0.8。"},"grpo-conservative-loss-and-tests":{"answer":0,"explain":".item() 会离开计算图；只取一个元素也丢掉了其余候选。逐元素选择后求均值才符合目标。"}};
-    const predictData = {"grpo-group-relative-advantages":{"answer":0,"revealNote":"组内标准化只使用本组统计量；中心化后再除以总体标准差 1，所以数值不再变化。"},"grpo-ratio-and-clipped-surrogates":{"answer":0,"revealNote":"原始路线使用 1.5×2，裁剪路线先把 1.5 限到 1.2，再乘 2。"},"grpo-conservative-loss-and-tests":{"answer":0,"revealNote":"[0.5, -0.6] 的均值是 -0.05，最外层负号把它变成 0.05。"}};
+    const checkpointData = {"grpo-group-advantages":{"answer":1,"explain":"这是判断是否真的按组归一化的直接信号。"},"grpo-clipped-objective":{"answer":2,"explain":"差异在 advantage 来源；clip surrogate 的构造方式相同。"},"grpo-loss-test":{"answer":0,"explain":"优化器需要标量目标，但测试还要检查每个样本的组内相对优势。"}};
+    const predictData = {"grpo-group-advantages":{"answer":0,"revealNote":"centered 全为 0；分母被 clamp 到 eps 后仍得到 0，避免 NaN。"},"grpo-clipped-objective":{"answer":0,"revealNote":"exp(0)=1；surr1=1×(-1)=-1。"},"grpo-loss-test":{"answer":0,"revealNote":"未聚合时 loss 仍是 [N]，不是标量。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
+    const homeworkTotal = 12;
     const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
     const checkpointKey = statePrefix + levelId + "-checkpoints";
     const homeworkKey = statePrefix + levelId + "-homework";
