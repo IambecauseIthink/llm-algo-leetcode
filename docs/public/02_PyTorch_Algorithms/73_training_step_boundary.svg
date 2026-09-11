@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#52606d"/>
+    </marker>
+    <style>
+      .title{font:700 27px sans-serif;fill:#172b4d}
+      .head{font:700 19px sans-serif;fill:#172b4d}
+      .label{font:600 17px sans-serif;fill:#172b4d}
+      .small{font:15px sans-serif;fill:#344563}
+      .box{stroke:#52606d;stroke-width:2;rx:10}
+      .line{stroke:#52606d;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="450" fill="#f7f9fc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">73：一次 training step 的测量边界</text>
+
+  <text x="600" y="82" text-anchor="middle" class="head">当前模板的完整测量范围</text>
+  <rect x="70" y="105" width="1060" height="125" rx="16" fill="#e7f0ff" stroke="#2f5597" stroke-width="3"/>
+  <text x="600" y="129" text-anchor="middle" class="small">73 计入总 step time 与峰值显存</text>
+
+  <rect x="105" y="155" width="165" height="50" class="box" fill="#ffffff"/>
+  <text x="187" y="186" text-anchor="middle" class="label">清零梯度</text>
+  <rect x="315" y="155" width="165" height="50" class="box" fill="#ffffff"/>
+  <text x="397" y="186" text-anchor="middle" class="label">前向计算 / 损失</text>
+  <rect x="525" y="155" width="165" height="50" class="box" fill="#ffffff"/>
+  <text x="607" y="186" text-anchor="middle" class="label">反向传播</text>
+  <rect x="735" y="155" width="165" height="50" class="box" fill="#ffffff"/>
+  <text x="817" y="186" text-anchor="middle" class="label">更新参数</text>
+  <rect x="945" y="155" width="145" height="50" class="box" fill="#ffffff"/>
+  <text x="1017" y="186" text-anchor="middle" class="label">同步确认</text>
+  <path d="M270 180 L315 180 M480 180 L525 180 M690 180 L735 180 M900 180 L945 180" class="line"/>
+
+  <rect x="70" y="270" width="300" height="82" class="box" fill="#fff3d6" stroke-dasharray="8 6"/>
+  <text x="220" y="301" text-anchor="middle" class="label">输入准备 / 设备拷贝</text>
+  <text x="220" y="328" text-anchor="middle" class="small">当前不单独拆分</text>
+
+  <rect x="450" y="270" width="300" height="82" class="box" fill="#e3fcef"/>
+  <text x="600" y="301" text-anchor="middle" class="label">74：阶段归因</text>
+  <text x="600" y="328" text-anchor="middle" class="small">数据、算子、同步和搬运轨迹</text>
+
+  <rect x="830" y="270" width="300" height="82" class="box" fill="#f0e9ff"/>
+  <text x="980" y="301" text-anchor="middle" class="label">76：策略比较</text>
+  <text x="980" y="328" text-anchor="middle" class="small">检查点重算 / 激活卸载搬运</text>
+
+  <path d="M220 230 L220 270" class="line"/>
+  <path d="M600 230 L600 270" class="line"/>
+  <path d="M980 230 L980 270" class="line"/>
+  <text x="600" y="382" text-anchor="middle" class="head">从机制到项目的验证链</text>
+  <text x="600" y="414" text-anchor="middle" class="small">机制先解释状态如何产生，项目再逐步增加真实测量和决策约束</text>
+
+  <rect x="40" y="435" width="200" height="58" class="box" fill="#fff3d6"/>
+  <text x="140" y="470" text-anchor="middle" class="label">17 自动微分</text>
+  <rect x="260" y="435" width="200" height="58" class="box" fill="#fff3d6"/>
+  <text x="360" y="470" text-anchor="middle" class="label">18 反向传播 / 激活值</text>
+  <rect x="480" y="435" width="200" height="58" class="box" fill="#fff3d6"/>
+  <text x="580" y="470" text-anchor="middle" class="label">12 梯度累积</text>
+  <rect x="700" y="435" width="200" height="58" class="box" fill="#fff3d6"/>
+  <text x="800" y="470" text-anchor="middle" class="label">19 检查点重算</text>
+  <rect x="920" y="435" width="200" height="58" class="box" fill="#fff3d6"/>
+  <text x="1020" y="470" text-anchor="middle" class="label">42 激活卸载</text>
+  <path d="M240 464 L260 464 M460 464 L480 464 M680 464 L700 464 M900 464 L920 464" class="line"/>
+
+  <rect x="95" y="525" width="220" height="58" class="box" fill="#e3fcef"/>
+  <text x="205" y="560" text-anchor="middle" class="label">73 训练基线</text>
+  <rect x="345" y="525" width="220" height="58" class="box" fill="#e3fcef"/>
+  <text x="455" y="560" text-anchor="middle" class="label">76 策略比较</text>
+  <rect x="595" y="525" width="220" height="58" class="box" fill="#e3fcef"/>
+  <text x="705" y="560" text-anchor="middle" class="label">75 预算决策</text>
+  <rect x="845" y="525" width="220" height="58" class="box" fill="#e3fcef"/>
+  <text x="955" y="560" text-anchor="middle" class="label">74 性能分析</text>
+  <path d="M315 554 L345 554 M565 554 L595 554 M815 554 L845 554" class="line"/>
+  <path d="M580 493 L580 515" class="line"/>
+  <text x="600" y="625" text-anchor="middle" class="small">73 回答“完整 step 的平均成本是多少”；76、75、74 逐步比较策略、约束预算并解释原因。</text>
+</svg>

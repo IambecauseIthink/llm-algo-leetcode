@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">统一内存管理总览</title><desc id="d">参数、激活、KV Cache 和临时对象进入统一账本，再依据访问热度和迁移代价决定驻留或移动。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">统一内存管理：工作集、层次与策略</text><text x="50" y="83" class="s">统一账本把单项优化放回同一个峰值和迁移代价模型中。</text>
+<rect x="55" y="190" width="225" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="167" y="232" text-anchor="middle" class="l">工作集对象</text><text x="167" y="263" text-anchor="middle" class="b">参数 · 激活 · KV · 临时量</text>
+<rect x="350" y="190" width="225" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="462" y="232" text-anchor="middle" class="l">统一账本</text><text x="462" y="263" text-anchor="middle" class="b">大小 · 峰值阶段 · 热度</text>
+<rect x="645" y="115" width="225" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="757" y="155" text-anchor="middle" class="l">GPU 驻留</text><text x="757" y="185" text-anchor="middle" class="b">高频访问路径</text>
+<rect x="645" y="260" width="225" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="757" y="300" text-anchor="middle" class="l">迁移或重算</text><text x="757" y="330" text-anchor="middle" class="b">容量换带宽或计算</text>
+<rect x="940" y="190" width="205" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1042" y="232" text-anchor="middle" class="l">预算决策</text><text x="1042" y="263" text-anchor="middle" class="b">峰值 · 步时 · 带宽</text>
+<path d="M280 245H350M575 235L645 165M575 265L645 310M870 165L940 225M870 310L940 265" class="f"/>
+</svg>

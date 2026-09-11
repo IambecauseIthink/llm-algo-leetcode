@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:23px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:14px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" class="title">76 GPU 策略 benchmark 流程</text>
+  <rect x="30" y="90" width="185" height="110" class="box"/><text x="122" y="125" text-anchor="middle" class="label">检查 73</text><text x="122" y="155" text-anchor="middle" class="small">模型 / workload / dtype</text><text x="122" y="180" text-anchor="middle" class="small">必须同口径</text>
+  <rect x="250" y="90" width="185" height="110" class="box"/><text x="342" y="125" text-anchor="middle" class="label">运行四策略</text><text x="342" y="155" text-anchor="middle" class="small">baseline · checkpoint</text><text x="342" y="180" text-anchor="middle" class="small">offload · hybrid</text>
+  <rect x="470" y="90" width="185" height="110" class="box"/><text x="562" y="125" text-anchor="middle" class="label">记录指标</text><text x="562" y="155" text-anchor="middle" class="small">时间 · 吞吐 · 显存</text><text x="562" y="180" text-anchor="middle" class="small">质量 · OOM</text>
+  <rect x="690" y="90" width="180" height="110" class="box"/><text x="780" y="125" text-anchor="middle" class="label">保存 JSON</text><text x="780" y="155" text-anchor="middle" class="small">交给 75 预算决策</text><text x="780" y="180" text-anchor="middle" class="small">不在 76 裁决</text>
+  <path d="M215 145 H245 M435 145 H465 M655 145 H685" class="arrow"/>
+</svg>

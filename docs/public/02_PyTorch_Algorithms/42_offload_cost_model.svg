@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 560" role="img" aria-labelledby="title desc">
+  <title id="title">Activation Offload 的代价模型</title>
+  <desc id="desc">Offload 通过搬走激活降低 GPU 驻留，但需要用传输量和带宽估算时间代价。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#ecfdf5"/></linearGradient>
+    <style>
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 28px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 15px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 16; ry: 16; }
+      .flow { stroke: #0891b2; stroke-width: 4; stroke-dasharray: 9 7; fill: none; marker-end: url(#cyan); }
+    </style>
+    <marker id="cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#0891b2"/></marker>
+  </defs>
+  <rect width="1500" height="560" fill="url(#bg)"/>
+  <text x="60" y="54" class="title">Offload 代价模型：省下多少显存，付出多少搬运</text>
+  <text x="60" y="82" class="sub">先计算可搬运激活，再用带宽估算传输时间，最后判断预算和 step time 是否可接受</text>
+  <rect x="80" y="220" width="230" height="100" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="195" y="260" text-anchor="middle" class="label">GPU 激活</text><text x="195" y="290" text-anchor="middle" class="small">总激活量</text>
+  <rect x="410" y="220" width="250" height="100" class="box" fill="#ecfeff" stroke="#0891b2"/><text x="535" y="260" text-anchor="middle" class="label">选择搬运块</text><text x="535" y="290" text-anchor="middle" class="small">可搬运数据量</text>
+  <rect x="760" y="220" width="250" height="100" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="885" y="260" text-anchor="middle" class="label">传输估算</text><text x="885" y="290" text-anchor="middle" class="small">搬运量 ÷ 带宽</text>
+  <rect x="1110" y="150" width="280" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1250" y="190" text-anchor="middle" class="label">显存收益</text><text x="1250" y="220" text-anchor="middle" class="small">GPU 保留量下降</text>
+  <rect x="1110" y="350" width="280" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="1250" y="390" text-anchor="middle" class="label">时间代价</text><text x="1250" y="420" text-anchor="middle" class="small">同步 + 往返传输</text>
+  <path d="M310 270 L410 270" class="flow"/><path d="M660 270 L760 270" class="flow"/><path d="M1010 250 C1060 220 1070 200 1110 200" class="flow"/><path d="M1010 290 C1060 350 1070 400 1110 400" class="flow"/>
+  <text x="90" y="505" class="small">决策时同时检查：GPU 是否仍超预算、搬运是否能与计算重叠、以及实际 workload 的峰值显存与 step time。</text>
+</svg>

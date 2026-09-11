@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Online Softmax 的分块状态更新</title>
+  <desc id="desc">顶部概括一个 Q 行如何保持跨 K/V 分块的归一化等价，下面依次展开历史状态、当前分块和重标定结果。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#486581"/>
+    </marker>
+    <style>
+      .title{font:700 27px sans-serif;fill:#17324d}
+      .label{font:700 19px sans-serif;fill:#17324d}
+      .text{font:16px sans-serif;fill:#334e68}
+      .small{font:14px sans-serif;fill:#486581}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}
+      .line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1200" height="520" fill="#f7fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">Online Softmax：一次分块更新如何保持结果等价</text>
+
+  <rect x="300" y="70" width="600" height="82" fill="#e6f6f5" class="box"/>
+  <text x="600" y="108" text-anchor="middle" class="label">固定一个 Q 行，持续吸收 K/V 分块</text>
+  <text x="600" y="135" text-anchor="middle" class="text">每次更新都保留跨分块归一化所需的状态</text>
+
+  <rect x="45" y="245" width="320" height="155" fill="#e6f6f5" class="box"/>
+  <text x="205" y="290" text-anchor="middle" class="label">历史状态</text>
+  <text x="75" y="330" class="text">m_i：历史最大值</text>
+  <text x="75" y="360" class="text">l_i：历史指数和</text>
+  <text x="75" y="390" class="text">O_i：历史输出</text>
+
+  <rect x="440" y="245" width="320" height="155" fill="#fff4e6" class="box"/>
+  <text x="600" y="290" text-anchor="middle" class="label">当前 K/V 分块</text>
+  <text x="470" y="330" class="text">S_ij = Q_i K_jᵀ</text>
+  <text x="470" y="360" class="text">m_block 与局部指数项</text>
+  <text x="470" y="390" class="text">产生当前块的贡献</text>
+
+  <rect x="835" y="245" width="320" height="155" fill="#eef2ff" class="box"/>
+  <text x="995" y="290" text-anchor="middle" class="label">重标定后的新状态</text>
+  <text x="865" y="330" class="text">m_new = max(m_i, m_block)</text>
+  <text x="865" y="360" class="text">修正 l_i 并合并 O_i</text>
+  <text x="865" y="390" class="text">得到下一轮状态</text>
+
+  <path d="M600 152 V195 H205 V245" class="line"/>
+  <path d="M600 152 V245" class="line"/>
+  <path d="M600 152 V195 H995 V245" class="line"/>
+  <path d="M365 322 H440" class="line"/>
+  <path d="M760 322 H835" class="line"/>
+
+  <text x="600" y="465" text-anchor="middle" class="small">分块只改变状态的保存与更新方式，不改变最终 Attention 的数学结果。</text>
+</svg>

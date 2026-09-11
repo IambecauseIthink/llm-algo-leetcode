@@ -1,41 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 760" role="img" aria-labelledby="title desc">
-  <title id="title">Architecture Tricks Diagram</title>
-  <desc id="desc">Compares common architecture tricks such as tied embeddings and Gemma-style RMSNorm scaling.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">模型架构变体的观察方法</title>
+  <desc id="desc">从模型结构选择出发，分别观察参数共享、归一化、注意力和稀疏结构对成本与行为的影响。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#f5f3ff"/>
-    </linearGradient>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#f5f3ff"/></linearGradient>
     <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 18; ry: 18; }
+      .flow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
     </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
   </defs>
-  <rect width="1540" height="760" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">Architecture tricks: small changes, large effects</text>
-  <text x="64" y="96" class="sub">Two common examples: tied word embeddings and Gemma-style RMSNorm scaling</text>
+  <rect width="1600" height="720" fill="url(#bg)"/>
+  <text x="60" y="60" class="title">架构变体：从结构改动追踪系统影响</text>
+  <text x="60" y="90" class="sub">先定位改动发生在参数、归一化、注意力还是稀疏路径，再观察容量、计算、通信和质量</text>
 
-  <rect x="80" y="150" width="620" height="180" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="390" y="192" text-anchor="middle" class="label">Tied word embeddings</text>
-  <text x="120" y="232" class="small">input embeddings and lm_head share parameters</text>
-  <text x="120" y="262" class="small">reduces parameter count and aligns input/output semantics</text>
-  <text x="120" y="292" class="small">often used in GPT / Qwen-style models</text>
-
-  <rect x="840" y="150" width="620" height="180" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="1150" y="192" text-anchor="middle" class="label">Gemma-style RMSNorm</text>
-  <text x="880" y="232" class="small">scaling form changes from w to (1 + w)</text>
-  <text x="880" y="262" class="small">initially behaves like pure normalization</text>
-  <text x="880" y="292" class="small">gives a smoother early training path</text>
-
-  <rect x="160" y="390" width="1220" height="220" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="770" y="430" text-anchor="middle" class="label">How to read these tricks</text>
-  <text x="200" y="470" class="small">- they do not change the main block structure</text>
-  <text x="200" y="500" class="small">- they do change parameter flow and early optimization behavior</text>
-  <text x="200" y="530" class="small">- they are easy to miss if you only look at the high-level architecture</text>
-  <text x="200" y="560" class="small">- they matter when comparing code paths across model families</text>
-  <text x="800" y="470" class="small">This page is the place to collect these small but meaningful deviations</text>
-  <text x="800" y="500" class="small">It keeps the main model pages focused on core structure while preserving important implementation quirks</text>
+  <rect x="650" y="260" width="300" height="110" class="box" fill="#ffffff" stroke="#6366f1"/><text x="800" y="305" text-anchor="middle" class="label">模型结构选择</text><text x="800" y="335" text-anchor="middle" class="small">改变哪一条数据或参数路径？</text>
+  <rect x="80" y="180" width="280" height="110" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="220" y="225" text-anchor="middle" class="label">参数共享</text><text x="220" y="255" text-anchor="middle" class="small">Embedding / LM Head</text>
+  <rect x="80" y="440" width="280" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="220" y="485" text-anchor="middle" class="label">归一化与激活</text><text x="220" y="515" text-anchor="middle" class="small">RMSNorm / 激活变体</text>
+  <rect x="1240" y="180" width="280" height="110" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1380" y="225" text-anchor="middle" class="label">注意力变体</text><text x="1380" y="255" text-anchor="middle" class="small">头数 / 位置 / 缓存组织</text>
+  <rect x="1240" y="440" width="280" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1380" y="485" text-anchor="middle" class="label">稀疏与专家</text><text x="1380" y="515" text-anchor="middle" class="small">MoE / 路由 / 负载均衡</text>
+  <path d="M650 300 C540 300 470 235 360 235" class="flow"/><path d="M650 330 C540 390 470 495 360 495" class="flow"/><path d="M950 300 C1060 300 1130 235 1240 235" class="flow"/><path d="M950 330 C1060 390 1130 495 1240 495" class="flow"/>
+  <text x="640" y="625" class="small">同一结构改动需要同时追踪：参数量与显存、算子与带宽、通信与调度、训练稳定性和任务质量。</text>
 </svg>

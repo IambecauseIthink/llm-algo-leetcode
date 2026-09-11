@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">多 Token 解码总览</title><desc id="d">草稿路径提出候选，目标模型按序验证，连续接受后一次推进多个 token。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">多 Token 解码：提议、验证与推进</text><text x="50" y="83" class="s">收益来自连续接受；首次拒绝后只保留已接受前缀并回到保守路径。</text>
+<rect x="55" y="190" width="225" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="167" y="232" text-anchor="middle" class="l">草稿路径</text><text x="167" y="263" text-anchor="middle" class="b">提出最多 K 个 token</text>
+<rect x="350" y="190" width="225" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="462" y="232" text-anchor="middle" class="l">目标模型验证</text><text x="462" y="263" text-anchor="middle" class="b">从左到右检查候选</text>
+<rect x="645" y="115" width="225" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="757" y="155" text-anchor="middle" class="l">连续接受</text><text x="757" y="185" text-anchor="middle" class="b">一次推进多个 token</text>
+<rect x="645" y="260" width="225" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="757" y="300" text-anchor="middle" class="l">首次拒绝</text><text x="757" y="330" text-anchor="middle" class="b">保留前缀并回退</text>
+<rect x="940" y="190" width="205" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1042" y="232" text-anchor="middle" class="l">记录收益</text><text x="1042" y="263" text-anchor="middle" class="b">接受率 · 实际推进量</text>
+<path d="M280 245H350M575 235L645 165M575 265L645 310M870 165L940 225M870 310L940 265" class="f"/>
+</svg>

@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 700" role="img" aria-labelledby="title desc">
-  <title id="title">Speculative decoding flow</title>
-  <desc id="desc">Shows a draft model proposing tokens and a target model verifying them with accept or reject decisions.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 520" role="img" aria-labelledby="title desc">
+  <title id="title">推测解码流程</title>
+  <desc id="desc">草稿模型提出候选 token，目标模型逐个验证，并根据结果接受或拒绝。</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#f8fafc"/>
@@ -21,28 +21,28 @@
     </style>
   </defs>
   <rect width="1660" height="700" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">Speculative decoding: draft first, verify later</text>
-  <text x="64" y="96" class="sub">A small draft model proposes several tokens, then the target model accepts or rejects them one by one.</text>
+  <text x="64" y="66" class="title">推测解码：先提议，再验证</text>
+  <text x="64" y="96" class="sub">草稿模型先提出多个候选，目标模型再逐个判断是否接受。</text>
 
   <rect x="90" y="180" width="320" height="120" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="250" y="216" text-anchor="middle" class="label">Draft model</text>
-  <text x="250" y="246" text-anchor="middle" class="small">propose K tokens</text>
-  <text x="250" y="272" text-anchor="middle" class="small">fast proposal path</text>
+  <text x="250" y="216" text-anchor="middle" class="label">草稿模型</text>
+  <text x="250" y="246" text-anchor="middle" class="small">提出 K 个 token</text>
+  <text x="250" y="272" text-anchor="middle" class="small">快速提议路径</text>
 
   <rect x="480" y="180" width="360" height="120" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="660" y="216" text-anchor="middle" class="label">Candidate tokens</text>
+  <text x="660" y="216" text-anchor="middle" class="label">候选 token</text>
   <text x="660" y="246" text-anchor="middle" class="small">x1, x2, x3, ... xK</text>
   <text x="660" y="272" text-anchor="middle" class="small">x1, x2, ... xK</text>
 
   <rect x="910" y="180" width="320" height="120" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
-  <text x="1070" y="216" text-anchor="middle" class="label">Target model</text>
-  <text x="1070" y="246" text-anchor="middle" class="small">verify each candidate</text>
-  <text x="1070" y="272" text-anchor="middle" class="small">correctness stays here</text>
+  <text x="1070" y="216" text-anchor="middle" class="label">目标模型</text>
+  <text x="1070" y="246" text-anchor="middle" class="small">验证每个候选</text>
+  <text x="1070" y="272" text-anchor="middle" class="small">最终正确性由此决定</text>
 
   <rect x="1280" y="180" width="290" height="120" class="box" fill="#fff1f2" stroke="#db2777"/>
-  <text x="1425" y="216" text-anchor="middle" class="label">Accept / Reject</text>
-  <text x="1425" y="246" text-anchor="middle" class="small">continue or stop</text>
-  <text x="1425" y="272" text-anchor="middle" class="small">accept or stop early</text>
+  <text x="1425" y="216" text-anchor="middle" class="label">接受 / 拒绝</text>
+  <text x="1425" y="246" text-anchor="middle" class="small">继续或停止</text>
+  <text x="1425" y="272" text-anchor="middle" class="small">拒绝后提前回退</text>
 
   <path d="M 410 240 L 480 240" class="arrow"/>
   <path d="M 840 240 L 910 240" class="arrow"/>
@@ -52,11 +52,8 @@
   <path d="M 1070 300 C 1070 430 1425 430 1425 300" class="reject"/>
 
   <rect x="90" y="360" width="1470" height="120" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="120" y="398" class="label">Verification loop</text>
-  <text x="120" y="432" class="small">Accept tokens that pass target-model verification; stop at the first rejection.</text>
-  <text x="120" y="462" class="small">After rejection, later draft tokens are discarded and generation returns to the target model.</text>
+  <text x="120" y="398" class="label">验证循环</text>
+  <text x="120" y="432" class="small">按从左到右的顺序验证，保留连续通过的前缀，在首次拒绝处停止。</text>
+  <text x="120" y="462" class="small">拒绝后面的草稿 token 被丢弃，生成回到目标模型路径。</text>
 
-  <rect x="90" y="530" width="1470" height="110" class="box" fill="#fffef2" stroke="#cbd5e1"/>
-  <text x="120" y="568" class="label">Read it in one line</text>
-  <text x="120" y="602" class="small">The draft model buys speed; the target model still decides which tokens become part of the final output.</text>
 </svg>

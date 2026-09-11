@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <rect width="1400" height="900" fill="#f7fafc"/>
+  <style>
+    .title { font: 700 30px sans-serif; fill: #172b4d; }
+    .head { font: 700 21px sans-serif; fill: #172b4d; }
+    .text { font: 17px sans-serif; fill: #243b53; }
+    .small { font: 15px sans-serif; fill: #486581; }
+    .box { stroke-width: 2; rx: 14; }
+    .arrow { stroke: #627d98; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#627d98"/>
+    </marker>
+  </defs>
+
+  <text x="700" y="45" text-anchor="middle" class="title">推理引擎如何进入同一套对照实验</text>
+  <rect x="390" y="70" width="620" height="72" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="700" y="102" text-anchor="middle" class="head">统一实验输入</text>
+  <text x="700" y="128" text-anchor="middle" class="small">模型 · workload · 生成长度 · 并发 · dtype · GPU · 服务接口</text>
+
+  <path d="M520 142 L260 210" class="arrow"/>
+  <path d="M650 142 L605 210" class="arrow"/>
+  <path d="M750 142 L795 210" class="arrow"/>
+  <path d="M880 142 L1140 210" class="arrow"/>
+
+  <rect x="35" y="210" width="310" height="220" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="190" y="250" text-anchor="middle" class="head">vLLM</text>
+  <text x="190" y="286" text-anchor="middle" class="text">PagedAttention</text>
+  <text x="190" y="316" text-anchor="middle" class="text">Continuous Batching</text>
+  <text x="190" y="356" text-anchor="middle" class="small">66 主线 backend</text>
+  <text x="190" y="382" text-anchor="middle" class="small">适合统一服务基线</text>
+  <text x="190" y="408" text-anchor="middle" class="small">项目：66 / 69 / 70</text>
+
+  <rect x="445" y="210" width="310" height="220" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="600" y="250" text-anchor="middle" class="head">SGLang</text>
+  <text x="600" y="286" text-anchor="middle" class="text">RadixAttention</text>
+  <text x="600" y="316" text-anchor="middle" class="text">Radix Cache</text>
+  <text x="600" y="356" text-anchor="middle" class="small">可选 backend 对照</text>
+  <text x="600" y="382" text-anchor="middle" class="small">适合重复前缀 workload</text>
+  <text x="600" y="408" text-anchor="middle" class="small">项目：66 / 69 / 70</text>
+
+  <rect x="785" y="210" width="310" height="220" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="940" y="250" text-anchor="middle" class="head">TensorRT-LLM</text>
+  <text x="940" y="286" text-anchor="middle" class="text">融合 kernel / In-flight Batching</text>
+  <text x="940" y="316" text-anchor="middle" class="text">量化与 GPU 图优化</text>
+  <text x="940" y="356" text-anchor="middle" class="small">扩展 backend</text>
+  <text x="940" y="382" text-anchor="middle" class="small">需要单独确认版本和 GPU</text>
+  <text x="940" y="408" text-anchor="middle" class="small">关联项目：67 / 74</text>
+
+  <rect x="1125" y="210" width="240" height="220" fill="#eef2f5" stroke="#829ab1" class="box"/>
+  <text x="1245" y="250" text-anchor="middle" class="head">参考 backend</text>
+  <text x="1245" y="286" text-anchor="middle" class="text">Transformers</text>
+  <text x="1245" y="316" text-anchor="middle" class="text">llama.cpp / GGUF</text>
+  <text x="1245" y="356" text-anchor="middle" class="small">本地或 CPU-first</text>
+  <text x="1245" y="382" text-anchor="middle" class="small">服务语义可能不同</text>
+  <text x="1245" y="408" text-anchor="middle" class="small">需单独标注口径</text>
+
+  <path d="M190 430 L480 550" class="arrow"/>
+  <path d="M600 430 L600 550" class="arrow"/>
+  <path d="M940 430 L720 550" class="arrow"/>
+  <path d="M1245 430 L820 550" class="arrow"/>
+
+  <rect x="260" y="550" width="880" height="92" fill="#ffffff" stroke="#627d98" class="box"/>
+  <text x="700" y="586" text-anchor="middle" class="head">统一 benchmark 与公平性检查</text>
+  <text x="700" y="615" text-anchor="middle" class="small">相同模型、输入、输出长度、并发、dtype、GPU 和预热设置，才能比较结果</text>
+
+  <path d="M700 642 L700 690" class="arrow"/>
+  <rect x="250" y="690" width="900" height="90" fill="#ffffff" stroke="#e0a23b" class="box"/>
+  <text x="700" y="727" text-anchor="middle" class="head">统一输出</text>
+  <text x="700" y="756" text-anchor="middle" class="text">TTFT · TPOT · E2E · 请求/Token 吞吐 · 成功率 · 峰值显存 · P99 · 质量</text>
+  <text x="700" y="840" text-anchor="middle" class="small">引擎内部机制不同；端到端差异需要专项实验或 profiler 证据支持。</text>
+</svg>

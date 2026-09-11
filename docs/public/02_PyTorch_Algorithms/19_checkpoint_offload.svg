@@ -1,55 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 820" role="img" aria-labelledby="title desc">
-  <title id="title">Checkpointing versus offload</title>
-  <desc id="desc">Compares activation checkpointing and activation offload across memory and recomputation paths.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 820" role="img" aria-labelledby="title desc">
+  <title id="title">训练显存优化的三种状态处理方式</title>
+  <desc id="desc">前向产生的激活在反向时仍可能需要，训练可以保存、重算或搬运这些状态，分别把压力转移到显存、计算或带宽。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#f5f3ff"/>
-    </linearGradient>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#eef2ff"/></linearGradient>
     <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 14px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
-      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
-      .dash { stroke: #7c3aed; stroke-width: 4; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrow); }
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .group { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #334155; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 16; ry: 16; }
+      .flow { stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .cost { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 600; }
     </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/></marker>
   </defs>
-  <rect width="1660" height="820" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">Activation checkpointing vs activation offload</text>
-  <text x="64" y="96" class="sub">Checkpointing recomputes; offload moves tensors to another storage tier. Both reduce peak GPU memory in different ways.</text>
+  <rect width="1600" height="820" fill="url(#bg)"/>
+  <text x="70" y="62" class="title">训练显存优化：同一份激活，三种处理方式</text>
+  <text x="70" y="94" class="sub">前向产生的激活在反向时仍可能需要；选择策略就是决定把压力转移到哪里</text>
 
-  <rect x="90" y="160" width="1460" height="140" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="120" y="198" class="label">Forward pass with checkpoints</text>
-  <text x="120" y="234" class="small">Block 1 -> Block 2 -> Block 3 -> Block 4</text>
-  <text x="120" y="264" class="small">keep only selected checkpoint states, drop intermediate activations</text>
+  <rect x="610" y="145" width="380" height="92" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="800" y="182" text-anchor="middle" class="label">前向产生激活</text>
+  <text x="800" y="210" text-anchor="middle" class="small">反向仍需要其中一部分</text>
 
-  <rect x="90" y="350" width="710" height="190" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="120" y="388" class="label">Checkpointing</text>
-  <text x="120" y="424" class="small">• save fewer activations</text>
-  <text x="120" y="454" class="small">• backward re-runs the local forward segment</text>
-  <text x="120" y="484" class="small">• trades compute for memory</text>
-  <text x="120" y="514" class="small">• best for long blocks with expensive activation storage</text>
+  <rect x="70" y="300" width="430" height="400" rx="22" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
+  <text x="100" y="340" class="group">保存：用显存换计算</text>
+  <rect x="115" y="380" width="340" height="76" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="285" y="426" text-anchor="middle" class="label">保留激活</text>
+  <path d="M285 456 L285 530" class="flow" stroke="#3b82f6"/>
+  <rect x="115" y="530" width="340" height="76" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="285" y="576" text-anchor="middle" class="label">反向直接读取</text>
+  <text x="285" y="650" text-anchor="middle" class="cost" fill="#1d4ed8">主要代价：GPU 显存</text>
 
-  <rect x="840" y="350" width="710" height="190" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
-  <text x="870" y="388" class="label">Offload</text>
-  <text x="870" y="424" class="small">• move activations to CPU / pinned memory / slower tier</text>
-  <text x="870" y="454" class="small">• backward fetches them back when needed</text>
-  <text x="870" y="484" class="small">• trades transfer for memory</text>
-  <text x="870" y="514" class="small">• best when recomputation is too expensive</text>
+  <rect x="585" y="300" width="430" height="400" rx="22" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="2"/>
+  <text x="615" y="340" class="group">重算：用计算换显存</text>
+  <rect x="630" y="380" width="340" height="76" class="box" fill="#ffffff" stroke="#8b5cf6"/>
+  <text x="800" y="426" text-anchor="middle" class="label">只保留区段边界</text>
+  <path d="M800 456 L800 530" class="flow" stroke="#8b5cf6"/>
+  <rect x="630" y="530" width="340" height="76" class="box" fill="#ffffff" stroke="#8b5cf6"/>
+  <text x="800" y="576" text-anchor="middle" class="label">反向重新执行区段</text>
+  <text x="800" y="650" text-anchor="middle" class="cost" fill="#6d28d9">主要代价：额外前向计算</text>
 
-  <path d="M 450 300 C 450 330 330 330 330 350" class="dash"/>
-  <path d="M 1210 300 C 1210 330 1330 330 1330 350" class="dash"/>
+  <rect x="1100" y="300" width="430" height="400" rx="22" fill="#ecfccb" stroke="#bef264" stroke-width="2"/>
+  <text x="1130" y="340" class="group">搬运：用带宽换显存</text>
+  <rect x="1145" y="380" width="340" height="76" class="box" fill="#ffffff" stroke="#65a30d"/>
+  <text x="1315" y="426" text-anchor="middle" class="label">移出 GPU</text>
+  <path d="M1315 456 L1315 530" class="flow" stroke="#65a30d"/>
+  <rect x="1145" y="530" width="340" height="76" class="box" fill="#ffffff" stroke="#65a30d"/>
+  <text x="1315" y="576" text-anchor="middle" class="label">反向取回状态</text>
+  <text x="1315" y="650" text-anchor="middle" class="cost" fill="#4d7c0f">主要代价：传输带宽与同步</text>
 
-  <rect x="90" y="590" width="1460" height="180" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="120" y="628" class="label">What to remember</text>
-  <text x="120" y="662" class="small">1. checkpointing: keep fewer states, recompute on backward.</text>
-  <text x="120" y="692" class="small">2. offload: keep states, but move them to another storage tier.</text>
-  <text x="120" y="722" class="small">3. both exist to reduce GPU peak memory; they are not the same optimization.</text>
-  <text x="870" y="662" class="small">4. the page should make the tradeoff visible before the code does.</text>
-  <text x="870" y="692" class="small">5. offload and checkpointing can be combined with other memory strategies.</text>
+  <path d="M705 237 C610 270 450 305 285 380" class="flow" stroke="#3b82f6"/>
+  <path d="M800 237 L800 380" class="flow" stroke="#8b5cf6"/>
+  <path d="M895 237 C990 270 1150 305 1315 380" class="flow" stroke="#65a30d"/>
 </svg>

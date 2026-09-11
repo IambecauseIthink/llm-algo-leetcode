@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:24px;font-weight:700}.label{font-size:18px;font-weight:600}.small{font-size:15px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="38" text-anchor="middle" class="title">训练激活值的保存方式与代价</text>
+  <rect x="40" y="90" width="190" height="120" class="box"/><text x="135" y="125" text-anchor="middle" class="label">baseline</text><text x="135" y="158" text-anchor="middle" class="small">激活值留在 GPU</text><text x="135" y="185" text-anchor="middle" class="small">反向直接读取</text>
+  <rect x="260" y="90" width="190" height="120" class="box"/><text x="355" y="125" text-anchor="middle" class="label">checkpoint</text><text x="355" y="158" text-anchor="middle" class="small">保存选定边界</text><text x="355" y="185" text-anchor="middle" class="small">部分前向重算</text>
+  <rect x="480" y="90" width="190" height="120" class="box"/><text x="575" y="125" text-anchor="middle" class="label">offload</text><text x="575" y="158" text-anchor="middle" class="small">部分激活值到 CPU</text><text x="575" y="185" text-anchor="middle" class="small">搬运与同步</text>
+  <rect x="700" y="90" width="160" height="120" class="box"/><text x="780" y="125" text-anchor="middle" class="label">hybrid</text><text x="780" y="158" text-anchor="middle" class="small">重算 + 部分搬运</text><text x="780" y="185" text-anchor="middle" class="small">综合代价</text>
+  <path d="M135 210 V275 H780 V210" fill="none" class="arrow"/>
+  <rect x="165" y="285" width="570" height="90" class="box"/><text x="450" y="320" text-anchor="middle" class="label">后续实验比较</text><text x="450" y="350" text-anchor="middle" class="small">GPU 显存 · 训练速度 · 可运行性 · loss</text>
+</svg>

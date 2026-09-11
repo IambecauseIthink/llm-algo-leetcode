@@ -1,80 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 760" role="img" aria-labelledby="title desc">
-  <title id="title">MoE Router Diagram</title>
-  <desc id="desc">Tokens are scored by a router and dispatched to top-k experts instead of passing through one dense MLP.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">MoE Router 路由主路径</title>
+  <desc id="desc">Token 经过路由器打分、Top-K 选择、专家计算和加权合并，形成稀疏激活路径。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#ffe4e6"/>
-    </linearGradient>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#fff1f2"/></linearGradient>
     <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
-      .arrow { stroke: #475569; stroke-width: 3.5; fill: none; marker-end: url(#arrow); }
-      .pink { stroke: #db2777; stroke-width: 3.5; fill: none; marker-end: url(#arrowPink); }
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 18; ry: 18; }
+      .flow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .route { stroke: #db2777; stroke-width: 3.5; fill: none; marker-end: url(#arrowPink); }
     </style>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
-    <marker id="arrowPink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#db2777"/>
-    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
+    <marker id="arrowPink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#db2777"/></marker>
   </defs>
-  <rect width="1540" height="760" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">MoE router: tokens are dispatched to top-k experts</text>
-  <text x="64" y="96" class="sub">Sparse activation lets capacity grow while each token only pays for a few experts</text>
+  <rect width="1600" height="720" fill="url(#bg)"/>
+  <text x="60" y="60" class="title">MoE Router：一个 token 如何选择少数专家</text>
+  <text x="60" y="90" class="sub">路由器控制计算路径；Top-K 让总参数容量变大，但每个 token 只激活少数专家</text>
 
-  <rect x="70" y="170" width="190" height="92" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="165" y="206" text-anchor="middle" class="label">Token</text>
-  <text x="165" y="232" text-anchor="middle" class="small">hidden state</text>
+  <rect x="70" y="270" width="190" height="90" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="165" y="305" text-anchor="middle" class="label">Token 表示</text><text x="165" y="330" text-anchor="middle" class="small">hidden state</text>
+  <rect x="330" y="270" width="220" height="90" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="440" y="305" text-anchor="middle" class="label">Router 打分</text><text x="440" y="330" text-anchor="middle" class="small">得到每个专家的概率</text>
+  <rect x="620" y="270" width="210" height="90" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="725" y="305" text-anchor="middle" class="label">Top-K 选择</text><text x="725" y="330" text-anchor="middle" class="small">保留少数专家</text>
 
-  <rect x="320" y="170" width="220" height="92" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="430" y="206" text-anchor="middle" class="label">Router logits</text>
-  <text x="430" y="232" text-anchor="middle" class="small">scores for experts</text>
+  <rect x="920" y="160" width="230" height="90" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1035" y="195" text-anchor="middle" class="label">专家 A</text><text x="1035" y="220" text-anchor="middle" class="small">独立 MLP</text>
+  <rect x="920" y="390" width="230" height="90" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1035" y="425" text-anchor="middle" class="label">专家 B</text><text x="1035" y="450" text-anchor="middle" class="small">独立 MLP</text>
+  <rect x="1240" y="270" width="230" height="90" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="1355" y="305" text-anchor="middle" class="label">加权合并</text><text x="1355" y="330" text-anchor="middle" class="small">恢复 token 表示</text>
 
-  <rect x="610" y="170" width="220" height="92" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
-  <text x="720" y="206" text-anchor="middle" class="label">Top-k select</text>
-  <text x="720" y="232" text-anchor="middle" class="small">keep a few experts</text>
-
-  <rect x="900" y="130" width="180" height="80" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="990" y="162" text-anchor="middle" class="label">Expert 1</text>
-  <text x="990" y="186" text-anchor="middle" class="small">specialized MLP</text>
-
-  <rect x="900" y="230" width="180" height="80" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="990" y="262" text-anchor="middle" class="label">Expert 2</text>
-  <text x="990" y="286" text-anchor="middle" class="small">specialized MLP</text>
-
-  <rect x="1140" y="130" width="180" height="80" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="1230" y="162" text-anchor="middle" class="label">Expert 3</text>
-  <text x="1230" y="186" text-anchor="middle" class="small">specialized MLP</text>
-
-  <rect x="1140" y="230" width="180" height="80" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="1230" y="262" text-anchor="middle" class="label">Expert 4</text>
-  <text x="1230" y="286" text-anchor="middle" class="small">specialized MLP</text>
-
-  <rect x="1350" y="170" width="120" height="92" class="box" fill="#fff1f2" stroke="#e11d48"/>
-  <text x="1410" y="206" text-anchor="middle" class="label">Mix</text>
-  <text x="1410" y="232" text-anchor="middle" class="small">combine</text>
-
-  <path d="M 260 216 L 320 216" class="arrow"/>
-  <path d="M 540 216 L 610 216" class="arrow"/>
-  <path d="M 830 216 C 860 216 870 170 900 170" class="pink"/>
-  <path d="M 830 216 C 860 216 870 270 900 270" class="arrow"/>
-  <path d="M 830 216 C 900 216 1090 170 1140 170" class="pink"/>
-  <path d="M 830 216 C 900 216 1090 270 1140 270" class="arrow"/>
-  <path d="M 1080 170 L 1350 216" class="arrow"/>
-  <path d="M 1320 170 L 1350 216" class="arrow"/>
-  <path d="M 1080 270 L 1350 216" class="arrow"/>
-  <path d="M 1320 270 L 1350 216" class="arrow"/>
-
-  <rect x="110" y="390" width="1320" height="220" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="770" y="430" text-anchor="middle" class="label">What the router is buying you</text>
-  <text x="150" y="470" class="small">- each token activates only a few experts</text>
-  <text x="150" y="500" class="small">- total parameter capacity can keep growing</text>
-  <text x="150" y="530" class="small">- training and dispatch become a systems problem</text>
-  <text x="150" y="560" class="small">- load balancing is needed so experts do not collapse</text>
-  <text x="780" y="470" class="small">MoE is not only a model trick; it is a routing and communication design</text>
-  <text x="780" y="500" class="small">That is why sparse expert models need both router logic and expert parallel execution</text>
+  <path d="M260 315 L330 315" class="flow"/><path d="M550 315 L620 315" class="flow"/>
+  <path d="M830 315 C870 315 875 205 920 205" class="route"/><path d="M830 315 C870 315 875 435 920 435" class="route"/>
+  <path d="M1150 205 C1190 205 1200 315 1240 315" class="flow"/><path d="M1150 435 C1190 435 1200 315 1240 315" class="flow"/>
+  <rect x="200" y="555" width="1200" height="82" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="800" y="588" text-anchor="middle" class="label">系统含义</text><text x="800" y="615" text-anchor="middle" class="small">稀疏激活降低单 token 计算量，但 dispatch、容量限制和专家间通信成为新的工程问题</text>
 </svg>

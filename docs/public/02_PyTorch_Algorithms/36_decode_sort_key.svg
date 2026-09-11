@@ -1,0 +1,43 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="640" fill="#F6F8FB"/>
+  <rect x="42" y="34" width="1196" height="572" rx="26" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+
+  <text x="82" y="88" fill="#0F172A" font-size="30" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">排序键如何决定下一次调度</text>
+  <text x="82" y="122" fill="#475569" font-size="18" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">排序键从左到右比较；前面的字段相同时，才继续比较后面的字段。</text>
+
+  <rect x="82" y="154" width="1116" height="70" rx="16" fill="#EEF2FF" stroke="#6366F1" stroke-width="2"/>
+  <text x="350" y="199" fill="#3730A3" font-size="25" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">排序键 = (阶段, 缓存, 优先级, 总长度, 编号)</text>
+
+  <rect x="82" y="258" width="202" height="138" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="126" y="296" fill="#1E3A8A" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">阶段</text>
+  <text x="112" y="332" fill="#1E3A8A" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">prefill = 0</text>
+  <text x="112" y="362" fill="#1E3A8A" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">decode = 1</text>
+
+  <rect x="314" y="258" width="202" height="138" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+  <text x="358" y="296" fill="#92400E" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">缓存</text>
+  <text x="344" y="332" fill="#92400E" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">命中 = 0</text>
+  <text x="344" y="362" fill="#92400E" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">未命中 = 1</text>
+
+  <rect x="546" y="258" width="202" height="138" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="584" y="296" fill="#166534" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">业务优先级</text>
+  <text x="576" y="332" fill="#166534" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">高优先级更靠前</text>
+  <text x="576" y="362" fill="#166534" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">转换后数值更小</text>
+
+  <rect x="778" y="258" width="202" height="138" rx="16" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="834" y="296" fill="#9D174D" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">总长度</text>
+  <text x="812" y="332" fill="#9D174D" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">`total_len`</text>
+  <text x="812" y="362" fill="#9D174D" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">用于稳定排序</text>
+
+  <rect x="1010" y="258" width="188" height="138" rx="16" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
+  <text x="1056" y="296" fill="#334155" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">请求编号</text>
+  <text x="1044" y="332" fill="#334155" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">`request_id`</text>
+  <text x="1044" y="362" fill="#334155" font-size="17" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">保证结果稳定</text>
+
+  <path d="M284 327H314M516 327H546M748 327H778M980 327H1010" stroke="#64748B" stroke-width="2.5"/>
+  <path d="M306 319L314 327L306 335M538 319L546 327L538 335M770 319L778 327L770 335M1002 319L1010 327L1002 335" fill="#64748B"/>
+
+  <rect x="82" y="446" width="1116" height="112" rx="18" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5"/>
+  <text x="112" y="480" fill="#0F172A" font-size="19" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">例：第一个不同字段就决定结果</text>
+  <text x="112" y="518" fill="#334155" font-size="18" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">A = (0, 1, -2, 20, 1)　　B = (1, 0, -5, 10, 2)</text>
+  <text x="112" y="546" fill="#1D4ED8" font-size="18" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">先比较阶段：A 的 0 小于 B 的 1，因此 A 排在前面，后面的字段暂不比较。</text>
+</svg>

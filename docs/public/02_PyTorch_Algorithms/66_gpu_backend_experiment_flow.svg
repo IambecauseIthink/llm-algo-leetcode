@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">66 Step6-8 GPU backend 实验流程</title>
+  <desc id="desc">Step6 完成 vLLM 主线，Step7 可选完成 SGLang 对照，Step8 在相同 workload 下比较两个 backend。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#52606d"/></marker>
+    <style>
+      .title { font: 700 25px sans-serif; fill: #172b4d; }
+      .lane { font: 700 18px sans-serif; fill: #243b53; }
+      .label { font: 700 16px sans-serif; fill: #172b4d; }
+      .body { font: 15px sans-serif; fill: #334e68; }
+      .small { font: 14px sans-serif; fill: #486581; }
+      .box { stroke-width: 2; rx: 14; }
+      .arrow { stroke: #52606d; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #829ab1; stroke-width: 2.2; stroke-dasharray: 7 6; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1400" height="650" fill="#f8fafc"/>
+  <text x="700" y="42" text-anchor="middle" class="title">66 Step6–8：从真实 backend 到跨 backend 比较</text>
+
+  <rect x="35" y="260" width="205" height="125" class="box" fill="#e8f1fb" stroke="#4c86c6"/>
+  <text x="137" y="295" text-anchor="middle" class="label">共同 workload</text>
+  <text x="137" y="325" text-anchor="middle" class="body">模型 · 请求集 · 长度</text>
+  <text x="137" y="353" text-anchor="middle" class="small">dtype · 并发 · 生成长度</text>
+  <text x="137" y="375" text-anchor="middle" class="small">三步使用同一口径</text>
+
+  <text x="285" y="105" class="lane">Step 6：vLLM 主线（必做）</text>
+  <rect x="275" y="125" width="200" height="125" class="box" fill="#fff4db" stroke="#d99a2b"/>
+  <text x="375" y="160" text-anchor="middle" class="label">环境与 backend 预检</text>
+  <text x="375" y="190" text-anchor="middle" class="body">GPU · CUDA · vLLM</text>
+  <text x="375" y="218" text-anchor="middle" class="small">模型和端口可用</text>
+  <rect x="515" y="125" width="200" height="125" class="box" fill="#fff4db" stroke="#d99a2b"/>
+  <text x="615" y="160" text-anchor="middle" class="label">G0 → G1</text>
+  <text x="615" y="190" text-anchor="middle" class="body">baseline → 单变量对照</text>
+  <text x="615" y="218" text-anchor="middle" class="small">保存 vLLM JSON</text>
+
+  <text x="285" y="315" class="lane">Step 7：SGLang 对照（可选）</text>
+  <rect x="275" y="335" width="200" height="125" class="box" fill="#e8f5ee" stroke="#4f9d69"/>
+  <text x="375" y="370" text-anchor="middle" class="label">确认 SGLang 环境</text>
+  <text x="375" y="400" text-anchor="middle" class="body">填写已验证命令</text>
+  <text x="375" y="428" text-anchor="middle" class="small">独立启动 backend</text>
+  <rect x="515" y="335" width="200" height="125" class="box" fill="#e8f5ee" stroke="#4f9d69"/>
+  <text x="615" y="370" text-anchor="middle" class="label">复用同一 benchmark</text>
+  <text x="615" y="400" text-anchor="middle" class="body">相同 workload 运行</text>
+  <text x="615" y="428" text-anchor="middle" class="small">保存 SGLang JSON</text>
+
+  <text x="285" y="525" class="lane">Step 8：跨 backend 比较（可选）</text>
+  <rect x="275" y="545" width="200" height="80" class="box" fill="#f0eafa" stroke="#8561a8"/>
+  <text x="375" y="578" text-anchor="middle" class="label">对齐比较条件</text>
+  <text x="375" y="604" text-anchor="middle" class="small">模型 · GPU · dtype · 并发</text>
+  <rect x="515" y="545" width="200" height="80" class="box" fill="#f0eafa" stroke="#8561a8"/>
+  <text x="615" y="578" text-anchor="middle" class="label">比较并解释</text>
+  <text x="615" y="604" text-anchor="middle" class="small">指标差异 → 项目结论</text>
+
+  <path d="M240 300 C255 300 255 188 275 188" class="arrow"/>
+  <path d="M240 325 C255 325 255 398 275 398" class="arrow"/>
+  <path d="M240 350 C255 350 255 585 275 585" class="dash"/>
+  <path d="M475 188 H515" class="arrow"/>
+  <path d="M475 398 H515" class="arrow"/>
+  <path d="M715 188 C820 188 820 285 900 285" class="dash"/>
+  <path d="M715 398 C820 398 820 335 900 335" class="dash"/>
+  <path d="M715 585 H900" class="arrow"/>
+
+  <rect x="900" y="240" width="220" height="145" class="box" fill="#f7f9fc" stroke="#829ab1"/>
+  <text x="1010" y="278" text-anchor="middle" class="label">统一结果表</text>
+  <text x="1010" y="308" text-anchor="middle" class="body">TTFT · TPOT · E2E</text>
+  <text x="1010" y="336" text-anchor="middle" class="body">吞吐 · 显存 · 成功率</text>
+  <text x="1010" y="364" text-anchor="middle" class="small">保留 backend 和版本</text>
+  <path d="M1120 312 H1170" class="arrow"/>
+
+  <rect x="1170" y="240" width="190" height="145" class="box" fill="#fdecec" stroke="#c05656"/>
+  <text x="1265" y="278" text-anchor="middle" class="label">最终结论</text>
+  <text x="1265" y="308" text-anchor="middle" class="body">适合什么 workload</text>
+  <text x="1265" y="336" text-anchor="middle" class="small">不能归因于单一机制</text>
+  <text x="1265" y="364" text-anchor="middle" class="small">accept / tune / reject</text>
+
+  <text x="700" y="645" text-anchor="middle" class="small">先完成 Step6 vLLM 基线；Step7 复用相同 workload；Step8 只比较条件一致的结果。</text>
+</svg>

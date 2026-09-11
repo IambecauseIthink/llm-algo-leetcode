@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 430" role="img" aria-labelledby="title desc">
+  <title id="title">FP8 KV Cache GPU 机制实验</title><desc id="desc">在 GPU 上比较 KV Cache 原始存储、分组量化、恢复误差和容量。</desc>
+  <defs><marker id="a41g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker><style>.t{font:700 28px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.h{font:700 19px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:2.5;rx:16}.l{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#a41g)}</style></defs>
+  <rect width="1100" height="430" fill="#f8fafc"/><text x="50" y="52" class="t">41 GPU 实验：比较 KV Cache 容量与恢复代价</text><text x="50" y="82" class="s">当前是 INT8 容器模拟，不代表真实 FP8 kernel 或 serving。</text>
+  <rect x="55" y="150" width="210" height="130" class="box" fill="#dbeafe" stroke="#2563eb"/><text x="116" y="198" class="h">KV Cache</text><text x="82" y="235" class="b">batch × heads × seq</text><text x="82" y="260" class="s">固定 head_dim</text>
+  <rect x="330" y="150" width="230" height="130" class="box" fill="#fef3c7" stroke="#d97706"/><text x="407" y="198" class="h">分组 scale</text><text x="365" y="235" class="b">改变 kv_group_size</text><text x="365" y="260" class="s">记录 scale 元数据</text>
+  <rect x="625" y="150" width="210" height="130" class="box" fill="#dcfce7" stroke="#16a34a"/><text x="690" y="198" class="h">量化 / 恢复</text><text x="655" y="235" class="b">低精度存储</text><text x="655" y="260" class="s">恢复后计算 MSE</text>
+  <rect x="900" y="150" width="150" height="130" class="box" fill="#fce7f3" stroke="#db2777"/><text x="936" y="198" class="h">指标</text><text x="925" y="235" class="b">容量 / MSE</text><text x="925" y="260" class="b">耗时 / 显存</text>
+  <path d="M265 215H330" class="l"/><path d="M560 215H625" class="l"/><path d="M835 215H900" class="l"/><text x="55" y="365" class="s">序列长度和并发增加时，重点观察缓存容量变化；真实服务收益仍由目标 backend 验证。</text>
+</svg>

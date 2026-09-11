@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:24px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:14px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" class="title">预算敏感性：结论是否依赖阈值</text>
+  <rect x="45" y="105" width="185" height="105" class="box"/><text x="137" y="140" text-anchor="middle" class="label">固定 76 报告</text><text x="137" y="170" text-anchor="middle" class="small">候选指标不变</text><text x="137" y="193" text-anchor="middle" class="small">不重新训练</text>
+  <rect x="265" y="105" width="185" height="105" class="box"/><text x="357" y="140" text-anchor="middle" class="label">改变阈值</text><text x="357" y="170" text-anchor="middle" class="small">显存上限</text><text x="357" y="193" text-anchor="middle" class="small">吞吐 / 质量下限</text>
+  <rect x="485" y="105" width="185" height="105" class="box"/><text x="577" y="140" text-anchor="middle" class="label">重新筛选</text><text x="577" y="170" text-anchor="middle" class="small">可行集合</text><text x="577" y="193" text-anchor="middle" class="small">最佳候选与决策</text>
+  <rect x="705" y="105" width="150" height="105" class="box"/><text x="780" y="140" text-anchor="middle" class="label">解释</text><text x="780" y="170" text-anchor="middle" class="small">稳定</text><text x="780" y="193" text-anchor="middle" class="small">或阈值敏感</text>
+  <path d="M230 157 H260 M450 157 H480 M670 157 H700" class="arrow"/>
+  <rect x="175" y="265" width="550" height="50" class="box"/><text x="450" y="296" text-anchor="middle" class="small">只能说明预算决策的稳定性，不能扩大 GPU 实测证据范围</text>
+</svg>

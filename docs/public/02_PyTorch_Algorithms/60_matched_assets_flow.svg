@@ -1,55 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
-  <title id="title">60 GPU 对照实验资产与流程</title>
-  <desc id="desc">固定模型、数据和训练条件后，分别运行 baseline 与 LoRA，比较资源和验证损失，保存模型产物与 JSON 报告，并输出项目决策。</desc>
-  <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L0,6 L9,3 z" fill="#52606d"/>
-    </marker>
-    <style>
-      .title { font: 700 24px sans-serif; fill: #172b4d; }
-      .label { font: 700 18px sans-serif; fill: #172b4d; }
-      .body { font: 15px sans-serif; fill: #334e68; }
-      .small { font: 14px sans-serif; fill: #486581; }
-      .box { stroke-width: 2; rx: 14; }
-      .arrow { stroke: #52606d; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-    </style>
-  </defs>
-  <rect width="1200" height="500" fill="#f8fafc"/>
-  <text x="600" y="42" text-anchor="middle" class="title">Step 7：GPU 对照实验如何形成项目资产</text>
-
-  <rect x="55" y="90" width="230" height="125" class="box" fill="#e8f1fb" stroke="#4c86c6"/>
-  <text x="170" y="125" text-anchor="middle" class="label">固定输入</text>
-  <text x="170" y="158" text-anchor="middle" class="body">模型 · 数据 · 切分</text>
-  <text x="170" y="183" text-anchor="middle" class="body">dtype · batch · steps</text>
-
-  <path d="M285 152 H350" class="arrow"/>
-
-  <rect x="350" y="70" width="230" height="165" class="box" fill="#fff4db" stroke="#d99a2b"/>
-  <text x="465" y="108" text-anchor="middle" class="label">两条训练分支</text>
-  <text x="465" y="145" text-anchor="middle" class="body">baseline</text>
-  <text x="465" y="168" text-anchor="middle" class="small">更新底座权重</text>
-  <text x="465" y="200" text-anchor="middle" class="body">LoRA</text>
-  <text x="465" y="223" text-anchor="middle" class="small">冻结底座，更新 adapter</text>
-
-  <path d="M580 152 H645" class="arrow"/>
-
-  <rect x="645" y="90" width="230" height="125" class="box" fill="#e8f5ee" stroke="#4f9d69"/>
-  <text x="760" y="125" text-anchor="middle" class="label">对照指标</text>
-  <text x="760" y="158" text-anchor="middle" class="body">train / val loss</text>
-  <text x="760" y="183" text-anchor="middle" class="body">速度 · 显存 · 参数量</text>
-
-  <path d="M875 152 H940" class="arrow"/>
-
-  <rect x="940" y="70" width="205" height="165" class="box" fill="#f0eafa" stroke="#8561a8"/>
-  <text x="1042" y="108" text-anchor="middle" class="label">项目资产</text>
-  <text x="1042" y="143" text-anchor="middle" class="body">adapter / tokenizer</text>
-  <text x="1042" y="168" text-anchor="middle" class="body">seed 报告</text>
-  <text x="1042" y="193" text-anchor="middle" class="body">汇总 JSON</text>
-
-  <path d="M760 215 V315" class="arrow"/>
-  <path d="M1042 235 V280 H960 V315" class="arrow"/>
-  <rect x="475" y="315" width="570" height="105" class="box" fill="#ffffff" stroke="#9fb3c8"/>
-  <text x="760" y="352" text-anchor="middle" class="label">决策依据</text>
-  <text x="760" y="382" text-anchor="middle" class="body">资源收益 + loss 变化 + 数据 / 交付检查</text>
-  <text x="760" y="405" text-anchor="middle" class="small">accept / tune / reject；结论仅适用于当前 workload</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">60 GPU 对照实验的双轨比较</title>
+  <desc id="desc">在相同模型、数据和训练条件下，分别运行全参数微调与 LoRA，再把资源、质量和交付结果放到同一张实验记录中比较。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#52606d"/></marker></defs>
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}.title{font-size:25px;font-weight:700}.h{font-size:19px;font-weight:700}.b{font-size:16px;fill:#334e68}.s{font-size:14px;fill:#486581}.box{stroke-width:2;rx:14}.ar{stroke:#52606d;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+  <rect width="1200" height="560" fill="#f8fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">GPU 对照实验：固定条件，比较两条训练轨道</text>
+  <rect x="55" y="95" width="235" height="150" class="box" fill="#e8f1fb" stroke="#4c86c6"/>
+  <text x="172" y="130" text-anchor="middle" class="h">共同条件</text><text x="172" y="166" text-anchor="middle" class="b">模型 · 数据 · 切分</text><text x="172" y="193" text-anchor="middle" class="b">dtype · batch · steps</text><text x="172" y="220" text-anchor="middle" class="s">只改变训练对象</text>
+  <path class="ar" d="M290 170 H340 V125 H370 M340 170 V215 H370"/>
+  <rect x="370" y="80" width="245" height="90" class="box" fill="#fff4db" stroke="#d99a2b"/><text x="492" y="118" text-anchor="middle" class="h">全参数微调</text><text x="492" y="148" text-anchor="middle" class="b">更新底座模型参数</text>
+  <rect x="370" y="195" width="245" height="90" class="box" fill="#e8f5ee" stroke="#4f9d69"/><text x="492" y="233" text-anchor="middle" class="h">LoRA 微调</text><text x="492" y="263" text-anchor="middle" class="b">冻结底座，更新 adapter</text>
+  <path class="ar" d="M615 125 H675 M615 240 H675"/>
+  <rect x="675" y="105" width="260" height="180" class="box" fill="#ffffff" stroke="#9fb3c8"/><text x="805" y="142" text-anchor="middle" class="h">同口径指标</text><text x="805" y="177" text-anchor="middle" class="b">参数量 · 显存 · step time</text><text x="805" y="205" text-anchor="middle" class="b">train loss · val loss</text><text x="805" y="233" text-anchor="middle" class="b">samples / s · OOM</text><text x="805" y="263" text-anchor="middle" class="s">两条轨道使用同一评测方法</text>
+  <path class="ar" d="M805 285 V345"/>
+  <rect x="475" y="345" width="660" height="125" class="box" fill="#f0eafa" stroke="#8561a8"/><text x="805" y="382" text-anchor="middle" class="h">项目决策与交付</text><text x="805" y="414" text-anchor="middle" class="b">资源是否下降 · 质量是否可接受 · 产物是否可复现</text><text x="805" y="444" text-anchor="middle" class="b">adapter / tokenizer / JSON 报告 → accept / tune / reject</text>
 </svg>
