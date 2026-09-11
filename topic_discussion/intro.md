@@ -12,7 +12,11 @@
 
 如果你还没有明确的性能或系统问题，先从四条主路线中选一条；横向专题用于补方法和机制，不要求全部顺序完成。四条路线是并列入口，不代表必须按页面顺序学习。
 
-专题轴包含四条学习路线、三个横切支撑专题和四个基础支撑专题；教程的纵向主线仍由 `Part 00–04` 构成。
+专题轴包含四条学习路线、四个横切支撑专题和四个基础支撑专题；教程的纵向主线仍由 `Part 00–04` 构成。
+
+![专题讨论轴：从 Notebook 主线到跨 Part 路线](../docs/public/topic_discussion/topic_discussion_overview.svg)
+
+专题页负责组织关系和学习入口，具体机制、题目和实验仍以对应 Part 的 Notebook 为准。
 
 | 路线 | 主入口 | 适合什么时候进入 |
 |:---|:---|:---|
@@ -51,7 +55,7 @@ Profiling 不属于某一个固定层，而是贯穿 Infra-L1–Infra-L5 的证�
 
 Profiling 与 Evaluation 横跨五层：前者负责采集证据，后者负责验证质量、性能、显存、通信和部署结果。每个优化结论至少要说明 `Compute Δ / Memory Δ / Communication Δ / Quality Δ / End-to-End Δ`。
 
-## 路线选择与实践级别
+## 路线选择与运行环境
 
 ### 如何选择主路线
 
@@ -66,18 +70,18 @@ Profiling 与 Evaluation 横跨五层：前者负责采集证据，后者负责�
 
 这里的 Infra 层表示问题主要发生的位置，不表示路线等级或学习先后。需要跨层定位时，再结合 Profiling、量化与压缩、通信与并行等横向专题。
 
-### Practice 实践级别
+### 运行环境
 
-项目中的 `Practice-P0~P3` 描述实验需要达到的真实运行深度，不是 Infra 层级：
+项目的运行环境由硬件、运行方式和依赖配置三部分组成：
 
-| Practice 级别 | 含义 |
-|:---|:---|
-| Practice-P0 | CPU-first 逻辑验证、公式推导或指标模板 |
-| Practice-P1 | 单 GPU、本地模型、单机 profiling 或显存实验 |
-| Practice-P2 | vLLM / SGLang 等真实 inference backend |
-| Practice-P3 | 多 GPU、分布式通信或分布式 serving |
+| 硬件 | 运行方式 | 依赖配置示例 |
+|:---|:---|:---|
+| CPU | Python / PyTorch 逻辑验证 | base.txt + torch-cpu.txt |
+| 单 GPU | Transformers / PyTorch 训练或本地推理 | fine-tuning.txt + torch-cu128.txt |
+| 单 GPU | vLLM / SGLang 真实推理服务 | inference-vllm.txt 或 inference-sglang.txt |
+| 多 GPU | PyTorch Distributed / 分布式服务 | distributed.txt + torch-cu128.txt |
 
-例如，一个项目可以是 `Practice-P1 + Infra-L4`：在单 GPU 上学习服务实例内部的推理调度；也可以是 `Practice-P2 + Infra-L3–Infra-L4`：接入真实 backend，验证运行时与服务层的性能。
+“单 GPU”和“真实 backend”不是递进等级：前者描述硬件，后者描述软件运行方式，两者可以同时成立。没有对应硬件时可以完成逻辑验证，但不能把模拟结果当作真实性能结论。
 
 ### 常见问题跳转
 
@@ -123,6 +127,7 @@ Profiling 与 Evaluation 横跨五层：前者负责采集证据，后者负责�
 | 量化与压缩 | [量化与压缩（Quantization and Compression）](./quantization/intro.md) | 当你同时要看精度、显存、带宽和部署取舍时 |
 | 通信与并行 | [通信与并行（Communication and Parallelism）](./communication_parallel/intro.md) | 当你开始进入多卡训练、并行切分和通信瓶颈时 |
 | 性能分析 | [性能分析（Performance Analysis）](./profiling/intro.md) | 当你需要拿证据，而不是只靠经验猜测时 |
+| 多模态 | [多模态（Multimodal）](./multimodal/intro.md) | 当你要把图像、文本等多种输入接入训练、推理和评测时 |
 
 **基础支撑专题**
 
