@@ -39,3 +39,5 @@
 ## 当前状态
 
 第一批和第二批图已补齐，当前图册已覆盖 `01-06` 的主要入口。
+
+专题入口主图：[性能分析：从现象到可复核决策](../../docs/public/topic_discussion/profiling/profiling_evidence_overview.svg)。
