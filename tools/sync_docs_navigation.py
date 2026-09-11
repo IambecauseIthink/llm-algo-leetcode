@@ -68,6 +68,13 @@ NAV_FILES = {
         "quantization/intro.md",
         "quantization/casebook.md",
         "quantization/walkthrough.md",
+        "operator_optimization/intro.md",
+        "operator_optimization/01_why_operator_optimization_matters.md",
+        "operator_optimization/02_kernel_semantics_and_memory.md",
+        "operator_optimization/03_fusion_and_kernel_composition.md",
+        "operator_optimization/04_cuda_execution_and_hardware_constraints.md",
+        "operator_optimization/05_cost_model_and_profiling.md",
+        "operator_optimization/06_benchmark_and_project_validation.md",
     ],
     "team_study": [
         "intro.md",
@@ -86,6 +93,15 @@ def sync_navigation() -> None:
         src_dir = ROOT / part
         dst_dir = DOCS / part
         dst_dir.mkdir(parents=True, exist_ok=True)
+        if part == "topic_discussion":
+            files = sorted(
+                path.relative_to(src_dir).as_posix()
+                for path in src_dir.rglob("*.md")
+            )
+            source_files = {src_dir / name for name in files}
+            for stale in dst_dir.rglob("*.md"):
+                if stale not in source_files:
+                    stale.unlink()
         for name in files:
             src = src_dir / name
             if not src.exists():
@@ -99,6 +115,11 @@ def sync_navigation() -> None:
             mirrored = mirrored.replace("../../docs/guide.md", "../../guide.md")
             mirrored = mirrored.replace("../docs/guide.md", "../guide.md")
             mirrored = mirrored.replace("../docs/", "../")
+            mirrored = mirrored.replace(
+                "../../tools/",
+                "https://github.com/datawhalechina/llm-algo-leetcode/blob/main/tools/",
+            )
+            dst.parent.mkdir(parents=True, exist_ok=True)
             dst.write_text(mirrored, encoding="utf-8")
             copied += 1
     print(f"Synced {copied} navigation files into docs/")
