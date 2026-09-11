@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="590" viewBox="0 0 1200 590">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+    <style>
+      text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+      .title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#475569}
+      .group{font-size:17px;font-weight:700}.head{font-size:17px;font-weight:700}
+      .body{font-size:14px}.small{font-size:13px;fill:#475569}
+      .panel{stroke-width:2;rx:18}.item{stroke-width:1.5;rx:11}
+      .flow{stroke:#64748b;stroke-width:2.6;fill:none;marker-end:url(#arrow)}
+      .branch{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      .label{font-size:13px;fill:#475569;paint-order:stroke;stroke:#f8fafc;stroke-width:6px;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="590" rx="24" fill="#f8fafc"/>
+  <text x="600" y="44" text-anchor="middle" class="title">混合精度：从数据格式到硬件路径</text>
+  <text x="600" y="72" text-anchor="middle" class="sub">dtype、矩阵条件和 kernel 支持共同决定硬件路径，再观察成本与数值稳定性</text>
+
+  <!-- Q2: formats and conditions -->
+  <rect x="36" y="112" width="260" height="350" fill="#eff6ff" stroke="#93c5fd" class="panel"/>
+  <text x="58" y="146" class="group">数据格式与矩阵条件</text>
+  <rect x="60" y="170" width="212" height="105" fill="#fff" stroke="#60a5fa" class="item"/>
+  <text x="166" y="201" text-anchor="middle" class="head">FP32 · FP16 · BF16 · FP8</text>
+  <text x="166" y="228" text-anchor="middle" class="body">范围、精度与字节数</text>
+  <text x="166" y="250" text-anchor="middle" class="small">参数 · 激活 · 梯度</text>
+  <rect x="60" y="318" width="212" height="88" fill="#fff" stroke="#60a5fa" class="item"/>
+  <text x="166" y="348" text-anchor="middle" class="head">矩阵与布局</text>
+  <text x="166" y="374" text-anchor="middle" class="body">形状、对齐、内存布局</text>
+  <text x="166" y="396" text-anchor="middle" class="small">影响 kernel 选择</text>
+
+  <!-- Q1: hardware path -->
+  <rect x="326" y="112" width="260" height="350" fill="#f0fdf4" stroke="#86efac" class="panel"/>
+  <text x="348" y="146" class="group">硬件路径判断</text>
+  <rect x="350" y="170" width="212" height="105" fill="#fff" stroke="#4ade80" class="item"/>
+  <text x="456" y="201" text-anchor="middle" class="head">Tensor Core</text>
+  <text x="456" y="228" text-anchor="middle" class="body">矩阵乘加 MMA</text>
+  <text x="456" y="250" text-anchor="middle" class="small">dtype × 形状 × 对齐</text>
+  <rect x="350" y="318" width="212" height="88" fill="#fff" stroke="#4ade80" class="item"/>
+  <text x="456" y="348" text-anchor="middle" class="head">算子与库支持</text>
+  <text x="456" y="374" text-anchor="middle" class="body">kernel 是否使用加速路径</text>
+  <text x="456" y="396" text-anchor="middle" class="small">不能由 dtype 单独保证</text>
+
+  <!-- Q2/Q3: precision allocation -->
+  <rect x="616" y="112" width="260" height="350" fill="#fffbeb" stroke="#fcd34d" class="panel"/>
+  <text x="638" y="146" class="group">混合精度分配</text>
+  <rect x="640" y="170" width="212" height="105" fill="#fff" stroke="#f59e0b" class="item"/>
+  <text x="746" y="201" text-anchor="middle" class="head">按路径分配 dtype</text>
+  <text x="746" y="228" text-anchor="middle" class="body">计算 · 存储 · 梯度</text>
+  <text x="746" y="250" text-anchor="middle" class="small">不必使用同一种格式</text>
+  <rect x="640" y="318" width="212" height="88" fill="#fff" stroke="#f59e0b" class="item"/>
+  <text x="746" y="348" text-anchor="middle" class="head">数值保护</text>
+  <text x="746" y="374" text-anchor="middle" class="body">输入精度与累加精度</text>
+  <text x="746" y="396" text-anchor="middle" class="small">溢出、下溢与稳定性</text>
+
+  <!-- Q3: observations -->
+  <rect x="906" y="112" width="258" height="350" fill="#faf5ff" stroke="#d8b4fe" class="panel"/>
+  <text x="928" y="146" class="group">成本与稳定性观察</text>
+  <rect x="930" y="170" width="210" height="105" fill="#fff" stroke="#a855f7" class="item"/>
+  <text x="1035" y="201" text-anchor="middle" class="head">系统成本</text>
+  <text x="1035" y="228" text-anchor="middle" class="body">显存 · 带宽 · 吞吐</text>
+  <text x="1035" y="250" text-anchor="middle" class="small">步时间 · Tensor Core 利用率</text>
+  <rect x="930" y="318" width="210" height="88" fill="#fff" stroke="#a855f7" class="item"/>
+  <text x="1035" y="348" text-anchor="middle" class="head">质量与证据</text>
+  <text x="1035" y="374" text-anchor="middle" class="body">loss · NaN / Inf · 任务质量</text>
+  <text x="1035" y="396" text-anchor="middle" class="small">CPU 关系验证 / GPU 实测</text>
+
+  <!-- main flow -->
+  <path d="M296 257H326" class="flow"/><text x="311" y="240" text-anchor="middle" class="label">检查条件</text>
+  <path d="M586 257H616" class="flow"/><text x="601" y="240" text-anchor="middle" class="label">选择路径</text>
+  <path d="M876 257H906" class="flow"/><text x="891" y="240" text-anchor="middle" class="label">观察成本</text>
+
+  <!-- internal relations -->
+  <path d="M166 275V318" class="branch"/><path d="M456 275V318" class="branch"/>
+  <path d="M746 275V318" class="branch"/><text x="762" y="300" class="label">保护稳定性</text>
+  <path d="M1035 275V318" class="branch"/><text x="1051" y="300" class="label">检查质量</text>
+</svg>

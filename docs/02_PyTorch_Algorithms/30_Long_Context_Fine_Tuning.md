@@ -20,24 +20,19 @@
 - 规划长上下文批次，估算哪些样本真的能进目标窗口。
 - 用统一口径比较 baseline 和 long-context run，判断是否值得继续投入。
 
-**关键词：** `context budget`, `packing`, `length distribution`
+**关键词：** `context budget`, `packing`, `length distribution`, `sparse attention`, `linear attention`
+
+本节还用 CPU 小张量对照 Dense、Sparse 和 Linear Attention 的连接数、状态形状与长度账本，帮助你把长上下文的数据问题和架构选择放到同一张检查表里。
 
 ---
 
 ## 前置阅读
 
-**导语：** 先把训练循环、显存账本和推理阶段的 KV cache 压力看过，再进入长上下文微调，会更容易理解为什么“能塞进去”和“值得训练”是两件事。
+**导语：** 进入本节前，先能读出训练循环中的 batch、activation 和 KV Cache 成本，再比较样本长度分布与目标窗口是否匹配。
 
 - [11. KV Cache and Memory Growth | KV Cache 与显存增长](../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.md)
 - [12. Gradient Accumulation | 梯度累积](./12_Gradient_Accumulation.md)
 - [19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](./19_Activation_Checkpointing_and_Activation_Offload.md)
-
-## 相关阅读
-
-**导语：** 学完长上下文微调后，下一步重点不是继续拉大窗口，而是看数据组织、显存动作和项目验证能否一起支撑这条方案真正落地。
-- [32. Data Engineering for SFT | SFT 数据工程](./32_Data_Engineering_for_SFT.md)
-- [42. Activation Offload | 激活卸载](./42_Activation_Offload.md)
-- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
 
 ---
 
@@ -46,6 +41,7 @@
 - 先统计长度分布，区分短样本、过渡样本和超长样本。
 - 不要只看最大长度，要看落在不同区间的样本占比。
 - 如果超长样本只占很少比例，优先考虑重写数据组织和 packing，而不是盲目扩大训练窗口。
+- 先区分是扩大 dense Attention 的窗口，还是改变 Attention 连接/计算形式；这两类方案的质量和实现风险不同。
 
 ### Step 2: 把上下文预算写成显式规则
 
@@ -54,18 +50,21 @@
 - 先给 response 预留固定 token 空间，避免 prompt 把监督区全部吃掉。
 - 再判断样本是否能在目标窗口内完整放下。
 - 若放不下，要明确是截断、切块，还是延后到更大窗口实验。
+- 对 Sparse Attention 记录 mask 的非零率或连接数量；对 Linear Attention 记录状态大小和递推维度。
 
 ### Step 3: 用统一口径比较 baseline 和 candidate run
 
 - 对齐 `fit_rate`、`peak_memory_gb`、`step_time_s` 和 `eval_score`。
 - 如果窗口更大，但 fit rate 只提升一点点、显存和步时却显著上升，就不该直接推进。
 - 真正应该保留的是“长度收益明显，且成本可接受”的方案。
+- CPU 结果只能确认预算计算和 toy 机制；真实 kernel、带宽、吞吐和质量仍需单独 benchmark。
 
 ### Step 4: 动手实战
 
 1. 补全 `bucket_length_distribution`，把样本长度分成 `short / medium / long` 三档。
 2. 补全 `plan_long_context_batches`，判断样本在预留 response token 后能否完整装入上下文窗口。
 3. 补全 `summarize_long_context_experiment`，输出 baseline 和 candidate 的对比结论。
+4. 用小张量写出 dense mask 与 sparse mask 的连接数量，并记录 linear attention 状态 shape；只比较结构，不比较 GPU 速度。
 
 ### 提示
 
@@ -81,6 +80,22 @@ from typing import Dict, List
 
 
 ```python
+def summarize_sparse_connections(seq_len: int, window_size: int) -> Dict[str, float]:
+    """TODO 4: 统计局部窗口 Sparse Attention 的连接数量和非零率。"""
+    # 提示：每个 token 最多连接左右 window_size 范围内的位置；先计算总连接数，再除以 seq_len ** 2。
+    # total_connections = ???
+    # density = ???
+    raise NotImplementedError
+
+
+def summarize_linear_attention_state(seq_len: int, feature_dim: int, value_dim: int) -> Dict[str, int]:
+    """TODO 5: 计算 Linear Attention 递推状态的形状和元素数。"""
+    # 提示：简化教学模型维护 [feature_dim, value_dim] 状态，不构造 [seq_len, seq_len] 矩阵。
+    # state_shape = ???
+    # state_elements = ???
+    raise NotImplementedError
+
+
 def bucket_length_distribution(lengths: List[int], short_threshold: int, long_threshold: int) -> Dict[str, int]:
     """
     TODO 1: 把样本长度分成 `short / medium / long` 三档。
@@ -128,6 +143,12 @@ def test_long_context_template():
     try:
         counts = bucket_length_distribution([64, 128, 300, 900], short_threshold=128, long_threshold=512)
         assert counts == {'short': 2, 'medium': 1, 'long': 1}
+        sparse = summarize_sparse_connections(seq_len=8, window_size=1)
+        assert sparse['total_connections'] == 22
+        assert 0 < sparse['density'] < 1
+        state = summarize_linear_attention_state(seq_len=128, feature_dim=16, value_dim=8)
+        assert state['state_shape'] == (16, 8)
+        assert state['state_elements'] == 128
 
         samples = [
             {'name': 'short_doc', 'prompt_tokens': 300},
@@ -172,6 +193,18 @@ test_long_context_template()
 
 
 ```python
+def summarize_sparse_connections(seq_len: int, window_size: int) -> Dict[str, float]:
+    """TODO 4: 统计局部窗口 Sparse Attention 的连接数量和非零率。"""
+    total_connections = sum(min(seq_len, i + window_size + 1) - max(0, i - window_size) for i in range(seq_len))
+    return {'total_connections': total_connections, 'density': total_connections / (seq_len ** 2)}
+
+
+def summarize_linear_attention_state(seq_len: int, feature_dim: int, value_dim: int) -> Dict[str, int]:
+    """TODO 5: 计算 Linear Attention 递推状态的形状和元素数。"""
+    state_shape = (feature_dim, value_dim)
+    return {'state_shape': state_shape, 'state_elements': feature_dim * value_dim, 'seq_len': seq_len}
+
+
 def bucket_length_distribution(lengths: List[int], short_threshold: int, long_threshold: int) -> Dict[str, int]:
     """
     TODO 1: 把样本长度分成 `short / medium / long` 三档。
@@ -262,7 +295,25 @@ def summarize_long_context_experiment(baseline_run: Dict[str, float], candidate_
 - 同时比较 `fit_rate_gain`、`memory_delta_gb`、`step_time_delta_s` 和 `eval_gain`，再决定 `keep_candidate`。
 - 长上下文方案不是窗口越大越好，只有当覆盖率收益和效果收益都成立时，才值得接受更高成本。
 
-**4. 这页的定位**
+**4. TODO 4：统计 Sparse Attention 连接**
+- **实现方式**：按局部窗口逐行统计允许连接的 token 数，再除以 `seq_len ** 2` 得到 mask density。
+- **边界**：连接数量下降不等于 kernel 时间按相同比例下降；实际收益取决于稀疏布局和实现。
+
+**5. TODO 5：统计 Linear Attention 状态**
+- **实现方式**：记录简化递推模型的 `[feature_dim, value_dim]` 状态，而不是构造 `[seq_len, seq_len]` 矩阵。
+- **边界**：状态规模趋势不等于质量、吞吐或真实显存结论。
+
+**6. 这页的定位**
 - 先做长度分桶，避免把“少量极长样本”误判成“整体都需要更长上下文”。
 - 上下文预算要扣除 response 预留区，真正能用来装 prompt 的空间才是关键。
 - 对比实验至少要同时看覆盖率增益和效果增益，不能只看窗口是否变大。
+
+## 相关阅读
+
+完成长度分布、上下文预算和 CPU 观察后，可以继续阅读长上下文方法、显存动作与真实微调项目。
+
+- [LongLoRA 原论文：Efficient Fine-tuning of Long-Context Large Language Models](https://arxiv.org/abs/2309.12307)
+- [Hugging Face Transformers：长文本生成文档](https://huggingface.co/docs/transformers/main/en/llm_tutorial)
+- [32. Data Engineering for SFT | SFT 数据工程](./32_Data_Engineering_for_SFT.md)
+- [42. Activation Offload | 激活卸载](./42_Activation_Offload.md)
+- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)

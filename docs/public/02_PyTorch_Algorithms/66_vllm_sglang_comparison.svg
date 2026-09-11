@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <rect width="1200" height="650" fill="#f7fafc"/>
+  <style>
+    .title { font: 700 28px sans-serif; fill: #172b4d; }
+    .head { font: 700 21px sans-serif; fill: #172b4d; }
+    .text { font: 17px sans-serif; fill: #243b53; }
+    .small { font: 15px sans-serif; fill: #486581; }
+    .box { stroke-width: 2; rx: 14; }
+    .arrow { stroke: #627d98; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#627d98"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="42" text-anchor="middle" class="title">vLLM 与 SGLang：相同接口，不同内部机制</text>
+
+  <rect x="390" y="70" width="420" height="70" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="600" y="101" text-anchor="middle" class="head">相同实验输入</text>
+  <text x="600" y="127" text-anchor="middle" class="small">模型 · workload · 生成长度 · 并发 · dtype · GPU</text>
+
+  <path d="M495 140 L295 205" class="arrow"/>
+  <path d="M705 140 L905 205" class="arrow"/>
+
+  <rect x="70" y="205" width="450" height="190" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="295" y="242" text-anchor="middle" class="head">vLLM（Step 6）</text>
+  <text x="295" y="278" text-anchor="middle" class="text">PagedAttention / KV Cache 管理</text>
+  <text x="295" y="310" text-anchor="middle" class="text">服务调度与 Continuous Batching</text>
+  <text x="295" y="350" text-anchor="middle" class="small">主线：G0 baseline → G1 单变量</text>
+  <text x="295" y="376" text-anchor="middle" class="small">自动启动、benchmark、保存 JSON</text>
+
+  <rect x="680" y="205" width="450" height="190" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="905" y="242" text-anchor="middle" class="head">SGLang（Step 7）</text>
+  <text x="905" y="278" text-anchor="middle" class="text">RadixAttention / Radix Cache</text>
+  <text x="905" y="310" text-anchor="middle" class="text">服务调度与请求复用</text>
+  <text x="905" y="350" text-anchor="middle" class="small">扩展：相同 workload 的 backend 对照</text>
+  <text x="905" y="376" text-anchor="middle" class="small">命令由学习者按版本填写</text>
+
+  <path d="M295 395 L495 475" class="arrow"/>
+  <path d="M905 395 L705 475" class="arrow"/>
+
+  <rect x="250" y="475" width="700" height="78" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="600" y="507" text-anchor="middle" class="head">统一 API 与 benchmark（Step 8）</text>
+  <text x="600" y="535" text-anchor="middle" class="small">只有条件一致，才比较两份 JSON；不能把差异直接归因给单一机制</text>
+
+  <path d="M600 553 L600 590" class="arrow"/>
+  <text x="600" y="625" text-anchor="middle" class="text">TTFT · TPOT · E2E · 吞吐 · 成功率 · 峰值显存 · P99</text>
+</svg>

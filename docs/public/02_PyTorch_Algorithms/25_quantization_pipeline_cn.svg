@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" role="img" aria-labelledby="title desc">
+  <title id="title">量化基础、W8A16 机制与部署验证的关系</title>
+  <desc id="desc">量化对象和处理阶段是共同基础，W8A16 使用低比特权重和高精度激活，随后让反量化参与前向计算，并在真实部署中观察资源与质量代价。</desc>
+  <defs>
+    <marker id="arrow25" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+    <style>
+      .title{font:700 27px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:500 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 20px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#1e293b}
+      .head{font:700 21px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}
+      .body{font:500 17px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}
+      .small{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .box{stroke-width:2.5;rx:18}
+      .group{stroke-width:2;rx:22}
+      .arrow{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#arrow25)}
+      .dash{stroke:#94a3b8;stroke-width:2.5;stroke-dasharray:8 7;fill:none;marker-end:url(#arrow25)}
+      .guide{stroke:#94a3b8;stroke-width:2.5;stroke-dasharray:8 7;fill:none}
+    </style>
+  </defs>
+  <rect width="1280" height="800" fill="#f8fafc"/>
+  <text x="60" y="55" class="title">量化机制总览</text>
+
+  <rect x="40" y="85" width="760" height="190" class="group" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="60" y="108" class="section">共同基础：量化对象与处理阶段</text>
+  <rect x="80" y="130" width="280" height="120" class="box" fill="#e0e7ff" stroke="#4f46e5"/>
+  <text x="108" y="169" class="head">被量化的对象</text>
+  <text x="108" y="202" class="body">权重 · 激活 · KV Cache</text>
+  <rect x="440" y="130" width="280" height="120" class="box" fill="#fef3c7" stroke="#d97706"/>
+  <text x="468" y="169" class="head">量化发生的阶段</text>
+  <text x="468" y="202" class="body">训练后校准与转换（PTQ）</text>
+  <text x="468" y="230" class="small">训练中模拟量化（QAT）</text>
+
+  <rect x="40" y="320" width="1200" height="205" class="group" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="60" y="335" class="section">本节机制：低比特权重如何参与前向计算</text>
+  <rect x="60" y="360" width="250" height="145" class="box" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="88" y="400" class="head">输入权重</text>
+  <text x="88" y="434" class="body">FP16 / FP32</text>
+  <text x="88" y="463" class="small">量化前 · 误差参照</text>
+  <rect x="365" y="360" width="250" height="145" class="box" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="393" y="400" class="head">量化机制</text>
+  <text x="393" y="431" class="body">动态范围与缩放</text>
+  <text x="393" y="460" class="small">取整 · 截断 → 整数表示</text>
+  <rect x="670" y="360" width="250" height="145" class="box" fill="#fce7f3" stroke="#db2777"/>
+  <text x="698" y="400" class="head">存储表示</text>
+  <text x="698" y="434" class="body">INT8 权重 + scale</text>
+  <text x="698" y="463" class="small">激活保持 FP16 / FP32</text>
+  <path d="M310 438H365" class="arrow"/>
+  <path d="M615 438H670" class="arrow"/>
+
+  <rect x="970" y="360" width="250" height="145" class="box" fill="#fce7f3" stroke="#db2777"/>
+  <text x="998" y="400" class="head">计算阶段</text>
+  <text x="998" y="434" class="body">反量化参与前向</text>
+  <text x="998" y="463" class="small">近似数值 → 计算输出</text>
+  <path d="M920 438H970" class="arrow"/>
+
+  <path d="M220 250V295H410" class="guide"/>
+  <path d="M580 250V295H410" class="guide"/>
+  <path d="M410 295V320" class="dash"/>
+  <rect x="60" y="545" width="1160" height="200" rx="12" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="85" y="565" class="head">扩展机制与验证出口</text>
+  <rect x="140" y="580" width="360" height="70" class="box" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="170" y="608" class="body">校准与敏感性</text>
+  <text x="170" y="633" class="small">误差预算 · GPTQ / AWQ</text>
+  <rect x="780" y="580" width="360" height="70" class="box" fill="#cffafe" stroke="#0891b2"/>
+  <text x="810" y="608" class="body">运行时与状态</text>
+  <text x="810" y="633" class="small">计算表示 · FP8 / KV Cache</text>
+  <path d="M490 505V530H320V580" class="dash"/>
+  <path d="M1097 505V530H960V580" class="dash"/>
+  <rect x="430" y="670" width="420" height="65" class="box" fill="#fee2e2" stroke="#dc2626"/>
+  <text x="465" y="696" class="head">部署与结果验证</text>
+  <text x="465" y="720" class="small">模型与推理后端 · 显存 · 延迟 · 吞吐 · 质量</text>
+  <path d="M320 650V660H640V670" class="dash"/>
+  <path d="M960 650V660H640V670" class="dash"/>
+</svg>

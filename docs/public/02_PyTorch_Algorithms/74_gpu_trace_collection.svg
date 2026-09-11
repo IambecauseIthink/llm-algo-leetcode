@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:23px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:14px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" class="title">74 GPU trace：采集证据，不自动宣判瓶颈</text>
+  <rect x="35" y="95" width="180" height="110" class="box"/><text x="125" y="130" text-anchor="middle" class="label">固定 76 workload</text><text x="125" y="160" text-anchor="middle" class="small">模型、batch、seq_len</text><text x="125" y="184" text-anchor="middle" class="small">baseline / candidate</text>
+  <rect x="245" y="95" width="180" height="110" class="box"/><text x="335" y="130" text-anchor="middle" class="label">torch.profiler</text><text x="335" y="160" text-anchor="middle" class="small">CPU + CUDA 活动</text><text x="335" y="184" text-anchor="middle" class="small">保存 trace 文件</text>
+  <rect x="455" y="95" width="180" height="110" class="box"/><text x="545" y="130" text-anchor="middle" class="label">Perfetto 检查</text><text x="545" y="160" text-anchor="middle" class="small">阶段、kernel、等待</text><text x="545" y="184" text-anchor="middle" class="small">形成瓶颈证据</text>
+  <rect x="665" y="95" width="200" height="110" class="box"/><text x="765" y="130" text-anchor="middle" class="label">针对性复验</text><text x="765" y="160" text-anchor="middle" class="small">指标 + trace 对照</text><text x="765" y="184" text-anchor="middle" class="small">再决定是否保留</text>
+  <path d="M215 150 H240 M425 150 H450 M635 150 H660" class="arrow"/>
+</svg>

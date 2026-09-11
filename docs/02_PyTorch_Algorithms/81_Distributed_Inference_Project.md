@@ -27,7 +27,7 @@
 
 ## 相关阅读
 
-**导语：** 做完分布式推理逻辑验证后，最自然的下一步是继续看并行变体，或回到 profiling 闭环确认迁移收益是否真实成立。
+**导语：** 完成分布式推理逻辑验证后，用 80 补充 MoE 专家并行对照；如果准备进入真实部署，先用 74 的 profiling 闭环检查迁移收益。
 - [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)
 - [74. Profiling-Driven End-to-End Optimization | profiling 驱动的端到端优化项目](./74_Profiling_Driven_End_to_End_Optimization.md)
 
@@ -81,16 +81,25 @@ from typing import Dict, List
 # 目标：把分布式推理验证整理成 baseline -> candidate -> decision 闭环
 
 def estimate_request_cost(request: Dict[str, int], config: Dict[str, float]) -> Dict[str, float]:
+    """null"""
+    # prompt_tokens = ???；generated_tokens = ???；prefill_ms = ???；decode_ms = ???；
+    # communication_ms = ???；e2e_ms = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def simulate_distributed_inference(
     requests: List[Dict[str, int]], num_replicas: int, config: Dict[str, float]
 ) -> Dict[str, object]:
+    """null"""
+    # replica_loads = ???；makespan_ms = ???；imbalance_ratio = ???；
+    # total_comm_ms = ???；throughput = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def recommend_distributed_inference_run(
     baseline: Dict[str, float], candidate: Dict[str, float], max_imbalance_ratio: float, max_comm_ratio: float
 ) -> Dict[str, object]:
+    """null"""
+    # latency_ok = ???；imbalance_ok = ???；comm_ok = ???；decision = ???；
+    # reason = ???；next_action = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 ```

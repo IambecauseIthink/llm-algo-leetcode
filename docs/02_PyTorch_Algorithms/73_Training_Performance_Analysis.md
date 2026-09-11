@@ -1,6 +1,6 @@
 # 73. Training Performance Analysis | 训练性能分析
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `显存优化`, `训练剖析`, `性能分析` | **目标人群：** 项目决策练习者
+**难度：** Hard | **环境：** CPU 可完成模板验证；GPU 用于正式 baseline | **标签：** `显存优化`, `训练剖析`, `性能分析` | **目标人群：** 项目决策练习者
 
 > 🚀 **云端运行环境**
 >
@@ -14,11 +14,19 @@
 
 ## 本节导读
 
-本节是 Task 3 的测量入口。你需要分析一次训练性能回归或优化是否真实存在。先固定训练任务、收敛约束和显存预算，再把 training step 拆成数据加载、forward、backward 和 optimizer step，分别测量耗时、吞吐与峰值显存。最终输出瓶颈判断、优化前后差异和是否保留改动的建议。
+前面的训练与显存小节已经说明了 activation、梯度和 optimizer state 为什么会影响训练成本。这一节把这些机制落到一次完整 training step 的测量上：先固定 workload 建立 baseline，再用统一字段记录时间、吞吐、显存和训练状态。
 
-> 环境提示：运行 CPU-first 主线不需要 GPU；运行真实 GPU Step 6 前，请先阅读 [Part02 Intro 的环境说明](./intro.md#environment-notes-环境说明)。Colab、ModelScope 和本地 GPU 默认都使用当前 runtime，不需要先搭建两套虚拟环境。
+> 运行提示：先查看[使用指南中的项目环境预检与安装说明](../guide.md#项目环境预检与安装)，再打开真实 GPU 开关。CPU-first 路径不要求 GPU；真实 GPU 路径必须先通过预检。
 
-如果把它放回显存优化路线，一个更直接的读法是：这页不只是泛泛地比较训练快慢，而是优先帮助你判断 `checkpointing / offload / mixed precision / batch` 这些训练侧显存手段到底把峰值显存压下去了多少，又把 step time 和稳定性拉坏了多少。也就是说，它在显存路线里承担的是“证据链页”，不是另一个纯机制页。
+CPU-first 路径用于检查计时、统计字段和报告逻辑；真实 GPU 路径才用于验证 step time、吞吐、peak / reserved memory 和 OOM。GPU smoke 只能证明流程可运行，重复 benchmark 才能比较当前 workload 的平均成本。
+
+| 内容 | 建议比重 | 作用 |
+|---|---:|---|
+| CPU 模板与正确性测试 | 约 40% | 验证计时、吞吐、账本和异常边界 |
+| GPU baseline 与结果解释 | 约 60% | 采集真实训练成本，并为 76 提供可复用基线 |
+
+本节不比较 checkpoint / offload，也不解释具体 kernel 或阶段瓶颈；它的产出是一份可被 76 复用的 baseline 报告。策略比较进入 76，预算判断进入 75，阶段归因进入 74。扩展实验可以改变 batch、seq_len 或 dtype，但必须单独保存并写明条件。
+**主责与复用边界：** 本项目主责是训练 baseline 和统一测量口径；76 负责 checkpoint / offload 策略比较，75 负责预算筛选，74 负责 trace 归因。其他路线可以复用本节的计时与环境字段，但不能把 baseline 直接当成优化收益。
 
 **关键词：** `training`, `profiling`, `memory`, `step time`
 
@@ -26,7 +34,7 @@
 
 ## 前置阅读
 
-**导语：** 先完成 Task 0 的反向传播基础、Task 1 的显存与性能认知，再了解 Task 2 的训练侧显存手段，最后进入本节建立统一测量口径；本节重点不是重复讲机制，而是为后续 76 的方案 benchmark 提供可靠 baseline。
+**导语：** 先理解反向传播、显存对象和训练侧显存手段，再进入本节建立统一测量口径；本节重点不是重复讲机制，而是为后续 76 的方案 benchmark 提供可靠 baseline。
 - [09. SFT Training Loop | SFT 训练循环](./09_SFT_Training_Loop.md)
 - [17. Autograd Basics | Autograd 基础](./17_Autograd_Basics.md)
 - [19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](./19_Activation_Checkpointing_and_Activation_Offload.md)
@@ -41,60 +49,79 @@
 - [74. Profiling-Driven End-to-End Optimization | profiling 驱动的端到端优化](./74_Profiling_Driven_End_to_End_Optimization.md)
 - [60. LoRA Fine-Tuning Project | LoRA 微调项目](./60_LoRA_Fine_Tuning_Project.md)
 ---
-### Step 1: 定义训练性能分析目标
+### Step 1：定义显存账本与可测假设
 
-- 固定模型、输入数据、batch size、seq len、硬件环境和运行后端，保证 baseline 与 tuned 只差一个变量。
-- 明确优化目标，例如降低 step time、提升 samples/s、降低 peak memory 或减少同步等待。
-- 同时写清约束条件：训练任务要保留 loss / 收敛约束，不能只追求单项速度收益。
-- Baseline 需要能稳定复现，不能只跑一次；建议先 warm-up，再测多轮平均值。
-- 这一步的目标是让后面的性能分析有判断标准，而不是只得到一组孤立数字。
+先把一次训练过程看成一条完整链路：输入 batch 经过 forward 和 loss，backward 产生梯度，optimizer.step 更新参数。显存对象会在这条链路的不同阶段出现或释放。
 
-### Step 2: 先确认 baseline 合法，再决定是否需要拆解
+本 Step 要回答两个问题：一次训练 step 的显存和时间可能由哪些对象共同造成？后面应该改变哪些变量、记录哪些指标来验证假设？先用显存对象账本描述可能开销，再把每一项转成可测假设。输入是模型、训练 batch、dtype、optimizer 和 workload；输出是显存对象账本、可测假设和对应 GPU 观测字段。
 
-训练性能分析必须先确认 baseline 可复现。当前最小模板只测完整 training step；如果要把一个 step 拆成能归因的几段，还需要进入 profiler 或额外的阶段计时，不能把总耗时直接当成瓶颈定位。
+CPU 用于检查对象关系、账本字段和待验证假设；GPU 用于验证 step time、samples/s、peak allocated、peak reserved、OOM 和训练状态。账本用于组织问题，不等同于 CUDA allocator 的实际峰值；73 只记录 baseline，checkpoint 的重算和 offload 的搬运留给 76。
 
-- 数据加载：DataLoader、CPU 预处理、CPU -> GPU 拷贝是否让 GPU 等待（需要阶段计时或 profiler 才能确认）。
-- 前向计算：Attention、Linear、LayerNorm 等 forward kernel 是否占主要时间（当前模板不单独测量）。
-- 反向计算：backward kernel、梯度计算和梯度累积是否成为瓶颈（当前模板不单独测量）。
-- 优化器更新：optimizer step 是否占用明显时间（需要阶段计时或 profiler 才能确认）。
-- 显存峰值：激活、梯度、优化器状态和临时 buffer 是否接近上限。
-- 同步开销：是否存在不必要的 CPU/GPU 同步或多卡通信等待。
+| 显存对象 | 典型内容 | 生命周期 | 主要变化因素 | CPU 可验证内容 | GPU 实测字段 | 本节要检验的假设 |
+|:---|:---|:---|:---|:---|:---|:---|
+| 参数 | 模型权重和可训练参数 | 整个训练过程 | 模型规模、dtype、训练方式 | 参数数量与理论字节数 | `peak_mem_mb`、参数账本 | 模型和 dtype 改变会影响固定占用 |
+| 梯度 | 参与更新的参数对应的梯度 | backward 后到 `zero_grad` | 可训练参数量、梯度 dtype | 梯度数量与字节数 | 峰值显存、OOM 状态 | 全参数更新通常需要更多梯度状态 |
+| optimizer state | AdamW 的动量、二阶矩等状态 | 第一次更新后持续存在 | optimizer、参数量、状态精度 | state tensor 字节数 | `peak_mem_mb`、`peak_reserved_mb` | optimizer state 可能成为训练预算的重要部分 |
+| activation | 中间隐藏状态、attention / MLP 中间结果 | forward 到 backward 使用完成 | `batch_size`、`seq_len`、hidden size、checkpoint | 账本关系与生命周期说明 | 峰值显存、OOM 状态 | batch 或序列长度增大时，activation 压力可能上升 |
+| 临时张量 / workspace | loss、通信缓冲区、kernel workspace | 某个算子执行期间 | kernel、算子实现、运行时 | 只能记录其角色 | `peak_mem_mb` 与 profiler trace | 峰值可能来自短时分配，而非长期状态 |
+| CPU-GPU 搬运与同步 | 输入拷贝、等待、offload 缓冲区 | 发生在数据或状态移动期间 | 数据管线、offload、同步点 | 记录流程和字段 | step time、吞吐、trace | 时间代价需要用 GPU 计时或 trace 验证 |
 
-这一步的目标是把“训练慢”具体化成某一类瓶颈，而不是只得到一个模糊结论。
-### Step 3: 用统一口径比较收益与代价
+下面的关系图先展示训练 step，再建立账本对象、影响因素和 GPU 观测结果之间的关系；表格随后列出每类对象对应的验证字段。
 
-训练优化项目必须同时看 step time、samples/s、peak memory 和 loss，不能只挑单项速度收益下结论。
+![73 训练显存对象账本与观测字段](../public/02_PyTorch_Algorithms/73_memory_ledger_map.svg)
+<div align="center"><strong>训练 step：显存对象受到 workload 和实现因素影响，最终通过峰值、时间和 trace 观测。</strong></div>
 
-- 一次只改一个变量，例如 batch size、混合精度、gradient checkpointing、数据加载或同步点。
-- 改完后重新测同样的指标，比较 baseline / tuned 的差异。
-- 如果 step time 变快但 loss 异常、显存更高或稳定性变差，要把取舍写清楚。
-- 这一轮修改的目标是建立因果关系，而不是一次性把所有开关都打开。
+### Step 2：定义 training step 与测量边界
 
-这一步的目标是回答：这次改动是把瓶颈解决了，还是只是把瓶颈挪走了。
-### Step 4: 输出训练性能结论
+本 Step 先确定一次 training step 从哪里开始、到哪里结束，以及哪些开销会进入 73 的 baseline。CPU 只验证阶段定义和统计字段；GPU 才测量真实的完整 step。73 不在这里判断具体瓶颈，阶段归因交给 74。一次完整 training step 可以写成 `zero_grad → forward → loss → backward → optimizer.step`：清理上一轮梯度，计算输出和 loss，生成梯度，再更新参数。
 
-训练性能分析最终不是输出“总耗时有没有降”，而是输出这次改动在当前训练任务下是否值得继续保留、微调或回退。
+| 阶段 | 这一步做什么 | 73 是否计入 | 后续分析 |
+|:---|:---|:---|:---|
+| `zero_grad` | 清理上一轮梯度 | 是 | 观察整体 step 成本 |
+| forward / loss | 根据输入计算隐藏状态、logits 和 loss | 是 | 74 分析 activation 和算子 |
+| backward | 根据 loss 计算梯度，可能读取 forward 暂存的中间结果 | 是 | 76 / 74 分析 checkpoint 和重算 |
+| `optimizer.step` | 使用梯度更新参数，并维护 optimizer state | 是 | 74 分析 optimizer 开销 |
+| 输入准备与同步 | 准备输入、设备拷贝和必要的 CUDA 等待 | 当前不单独拆分 | 74 分析数据、搬运和同步 |
 
-- 输出 baseline / tuned 对比表，至少包含 step time、samples/s、peak memory、loss 和备注。
-- 附上 profiling 截图或关键统计，说明瓶颈来自数据、forward、backward、optimizer 还是显存。
-- 写清楚本次改动、收益、代价和是否满足 loss / 收敛约束。
-- 如果还有后续优化空间，就列出下一轮优先级。
+![73 training step 测量边界](../public/02_PyTorch_Algorithms/73_training_step_boundary.svg)
+<div align="center"><strong>上方定义 73 的测量边界，下方连接 17 / 18 / 12 / 19 / 42 的机制与 73 / 76 / 75 / 74 的项目证据链。</strong></div>
 
-这一步的目标是把训练性能分析收成一份可复用的项目报告。
+因此，73 能回答“完整 training step 的平均成本是多少”，不能仅凭总耗时回答“哪个阶段是瓶颈”，也不能从 `peak allocated` 拆出各类显存对象。
+### Step 3：固定实验协议与 baseline 报告
 
-**本节交付物：** 一份可被 76 复用的 baseline 记录，至少包含 workload、运行环境、模型、batch、seq_len、warmup、iters、step_time_ms、samples_per_s、peak_mem_mb 和 loss。本节的轻量 `accept / tune / reject` 只用于对照，不替代 75 的预算裁决。
-### Step 5: 最小代码模板
+先定义统一的实验协议和报告字段，再分别用 CPU 模板检查逻辑、用 GPU Step 5 采集真实训练成本。CPU 只验证计时、账本、字段和异常边界；GPU 才产生真实的时间、吞吐、显存和 OOM 证据。
 
-上面的 Step 1-4 是完整训练性能分析流程。下面的代码只实现其中最小、可复用的三块：测量训练 step 的平均耗时与峰值显存、汇总 baseline / tuned 的差异，以及把结果收成 `accept / tune / reject` 的轻量项目决策。真实项目中的 forward / backward / optimizer 拆解和 loss 约束，需要在 profiling 报告中继续补充。
+实验按“先确认流程、再固定口径、最后比较指标”的顺序进行。`smoke` 用于确认模型、依赖和报告流程可运行；固定的 `pressure` workload 用于获得当前条件下的 GPU baseline。dtype、batch / seq_len、checkpoint / offload、数据搬运和同步分别对应不同假设，一次只改变一个方向，并使用独立输出文件。
 
-### 提示
+每次 GPU 运行都要同时保存配置、环境、指标、训练状态和证据等级，最终生成一份 JSON 报告，而不是只查看屏幕输出。73 的主产物是固定 workload 下的训练 baseline；可选 AMP 对照只用于观察 dtype 对训练成本的影响，不属于 checkpoint / offload 策略优化。
 
-- 先固定 baseline，再看 tuned，不要把环境变量、batch、seq len 一起改掉。
-- GPU 场景下要关注 peak memory，CPU 场景下至少要保证计时口径一致。
-- 一次只改一个变量，才能把 step time 和显存变化归因到具体修改。
-### 测试
+73 的主产物是固定 workload 下的训练 baseline 报告：它要说明当前训练成本是多少，以及哪些显存对象值得继续验证。baseline 报告可作为 76 的输入，但不替代 75 的预算决策和 74 的阶段归因；checkpoint 的重算和 offload 的搬运留给 76 验证。
 
-运行下面的测试单元，确认 `measure_train_step` 和 `summarize_training_result` 的输出字段完整且口径一致。
+| 类型 | 项目 | 具体内容 | 目的 / 用途 |
+|:---|:---|:---|:---|
+| 实验步骤 | 1. smoke | 确认模型、依赖和报告流程可运行 | 检查流程 |
+| 实验步骤 | 2. 固定条件 | 固定模型、dtype、optimizer、batch、seq_len、输入和 seed | 保证 baseline 可复现 |
+| 实验步骤 | 3. pressure | warm-up 后重复测量 | 获得正式 GPU baseline |
+| 实验步骤 | 4. 单变量对照 | 每次只改变一个变量，使用独立输出文件 | 保持结果可归因 |
+| 实验步骤 | 5. 比较指标 | 对比 step time、samples/s、显存、loss 和 OOM | 判断收益是否伴随代价 |
+| 报告字段 | workload | model、dtype、batch、seq_len、warmup、iters、seed | 判断结果是否可复现 |
+| 报告字段 | 环境 | GPU、PyTorch、CUDA、运行后端 | 判断硬件证据边界 |
+| 报告字段 | 性能 | step time、samples/s | 衡量训练成本 |
+| 报告字段 | 显存 | peak allocated、peak reserved、OOM | 衡量容量压力 |
+| 报告字段 | 训练状态 | loss / eval_loss | 防止只追求速度或显存 |
+| 报告字段 | 证据等级 | CPU、GPU smoke、repeated benchmark | 限定结论强度 |
+### Step 4（CPU 代码练习）：验证测量与账本逻辑
+
+本 Step 使用 CPU 示例函数，检查训练计时、吞吐统计和显存对象账本能否正确生成报告字段。输入是训练函数、测量配置，以及用于账本统计的 model / optimizer；输出是 step time、samples/s、设备峰值显存字段和参数、梯度、optimizer state 字节数。
+
+| 输入 | 练习内容 | 输出 | 证据边界 |
+| --- | --- | --- | --- |
+| 训练函数与 warmup / iters | 统计正式迭代的平均耗时和吞吐 | `step_time_ms`、`samples_per_s` | CPU 只检查计算口径，不代表 GPU 速度 |
+| `model` 与 `optimizer` | 统计参数、梯度和 optimizer state 的字节数 | 静态显存账本字段 | 账本是估算关系，不是 CUDA 峰值 |
+| `device` 与测量配置 | 检查设备相关字段的处理 | GPU 峰值字段或 CPU 的明确占位 | CPU 不读取或虚构 GPU 显存 |
+
+先通过本 Step 的 CPU 测试，再把相同测量口径用于 Step 5 的真实 GPU baseline；GPU 计时还需要正确处理 CUDA 同步。
+
 
 ```python
 import time
@@ -104,18 +131,29 @@ import torch
 
 
 ```python
-# 完成训练性能统计的两个函数
-# 目标：完成 measure -> compare 的最小训练性能分析链路
+# 完成训练性能统计和基础显存账本函数
+# 目标：完成 measure -> compare -> decide，并统计训练状态 tensor 的实际字节数
 
-def measure_train_step(train_step_fn, warmup=2, iters=8):
+def measure_train_step(train_step_fn, warmup=2, iters=8, device='cpu', batch_size=1):
+    """测量完整训练 step；CPU 不读取 GPU 峰值显存。
+
+    输入是训练函数和测量配置，返回 step_time_ms、samples_per_s 和 peak_mem_mb。
+    其中 CPU 的 peak_mem_mb 必须为 0.0，GPU 才能读取 CUDA peak allocated。
+    """
+    if warmup < 0 or iters <= 0 or batch_size <= 0:
+        raise ValueError('warmup / iters / batch_size 配置不合法')
+    use_cuda = str(device).startswith('cuda')
+    if use_cuda and not torch.cuda.is_available():
+        raise RuntimeError('device=cuda 但当前 CUDA 不可用')
     # ==========================================
     # TODO 1: 记录平均 step time 和 peak memory
-    # 提示：先 warmup，再测正式迭代；GPU 场景下记录 peak memory。
+    # 提示：先 warmup，再测正式迭代；device=cuda 时同步后读取 peak allocated，
+    #      device=cpu 时不要读取或虚构 CUDA 显存。
     # ==========================================
     for _ in range(warmup):
         train_step_fn()
 
-    if torch.cuda.is_available():
+    if use_cuda:
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
 
@@ -125,20 +163,22 @@ def measure_train_step(train_step_fn, warmup=2, iters=8):
     # end = ???
     # elapsed = ???
 
-    if torch.cuda.is_available():
+    if use_cuda:
         torch.cuda.synchronize()
 
     peak_mem_mb = 0.0
-    if torch.cuda.is_available():
+    if use_cuda:
         # peak_mem_mb = ???
         pass
 
     return {
         'step_time_ms': round(elapsed * 1000, 2),
+        'samples_per_s': round(batch_size * iters / (end - start), 3),
         'peak_mem_mb': round(peak_mem_mb, 2),
     }
 
 def summarize_training_result(base_metrics, tuned_metrics):
+    """按 baseline - tuned 计算速度和显存差值。"""
     # ==========================================
     # TODO 2: 比较 baseline 和 tuned 的指标差值
     # 提示：delta = baseline - tuned，正数表示 tuned 更省或更快。
@@ -156,10 +196,10 @@ def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delt
     """根据速度和显存收益给出训练项目结论。"""
     # ==========================================
     # TODO 3: 输出训练项目结论
-    # 规则：
+    # 规则：达到配置阈值才算强收益；只有轻微正收益时继续 tune；
     # - 速度和显存收益都达标：accept
-    # - 至少一项有正收益：tune
-    # - 否则：reject
+    # - 至少一项有正收益但未同时达标：tune
+    # - 没有正收益：reject
     # ==========================================
     # strong_time_gain = ???
     # strong_memory_gain = ???
@@ -174,6 +214,22 @@ def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delt
     #     reason = ???
     # return {'decision': decision, 'reason': reason}
 
+def summarize_training_memory_ledger(model, optimizer):
+    """统计参数、梯度和 optimizer state 的实际 tensor 字节数。
+
+    activation、临时 workspace 和 CUDA allocator reserved 不在本函数内计算。
+    """
+    # ==========================================
+    # TODO 4: 统计参数、梯度和 optimizer state 的实际字节数
+    # 提示：遍历 tensor 的 numel() * element_size()；optimizer.step() 后再统计 state。
+    # 参数、梯度和 optimizer state 是本 TODO 的实现范围；activation 只在账本中估算。
+    # ==========================================
+    # parameter_bytes = ???
+    # gradient_bytes = ???
+    # optimizer_state_bytes = ???
+    # return {"parameter_bytes": ..., "gradient_bytes": ...,
+    #         "optimizer_state_bytes": ..., "parameter_dtype": ...}
+
 ```
 
 
@@ -181,16 +237,52 @@ def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delt
 # 测试你的实现
 def test_training_project_template():
     try:
+        torch.manual_seed(42)
         counter = {'n': 0}
+        model = torch.nn.Sequential(torch.nn.Linear(8, 16), torch.nn.Tanh(), torch.nn.Linear(16, 4))
+        # AdamW 在第一次 optimizer.step() 后创建状态，便于检查 optimizer state 账本。
+        optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+        inputs = torch.randn(2, 8)
+        targets = torch.randn(2, 4)
 
         def train_step():
             counter['n'] += 1
+            optimizer.zero_grad(set_to_none=True)
+            loss = torch.nn.functional.mse_loss(model(inputs), targets)
+            loss.backward()
+            optimizer.step()
+            return loss.detach()
 
+        before = [parameter.detach().clone() for parameter in model.parameters()]
         result = measure_train_step(train_step, warmup=0, iters=2)
         assert counter['n'] == 2, "measure_train_step 没有正确执行训练迭代次数！"
-        assert 'step_time_ms' in result and 'peak_mem_mb' in result, "训练统计字段不完整！"
+        assert {'step_time_ms', 'samples_per_s', 'peak_mem_mb'} <= result.keys(), "训练统计字段不完整！"
+        assert result['samples_per_s'] > 0.0, "samples_per_s 应为正数！"
         assert result['step_time_ms'] >= 0.0, "step_time_ms 应为非负数！"
-        assert result['peak_mem_mb'] >= 0.0, "peak_mem_mb 应为非负数！"
+        assert result['peak_mem_mb'] == 0.0, "CPU 测量不能虚构 GPU 峰值显存！"
+        assert all(parameter.grad is not None for parameter in model.parameters()), "训练 step 必须完成 backward 并产生梯度！"
+        assert all(torch.isfinite(parameter).all() for parameter in model.parameters()), "参数出现 NaN 或 Inf！"
+        assert any(not torch.equal(previous, parameter) for previous, parameter in zip(before, model.parameters())), "optimizer.step 必须更新至少一个参数！"
+        ledger = summarize_training_memory_ledger(model, optimizer)
+        expected_parameter_bytes = sum(parameter.numel() * parameter.element_size() for parameter in model.parameters())
+        assert ledger['parameter_bytes'] == expected_parameter_bytes, "参数字节数账本不正确！"
+        assert ledger['gradient_bytes'] > 0, "完成 backward 后应能统计梯度字节数！"
+        assert ledger['optimizer_state_bytes'] > 0, "完成 AdamW step 后应能统计 optimizer state 字节数！"
+        assert ledger['parameter_dtype'] == 'torch.float32', "参数 dtype 记录不正确！"
+        if not torch.cuda.is_available():
+            try:
+                measure_train_step(train_step, warmup=0, iters=1, device='cuda')
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError('CUDA 不可用时，device=cuda 应明确报错！')
+        for invalid in ({'warmup': -1, 'iters': 2}, {'warmup': 0, 'iters': 0}):
+            try:
+                measure_train_step(train_step, **invalid)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError('非法 warmup / iters 应明确拒绝！')
 
         baseline = {'step_time_ms': 120.0, 'peak_mem_mb': 8192.0}
         tuned = {'step_time_ms': 98.0, 'peak_mem_mb': 6144.0}
@@ -258,33 +350,41 @@ import time
 import torch
 
 # TODO 1: 测量训练 step 的平均耗时和峰值显存
-def measure_train_step(train_step_fn, warmup=2, iters=8):
+def measure_train_step(train_step_fn, warmup=2, iters=8, device='cpu', batch_size=1):
+    """测量一次完整训练 step 的平均耗时；CPU 不采集 GPU 显存。"""
+    if warmup < 0 or iters <= 0 or batch_size <= 0:
+        raise ValueError('warmup / iters / batch_size 配置不合法')
+    use_cuda = str(device).startswith('cuda')
+    if use_cuda and not torch.cuda.is_available():
+        raise RuntimeError('device=cuda 但当前 CUDA 不可用')
     for _ in range(warmup):
         train_step_fn()
 
-    if torch.cuda.is_available():
+    if use_cuda:
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
 
     start = time.perf_counter()
     for _ in range(iters):
         train_step_fn()
-    if torch.cuda.is_available():
+    if use_cuda:
         torch.cuda.synchronize()
     end = time.perf_counter()
     elapsed = (end - start) / iters
 
     peak_mem_mb = 0.0
-    if torch.cuda.is_available():
+    if use_cuda:
         peak_mem_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
 
     return {
         'step_time_ms': round(elapsed * 1000, 2),
+        'samples_per_s': round(batch_size * iters / (end - start), 3),
         'peak_mem_mb': round(peak_mem_mb, 2),
     }
 
 # TODO 2: 汇总 baseline 和 tuned 的差异
 def summarize_training_result(base_metrics, tuned_metrics):
+    """按 baseline - tuned 计算速度和显存差值。"""
     time_delta = base_metrics['step_time_ms'] - tuned_metrics['step_time_ms']
     mem_delta = base_metrics['peak_mem_mb'] - tuned_metrics['peak_mem_mb']
     return {
@@ -296,6 +396,7 @@ def summarize_training_result(base_metrics, tuned_metrics):
 
 # TODO 3: 输出训练项目结论
 def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0):
+    """根据配置阈值输出轻量的 accept / tune / reject 建议。"""
     strong_time_gain = summary['step_time_delta_ms'] >= min_time_delta_ms
     strong_memory_gain = summary['peak_mem_delta_mb'] >= min_memory_delta_mb
     if strong_time_gain and strong_memory_gain:
@@ -309,6 +410,33 @@ def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delt
         reason = '速度和显存都没有形成有效收益，当前改动不值得保留。'
     return {'decision': decision, 'reason': reason}
 
+# TODO 4: 统计训练状态账本；optimizer.step() 后 optimizer state 才会出现
+def summarize_training_memory_ledger(model, optimizer):
+    """返回参数、梯度和 optimizer state 的实际字节数，不包含 activation 或 CUDA 峰值。"""
+    def tensor_bytes(tensor):
+        return tensor.numel() * tensor.element_size()
+
+    parameter_bytes = sum(tensor_bytes(parameter) for parameter in model.parameters())
+    gradient_bytes = sum(
+        tensor_bytes(parameter.grad)
+        for parameter in model.parameters()
+        if parameter.grad is not None
+    )
+    optimizer_state_bytes = sum(
+        tensor_bytes(value)
+        for state in optimizer.state.values()
+        for value in state.values()
+        if torch.is_tensor(value)
+    )
+    first_parameter = next(model.parameters(), None)
+    return {
+        'parameter_bytes': parameter_bytes,
+        'gradient_bytes': gradient_bytes,
+        'optimizer_state_bytes': optimizer_state_bytes,
+        'parameter_dtype': str(first_parameter.dtype) if first_parameter is not None else None,
+    }
+
+
 counter = {'n': 0}
 def train_step():
     counter['n'] += 1
@@ -316,16 +444,85 @@ print(measure_train_step(train_step, warmup=0, iters=2))
 
 ```
 
-## Step 6（可选）：真实 GPU 训练 step 对比
+### 解析
 
-前面的 Step 1-5 是 CPU-first 的性能分析模板；本 Step 把同一套完整 training step 测量口径接到真实 causal LM 的 forward / backward / optimizer.step。默认关闭，只有在 GPU、Transformers 和模型依赖准备好时才运行。成功后会保存 `benchmarks/results/73_real_gpu_training.json`；只有当 73 与 76 使用相同 workload 配置时，它才能作为 76 的 baseline 输入。
+**TODO 1：测量完整 training step**
+- 先执行 warmup，避免把首次初始化成本混入正式结果。
+- GPU 计时前后都要 `synchronize()`，否则只测到 CPU 发起 kernel 的时间。
+- 只有 `device='cuda'` 时读取 `max_memory_allocated()`；CPU 模式用 `0.0` 表示本次没有采集 GPU 显存。
 
-本示例只比较一个变量：FP32 baseline 与 AMP（优先 BF16，否则 FP16）tuned。模型、固定 batch、batch size、序列长度、optimizer 和迭代次数保持一致。固定 batch 用于保证两种模式的输入可比，不替代 60 节的真实 SFT 数据质量与收敛实验。`smoke` 用于先验证流程，`pressure` 用于生成与 76 对齐的高压力 baseline；正式采集可将 `REPEATS` 改为 3，报告会同时保存每次结果和均值。
+**TODO 2：计算 baseline 与 tuned 的差值**
+- 使用 `baseline - tuned`，因此 step time 或 peak memory 的正差值表示 tuned 更低。
+- 差值只适用于 workload、设备和统计口径一致的两次测量。
+
+**TODO 3：输出轻量决策**
+- 同时达到速度和显存阈值时为 `accept`。
+- 只有轻微或单项正收益时为 `tune`；没有正收益时为 `reject`。
+- 这里的决策只用于练习比较逻辑，不能替代 75 的预算裁决。
+
+**TODO 4：建立训练状态账本**
+- 统计参数、已产生的梯度和 optimizer state 的 tensor bytes；optimizer.step() 之前可能还没有完整的 state。
+- 账本不包含 activation、临时 workspace 或 allocator reserved，只用于解释对象规模。
+### Step 5（GPU 项目实验，可选）：采集真实 baseline
+
+Step 1-4 用 CPU 验证测量口径；本 Step 将相同的完整 training step（`zero_grad → forward / loss → backward → optimizer.step`）接到真实 causal LM，建立 GPU baseline。进入本 Step 前，请按 [使用指南：Part 02 环境分层与决策树](../guide.md#part-02-环境分层与决策树) 准备 `base + torch-cu128 + transformers + GPU`；完成预检后再将 `RUN_REAL_GPU` 改为 `True`。结果保存到 `benchmarks/results/73_real_gpu_training.json`，并可作为相同 workload 下 76 的 baseline。
+
+本实验只改变 dtype：比较 FP32 与 AMP。AMP 优先使用原生 BF16，否则使用 FP16；`torch.cuda.is_bf16_supported()` 的默认结果包含模拟支持，需结合 compute capability 判断。模型、输入、batch size、seq_len、optimizer、warmup、iters 和 seed 保持一致；`smoke` 用于流程检查，`pressure` 用于正式 baseline。AMP 只观察 dtype 对训练成本的影响，checkpoint / offload 留给 76。
+![73 GPU baseline 实验流程](../public/02_PyTorch_Algorithms/73_gpu_baseline_flow.svg)
+<div align="center"><strong>先检查环境，再固定配置，最后运行 FP32 / AMP 对照并保存报告。</strong></div>
+
+### Colab / GPU 启动检查（可独立运行）
+
+从文档链接打开 Colab 时，Notebook 文件和项目仓库不一定同时存在。先运行下面的单元，它会准备项目根目录、把项目加入 `sys.path`，并检查当前 Python 是否真的使用 CUDA 版 PyTorch。它不会静默重装 PyTorch；如果检测到 CPU 版，会给出安装命令。
 
 ```python
-RUN_REAL_GPU = True  # 是否运行真实 GPU 测量；实测时显式改为 True。
+"""检查 GPU 实验所需的项目路径、Python 解释器和 CUDA 运行时。"""
+from pathlib import Path
+import os
+import subprocess
+import sys
+
+PROJECT_ROOT = Path('/content/llm-algo-leetcode') if Path('/content').is_dir() else Path.cwd()
+if not (PROJECT_ROOT / 'tools/project_runtime.py').is_file():
+    if PROJECT_ROOT.exists() and any(PROJECT_ROOT.iterdir()):
+        raise RuntimeError(f'项目目录存在但不是完整仓库：{PROJECT_ROOT}')
+    subprocess.run([
+        'git', 'clone',
+        'https://github.com/datawhalechina/llm-algo-leetcode.git',
+        str(PROJECT_ROOT),
+    ], check=True)
+os.chdir(PROJECT_ROOT)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import torch
+print('项目根目录:', PROJECT_ROOT)
+print('tools 存在:', (PROJECT_ROOT / 'tools').is_dir())
+print('PyTorch:', torch.__version__)
+print('PyTorch CUDA:', torch.version.cuda)
+print('CUDA available:', torch.cuda.is_available())
+if not torch.cuda.is_available():
+    print('当前是 CPU 版 PyTorch 或 CUDA 未连接。GPU 实验前请安装 CUDA wheel，并重启 Colab runtime：')
+    print('%pip install --force-reinstall --no-cache-dir torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128')
+else:
+    print('GPU:', torch.cuda.get_device_name(0))
+    print('GPU memory GB:', round(torch.cuda.get_device_properties(0).total_memory / 2**30, 2))
+    capability = torch.cuda.get_device_capability()
+    native_bf16 = capability[0] >= 8 and torch.cuda.is_bf16_supported(including_emulation=False)
+    print('Compute capability:', f'{capability[0]}.{capability[1]}')
+    print('BF16 allocatable:', torch.cuda.is_bf16_supported())
+    print('BF16 native acceleration:', native_bf16)
+
+```
+
+
+```python
+"""定义 73 的 GPU baseline 配置；本 cell 只改配置，不加载模型或启动训练。"""
+RUN_REAL_GPU = False  # CPU-first 默认关闭；在 Colab / 本地 GPU 实测时显式改为 True。
+AUTO_INSTALL_REAL_DEPS = True  # 真实 GPU 开启时，只安装当前内核缺失的普通依赖。
+AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES = True  # 云端 PEP 668 环境允许安装普通依赖；不会重装 PyTorch。
 #REAL_RUN_MODE = 'paired'  # paired：FP32/BF16 对比；bf16_probe：只探测 BF16 容量。
-REAL_RUN_MODE =  'bf16_probe'
+REAL_RUN_MODE = 'paired'
 MODEL_PROFILES = {
     'qwen25_small': 'Qwen/Qwen2.5-0.5B-Instruct',
     'deepseek_r1_small': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
@@ -339,41 +536,53 @@ WORKLOADS = {
     'pressure': {'batch_size': 1, 'seq_len': 768, 'warmup': 2, 'iters': 5},
     'pressure_1024': {'batch_size': 1, 'seq_len': 1024, 'warmup': 2, 'iters': 5},
 }
-WORKLOAD = 'pressure_1024'  # pressure 保留 768；pressure_1024 与新的 76 高压力实验对齐。
+WORKLOAD = 'pressure'  # 主线使用 seq_len=768；pressure_1024 是扩展 workload。
 REPEATS = 3  # 正式采集可改为 3；每次重复都会重新初始化模型。
-BATCH_SIZE = 1  # 由 WORKLOADS 自动覆盖；保留变量便于阅读配置。
-SEQ_LEN = 1024  # 由 WORKLOADS 自动覆盖；显著影响 activation 显存。
-WARMUP = 3  # 由 WORKLOADS 自动覆盖；不计入正式平均值。
-ITERS = 10  # 由 WORKLOADS 自动覆盖；正式测量轮数。
-LEARNING_RATE = 1e-5  # baseline 与 tuned 必须保持一致。
-SEED = 42  # 固定输入和初始化，减少方案间随机差异。
+BATCH_SIZE = 1  # 由 WORKLOADS 覆盖；增大它通常会提高吞吐和 activation 压力。
+SEQ_LEN = 768  # 由 WORKLOADS 覆盖；它是压力变量，不要脱离 workload 单独修改。
+WARMUP = 3  # 由 WORKLOADS 覆盖；用于 kernel / allocator 预热，不计入平均值。
+ITERS = 10  # 由 WORKLOADS 覆盖；数值越小越接近 smoke，重复性较弱。
+LEARNING_RATE = 1e-5  # baseline 与 tuned 必须一致；本节不据此判断收敛。
+SEED = 42  # 固定输入和初始化，降低随机差异；不能消除 GPU 调度噪声。
 from pathlib import Path
-OUTPUT_RELATIVE_PATH = Path('benchmarks/results/73_real_gpu_training_bf16.json')
+OUTPUT_RELATIVE_PATH = Path('benchmarks/results/73_real_gpu_training.json')
 
 ```
 
 
 ```python
+"""按固定 workload 运行 FP32 / AMP 对照，汇总指标并保存 JSON 报告。"""
 import json
 import os
 import sys
 import time
 from pathlib import Path
 
-def resolve_project_root():
-    override = os.environ.get('LLM_ALGO_PROJECT_ROOT')
-    if override:
-        return Path(override).expanduser().resolve()
-    current = Path.cwd().resolve()
-    for candidate in (current, *current.parents):
-        if (candidate / 'benchmarks').is_dir() and (candidate / '02_PyTorch_Algorithms').is_dir():
-            return candidate
-    return current
-
-PROJECT_ROOT = resolve_project_root()
+# 先把 Notebook 所在仓库加入 sys.path，再导入项目工具；适配本地、Colab 和 ModelScope。
+PROJECT_ROOT = Path(os.environ.get('LLM_ALGO_PROJECT_ROOT', Path.cwd())).expanduser().resolve()
+if not (PROJECT_ROOT / 'tools/project_runtime.py').is_file():
+    colab_root = Path('/content/llm-algo-leetcode')
+    if (colab_root / 'tools/project_runtime.py').is_file():
+        PROJECT_ROOT = colab_root
+    else:
+        for candidate in (PROJECT_ROOT, *PROJECT_ROOT.parents):
+            if (candidate / 'tools/project_runtime.py').is_file():
+                PROJECT_ROOT = candidate
+                break
+        else:
+            colab_root = Path('/content/llm-algo-leetcode')
+            if Path('/content').is_dir() and not colab_root.exists():
+                subprocess.run(['git', 'clone', 'https://github.com/datawhalechina/llm-algo-leetcode.git', str(colab_root)], check=True)
+            if (colab_root / 'tools/project_runtime.py').is_file():
+                PROJECT_ROOT = colab_root
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-from tools.project_runtime import ensure_output_path, runtime_snapshot, validate_training_config
+from tools.project_runtime import ensure_output_path, resolve_project_root, environment_preflight, runtime_snapshot, standard_experiment_config, standard_training_metrics, validate_training_config
+from tools.training_memory_runtime import measure_training_run
+
+PROJECT_ROOT = resolve_project_root(PROJECT_ROOT)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 OUTPUT_PATH = ensure_output_path(PROJECT_ROOT, OUTPUT_RELATIVE_PATH)
 print(f'项目根目录: {PROJECT_ROOT}')
 print(f'结果保存路径: {OUTPUT_PATH}')
@@ -388,8 +597,32 @@ def summarize_training_result(base_metrics, tuned_metrics):
         'memory_improved': mem_delta > 0,
     }
 
+if 'recommend_training_decision' not in globals():
+    def recommend_training_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0):
+        time_gain = summary['step_time_delta_ms'] >= min_time_delta_ms
+        memory_gain = summary['peak_mem_delta_mb'] >= min_memory_delta_mb
+        if time_gain and memory_gain:
+            return {'decision': 'accept', 'reason': '训练速度和显存收益都达到门槛。'}
+        if summary['time_improved'] or summary['memory_improved']:
+            return {'decision': 'tune', 'reason': '至少有一项收益，但仍需继续验证。'}
+        return {'decision': 'reject', 'reason': '速度和显存都没有形成有效收益。'}
+
 if RUN_REAL_GPU:
+    # 阶段 1：检查 workload、依赖和 CUDA；检查失败时不加载模型。
     import torch
+    if AUTO_INSTALL_REAL_DEPS:
+        import importlib.util
+        missing = [name for name in ('transformers',) if importlib.util.find_spec(name) is None]
+        if missing:
+            install_cmd = [sys.executable, '-m', 'pip', 'install', '-U', *missing]
+            markers = [Path(sys.prefix) / 'EXTERNALLY-MANAGED', Path(sys.executable).parent.parent / 'EXTERNALLY-MANAGED']
+            if any(marker.is_file() for marker in markers):
+                if not AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES:
+                    raise RuntimeError('检测到 PEP 668 受管 Python，请启用 AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES 或改用独立虚拟环境。')
+                install_cmd[3:3] = ['--break-system-packages']
+            print('使用当前 Notebook 内核安装缺失依赖：', missing)
+            subprocess.check_call(install_cmd)
+            print('依赖安装完成；如当前内核仍找不到 transformers，请重启内核后继续。')
     from tools.model_runtime import resolve_model
     from transformers import AutoConfig, AutoModelForCausalLM
 
@@ -403,10 +636,15 @@ if RUN_REAL_GPU:
     if REPEATS < 1:
         raise ValueError('REPEATS 必须至少为 1。')
     validate_training_config({'batch_size': BATCH_SIZE, 'seq_len': SEQ_LEN, 'warmup': WARMUP, 'iters': ITERS, 'seed': SEED, 'learning_rate': LEARNING_RATE})
+    preflight = environment_preflight(torch, required_packages=('transformers',), require_gpu=True, output_path=OUTPUT_PATH)
+    print({'environment_preflight': preflight})
+    if not preflight['ready']:
+        raise RuntimeError('环境预检未通过，请先按 next_actions 修复；没有加载模型。')
     print({'runtime': runtime_snapshot(torch)})
     if not torch.cuda.is_available():
         raise RuntimeError('RUN_REAL_GPU=True 但 CUDA 不可用，请先完成 GPU 环境预检。')
 
+    # 阶段 2：准备固定输入、选择可验证的 AMP dtype，并记录运行环境。
     device = torch.device('cuda')
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
@@ -418,16 +656,20 @@ if RUN_REAL_GPU:
         0, model_config.vocab_size, (BATCH_SIZE, SEQ_LEN),
         generator=input_generator,
     )
-    amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    capability = torch.cuda.get_device_capability()
+    native_bf16 = capability[0] >= 8 and torch.cuda.is_bf16_supported(including_emulation=False)
+    amp_dtype = torch.bfloat16 if native_bf16 else torch.float16
     common = {
         'model_id': MODEL_ID, 'batch_size': BATCH_SIZE, 'seq_len': SEQ_LEN,
         'dtype': 'float32', 'optimizer': 'AdamW', 'workload': WORKLOAD,
         'warmup': WARMUP, 'iters': ITERS, 'amp_dtype': str(amp_dtype),
         'torch': torch.__version__, 'torch_cuda': torch.version.cuda,
         'device': torch.cuda.get_device_name(0),
+        'compute_capability': list(capability), 'native_bf16': native_bf16,
     }
 
     def run_train_mode(use_amp, repeat_index=0):
+        """在一次独立模型实例上执行 warmup 和正式训练 step 测量。"""
         torch.manual_seed(SEED + repeat_index)
         model = AutoModelForCausalLM.from_pretrained(model_path, dtype=torch.float32)
         model.config.use_cache = False
@@ -444,36 +686,28 @@ if RUN_REAL_GPU:
             optimizer.step()
             return float(loss.detach().item())
 
-        for _ in range(WARMUP):
-            train_step()
-        torch.cuda.synchronize()
-        torch.cuda.reset_peak_memory_stats()
-        start = time.perf_counter()
-        losses = [train_step() for _ in range(ITERS)]
-        torch.cuda.synchronize()
-        elapsed = time.perf_counter() - start
-        result = {
-            'step_time_ms': round(elapsed * 1000 / ITERS, 3),
-            'samples_per_s': round(BATCH_SIZE * ITERS / elapsed, 3),
-            'loss': round(losses[-1], 6),
-            'peak_mem_mb': round(torch.cuda.max_memory_allocated() / (1024 ** 2), 2),
-            'peak_reserved_mb': round(torch.cuda.max_memory_reserved() / (1024 ** 2), 2),
-        }
+        result = measure_training_run(
+            train_step, torch_module=torch, batch_size=BATCH_SIZE,
+            warmup=WARMUP, iters=ITERS,
+        )
         del optimizer, model, input_ids, labels
         torch.cuda.empty_cache()
         return result
 
     def aggregate_runs(runs):
+        """计算多次 GPU 运行的均值，并保留单次结果供复核。"""
         return {
             key: round(sum(item[key] for item in runs) / len(runs), 3)
             for key in ('step_time_ms', 'samples_per_s', 'loss', 'peak_mem_mb', 'peak_reserved_mb')
         }
 
+    # 阶段 3：分别运行 baseline 和 AMP candidate，每次都重新初始化模型。
     if REAL_RUN_MODE == 'bf16_probe':
         tuned_runs = [run_train_mode(use_amp=True, repeat_index=i) for i in range(REPEATS)]
         tuned = aggregate_runs(tuned_runs)
         result = {
             'task': 'task3_training_memory_optimization',
+            'environment_preflight': preflight,
             'stage': 'bf16_capacity_probe',
             'config': {**common, 'mode': REAL_RUN_MODE, 'seed': SEED, 'repeats': REPEATS},
             'candidate': {**tuned, 'runs': tuned_runs},
@@ -496,6 +730,7 @@ if RUN_REAL_GPU:
         decision = recommend_training_decision(summary)
         result = {
             'task': 'task3_training_memory_optimization',
+            'environment_preflight': preflight,
             'stage': 'measurement_baseline',
             'next_stage': '76_activation_checkpoint_offload_benchmark',
             'config': {**common, 'mode': REAL_RUN_MODE, 'seed': SEED, 'repeats': REPEATS},
@@ -506,6 +741,12 @@ if RUN_REAL_GPU:
             'evidence_level': 'fixed_workload_performance_smoke',
             'decision': decision,
         }
+    # 阶段 4：补充统一报告字段，并将单次结果和均值写入 JSON。
+    result['experiment'] = standard_experiment_config(result['config'])
+    if 'baseline' in result:
+        result['standard_metrics'] = {name: standard_training_metrics(result[name]) for name in ('baseline', 'tuned')}
+    elif 'candidate' in result:
+        result['standard_metrics'] = {'candidate': standard_training_metrics(result['candidate'])}
     output_path = Path(OUTPUT_PATH)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -527,40 +768,17 @@ else:
 | 模型 | `Qwen/Qwen2.5-0.5B-Instruct` |
 | batch / seq len | `1 / 768` |
 | warmup / iters / repeats | `2 / 5 / 3` |
-| 对比模式 | FP32 baseline / AMP BF16 tuned |
+| 对比模式 | FP32 baseline / AMP BF16 candidate |
 
-| 指标 | FP32 baseline | AMP BF16 tuned | 变化 |
+| 指标 | FP32 baseline | AMP BF16 candidate | 变化 |
 |:---|---:|---:|---:|
 | step time | 482.753 ms | 237.998 ms | 提升约 50.7% |
 | throughput | 2.072 samples/s | 4.202 samples/s | 提升约 102.8% |
 | peak allocated | 9782.56 MiB | 9477.25 MiB | 下降 305.31 MiB（3.12%） |
 | peak reserved | 10766 MiB | 10624 MiB | allocator 预留变化 |
 | 最后一步 loss | 11.477 | 11.716 | 差值约 +0.239 |
+| 状态 / 证据级别 | ok / repeated benchmark | ok / repeated benchmark | 73 只说明固定 workload 的对比结果 |
 
 结论：AMP 带来了明显速度收益，但没有形成实质显存收益，当前自动决策为 `tune`。`peak reserved` 的下降不能直接当作模型显存节省；loss 差异还需要更长训练和固定验证集复核。
 
 73 建立 baseline 与测量口径；76 在相同任务上比较 checkpoint / offload / hybrid；75 再根据 76 的结果形成显存预算决策。
-
-### 解析
-
-**1. TODO 1: 统计训练 step 耗时和峰值显存**
-- **实现方式**：先执行 `warmup` 轮训练 step 预热，再用 `time.perf_counter()` 记录正式测量阶段的起点和终点，最后用 `(end - start) / iters` 得到平均 step time。
-- **关键点**：warmup 不计入结果，避免首次运行的数据加载、kernel 初始化或缓存状态影响平均耗时。
-- **显存统计**：GPU 场景下先调用 `torch.cuda.reset_peak_memory_stats()` 清空历史峰值，再用 `torch.cuda.max_memory_allocated()` 读取本轮训练的峰值显存。CPU 场景下返回 `0.0`，保证模板可以在无 GPU 环境中运行。
-
-**2. TODO 2: 汇总 baseline 和 tuned 的差异**
-- **实现方式**：`time_delta = baseline_step_time - tuned_step_time`，`mem_delta = baseline_peak_mem - tuned_peak_mem`。
-- **关键点**：这里统一用 `baseline - tuned`，所以 delta 为正表示优化后更快或更省显存。
-- **技术细节**：`time_improved` 和 `memory_improved` 只是快速判断标记，真正复盘时还要结合 loss、吞吐和收敛稳定性一起看。
-
-**3. TODO 3: 输出训练项目结论**
-- **accept**：速度和显存收益都达标，说明当前改动值得保留并继续推进。
-- **tune**：至少有一项收益成立，但还没达到稳定项目结论，适合继续围绕当前方向微调。
-- **reject**：速度和显存都没有形成有效收益，说明当前改动不值得继续保留。
-
-**训练性能分析的实验原则**
-- **固定 baseline**：同一轮对比中固定模型、数据、batch size、seq len、优化器和评测方式。
-- **一次只改一个变量**：例如只改 batch size、混合精度、gradient checkpointing 或数据加载方式，避免结果不可归因。
-- **指标一起看**：step time 变快但 peak memory、loss 或稳定性变差时，要把取舍写清楚。
-- **瓶颈归因**：如果 step time 没有改善，需要回到 profiling 结果，判断瓶颈来自数据等待、前向 / 反向算子，还是显存压力。
-- **工程产物**：建议保存对比表、profiling 截图、瓶颈结论和下一轮计划，形成可复用的训练性能排障记录。

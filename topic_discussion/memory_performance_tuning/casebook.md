@@ -1,55 +1,78 @@
-# 显存优化与性能调优正文
+# 显存优化判断手册
 
-这页只做显存问题的判断框架：不重复 `intro` 的路线入口，也不写 `walkthrough` 的连续故事。
+> 这份判断手册按问题组织，不属于 Task0–6 的顺序学习内容。完成机制学习后，遇到实际显存问题时，用它选择排查方向和验证项目。
 
-## Infra 边界
+显存优化不应从技巧名称开始，而应从现象开始判断：当前是哪类对象超过预算，发生在什么生命周期，应该优先减少驻留、重算、搬运还是压缩表示。
 
-显存优化主要连接 Infra-L1 的容量与带宽、Infra-L2 的访存与 kernel、Infra-L3 的框架状态管理，并延伸到 Infra-L4 的 KV Cache、量化和 Serving 配置。每项策略都要同时检查容量、重算、搬运、通信、吞吐和质量；Infra-L5 只负责资源治理、回归和部署流程。
+统一判断链是：
 
-## 总判断链：对象 → 生命周期 → 证据 → 策略
+```text
+现象 → 显存对象 → 生命周期 → 策略代价 → 证据出口
+```
 
-遇到显存问题时，先沿下面四步走，不要直接从技巧名称开始：
+训练和推理共享这套判断方法，但对象账本和实验结论不能混用。训练主要观察 activation、梯度和 optimizer state；推理主要观察权重、KV Cache 和运行时 buffer。
 
-1. **确认对象。** 先区分参数、梯度、optimizer state、activation、KV Cache 和临时 buffer；训练和推理的对象账本不能混写。
-2. **确认生命周期。** 判断对象是在 forward、backward、optimizer step、prefill、decode 还是请求排队阶段驻留或增长。
-3. **确认证据。** 区分公式 / toy 机制、CPU 功能验证、单 GPU benchmark 和真实 profiler trace；证据等级不足时，只保留待验证假设。
-4. **选择策略。** 根据对象和瓶颈选择 accumulation、checkpoint、offload、paging、prefix reuse、量化或 kernel / graph 优化，并记录代价转移到了计算、带宽、通信、延迟还是质量。
+## 显存对象与问题入口
 
-这四步对应整条路线：Task0–1 建立对象和生命周期语言，Task2 学习训练侧策略，Task3 采集训练证据，Task4–5 处理推理与量化分支，Task6 负责跨策略的 profiling 和决策收口。
+![显存账本：对象、生命周期与证据](../../docs/public/topic_discussion/memory_performance_tuning/memory_ledger.svg)
 
-## 同一机制的显存目标
-
-显存专题与推理专题可以共享同一份机制 Notebook，但这里把 checkpoint、offload、paging、KV Cache 和量化看成资源预算策略：先确认减少了哪类状态的驻留，再判断代价转移到了重算、带宽、通信还是质量。
-
-| 共同机制 | 显存侧要回答的问题 | 主要指标 | 项目输出 |
+| 显存对象 | 主要生命周期 | 常见问题 | 主要学习入口 |
 |:---|:---|:---|:---|
-| Checkpointing | 少保存了多少 activation，重算代价是否可接受 | `peak memory`、step time、吞吐 | 训练显存策略选型 |
-| Offload | 状态搬到 CPU 或其他层级后是否仍值得 | GPU 显存、搬运时间、带宽、吞吐 | offload 范围决策 |
-| PagedAttention / KV Cache | cache 碎片和驻留是否限制并发 | 每请求显存、cache 容量、并发、质量 | cache 预算决策 |
-| 权重 / 激活 / KV Cache 量化 | 哪类状态被压缩，模型是否因此装得下 | 权重或 activation 占用、`peak memory`、质量、吞吐 | 量化预算决策 |
+| 参数 | 模型加载到运行结束 | 模型或 checkpoint 装不下 | Task1、量化与分布式 |
+| 梯度 | backward 后产生 | 训练峰值升高 | Task0、Task2 |
+| optimizer state | optimizer step 后驻留 | 训练状态过大 | Task1、73 |
+| activation | forward 保存到 backward | 中后段 OOM | Task0、Task2、76 |
+| KV Cache | Prefill 到请求结束 | 长上下文、并发受限 | Task4、66、69、71 |
+| 通信 buffer | 多卡通信期间 | 多卡峰值和通信开销 | Task6、79–81 |
 
-量化在本专题中首先是显存工具：先回答模型是否装得下、上下文或并发是否能提高，再验证速度和质量；不能从单项显存下降直接推出优化成功。
+## 按现象选择策略
 
-## 判断表
+| 现象 | 先判断的对象 | 先测什么 | 候选策略 | 主要代价 | 验证出口 |
+|:---|:---|:---|:---|:---|:---|
+| 训练前几步正常，中后段 OOM | activation、临时张量 | forward / backward 峰值和 saved tensors | checkpoint、offload | 重算、搬运、同步 | [73](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) → [76](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb) |
+| 单步显存可接受，但有效 batch 不够 | activation 与 micro-batch | 单步峰值和有效 batch | gradient accumulation、checkpoint | 微步数、重算时间 | [12](../../02_PyTorch_Algorithms/12_Gradient_Accumulation.ipynb) → [73](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) |
+| 模型加载阶段就超过预算 | 权重、dtype、运行时 buffer | 参数账本和加载峰值 | 量化、分片、改变 dtype | 质量、kernel、通信 | [67](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb) / [79](../../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb) |
+| 上下文变长后显存持续上涨 | KV Cache | Cache 增长和并发边界 | paging、prefix reuse、cache quantization | 命中率、误差、backend 约束 | [66](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb) → [69](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb) |
+| 并发增加后 Cache 无法容纳 | KV Cache、临时请求空间 | Cache 容量、命中和请求 workload | cache budget、复用、架构扩展 | 并发、质量、调度约束 | [69](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb) / [71](../../02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb) |
+| 峰值显存下降但速度变慢 | 重算、搬运或 kernel | forward / backward / 搬运时间 | 先做 profiling，再调策略 | 时间、带宽、通信 | [74](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) |
+| 理论账本与实测差距很大 | buffer、碎片、生命周期 | allocator 和 trace | 对齐账本与实测证据 | 分析成本 | [01 显存账本](./01_vram_ledger_and_metrics.md) → [74](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) |
 
-先按“对象 → 生命周期 → 证据 → 策略”的顺序分流，再判断省下来的显存有没有把时间代价一起控制住。
+## Profiling、Benchmark 与项目决策
 
-| 现象 | 优先判断 | 先看哪条线 | 常见动作 |
+![显存优化：从分支证据到统一决策](../../docs/public/topic_discussion/memory_performance_tuning/benchmark_tradeoff_decision.svg)
+
+Profiling 和 Benchmark 解决不同问题：Profiling 用来发现和解释瓶颈，Benchmark 用来比较候选策略；75 进一步检查预算变化后结论是否稳定，74 当前作为最终 trace 收口。实际项目顺序是 `73 baseline → 76 策略比较 → 75 预算敏感性 → 74 Profiling 收口`。
+
+| 环节 | 主要问题 | 代表项目 | 可以形成的证据 |
 |:---|:---|:---|:---|
-| 训练前几步正常，中后段突然 OOM | `training activation pressure` | [02](./02_training_memory_pressure.md), [03](./03_checkpointing_and_offload.md) | 检查 batch、accumulation、checkpointing、offload |
-| 推理能跑，但 cache 一直涨，batch 上不去 | `inference cache pressure` | [04](./04_inference_cache_and_memory_budget.md) | 检查 paging、prefix reuse、eviction、KV cache quant |
-| 峰值显存下降了，但 benchmark 没改善 | `trade-off mismatch` | [06](./06_benchmark_and_tradeoff_decision.md) | 比较 peak memory、step time、TTFT、TPOT、throughput |
-| 理论账本和实测差很多 | `ledger mismatch` | [01](./01_vram_ledger_and_metrics.md), [06](./06_benchmark_and_tradeoff_decision.md) | 对齐理论账本、运行时 buffer、碎片和流程开销 |
+| baseline | 当前配置的真实成本是多少 | 73 | step time、吞吐、峰值显存、loss、OOM |
+| profiling | 时间和显存花在哪里 | 74 | 重算、搬运、optimizer step、kernel 代价 |
+| strategy benchmark | 哪个候选策略更合适 | 76 | baseline / checkpoint / offload / hybrid 对比 |
+| budget analysis | 不同预算下是否仍然成立 | 75 | budget sensitivity、可行策略集合 |
+| final decision | 是否采用当前方案 | 74 + 75 | accept / tune / reject |
 
-| 检查项 | 主要回答什么 | 常见误判 |
-|:---|:---|:---|
-| `activation` | 训练侧主峰值是不是来自前反向中间状态 | 把所有问题都归到 batch 太大 |
-| `optimizer state` | 更新状态是不是把预算继续抬高 | 只看参数量，不看更新状态驻留 |
-| `KV cache` | 推理侧预算是不是被缓存增长顶高 | 看到延迟差就直接改 decode |
-| `peak memory + time` | 省显存是否把时间和吞吐一起赔掉 | 峰值降了就默认 adopt |
+| Task | 在 casebook 中承担的角色 |
+|:---|:---|
+| Task0 | 理解状态产生、驻留和释放 |
+| Task1 | 建立 dtype、参数、activation 和 optimizer state 账本 |
+| Task2 | 选择 accumulation、checkpoint、offload 等单机策略 |
+| Task3 | 用 73、76、75 完成训练侧测量和预算决策 |
+| Task4 | 处理 KV Cache、分页、复用和推理容量 |
+| Task5 | 通过量化改变权重或 Cache 的容量 |
+| Task6 | 用分布式切分和 Profiling 完成系统收口 |
 
-最终判断不该停在“省了多少显存”，而要落回“系统是不是因此更可运行、更稳定、更值得保留”。
+形成结论时按以下顺序检查：
 
-## 本节要点
+1. **先确认对象。** 不要把 activation、optimizer state 和 KV Cache 放在同一个账本条目里。
+2. **再确认阶段。** 训练看 forward / backward / optimizer step；推理看 prefill / decode / cache 增长。
+3. **再选择策略。** 说明策略减少了哪类 GPU 驻留，以及代价转移到了计算、带宽、通信、延迟还是质量。
+4. **最后选择证据。** CPU 只能验证公式、shape、梯度和决策逻辑；GPU、backend、多卡或 profiler 才能证明对应的系统结论。
 
-这页的职责不是列出更多省显存的方法名，而是把显存问题里最常见的判断点压成一张表。路线入口留给 `intro`，连续故事留给 `walkthrough`，项目证明留给 benchmark 和项目页。
+`accept / tune / reject` 只用于固定 workload 下的策略判断：显存收益、性能、质量和稳定性同时满足约束时才是 `accept`；证据不足或阈值敏感时保持 `tune`；副作用过大或质量不达标时 `reject`。
+
+## 阅读入口
+
+- 想按顺序学习机制：回到 [显存优化入口](./intro.md)，再读 [01–06 正文](./01_vram_ledger_and_metrics.md)。
+- 想沿一个问题完整走一遍：阅读[显存优化深入阅读](./walkthrough.md)。
+- 想采集真实数据：进入 73–76、66–71 或 79–81 对应的项目页，并遵守各自环境与报告要求。
+- 如果问题首先是请求速度、服务调度或版本治理，应转到[推理优化](../inference_optimization/intro.md)，而不是把所有问题都归入显存优化。

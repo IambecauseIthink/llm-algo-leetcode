@@ -23,20 +23,11 @@ SwiGLU 用两条并行分支做门控：一条提供候选特征，另一条决�
 ---
 ## 前置阅读
 
-**导语：** 先把张量运算、激活函数和归一化直觉理顺，再看 MLP 里的门控分支会更容易。
+**导语：** 先能读出逐元素激活、矩阵投影和归一化的位置，再比较 MLP 的单路激活与 SwiGLU 的双路门控。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 14. Activation Functions | 激活函数](../00_Prerequisites/14_Activation_Functions.md)
 - [P0: 15. Normalization Techniques | 归一化技术](../00_Prerequisites/15_Normalization_Techniques.md)
-
-## 相关阅读
-
-**导语：** 理解 SwiGLU 后，可以继续看位置编码、Attention，以及同一类 MLP 算子在混合精度和融合优化里的落地方式。
-
-- [03. RoPE Tutorial | 旋转位置编码教程](../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)
-- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
-- [P1: 12. TensorCore and Mixed Precision | Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
 
 ---
 ### Step 1: 核心思想与痛点
@@ -292,3 +283,13 @@ class SwiGLU_MLP(nn.Module):
 - **这一题要解决什么：** 把融合后的输出切回两条分支，再按 SwiGLU 公式完成前向计算。
 - **为什么先切分再激活：** `gate` 负责门控，`up` 负责保留线性信息；先把它们拆开，各自的计算角色更明确。
 - **带走的直觉：** SwiGLU 不是单个激活函数，而是“门控 + 线性分支 + 融合投影”的一整套结构。
+## 相关阅读
+
+本节的门控激活可以继续沿两条线阅读：一条是 GLU 家族的原始设计，另一条是 LLaMA 实现中 gate / up / down 三个投影如何落地。
+
+- [GLU 家族原论文：GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202)
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [03. RoPE 旋转位置编码](../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)
+- [04. 多头注意力与 GQA](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

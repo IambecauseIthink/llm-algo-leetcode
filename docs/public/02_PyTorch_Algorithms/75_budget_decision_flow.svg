@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:24px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:14px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" class="title">75：读取 GPU 结果，执行 CPU 预算决策</text>
+  <rect x="35" y="100" width="190" height="105" class="box"/><text x="130" y="135" text-anchor="middle" class="label">76 JSON</text><text x="130" y="165" text-anchor="middle" class="small">候选指标与状态</text><text x="130" y="188" text-anchor="middle" class="small">GPU 已测证据</text>
+  <rect x="260" y="100" width="190" height="105" class="box"/><text x="355" y="135" text-anchor="middle" class="label">预算条件</text><text x="355" y="165" text-anchor="middle" class="small">显存 / 吞吐 / 质量</text><text x="355" y="188" text-anchor="middle" class="small">目标设备可用空间</text>
+  <rect x="485" y="100" width="190" height="105" class="box"/><text x="580" y="135" text-anchor="middle" class="label">候选筛选</text><text x="580" y="165" text-anchor="middle" class="small">可行集合与节省量</text><text x="580" y="188" text-anchor="middle" class="small">敏感性场景</text>
+  <rect x="710" y="100" width="155" height="105" class="box"/><text x="787" y="135" text-anchor="middle" class="label">决策</text><text x="787" y="165" text-anchor="middle" class="small">accept</text><text x="787" y="185" text-anchor="middle" class="small">tune / reject</text>
+  <path d="M225 152 H255 M450 152 H480 M675 152 H705" class="arrow"/>
+  <rect x="185" y="260" width="530" height="55" class="box"/><text x="450" y="294" text-anchor="middle" class="small">75 不重新训练，也不产生新的 GPU 性能结论</text>
+</svg>

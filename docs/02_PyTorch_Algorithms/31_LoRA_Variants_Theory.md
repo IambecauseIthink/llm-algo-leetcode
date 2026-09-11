@@ -15,7 +15,7 @@
 
 LoRA 变体看起来很多，但真正要比较的东西并不复杂：它们到底在改什么，代价是什么，换来了什么收益。`10` 先回答 LoRA 本体怎么工作，`26` 再说明量化底座和 LoRA 旁路怎样结合，而 `31` 进一步回答另一个更贴近训练设计的问题：当你已经决定走 adapter 路线后，不同 LoRA 变体该怎么放到同一套比较口径里。
 
-这一节不追求穷举所有 PEFT 名词，而是先把变体选择收敛成三个最小判断：规格字段怎么统一、参数效率和训练稳定性怎么比较、最终推荐为什么必须绑定具体场景。它在训练微调路线里不是松散扩展页，而是项目收口前补链的“方案比较”环节：`26` 先把小显存分支立住，`31` 再回答同样走 adapter 路线时不同 LoRA 变体该怎么比较，后面才接 `32 / 33 / 60`。学完后，你应该能看清“LoRA 本体 -> 量化分支 -> 变体比较 -> 数据与 readiness -> 项目收口”这条主线，而不是停留在名称堆砌。
+这一节把变体选择收敛成三个可比较的问题：规格字段怎么统一、参数效率和训练稳定性怎么比较、最终推荐如何绑定具体场景。你会沿着 `rank`、`alpha`、`dropout` 和 `target modules` 这些字段阅读不同方案，并把比较结果接到后续数据准备、readiness 和项目验证。
 
 **关键词：** `rank`, `alpha`, `dropout`, `target modules`
 
@@ -23,18 +23,10 @@ LoRA 变体看起来很多，但真正要比较的东西并不复杂：它们到
 
 ## 前置阅读
 
-**导语：** 这一节同时承接 LoRA 本体、训练资源限制和量化微调三条线：先知道 adapter 在改什么，再回来看为什么不同变体会适合不同预算和目标。
+**导语：** 进入本节前，先能说明 LoRA adapter 修改哪条参数路径，再观察 rank、缩放系数和 target modules 如何改变预算与训练行为。
 - [10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)
 - [12. Gradient Accumulation | 梯度累积](./12_Gradient_Accumulation.md)
 - [26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化](./26_QLoRA_and_4bit_Quantization.md)
-
-## 相关阅读
-
-**导语：** 学完 LoRA 变体原理后，下一步可以沿两条线继续走：一条是项目线，去看这些比较口径如何真正落到微调交付；另一条是选型线，去验证不同变体在 benchmark 和 QLoRA 方案里是否真的值得落地。
-- [60. LoRA Fine-Tuning Project | LoRA 微调项目](./60_LoRA_Fine_Tuning_Project.md)
-- [63. LoRA Variants Benchmark | LoRA 变体基准对比](./63_LoRA_Variants_Benchmark.md)
-- [65. QLoRA Selection Project | QLoRA 方案选择项目](./65_QLoRA_Selection_Project.md)
-- [2.3](./2_3.md)
 
 ---
 
@@ -248,3 +240,14 @@ def recommend_lora_variant(variants: List[Dict[str, object]], priority: str) -> 
 - 先统一规格，后续比较才不会混口径。
 - `trainable_params_ratio` 是最常用的参数效率指标。
 - 推荐必须显式绑定优先级，否则结论很难复用到别的项目里。
+
+## 相关阅读
+
+完成变体规格和比较指标后，可以继续阅读 LoRA 原论文、PEFT 实现和项目基准，核对方案是否适合具体训练预算。
+
+- [LoRA 原论文：Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
+- [Hugging Face PEFT 官方仓库](https://github.com/huggingface/peft)
+- [60. LoRA Fine-Tuning Project | LoRA 微调项目](./60_LoRA_Fine_Tuning_Project.md)
+- [63. LoRA Variants Benchmark | LoRA 变体基准对比](./63_LoRA_Variants_Benchmark.md)
+- [65. QLoRA Selection Project | QLoRA 方案选择项目](./65_QLoRA_Selection_Project.md)
+- [2.3](./2_3.md)

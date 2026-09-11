@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 430" role="img" aria-labelledby="title desc">
+  <title id="title">W8A16 GPU 机制实验</title><desc id="desc">比较浮点线性层与 W8A16 线性层的存储、前向和误差。</desc>
+  <defs><marker id="a25g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker><style>.t{font:700 28px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.h{font:700 19px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:2.5;rx:16}.l{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#a25g)}</style></defs>
+  <rect width="1100" height="430" fill="#f8fafc"/><text x="50" y="52" class="t">25 GPU 实验：验证表示与前向代价</text><text x="50" y="82" class="s">教学实现保留浮点计算，不代表真实 INT8 kernel。</text>
+  <rect x="55" y="150" width="210" height="130" class="box" fill="#dbeafe" stroke="#2563eb"/><text x="115" y="198" class="h">同一 Linear</text><text x="82" y="235" class="b">相同权重、输入、dtype</text><text x="82" y="260" class="s">固定 batch / seq_len</text>
+  <rect x="330" y="105" width="230" height="130" class="box" fill="#fef3c7" stroke="#d97706"/><text x="406" y="153" class="h">FP16 baseline</text><text x="365" y="190" class="b">权重存储 / forward</text><text x="365" y="215" class="s">作为对照</text>
+  <rect x="330" y="275" width="230" height="130" class="box" fill="#dcfce7" stroke="#16a34a"/><text x="402" y="323" class="h">W8A16</text><text x="365" y="360" class="b">INT8 权重 + 反量化</text><text x="365" y="385" class="s">保留浮点前向</text>
+  <rect x="625" y="150" width="210" height="130" class="box" fill="#fce7f3" stroke="#db2777"/><text x="690" y="198" class="h">统一指标</text><text x="655" y="235" class="b">权重字节 / latency</text><text x="655" y="260" class="s">显存 / 输出 MSE</text>
+  <rect x="900" y="150" width="150" height="130" class="box" fill="#e0e7ff" stroke="#4f46e5"/><text x="936" y="198" class="h">结论</text><text x="925" y="235" class="b">measure</text><text x="925" y="260" class="b">不等于部署</text>
+  <path d="M265 215L330 170" class="l"/><path d="M265 215L330 340" class="l"/><path d="M560 170L625 215" class="l"/><path d="M560 340L625 215" class="l"/><path d="M835 215H900" class="l"/>
+</svg>

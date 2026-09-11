@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="660" viewBox="0 0 1280 660">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #0f172a; }
+      .subtitle { font: 16px sans-serif; fill: #475569; }
+      .group { font: 700 17px sans-serif; fill: #334155; }
+      .node-title { font: 700 18px sans-serif; fill: #0f172a; }
+      .node-text { font: 14px sans-serif; fill: #334155; }
+      .line-label { font: 13px sans-serif; fill: #475569; paint-order: stroke; stroke: #f8fafc; stroke-width: 6px; stroke-linejoin: round; }
+    </style>
+  </defs>
+  <rect width="1280" height="660" rx="24" fill="#f8fafc"/>
+  <text x="640" y="48" text-anchor="middle" class="title">多卡训练通信：从并行方式到拓扑验证</text>
+  <text x="640" y="76" text-anchor="middle" class="subtitle">先决定状态和计算如何放置，再估算数据交换，最后用链路与集合通信验证收益</text>
+  <rect x="36" y="108" width="244" height="420" rx="18" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/><text x="58" y="142" class="group">并行方式</text>
+  <rect x="58" y="166" width="200" height="92" rx="12" fill="#fff" stroke="#60a5fa"/><text x="78" y="194" class="node-title">数据并行 DP</text><text x="78" y="220" class="node-text">不同数据批次</text><text x="78" y="242" class="node-text">梯度同步</text>
+  <rect x="58" y="282" width="200" height="92" rx="12" fill="#fff" stroke="#60a5fa"/><text x="78" y="310" class="node-title">张量并行 TP</text><text x="78" y="336" class="node-text">切分层内张量</text><text x="78" y="358" class="node-text">频繁交换激活</text>
+  <rect x="58" y="398" width="200" height="92" rx="12" fill="#fff" stroke="#60a5fa"/><text x="78" y="426" class="node-title">流水线并行 PP</text><text x="78" y="452" class="node-text">切分网络层</text><text x="78" y="474" class="node-text">阶段传递与等待</text>
+  <rect x="320" y="108" width="244" height="420" rx="18" fill="#f0fdf4" stroke="#86efac" stroke-width="2"/><text x="342" y="142" class="group">数据交换</text>
+  <rect x="342" y="190" width="200" height="86" rx="12" fill="#fff" stroke="#4ade80"/><text x="362" y="218" class="node-title">同步对象</text><text x="362" y="244" class="node-text">梯度 · 激活 · 参数</text><text x="362" y="266" class="node-text">状态分片与重建</text>
+  <rect x="342" y="326" width="200" height="86" rx="12" fill="#fff" stroke="#4ade80"/><text x="362" y="354" class="node-title">通信原语</text><text x="362" y="380" class="node-text">AllReduce · AllGather</text><text x="362" y="402" class="node-text">ReduceScatter · P2P</text>
+  <rect x="604" y="108" width="284" height="420" rx="18" fill="#fffbeb" stroke="#fcd34d" stroke-width="2"/><text x="626" y="142" class="group">拓扑与代价</text>
+  <rect x="626" y="184" width="240" height="96" rx="12" fill="#fff" stroke="#f59e0b"/><text x="648" y="214" class="node-title">链路带宽</text><text x="648" y="240" class="node-text">NVLink / NVSwitch</text><text x="648" y="262" class="node-text">PCIe / 网络互联</text>
+  <rect x="626" y="314" width="240" height="96" rx="12" fill="#fff" stroke="#f59e0b"/><text x="648" y="344" class="node-title">通信代价</text><text x="648" y="370" class="node-text">载荷 × 次数 ÷ 带宽</text><text x="648" y="392" class="node-text">同步等待与重叠空间</text>
+  <rect x="928" y="108" width="316" height="420" rx="18" fill="#faf5ff" stroke="#d8b4fe" stroke-width="2"/><text x="950" y="142" class="group">验证与决策</text>
+  <rect x="950" y="184" width="272" height="96" rx="12" fill="#fff" stroke="#a855f7"/><text x="972" y="214" class="node-title">TP / PP 部署决策</text><text x="972" y="240" class="node-text">带宽断层 · 同步频率</text><text x="972" y="262" class="node-text">stage 边界 · 计算通信重叠</text>
+  <rect x="950" y="314" width="272" height="96" rx="12" fill="#fff" stroke="#a855f7"/><text x="972" y="344" class="node-title">验证出口</text><text x="972" y="370" class="node-text">CPU：公式与原语语义</text><text x="972" y="392" class="node-text">GPU：NCCL 与多卡实测</text>
+  <path d="M 280 318 L 320 318" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M 564 318 L 604 318" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M 888 318 L 928 318" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M 442 276 V 326" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 746 280 V 314" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 1086 280 V 314" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+</svg>

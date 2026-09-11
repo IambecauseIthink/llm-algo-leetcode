@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="380" viewBox="0 0 900 380">
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}.title{font-size:24px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:14px}.box{fill:#f8fafc;stroke:#475569;stroke-width:2;rx:12}.arrow{stroke:#64748b;stroke-width:3;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" class="title">74：从指标变化走到瓶颈证据</text>
+  <rect x="35" y="105" width="180" height="105" class="box"/><text x="125" y="140" text-anchor="middle" class="label">73 / 76 / 75</text><text x="125" y="170" text-anchor="middle" class="small">指标、候选、预算</text><text x="125" y="193" text-anchor="middle" class="small">已有结论</text>
+  <rect x="245" y="105" width="180" height="105" class="box"/><text x="335" y="140" text-anchor="middle" class="label">采集 trace</text><text x="335" y="170" text-anchor="middle" class="small">forward / backward</text><text x="335" y="193" text-anchor="middle" class="small">重算 / 搬运 / 同步</text>
+  <rect x="455" y="105" width="180" height="105" class="box"/><text x="545" y="140" text-anchor="middle" class="label">提出假设</text><text x="545" y="170" text-anchor="middle" class="small">计算、带宽、容量</text><text x="545" y="193" text-anchor="middle" class="small">或通信瓶颈</text>
+  <rect x="665" y="105" width="200" height="105" class="box"/><text x="765" y="140" text-anchor="middle" class="label">改一个变量并复测</text><text x="765" y="170" text-anchor="middle" class="small">收益 + 代价</text><text x="765" y="193" text-anchor="middle" class="small">accept / tune / reject</text>
+  <path d="M215 157 H240 M425 157 H450 M635 157 H660" class="arrow"/>
+  <path d="M765 215 V285 H125 V215" fill="none" class="arrow"/>
+  <text x="445" y="315" text-anchor="middle" class="small">复测结果回到同一 workload，检查因果关系</text>
+</svg>

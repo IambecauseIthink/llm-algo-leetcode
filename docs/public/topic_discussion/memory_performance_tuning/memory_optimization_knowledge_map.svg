@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="880" viewBox="0 0 1500 880">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#52606d"/></marker>
+<marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#3778b8"/></marker>
+</defs>
+<rect width="1500" height="880" fill="#f7fafc"/>
+<style>
+.title{font:700 30px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#52606d}.label{font:700 19px sans-serif;fill:#172b4d}.body{font:15px sans-serif;fill:#243b53}.small{font:13px sans-serif;fill:#52606d}.box{stroke-width:2;rx:18}.flow{stroke:#52606d;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.map{stroke:#3778b8;stroke-width:2.3;stroke-dasharray:8 6;fill:none;marker-end:url(#arrowBlue)}
+</style>
+
+<text x="750" y="44" text-anchor="middle" class="title">显存优化知识地图：从对象账本到资源决策</text>
+<text x="750" y="78" text-anchor="middle" class="sub">先识别占用对象和生命周期，再选择代价转移方式，最后用匹配环境的证据判断收益。</text>
+
+<rect x="475" y="110" width="550" height="92" fill="#e6f0ff" stroke="#4c8eda" class="box"/>
+<text x="750" y="150" text-anchor="middle" class="label">显存优化问题</text>
+<text x="750" y="180" text-anchor="middle" class="body">显存被谁占用？何时达到峰值？代价转移后是否值得？</text>
+
+<rect x="55" y="300" width="290" height="150" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+<text x="200" y="340" text-anchor="middle" class="label">对象账本</text>
+<text x="200" y="375" text-anchor="middle" class="body">参数 · 梯度 · 激活</text>
+<text x="200" y="405" text-anchor="middle" class="small">KV Cache · optimizer · workspace</text>
+
+<rect x="405" y="300" width="290" height="150" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+<text x="550" y="340" text-anchor="middle" class="label">生命周期</text>
+<text x="550" y="375" text-anchor="middle" class="body">常驻 · 阶段驻留 · 临时峰值</text>
+<text x="550" y="405" text-anchor="middle" class="small">forward / backward · prefill / decode</text>
+
+<rect x="755" y="300" width="290" height="150" fill="#fff4d6" stroke="#e0a23b" class="box"/>
+<text x="900" y="340" text-anchor="middle" class="label">策略代价</text>
+<text x="900" y="375" text-anchor="middle" class="body">重算 · 搬运 · 压缩 · 通信</text>
+<text x="900" y="405" text-anchor="middle" class="small">空间收益不等于系统收益</text>
+
+<rect x="1105" y="300" width="340" height="150" fill="#f2effc" stroke="#8069b5" class="box"/>
+<text x="1275" y="340" text-anchor="middle" class="label">证据升级</text>
+<text x="1275" y="375" text-anchor="middle" class="body">CPU 机制 → 单 GPU / backend</text>
+<text x="1275" y="405" text-anchor="middle" class="small">多卡、trace 与最终决策</text>
+
+<path d="M750 202 V240 H200 V300" class="flow"/>
+<path d="M750 202 V240 H550 V300" class="flow"/>
+<path d="M750 202 V240 H900 V300" class="flow"/>
+<path d="M750 240 H1275 V300" class="flow"/>
+
+<rect x="110" y="555" width="560" height="155" fill="#eef6ff" stroke="#4c8eda" class="box"/>
+<text x="390" y="595" text-anchor="middle" class="label">训练侧分支</text>
+<text x="390" y="630" text-anchor="middle" class="body">micro-batch / accumulation</text>
+<text x="390" y="657" text-anchor="middle" class="body">checkpoint / offload / LoRA / QLoRA</text>
+<text x="390" y="687" text-anchor="middle" class="small">重点观察 activation、梯度和 optimizer state</text>
+
+<rect x="830" y="555" width="560" height="155" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+<text x="1110" y="595" text-anchor="middle" class="label">推理与系统分支</text>
+<text x="1110" y="630" text-anchor="middle" class="body">paging / prefix reuse / KV Cache 量化</text>
+<text x="1110" y="657" text-anchor="middle" class="body">架构压缩 / 分布式切分 / profiling</text>
+<text x="1110" y="687" text-anchor="middle" class="small">重点观察权重、KV Cache、通信和服务容量</text>
+
+<path d="M550 450 V500 H390 V555" class="map"/>
+<path d="M900 450 V500 H1110 V555" class="map"/>
+<path d="M1275 450 V500 H1110 V555" class="map"/>
+
+</svg>

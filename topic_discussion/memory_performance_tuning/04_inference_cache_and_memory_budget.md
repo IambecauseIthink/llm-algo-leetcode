@@ -2,68 +2,40 @@
 
 ## 页面目标
 
-这一页回答的是：推理显存为什么会被 KV cache 顶高，为什么分页、复用、调度和压缩都必须回到预算问题来看。
+本节回答：为什么上下文和并发增加后，KV Cache 会成为推理显存边界？分页、前缀复用、缓存调度和 KV Cache 量化分别改变了什么？
 
-## 问题起点
+## 核心机制
 
-推理显存问题最典型的表象是：
+KV Cache 保存历史 token 对应的键和值，使 decode 不必重复计算全部历史上下文；代价是每层、每个请求和每个历史 token 都会占用运行时显存。上下文越长、并发越高，缓存增长越接近容量上限。
 
-- 上下文一长，显存就迅速爬升；
-- 并发一高，batch 就上不去；
-- 延迟也变差，但问题根子未必在 decode 算法，而可能在 cache 组织。
+| 机制 | 主要改变什么 | 显存侧观察点 | 相关入口 |
+|:---|:---|:---|:---|
+| KV Cache 增长 | 历史 token 的运行时驻留 | 每 token、每请求和每并发的容量 | [11 KV Cache](../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb) |
+| Paging | cache block 的组织和分配 | 碎片、可用容量和回收 | [22 PagedAttention](../../02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb) |
+| Prefix reuse | 重复前缀的存储复用 | 命中率、复用容量和失效 | [34 Prefix Cache](../../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb) |
+| KV Cache 量化 | cache 的数值表示 | cache 占用、误差和 backend 支持 | [41 KV Cache 量化](../../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb)；完整量化路线见 Task5 |
 
-因此，推理侧显存首先是预算问题，其次才是“让请求更快”的问题。
+这里关注的是“缓存如何在有限显存中驻留和增长”，不是请求路由、扩缩容或版本治理。服务调度的完整问题回到推理优化路线；同一个 66 项目在该路线关注延迟和吞吐，在本专题还要记录 cache policy、命中率、峰值显存和并发容量。
 
-## 你要先确认什么
+![KV Cache：增长、组织与预算](../../docs/public/topic_discussion/memory_performance_tuning/kv_cache_budget.svg)
 
-- peak memory 是否由 KV cache 主导。
-- cache 增长是否来自自然长度扩展，还是碎片和复用不足。
-- 当前动作是在优化复用、分页、调度还是压缩表示。
+## 判断与验证
 
-## 核心矛盾
+推理侧显存问题按下面顺序进入实验：
 
-KV cache 一方面能让 decode 不必重复计算历史 token，另一方面又会稳定吞掉显存预算。系统希望保留上下文、提高并发，但显存预算会先行成为边界。
+1. 先用 shape 和容量估算判断 KV Cache 是否是主要压力。
+2. 再观察分页或前缀复用能否减少碎片和重复驻留。
+3. 预算仍不足时，再转入 Task5 判断 KV Cache 量化，或进入架构扩展，例如 [71 MLA / KV Cache](../../02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb)。
+4. 最后在匹配的 GPU backend workload 中记录 cache 容量、并发、TTFT、TPOT、吞吐、质量和 OOM 状态。
 
-## 与推理优化路线的边界
+进入项目前，至少把下面几类观测字段分开记录：
 
-推理优化路线主要问“请求怎样更快、服务怎样更稳”；本页主要问“KV Cache 如何在有限预算中驻留、复用和增长”。因此同一个 [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb) 在推理专题中比较 TTFT、TPOT 和吞吐，在本专题中还必须记录 cache policy、命中率、峰值显存和并发容量。这样可以避免把“延迟变快”误读成“显存管理已经优化”。
+| 观察对象 | 需要记录什么 | 主要回答的问题 |
+|:---|:---|:---|
+| Cache 容量 | 每 token、每请求、每并发的增长 | 当前容量边界由什么决定？ |
+| Cache 组织 | block 分配、碎片、回收和 eviction | paging 是否减少了浪费？ |
+| Cache 复用 | prefix 命中率、复用长度、失效原因 | 复用是否减少重复驻留和 prefill？ |
+| 请求性能 | TTFT、TPOT、吞吐、P99 | 显存收益是否转化为可接受的服务结果？ |
+| 数值与质量 | cache dtype、误差、任务质量 | 压缩是否改变了可用性？ |
 
-这与 Task2 的训练显存不是同一个对象：训练侧主要观察 activation、梯度和 optimizer state 的生命周期，推理侧主要观察 KV Cache 的增长、复用和驻留。两者共享账本和带宽语言，但不能把 checkpoint/offload 的训练结论直接迁移到推理服务。
-
-## 演化路径
-
-1. 先看 cache 增长是否自然且可接受。
-2. 再看 prefix reuse 和分页是否足以缓解碎片和驻留。
-3. 如果预算仍然过紧，再考虑 KV cache quantization。
-4. 最后回到 benchmark，看省下来的显存是否真的换到了上下文或并发收益。
-
-## 关键取舍
-
-- `prefix reuse` 适合重复历史明显的 workload。
-- `paging` 更像 allocator 和布局优化，不一定直接改善算法。
-- `KV cache quantization` 能继续压预算，但会引入表示误差和后端约束。
-
-![KV cache budget](/topic_discussion/memory_performance_tuning/kv_cache_budget.svg)
-
-## 文献锚点
-
-- PagedAttention / vLLM：理解分页为什么是推理 cache 的系统级动作。
-- RadixAttention / prefix reuse 工程资料：理解前缀共享对 cache 预算的影响。
-- KV cache quantization 资料：理解为什么缓存压缩和权重量化不是一回事。
-
-## 对应 Part 02
-
-- [22 vLLM PagedAttention](../../02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb)
-- [24 SGLang RadixAttention](../../02_PyTorch_Algorithms/24_SGLang_RadixAttention.ipynb)
-- [34 Prefix Caching and Chunked Prefill](../../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb)、[37 KV Cache Scheduling](../../02_PyTorch_Algorithms/37_KV_Cache_Scheduling.ipynb)
-- [41 FP8 and KV Cache Quantization](../../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb)
-- [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb)、[67 Quantized Inference and Deployment](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb)
-
-## 典型阅读入口
-
-- [05 Quantization as a Memory Tool](./05_quantization_as_a_memory_tool.md)
-- [06 Benchmark and Trade-off Decision](./06_benchmark_and_tradeoff_decision.md)
-
-## 本节要点
-
-推理侧显存问题的核心不是“cache 有没有”，而是“cache 如何组织、预算是否可接受、代价是否值得”。
+CPU 可以验证 cache shape、容量公式、分页和前缀匹配逻辑；真实命中率、eviction、并发容量和 backend 显存必须由 [66 推理 baseline](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb) 或 [69 Prefix Cache benchmark](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb) 验证。缓存模型不能直接写成 vLLM 或 SGLang 的实测结论。

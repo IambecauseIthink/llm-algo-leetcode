@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">60 GPU 对照实验的双轨比较</title>
+  <desc id="desc">在相同模型、数据和训练条件下，分别运行全参数微调与 LoRA，再把资源、质量和交付结果放到同一张实验记录中比较。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#52606d"/></marker></defs>
+  <style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}.title{font-size:25px;font-weight:700}.h{font-size:19px;font-weight:700}.b{font-size:16px;fill:#334e68}.s{font-size:14px;fill:#486581}.box{stroke-width:2;rx:14}.ar{stroke:#52606d;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+  <rect width="1200" height="560" fill="#f8fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">GPU 对照实验：固定条件，比较两条训练轨道</text>
+  <rect x="55" y="95" width="235" height="150" class="box" fill="#e8f1fb" stroke="#4c86c6"/>
+  <text x="172" y="130" text-anchor="middle" class="h">共同条件</text><text x="172" y="166" text-anchor="middle" class="b">模型 · 数据 · 切分</text><text x="172" y="193" text-anchor="middle" class="b">dtype · batch · steps</text><text x="172" y="220" text-anchor="middle" class="s">只改变训练对象</text>
+  <path class="ar" d="M290 170 H340 V125 H370 M340 170 V215 H370"/>
+  <rect x="370" y="80" width="245" height="90" class="box" fill="#fff4db" stroke="#d99a2b"/><text x="492" y="118" text-anchor="middle" class="h">全参数微调</text><text x="492" y="148" text-anchor="middle" class="b">更新底座模型参数</text>
+  <rect x="370" y="195" width="245" height="90" class="box" fill="#e8f5ee" stroke="#4f9d69"/><text x="492" y="233" text-anchor="middle" class="h">LoRA 微调</text><text x="492" y="263" text-anchor="middle" class="b">冻结底座，更新 adapter</text>
+  <path class="ar" d="M615 125 H675 M615 240 H675"/>
+  <rect x="675" y="105" width="260" height="180" class="box" fill="#ffffff" stroke="#9fb3c8"/><text x="805" y="142" text-anchor="middle" class="h">同口径指标</text><text x="805" y="177" text-anchor="middle" class="b">参数量 · 显存 · step time</text><text x="805" y="205" text-anchor="middle" class="b">train loss · val loss</text><text x="805" y="233" text-anchor="middle" class="b">samples / s · OOM</text><text x="805" y="263" text-anchor="middle" class="s">两条轨道使用同一评测方法</text>
+  <path class="ar" d="M805 285 V345"/>
+  <rect x="475" y="345" width="660" height="125" class="box" fill="#f0eafa" stroke="#8561a8"/><text x="805" y="382" text-anchor="middle" class="h">项目决策与交付</text><text x="805" y="414" text-anchor="middle" class="b">资源是否下降 · 质量是否可接受 · 产物是否可复现</text><text x="805" y="444" text-anchor="middle" class="b">adapter / tokenizer / JSON 报告 → accept / tune / reject</text>
+</svg>

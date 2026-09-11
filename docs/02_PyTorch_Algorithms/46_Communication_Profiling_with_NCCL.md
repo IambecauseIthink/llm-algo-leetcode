@@ -23,20 +23,11 @@
 
 ## 前置阅读
 
-**导语：** 先看并行策略、通信拓扑和 profiling 方法，再看 NCCL 通信剖析会更容易。
+**导语：** 进入本节前，先能区分计算事件、通信事件和同步等待，再观察 NCCL 时间线如何定位 overlap 与通信热点。
 
 - [29. Tensor Parallelism Sim | Tensor 并行模拟](./29_Tensor_Parallelism_Sim.md)
 - [P1: 05. Communication Topologies | 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
 - [P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.md)
-
-## 相关阅读
-
-**导语：** 学完这页后，下一步重点不是继续背通信算子名称，而是看 profiling 结果怎样反过来指导 MoE、分布式 benchmark 和整体性能分析，确认通信到底是不是关键路径上的主瓶颈。
-
-- [47. MoE Expert Parallel | MoE 专家并行](./47_MoE_Expert_Parallel.md)
-- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)
-- [79. Distributed Parallel Benchmark | 分布式并行 Benchmark](./79_Distributed_Parallel_Benchmark.md)
-- [2.9](./2_9.md)
 
 ---
 ### Step 1: 原理与痛点
@@ -52,6 +43,8 @@ NCCL profiling 要回答的不是“有没有通信”，而是三件事：
 - **是否被计算掩盖**：通信是否和 forward / backward 等 compute 区间重叠。
 
 这一步的核心直觉是：同样一段通信时间，如果能和计算重叠，体感开销会小很多；如果完全落在关键路径上，就会直接拖慢训练或推理。
+
+![NCCL 通信分析总览](../public/02_PyTorch_Algorithms/46_nccl_profiling_overview.svg)
 
 ### Step 2: 代码实现框架
 
@@ -72,6 +65,8 @@ NCCL profiling 要回答的不是“有没有通信”，而是三件事：
 ### Step 3: 核心机制
 
 判断两个时间区间是否重叠，可以用一个反向条件：如果通信区间完全在计算区间左侧，或者完全在计算区间右侧，则不重叠；否则就是重叠。
+
+![通信事件如何读时间线](../public/02_PyTorch_Algorithms/46_collective_trace.svg)
 
 写成代码就是：
 
@@ -360,3 +355,14 @@ TODO 3：`timeline` 负责导出单条事件记录。这里把 `op`、起止时�
 - **Profiler 工具**：真实环境可结合 PyTorch Profiler、Nsight Systems、NCCL debug log 或框架内置 tracing
 - **优化方向**：常见手段包括增大 bucket、调整通信时机、通信计算重叠、减少同步点和优化并行切分策略
 - **判断边界**：overlap ratio 高不一定代表没有通信瓶颈，还要看通信是否处在关键路径、是否造成 rank 间等待
+
+## 相关阅读
+
+完成事件记录、overlap 判断和通信汇总后，可以继续阅读 NCCL 实现、MoE 通信和分布式基准。
+
+- [NCCL 官方仓库](https://github.com/NVIDIA/nccl)
+- [NVIDIA Nsight Systems 文档](https://docs.nvidia.com/nsight-systems/)
+- [47. MoE Expert Parallel | MoE 专家并行](./47_MoE_Expert_Parallel.md)
+- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)
+- [79. Distributed Parallel Benchmark | 分布式并行 Benchmark](./79_Distributed_Parallel_Benchmark.md)
+- [2.9](./2_9.md)

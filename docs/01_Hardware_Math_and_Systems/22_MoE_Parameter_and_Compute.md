@@ -14,28 +14,19 @@
 
 ## 本节导读
 
-MoE 容易让人误判的地方，是“总参数很多”不等于“每一步真的算很多”。它把模型容量和实际激活计算拆开了：参数可以变大，但每个 token 真正经过的专家数仍然有限。真正要算清楚的，是总容量、活跃参数、通信代价和路由开销分别落在哪一层。
-
-这一页在整个教程的纵向主线里属于 `Part 01` 的模型容量与部署成本判断页，优先服务后续 `大模型架构专题`，也给 `通信与并行专题` 和 `推理优化路线` 补一层 MoE 成本前置。学完这里，后面再看 `47 / 80` 以及和 router、负载均衡、expert parallel 相关的页时，你会更容易先区分“容量变大”和“单步成本变大”；如果这里没学明白，后面很容易只看到 MoE 总参数更大这个表象，却判断不清活跃参数、路由开销和通信代价分别落在哪一层。按专题归类，这一页主要属于 `大模型架构专题`，并和 `通信与并行专题` 共享一部分成本判断视角。
+MoE 通过多个专家扩大模型容量，但每个 token 只激活部分专家。学习本节后，你应该能解释总参数、活跃计算、Router 负载和跨设备通信之间的关系，并据此判断 MoE 的系统代价。按“总参数与活跃计算 → Router 与负载均衡 → 专家并行通信 → 方案判断”的顺序完成后面的机制解释和小验证。
 
 **关键词：** `experts`, `router`, `load balancing`
 
+![本节概念关系](../public/01_Hardware_Math_and_Systems/22_moe_cost_map.svg)
 ---
 ## 前置阅读
 
-**导语：** 这一页先接上参数量、显存和分布式通信的基础判断，这样更容易看清 MoE 为什么会出现“总参数大、活跃计算量没那么大”的现象。
+**导语：** 先复习参数量、显存和分布式通信，再观察为什么 MoE 能扩大总容量，却同时引入路由、负载均衡和专家并行通信问题。
 
 - [01. Data Types and Precision | 大模型的数据格式与混合精度](./01_Data_Types_and_Precision.md)
 - [02. LLM Params and FLOPs | 大模型参数量与算力推导](./02_LLM_Params_and_FLOPs.md)
 - [05. Communication Topologies | 通信拓扑与分布式基石](./05_Communication_Topologies.md)
-
-## 相关阅读
-
-**导语：** 把 MoE 的参数与计算账本继续接到显存、通信和并行策略，会更容易判断它什么时候值得放大。
-
-- [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](./06_VRAM_Calculation_and_ZeRO.md)
-- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
-- [26. Parallel Strategy Decision Framework | 并行策略决策框架](./26_Parallel_Strategy_Decision_Framework.md)
 ---
 ## Q1：MoE 和普通 dense Transformer 的参数量差别在哪里？
 
@@ -57,7 +48,7 @@ MoE 容易让人误判的地方，是“总参数很多”不等于“每一步�
 - **单 token 激活参数量**：相对没那么大
 - **单 token 计算量**：通常按 `k` 而不是按 `E` 增长
 
-这就是为什么 MoE 常被用来扩大模型容量，但不把每次计算都线性放大。
+这就是为什么 MoE 常被用来扩大模型容量，但不把每次计算都线性放大。这里的“活跃参数量”只描述 token 经过的专家规模；完整的推理 FLOPs 还包括 Attention、Router、数据搬运和其他算子，不能直接把活跃参数量当成完整 FLOPs。
 
 一个最常见的直觉例子是 Mixtral 8x7B：
 
@@ -81,12 +72,13 @@ flowchart TD
     R --> EN[Expert N]
 ```
 </details>
-### Q1小验证：计算 dense FFN 和 MoE 专家参数量
+### Q1小验证：计算专家参数量与活跃 FFN FLOPs
 
-先把最基础的参数量公式写出来，再对比 dense 和 MoE 的差异。
+写出参数量公式，再对比 dense 和 MoE 的总参数、活跃参数与专家 FFN FLOPs。
 
 ```python
 import math
+import torch
 from typing import Dict, List
 
 
@@ -103,6 +95,16 @@ def moe_expert_params(d: int, d_ff: int, num_experts: int) -> int:
 def active_expert_params(d: int, d_ff: int, active_experts: int) -> int:
     """单个 token 激活的专家参数量。"""
     return active_experts * dense_ffn_params(d, d_ff)
+
+
+def active_expert_ffn_flops(d: int, d_ff: int, active_experts: int, flops_per_param: int = 2) -> int:
+    """估算单 token 激活专家的 FFN 矩阵乘 FLOPs。
+
+    这里只估算专家 FFN 的乘加，不包含 Attention、Router、路由搬运和通信。
+    """
+    if active_experts <= 0 or flops_per_param <= 0:
+        raise ValueError('active_experts 和 flops_per_param 必须为正数')
+    return active_expert_params(d, d_ff, active_experts) * flops_per_param
 
 
 def moe_layer_params(d: int, d_ff: int, num_experts: int, include_router: bool = True) -> int:
@@ -132,11 +134,13 @@ def test_moe_parameter_formulas():
     dense = dense_ffn_params(d, d_ff)
     total_expert = moe_expert_params(d, d_ff, experts)
     active_params = active_expert_params(d, d_ff, active)
+    active_flops = active_expert_ffn_flops(d, d_ff, active)
     layer_params = moe_layer_params(d, d_ff, experts)
 
     assert dense == 134_217_728, dense
     assert total_expert == 1_073_741_824, total_expert
     assert active_params == 268_435_456, active_params
+    assert active_flops == 536_870_912, active_flops
     assert layer_params == 1_140_883_456, layer_params
     print('✅ MoE 参数量公式测试通过')
 
@@ -146,6 +150,7 @@ test_moe_parameter_formulas()
 print('单个 dense FFN 参数量:', to_million(dense_ffn_params(4096, 16384)), 'M')
 print('8 个专家的总参数量:', to_billion(moe_expert_params(4096, 16384, 8)), 'B')
 print('top-2 激活参数量:', to_billion(active_expert_params(4096, 16384, 2)), 'B')
+print('top-2 专家 FFN FLOPs / token:', active_expert_ffn_flops(4096, 16384, 2))
 print('MoE 单层粗略参数量:', to_billion(moe_layer_params(4096, 16384, 8)), 'B')
 
 ```
@@ -155,7 +160,7 @@ print('MoE 单层粗略参数量:', to_billion(moe_layer_params(4096, 16384, 8))
 <details>
 <summary>点击展开查看解析</summary>
 
-Router / Gate 决定的是：token 应该去哪个专家、每个专家会不会过载、以及路由结果会不会引入额外通信和同步开销。
+Router / Gate 先根据每个 token 的分数选择 top-k 专家，再决定每个专家会不会过载，以及路由结果会不会引入额外通信和同步开销。
 
 从原理上看，Router 至少同时承担三件事：
 
@@ -171,7 +176,7 @@ Router / Gate 决定的是：token 应该去哪个专家、每个专家会不会
    - 如果路由长期偏向少数专家，MoE 可能退化成“少数专家在工作，其余专家闲置”。
    - 所以很多方案会引入 load balancing loss 或容量因子，强迫路由更均匀。
 
-这也是为什么 MoE 不只是“参数变多了”，它的工程难点其实在路由质量和负载均衡，而不是单纯在 FFN 参数本身。
+这也是为什么 MoE 不只是“参数变多了”，它的工程难点其实在路由质量和负载均衡，而不是单纯在 FFN 参数本身。当前小验证只观察 top-k 路由、容量和溢出；load balancing loss 作为训练机制在这里保留概念说明，不由这段代码直接计算。
 
 ```mermaid
 flowchart LR
@@ -201,6 +206,7 @@ def overflow_tokens(token_counts: List[int], capacity: int) -> int:
 
 
 def load_balance_stats(token_counts: List[int], capacity: int) -> Dict[str, float]:
+    """根据 Router 已产生的专家 token 数，统计容量和溢出。"""
     total = sum(token_counts)
     overflow = overflow_tokens(token_counts, capacity)
     return {
@@ -211,6 +217,30 @@ def load_balance_stats(token_counts: List[int], capacity: int) -> Dict[str, floa
         'overflow_tokens': overflow,
         'drop_rate': overflow / total if total else 0.0,
     }
+
+
+def route_tokens(router_scores: torch.Tensor, top_k: int = 1) -> Dict[str, object]:
+    """根据 token 对各专家的分数，选择 top-k 专家并统计分布。
+
+    输入形状为 `[num_tokens, num_experts]`；这里只模拟离散路由，
+    不实现专家网络、容量截断或跨设备通信。
+    """
+    if router_scores.ndim != 2:
+        raise ValueError('router_scores 必须是 [num_tokens, num_experts]')
+    num_tokens, num_experts = router_scores.shape
+    if not 1 <= top_k <= num_experts:
+        raise ValueError('top_k 必须在 1 和 num_experts 之间')
+    selected = torch.topk(router_scores, k=top_k, dim=-1).indices
+    token_counts = torch.bincount(selected.reshape(-1), minlength=num_experts).tolist()
+    return {'selected_experts': selected, 'token_counts': token_counts, 'top_k': top_k}
+
+
+torch.manual_seed(0)
+router_scores = torch.randn(32, 4)
+route = route_tokens(router_scores, top_k=2)
+print('top-k 路由后的专家 token 数:', route['token_counts'])
+assert route['selected_experts'].shape == (32, 2)
+assert sum(route['token_counts']) == 32 * 2
 
 ```
 
@@ -261,7 +291,7 @@ flowchart LR
 </details>
 ### Q3小验证：粗估专家并行通信量
 
-先估算每层的通信量，再看它为什么会成为 MoE 的工程代价。
+先把 top-k 视为每个 token 的路由副本数，估算每层的 dispatch / gather 数据量，再看它为什么会成为 MoE 的工程代价。这个结果是容量级估算，不是 NCCL All-to-All 实测。
 
 ```python
 def estimate_expert_parallel_traffic(
@@ -270,13 +300,21 @@ def estimate_expert_parallel_traffic(
     hidden_dim: int,
     num_experts: int,
     num_devices: int,
+    top_k: int = 1,
     bytes_per_param: int = 2,
     dispatch_and_gather_factor: float = 2.0,
 ) -> int:
-    """粗略估算专家并行的通信量（字节）。"""
+    """粗略估算专家并行的通信量（字节）。
+
+    这里按 token 数、hidden size、top-k 和 dispatch/gather 次数
+    做数量级估算；不代表 NCCL All-to-All 的真实 trace。
+    """
     tokens = batch * seq_len
     traffic = tokens * hidden_dim * bytes_per_param
-    traffic *= (num_experts / max(1, num_devices))
+    if top_k <= 0 or num_devices <= 0:
+        raise ValueError('top_k 和 num_devices 必须为正数')
+    traffic *= top_k
+    traffic *= (num_experts / num_devices)
     traffic *= dispatch_and_gather_factor
     return int(traffic)
 
@@ -297,11 +335,14 @@ seq_len = 2048
 hidden_dim = 4096
 num_experts = 8
 num_devices = 8
-traffic = estimate_expert_parallel_traffic(batch, seq_len, hidden_dim, num_experts, num_devices)
+top_k = 2
+traffic = estimate_expert_parallel_traffic(
+    batch, seq_len, hidden_dim, num_experts, num_devices, top_k=top_k
+)
 
 print('专家并行通信量粗估：')
 print('-' * 60)
-print(f'batch={batch}, seq_len={seq_len}, hidden_dim={hidden_dim}')
+print(f'batch={batch}, seq_len={seq_len}, hidden_dim={hidden_dim}, top_k={top_k}')
 print(f'communication = {bytes_to_mb(traffic):.1f} MB / layer')
 print(f'communication = {bytes_to_gb(traffic):.3f} GB / layer')
 
@@ -310,11 +351,13 @@ print(f'communication = {bytes_to_gb(traffic):.3f} GB / layer')
 
 ```python
 def test_traffic_estimation():
-    traffic_small = estimate_expert_parallel_traffic(4, 1024, 4096, 8, 8)
-    traffic_large = estimate_expert_parallel_traffic(8, 2048, 4096, 8, 8)
+    traffic_small = estimate_expert_parallel_traffic(4, 1024, 4096, 8, 8, top_k=1)
+    traffic_large = estimate_expert_parallel_traffic(8, 2048, 4096, 8, 8, top_k=1)
+    traffic_top2 = estimate_expert_parallel_traffic(4, 1024, 4096, 8, 8, top_k=2)
     assert traffic_small > 0
     assert traffic_large > traffic_small
     assert traffic_large == 4 * traffic_small
+    assert traffic_top2 == 2 * traffic_small
     print('✅ 通信量测试通过')
 
 
@@ -337,36 +380,75 @@ MoE 适合的场景通常有两个特征：
 - 你的系统带宽 / 通信条件并不理想
 - 你很难接受路由不均衡带来的训练波动
 
-一句话判断：
-- 如果你的系统已经很强，且希望“总参数更大但单步计算别太重”，MoE 值得认真考虑
-- 如果你的系统更看重工程简洁和稳定，dense 结构往往更省心
+可以先用下面的条件表形成初步判断，再用固定 workload 和多卡 benchmark 验证：
+
+| 条件 | 初步倾向 |
+| --- | --- |
+| 总参数需求高、通信条件好、路由分布稳定 | 考虑 MoE |
+| 需要单卡稳定推理、实现简单和延迟可预测 | 倾向 Dense |
+| 通信带宽不足或专家负载明显不均 | 先优化 Router / 并行策略 |
+| 只观察到容量收益，尚未测量真实吞吐和尾延迟 | 暂不下最终结论 |
+
+这张表是决策入口，不是通用评分公式；最终选择仍需要记录质量、吞吐、通信时间和尾延迟。
 </details>
 ### Q4小验证：MoE 什么时候更值得用？
 
-把容量收益、通信代价和工程复杂度放到一起，快速判断是否适合上 MoE。
+把容量需求、通信条件、负载均衡和工程简洁度放到一起，形成可解释的初步判断。
 
 
 ```python
-def moe_suitability(capacity_gain, comm_cost, balance_score, simplicity_need):
-    score = capacity_gain * 2 - comm_cost * 2 + balance_score - simplicity_need
-    if score >= 3:
-        recommendation = 'MoE'
-    elif score >= 0:
-        recommendation = 'context-dependent'
-    else:
+def moe_decision(capacity_need, communication_ready, load_balance_ok, simplicity_priority):
+    """根据可解释条件给出 MoE 的初步决策，不生成伪精确评分。"""
+    flags = [capacity_need, communication_ready, load_balance_ok, simplicity_priority]
+    if not all(isinstance(value, bool) for value in flags):
+        raise TypeError('四个条件必须是 bool')
+    if simplicity_priority:
         recommendation = 'dense'
-    return {
-        'recommendation': recommendation,
-        'suitability_score': score,
-    }
+        reason = '优先保证实现简单和延迟可预测'
+    elif not communication_ready:
+        recommendation = 'tune'
+        reason = '先确认通信条件，再评估专家并行'
+    elif not load_balance_ok:
+        recommendation = 'tune'
+        reason = '先优化 Router 或容量策略'
+    elif capacity_need:
+        recommendation = 'moe'
+        reason = '容量需求和系统条件都支持 MoE'
+    else:
+        recommendation = 'context-dependent'
+        reason = '需要用固定 workload 比较质量、吞吐和尾延迟'
+    return {'recommendation': recommendation, 'reason': reason}
 
 cases = [
-    (4, 1, 2, 1),
-    (2, 3, 1, 2),
-    (3, 2, 0, 3),
+    (True, True, True, False),
+    (True, False, True, False),
+    (False, True, True, True),
 ]
 for case in cases:
-    print(case, '->', moe_suitability(*case))
-print('MoE is attractive only when capacity gain can pay for routing and communication costs')
+    print(case, '->', moe_decision(*case))
+assert moe_decision(True, True, True, False)['recommendation'] == 'moe'
+assert moe_decision(True, False, True, False)['recommendation'] == 'tune'
+assert moe_decision(False, True, True, True)['recommendation'] == 'dense'
+print('✅ MoE 条件决策测试通过')
 
 ```
+
+---
+## 相关阅读
+
+**导语：** 把 MoE 的参数与计算账本继续接到显存、通信和并行策略，会更容易判断它什么时候值得放大。
+
+- [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](./06_VRAM_Calculation_and_ZeRO.md)
+- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
+- [26. Parallel Strategy Decision Framework | 并行策略决策框架](./26_Parallel_Strategy_Decision_Framework.md)
+
+**经典论文：**
+- [GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding](https://arxiv.org/abs/2006.16668)
+- [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961)
+- [Mixtral of Experts](https://arxiv.org/abs/2401.04088)：稀疏专家模型的代表性案例。
+
+**开源实现：**
+- [MegaBlocks](https://github.com/databricks/megablocks)：面向 MoE 的高效稀疏计算与专家并行实现。
+- [Tutel](https://github.com/microsoft/Tutel)：MoE 训练和专家并行优化工具。
+- [DeepSpeed-MoE](https://www.deepspeed.ai/tutorials/mixture-of-experts/)：MoE 与专家并行实践入口。
+---

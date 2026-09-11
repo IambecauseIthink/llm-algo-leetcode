@@ -1,55 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 760" role="img" aria-labelledby="title desc">
-  <title id="title">MoE Load Balancing Diagram</title>
-  <desc id="desc">Shows how load balancing loss prevents expert collapse and encourages more even token distribution.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">MoE 负载均衡训练机制</title>
+  <desc id="desc">路由分布经过统计形成负载均衡损失，反向传播后约束路由器避免专家塌缩。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#dcfce7"/>
-    </linearGradient>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#ecfdf5"/></linearGradient>
     <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
-      .barGood { fill: #86efac; stroke: #16a34a; stroke-width: 2; }
-      .barBad { fill: #fca5a5; stroke: #dc2626; stroke-width: 2; }
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 18; ry: 18; }
+      .flow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
     </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
   </defs>
-  <rect width="1540" height="760" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">MoE load balancing: avoid expert collapse</text>
-  <text x="64" y="96" class="sub">A small auxiliary loss keeps token routing from piling into only a few experts</text>
+  <rect width="1600" height="720" fill="url(#bg)"/>
+  <text x="60" y="60" class="title">MoE 负载均衡：让路由真正可训练</text>
+  <text x="60" y="90" class="sub">统计“路由器想选谁”和“实际分给谁”，把专家拥塞转成可优化的训练信号</text>
 
-  <rect x="80" y="150" width="420" height="200" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="290" y="192" text-anchor="middle" class="label">Collapsed routing</text>
-  <rect x="120" y="230" width="60" height="80" class="barBad"/>
-  <rect x="195" y="200" width="60" height="110" class="barBad"/>
-  <rect x="270" y="182" width="60" height="128" class="barBad"/>
-  <rect x="345" y="270" width="60" height="40" class="barBad"/>
-  <rect x="420" y="286" width="60" height="24" class="barBad"/>
-  <text x="290" y="332" text-anchor="middle" class="small">few experts overloaded, others idle</text>
+  <rect x="70" y="250" width="220" height="100" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="180" y="290" text-anchor="middle" class="label">路由输出</text><text x="180" y="318" text-anchor="middle" class="small">概率 P 与 Top-K 分配</text>
+  <rect x="360" y="180" width="240" height="100" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="480" y="220" text-anchor="middle" class="label">概率分布 P</text><text x="480" y="248" text-anchor="middle" class="small">路由器的偏好</text>
+  <rect x="360" y="390" width="240" height="100" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="480" y="430" text-anchor="middle" class="label">分配比例 f</text><text x="480" y="458" text-anchor="middle" class="small">实际专家负载</text>
+  <rect x="700" y="250" width="250" height="100" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="825" y="290" text-anchor="middle" class="label">辅助损失</text><text x="825" y="318" text-anchor="middle" class="small">比较 P 与 f 的偏斜</text>
+  <rect x="1050" y="250" width="220" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1160" y="290" text-anchor="middle" class="label">总损失</text><text x="1160" y="318" text-anchor="middle" class="small">任务损失 + 辅助项</text>
+  <rect x="1360" y="250" width="170" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="1445" y="290" text-anchor="middle" class="label">更新路由器</text><text x="1445" y="318" text-anchor="middle" class="small">反向传播</text>
 
-  <rect x="560" y="150" width="420" height="200" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="770" y="192" text-anchor="middle" class="label">Balanced routing</text>
-  <rect x="600" y="240" width="60" height="70" class="barGood"/>
-  <rect x="675" y="230" width="60" height="80" class="barGood"/>
-  <rect x="750" y="235" width="60" height="75" class="barGood"/>
-  <rect x="825" y="225" width="60" height="85" class="barGood"/>
-  <rect x="900" y="238" width="60" height="72" class="barGood"/>
-  <text x="770" y="332" text-anchor="middle" class="small">tokens spread more evenly across experts</text>
-
-  <rect x="1040" y="150" width="420" height="200" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="1250" y="192" text-anchor="middle" class="label">Auxiliary loss</text>
-  <text x="1070" y="235" class="small">main task loss + small load balancing term</text>
-  <text x="1070" y="265" class="small">encourage similar usage frequency</text>
-  <text x="1070" y="295" class="small">encourage stable router probabilities</text>
-  <text x="1070" y="325" class="small">prevents expert collapse during training</text>
-
-  <rect x="120" y="430" width="1300" height="180" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="770" y="470" text-anchor="middle" class="label">Why it matters</text>
-  <text x="150" y="510" class="small">1. router quality and expert utilization are tied together</text>
-  <text x="150" y="540" class="small">2. good routing keeps capacity useful instead of just large</text>
-  <text x="150" y="570" class="small">3. without balance, sparse MoE degenerates into a few hot experts</text>
-  <text x="780" y="510" class="small">This is why the MoE chapter needs a separate loss page, not only a router page</text>
-  <text x="780" y="540" class="small">Sparse routing is a model choice; load balancing is the training constraint that makes it work</text>
+  <path d="M290 300 C325 300 325 230 360 230" class="flow"/><path d="M290 300 C325 300 325 440 360 440" class="flow"/><path d="M600 230 C650 230 660 300 700 300" class="flow"/><path d="M600 440 C650 440 660 300 700 300" class="flow"/><path d="M950 300 L1050 300" class="flow"/><path d="M1270 300 L1360 300" class="flow"/>
+  <text x="70" y="570" class="small">失衡时：少数专家过载，其他专家空闲，容量浪费并可能出现 token 丢弃或通信热点。</text>
+  <text x="70" y="605" class="small">均衡时：专家利用率更接近，稀疏激活带来的容量和计算优势才更容易兑现。</text>
 </svg>

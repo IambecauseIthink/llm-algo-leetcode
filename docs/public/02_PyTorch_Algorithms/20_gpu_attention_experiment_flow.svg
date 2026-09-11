@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">GPU 对照实验的组成</title>
+  <desc id="desc">顶部是 GPU 对照实验总目标，下方分为环境与 workload、两条执行路径、指标与报告三个实验部分。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#486581"/>
+    </marker>
+    <style>
+      .title{font:700 28px sans-serif;fill:#17324d}
+      .label{font:700 19px sans-serif;fill:#17324d}
+      .text{font:16px sans-serif;fill:#334e68}
+      .small{font:14px sans-serif;fill:#486581}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}
+      .line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1200" height="500" fill="#f7fafc"/>
+  <text x="600" y="45" text-anchor="middle" class="title">GPU 可选对照实验</text>
+
+  <rect x="340" y="75" width="520" height="92" fill="#e6f6f5" class="box"/>
+  <text x="600" y="115" text-anchor="middle" class="label">固定 Q / K / V workload</text>
+  <text x="600" y="145" text-anchor="middle" class="text">在当前 GPU 上观察两种 Attention 路径的差异</text>
+
+  <rect x="45" y="270" width="320" height="145" fill="#fff4e6" class="box"/>
+  <text x="205" y="315" text-anchor="middle" class="label">环境与 workload</text>
+  <text x="75" y="355" class="text">GPU、dtype、shape、causal</text>
+  <text x="75" y="385" class="text">warmup、iters、seed</text>
+
+  <rect x="440" y="270" width="320" height="145" fill="#eef2ff" class="box"/>
+  <text x="600" y="315" text-anchor="middle" class="label">两条执行路径</text>
+  <text x="470" y="355" class="text">显式 QKᵀ → Softmax → V</text>
+  <text x="470" y="385" class="text">PyTorch SDPA backend</text>
+
+  <rect x="835" y="270" width="320" height="145" fill="#f0f4f8" class="box"/>
+  <text x="995" y="315" text-anchor="middle" class="label">指标与报告</text>
+  <text x="865" y="355" class="text">延迟、峰值显存、最大误差</text>
+  <text x="865" y="385" class="text">JSON 记录与结果表</text>
+
+  <path d="M600 167 V215 H205 V270" class="line"/>
+  <path d="M600 167 V270" class="line"/>
+  <path d="M600 167 V215 H995 V270" class="line"/>
+</svg>

@@ -16,7 +16,7 @@
 
 长 prompt 的推理压力不只来自 token 数量，还来自重复：很多请求会共享相同 system prompt、工具说明或多轮历史。如果每个请求都重新 prefill 一遍，共享前缀会被反复计算，KV cache 也难以形成稳定复用。
 
-本节把前缀缓存和分块预填充拆成一个最小 cache manager：先登记可复用前缀，再匹配新请求能命中的最长前缀，最后把 prompt 切成固定大小 chunk 形成 prefill 计划。完成后，你应该能看懂“共享前缀不要重复算”和“长 prefill 不要一次压太重”这两条推理优化思路如何落到代码里。
+本节先把 Prefix Cache 落成一条可检查的请求路径：登记前缀、匹配最长命中、拆出 suffix，并统计复用账本。Chunked Prefill 作为后续扩展，把未命中的长 suffix 分成多个执行块，观察单次 prefill 的资源压力。
 
 **关键词：** `prefix caching`, `chunked prefill`, `cache reuse`
 
@@ -24,68 +24,50 @@
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能说明 KV Cache 如何保存历史状态，再比较公共前缀如何被登记、命中和复用。
 - [20. FlashAttention Sim | FlashAttention 模拟](./20_FlashAttention_Sim.md)
 - [22. vLLM PagedAttention | vLLM 分页注意力](./22_vLLM_PagedAttention.md)
 - [24. SGLang RadixAttention | SGLang 基数注意力](./24_SGLang_RadixAttention.md)
 
-## 相关阅读
-
-- [35. Multi-Token Decoding | 多 Token 解码](./35_Multi_Token_Decoding.md)
-- [36. Decode Scheduling | 解码调度](./36_Decode_Scheduling.md)
-- [37. KV Cache Scheduling | KV Cache 调度](./37_KV_Cache_Scheduling.md)
-
 ---
 
-### Step 1: 原理与痛点
+### Step 1: 共享前缀为什么值得缓存
 
-> **为什么长 prompt 推理不能只靠“算得更快”？**
->
-> 关键在于 prefill 阶段经常会重复计算同一段前缀。很多在线请求共享系统提示词、角色设定、工具说明或 RAG 模板，但如果每个请求都从头 prefill，一段已经算过的上下文会被反复送进模型，GPU 时间和 KV Cache 写入都会被重复消耗。
+长 prompt 的压力不只来自 token 数量，还来自重复：系统提示词、工具说明、RAG 模板和多轮历史可能在不同请求中保持不变。如果每个请求都从头执行 prefill，同一段前缀会被重复计算，并重复写入 KV Cache。
 
-Prefix Caching 解决的是“共享前缀不要重复算”：把已经完成 prefill 的前缀缓存起来，后续请求只要从开头命中这段前缀，就可以复用已有结果。Chunked Prefill 解决的是另一个问题：长 prompt 一次性 prefill 会制造较高的显存和调度压力，因此可以把 prompt 拆成固定大小的 chunk，分块进入执行计划。
+Prefix Caching 把已经完成 prefill 的公共前缀保留下来。新请求只有从开头连续命中的 token 才能复用；中间位置偶然相同的 token 不构成前缀命中。
 
-这两个机制关注的不是同一个层面：Prefix Caching 关注复用，Chunked Prefill 关注执行节奏。前者减少重复计算，后者降低单次长上下文 prefill 的峰值压力。理解了这一点，下面的代码就可以围绕“登记、命中、拆分、分块”四个动作展开。
+![前缀缓存与分块预填充总览](../public/02_PyTorch_Algorithms/34_prefix_chunk_overview.svg)
 
-### Step 2: 代码实现框架
+### Step 2: 命中前缀与未命中 suffix
 
-本节会实现一个最小 `PrefixCacheManager`。真实系统缓存的是 KV 张量，本节为了突出核心逻辑，只用 token 序列表示 prompt 前缀，用 tuple block 表示可管理的缓存块。
-
-代码拆成六个动作：
-
-| 动作 | 对应方法 | 作用 |
-|------|----------|------|
-| 统一表示 | `_normalize` | 把输入 token 转成统一的 `list[int]` |
-| 分块 | `_chunk_tokens` | 按 `block_size` 切成多个 tuple block |
-| 登记缓存 | `add_prefix` | 保存完整前缀和它的分块形式 |
-| 匹配前缀 | `match_prefix` | 找出新 prompt 能命中的最长缓存前缀 |
-| 拆分 prompt | `split_prompt` | 分出可复用前缀和仍需 prefill 的后缀 |
-| 执行计划 | `chunked_prefill_plan` | 生成分块 prefill 计划 |
-
-这套设计故意不引入真实 KV Cache 的内存布局，是为了先把 cache 命中的判断逻辑讲清楚：只有从 prompt 开头连续命中的部分，才能安全复用；中间某段相同 token 不能被当作前缀缓存命中。
-
-### Step 3: 核心机制
-
-Prefix Caching 的核心可以写成一个简单拆分：
+对新请求先做最长前缀匹配，再把输入拆成两部分：
 
 $$
 prompt = reusable\_prefix + suffix
 $$
 
-其中 `reusable_prefix` 是已经命中缓存、可以复用 prefill 结果的部分；`suffix` 是还没有缓存、必须继续执行 prefill 的部分。命中越长，suffix 越短，重复计算就越少。
+`reusable_prefix` 使用已有的 prefill 结果，`suffix` 仍需送入模型计算。命中越长，重复 prefill 的 token 越少；没有命中时，整个 prompt 都属于 suffix。
 
-Chunked Prefill 则把 prompt 或 suffix 进一步拆成：
+### Step 3: 长 suffix 如何进入分块执行
+
+长 suffix 如果一次性进入 prefill，可能占用较多显存和计算时间。Chunked Prefill 将未命中的部分拆成固定大小的执行块：
+
+在确定可复用前缀后，Chunked Prefill 再把未命中的 suffix 拆成：
 
 $$
 chunks = [block_1, block_2, \dots, block_n]
 $$
 
-每个 block 最多包含 `block_size` 个 token。这样做的好处是执行计划更细，调度器可以按块安排 prefill，而不是让一个超长 prompt 一次性占住计算资源。本节代码里的 chunk 只是 tuple，但它对应真实系统里更底层的 KV block、page 或调度单元。
+每个 chunk 最多包含 `block_size` 个 token，执行计划可以按块推进。本节的 tuple 只表示 token 分块；真实系统还要把它映射到 KV block、page 或其他调度单元。
 
-### Step 4: 动手实战
+![前缀命中如何进入执行计划](../public/02_PyTorch_Algorithms/34_prefix_hit_plan.svg)
 
-**要求**：请补全下方 `PrefixCacheManager`，跑通“登记 -> 命中 -> 拆分 -> 分块计划”这条链路。你需要重点完成六个位置：统一 token 表示、切块、登记前缀块、判断最长命中、拆出 suffix，以及复用切块逻辑生成执行计划。
+### Step 4: 用一个管理器串起这条链路
 
-完成后观察测试中的三个结果：`match_prefix` 是否能找到最长前缀，`split_prompt` 是否能正确拆出复用部分和待计算后缀，`chunked_prefill_plan` 是否和 block size 保持一致。只要这三点成立，就说明前缀缓存和分块预填充的核心链路已经跑通。
+本节用最小 `PrefixCacheManager` 表示上述流程。真实系统缓存的是 KV 张量，这里先用 token 序列和 tuple block 验证控制逻辑。请补全：统一 token 表示、切块、登记前缀、最长匹配、suffix 拆分、分块计划、命中账本和 suffix 计划。
+
+完成后检查命中长度、suffix、`reuse_ratio` 和 suffix chunks 是否符合预期。这里的 token 数和比例用于验证机制账本，不代表真实 KV 显存节省或吞吐提升。
 
 ### 提示
 
@@ -172,6 +154,22 @@ class PrefixCacheManager:
         # plan = ???
         return plan
 
+    def cache_stats(self, prompt_tokens: Sequence[int]) -> dict:
+        """返回 token 级命中账本；不代表真实 KV 显存收益。"""
+        prompt = self._normalize(prompt_tokens)
+        # TODO 7: 统计 hit_tokens、uncached_tokens 和 reuse_ratio
+        # hit_tokens = ???
+        # uncached_tokens = ???
+        # reuse_ratio = ???
+        return {'hit_tokens': hit_tokens, 'uncached_tokens': uncached_tokens, 'reuse_ratio': reuse_ratio}
+
+    def chunked_suffix_prefill_plan(self, prompt_tokens: Sequence[int]) -> List[Tuple[int, ...]]:
+        """只对未命中的 suffix 生成 chunk 计划。"""
+        # TODO 8: 复用 split_prompt，只对 suffix 调用 _chunk_tokens
+        # _, suffix, _ = ???
+        # return ???
+        raise NotImplementedError
+
 ```
 
 ### 测试
@@ -184,8 +182,10 @@ def test_prefix_cache_manager():
         manager = PrefixCacheManager(block_size=2)
         manager.add_prefix([1, 2, 3])
         manager.add_prefix([1, 2, 9])
+        manager.add_prefix([1, 2, 3])  # 重复登记不应增加缓存条目
 
         assert manager.cached_prefixes == [(1, 2, 3), (1, 2, 9)]
+        assert len(manager.chunked_prefixes) == 2, "重复 prefix 不应重复建立分块记录"
         assert manager.chunked_prefixes[0] == [(1, 2), (3,)]
         assert manager.match_prefix([1, 2, 3, 9]) == 3
         assert manager.match_prefix([1, 2, 9, 8]) == 3
@@ -197,6 +197,12 @@ def test_prefix_cache_manager():
         assert hit_len == 3
 
         assert manager.chunked_prefill_plan([1, 2, 3, 4, 5]) == [(1, 2), (3, 4), (5,)]
+        stats = manager.cache_stats([1, 2, 3, 9])
+        assert stats == {'hit_tokens': 3, 'uncached_tokens': 1, 'reuse_ratio': 0.75}
+        assert manager.chunked_suffix_prefill_plan([1, 2, 3, 9, 10]) == [(9, 10)]
+        assert manager.chunked_suffix_prefill_plan([1, 2, 3]) == [], "完整命中时不应生成 suffix chunk"
+        manager_small = PrefixCacheManager(block_size=3)
+        assert manager_small.chunked_prefill_plan([1, 2, 3, 4, 5, 6, 7]) == [(1, 2, 3), (4, 5, 6), (7,)], "不同 block_size 下分块边界不正确"
         print("✅ PrefixCacheManager 测试通过")
     except NotImplementedError:
         print("请先完成 TODO 代码！")
@@ -301,6 +307,19 @@ class PrefixCacheManager:
         plan = self._chunk_tokens(prompt_tokens)
         return plan
 
+    def cache_stats(self, prompt_tokens: Sequence[int]) -> dict:
+        """返回 token 级命中账本；不代表真实 KV 显存收益。"""
+        prompt = self._normalize(prompt_tokens)
+        hit_tokens = self.match_prefix(prompt)
+        uncached_tokens = len(prompt) - hit_tokens
+        reuse_ratio = hit_tokens / len(prompt) if prompt else 0.0
+        return {'hit_tokens': hit_tokens, 'uncached_tokens': uncached_tokens, 'reuse_ratio': round(reuse_ratio, 4)}
+
+    def chunked_suffix_prefill_plan(self, prompt_tokens: Sequence[int]) -> List[Tuple[int, ...]]:
+        """只对未命中的 suffix 生成 chunk 计划。"""
+        _, suffix, _ = self.split_prompt(prompt_tokens)
+        return self._chunk_tokens(suffix)
+
 ```
 
 ### 解析
@@ -330,10 +349,17 @@ class PrefixCacheManager:
 - **关键点**：`hit_len` 之前的 token 可以复用缓存，之后的 token 仍需要执行 prefill
 - **技术细节**：这个拆分把 prefix caching 的收益显式落到代码里：命中越长，需要重新计算的 suffix 越短
 
-**6. TODO 6: 生成分块预填充计划**
-- **实现方式**：`plan = self._chunk_tokens(prompt_tokens)`
-- **关键点**：复用 `_chunk_tokens`，保证缓存分块和 prefill 执行计划使用同一套切块规则
-- **技术细节**：真实系统可以按 chunk 调度长 prompt 的 prefill，降低单次长上下文带来的峰值压力
+**6. TODO 6：生成完整 prompt 的分块计划**
+- **实现方式**：`plan = self._chunk_tokens(prompt_tokens)`。
+- **关键点**：这是基础切块接口；它不表示缓存命中后的真实执行路径。
+
+**7. TODO 7：统计命中账本**
+- `hit_tokens` 是可以复用的前缀长度，`uncached_tokens` 是仍需 prefill 的 suffix 长度。
+- `reuse_ratio` 只反映 token 数量比例，不等于 KV 显存节省比例或吞吐提升。
+
+**8. TODO 8：只对 suffix 分块**
+- 真实组合路径是 `split_prompt -> suffix -> _chunk_tokens(suffix)`。
+- 命中前缀不应再次进入 prefill 计划；suffix 的 chunk 数才是本次新增计算的执行粒度。
 
 **Prefix Caching 核心机制**
 - **重复前缀问题**：多轮对话、系统提示词和 RAG 模板经常共享长前缀，如果每次都重新 prefill，会浪费大量计算
@@ -344,3 +370,66 @@ class PrefixCacheManager:
 - **显存管理**：缓存真实系统中的 KV 张量会占用显存，需要配合淘汰策略和 block 管理
 - **调度收益**：Chunked Prefill 可以把长 prompt 拆成多个小任务，降低单次 prefill 对延迟和显存峰值的冲击
 - **适用场景**：共享系统提示词、多轮会话、Agent 工具调用和 RAG 模板化 prompt 都容易受益于前缀缓存
+
+**证据边界**
+- CPU 代码验证 token 匹配、suffix 拆分和 chunk 计划；真实 KV Tensor 的显存占用、cache hit rate、TTFT、TPOT 和吞吐需要 69 节 backend benchmark。
+- 这里没有实现 LRU、引用计数、物理 block 分配或跨 worker KV 传输；这些属于 serving / 系统扩展。
+### Step 5: 可选 GPU 分块探针
+
+本实验用合成 hidden states 观察“一次性处理 suffix”和“按 chunk 处理 suffix”的分配峰值。它用于理解分块带来的资源边界，不等同于真实 Prefix Cache、KV Cache 或 serving benchmark。
+
+```python
+# GPU 可选实验配置：默认只输出计划，不申请 CUDA 张量。
+RUN_MODE = 'dry_run'  # dry_run / real_gpu
+CHUNK_GPU_PROBE = {
+    'suffix_tokens': 4096,
+    'hidden_size': 1024,
+    'chunk_size': 512,
+    'dtype': 'float16',
+}
+
+def run_chunked_gpu_probe(run_mode='dry_run', config=None):
+    """比较合成 suffix 的一次性和分块张量峰值；不代表真实 prefill kernel。"""
+    import json
+    import torch
+    config = dict(config or CHUNK_GPU_PROBE)
+    tokens = config['suffix_tokens']
+    chunk_size = config['chunk_size']
+    chunks = (tokens + chunk_size - 1) // chunk_size
+    plan = {'suffix_tokens': tokens, 'chunk_size': chunk_size, 'chunk_count': chunks, 'evidence_level': 'synthetic_gpu_chunk_probe'}
+    if run_mode == 'dry_run':
+        print(json.dumps({'mode': run_mode, 'plan': plan}, ensure_ascii=False, indent=2))
+        return plan
+    if run_mode != 'real_gpu':
+        raise ValueError("RUN_MODE 只能是 dry_run 或 real_gpu")
+    if not torch.cuda.is_available():
+        raise RuntimeError('real_gpu 模式需要 CUDA')
+    device = torch.device('cuda')
+    dtype = getattr(torch, config['dtype'])
+    results = {}
+    for name, sizes in {'one_shot': [tokens], 'chunked': [min(chunk_size, tokens - i) for i in range(0, tokens, chunk_size)]}.items():
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats(device)
+        for size in sizes:
+            block = torch.empty((size, config['hidden_size']), dtype=dtype, device=device)
+            block = block + 1
+            del block
+        torch.cuda.synchronize(device)
+        results[name] = {'peak_allocated_mb': round(torch.cuda.max_memory_allocated(device) / 2**20, 2)}
+    torch.cuda.empty_cache()
+    result = {'mode': run_mode, 'plan': plan, 'results': results, 'device': torch.cuda.get_device_name(0)}
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return result
+
+run_chunked_gpu_probe(RUN_MODE, CHUNK_GPU_PROBE)
+```
+
+## 相关阅读
+
+完成公共前缀登记、最长命中和分块预填充后，可以继续阅读推理引擎中的缓存复用与请求调度实现。
+
+- [SGLang 原论文：Efficient Execution of Structured Language Model Programs](https://arxiv.org/abs/2312.07104)
+- [vLLM Automatic Prefix Caching 文档](https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html)
+- [35. Multi-Token Decoding | 多 Token 解码](./35_Multi_Token_Decoding.md)
+- [36. Decode Scheduling | 解码调度](./36_Decode_Scheduling.md)
+- [37. KV Cache Scheduling | KV Cache 调度](./37_KV_Cache_Scheduling.md)

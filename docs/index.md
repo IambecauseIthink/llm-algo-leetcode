@@ -6,17 +6,18 @@
 
 <p align="center">
   <strong>主学习路线 / Core Routes</strong><br>
-  <a href="./topic_discussion/fine_tuning_training/intro.md">训练微调 / Fine-tuning</a> ·
-  <a href="./topic_discussion/inference_optimization/intro.md">推理优化 / Inference</a> ·
-  <a href="./topic_discussion/memory_performance_tuning/intro.md">显存优化 / Memory</a> ·
-  <a href="./topic_discussion/compiler_graph_optimization/intro.md">算子与编译优化 / Operators & Compilers（建设中 / In progress）</a>
+  <a href="./topic_discussion/inference_optimization/intro.md">推理优化 / Inference Optimization</a> ·
+  <a href="./topic_discussion/memory_performance_tuning/intro.md">显存优化 / Memory Optimization</a> ·
+  <a href="./topic_discussion/operator_optimization/intro.md">算子优化 / Operator Optimization（建设中 / In progress）</a> ·
+  <a href="./topic_discussion/post_training_alignment/intro.md">后训练优化 / Post-Training Optimization（建设中 / In progress）</a>
 </p>
 
 <p align="center">
   <strong>专题入口 / Topic Paths</strong><br>
-  <a href="./topic_discussion/quantization/intro.md">量化与压缩 / Quantization</a> ·
-  <a href="./topic_discussion/profiling/intro.md">Profiling</a> ·
-  <a href="./topic_discussion/communication_parallel/intro.md">通信与并行 / Parallelism</a> ·
+  <a href="./topic_discussion/quantization/intro.md">量化与压缩 / Quantization and Compression</a> ·
+  <a href="./topic_discussion/profiling/intro.md">性能分析 / Performance Analysis</a> ·
+  <a href="./topic_discussion/communication_parallel/intro.md">通信与并行 / Communication and Parallelism</a> ·
+  <a href="./topic_discussion/multimodal/intro.md">多模态 / Multimodal（建设中 / In progress）</a> ·
   <a href="./topic_discussion/intro.md">查看全部专题 / All topics</a>
 </p>
 
@@ -48,15 +49,17 @@
 
 ## 🌐 教程总览
 
-教程提供两种阅读方式：按 `Part 00 -> Part 04` 逐层推进，或按训练、推理、显存、算子与编译优化等主路线进入，再通过量化、Profiling、并行等专题补充能力。推荐先从 [`Part 02`](./02_PyTorch_Algorithms/intro.md) 建立算法实践感，再按需要回补 `Part 00` / `Part 01`，最后进入 `Part 03` / `Part 04`；路线四目前处于建设阶段，`Part 05` 作为扩展预留。
+教程提供两种阅读方式：按 `Part 00 -> Part 04` 逐层推进，或按训练、推理、显存、算子、后训练等主路线进入，再通过量化与压缩、性能分析、通信与并行等专题补充能力。推荐先从 [`Part 02`](./02_PyTorch_Algorithms/intro.md) 建立算法实践感，再按需要回补 `Part 00` / `Part 01`，最后进入 `Part 03` / `Part 04`；路线四目前处于建设阶段，`Part 05` 作为扩展预留。
 
 [topic_discussion](./topic_discussion/intro.md) 用于组织跨 Part 的专题路线，[team_study](./team_study/intro.md) 用于沉淀共学记录。页面顶部提供常用专题入口，下面的资产总览和专题总览分别说明主线结构与专题覆盖范围。
 
-![教程结构示意图](./image-1.png)
+![llm-algo-leetcode 教程主路线：从基础机制到系统决策](./public/readme/tutorial_roadmap.svg)
 
 
 <details>
 <summary>📚 查看完整资产总览</summary>
+
+![教程资产关系：从知识到可复核结论](./public/readme/tutorial_assets_map.svg)
 
 这套教程不要求从 `00` 开始按顺序硬读。`00` 主要是前置补齐区，如果你已有基础，可以直接从最相关的部分开始；下面这张表会直接告诉你：每一部分学什么、包含哪些组、适合谁、当前进度如何。
 
@@ -74,18 +77,20 @@
 <details>
 <summary>🧭 查看完整专题总览</summary>
 
-| 层级 | 入口 | 覆盖范围 | 内容定位 | 适合对象 |
+| 层级 | 入口 | 内容定位 | 适合对象 | 状态 |
 | ---- | ---- | ---- | ---- | ---- |
-| 主学习路线 | [`监督微调专题`](./topic_discussion/fine_tuning_training/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/fine_tuning_training/intro.md)；正文：[casebook](./topic_discussion/fine_tuning_training/casebook.md)。SFT、LoRA、训练控制和项目交付。 | 想从 SFT 一路走到 LoRA 项目闭环的学习者。 |
-| 主学习路线 | [`推理优化专题`](./topic_discussion/inference_optimization/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/inference_optimization/intro.md)；正文：[casebook](./topic_discussion/inference_optimization/casebook.md)。FlashAttention、解码、PagedAttention、cache 与 benchmark。 | 想系统理解推理加速路径的学习者。 |
-| 主学习路线 | [`显存优化专题`](./topic_discussion/memory_performance_tuning/intro.md) | Part 00-02 | 导读：[intro](./topic_discussion/memory_performance_tuning/intro.md)；正文：[casebook](./topic_discussion/memory_performance_tuning/casebook.md)。VRAM、activation、checkpointing、offload 和 trade-off。 | 想系统优化显存和端到端性能的学习者。 |
-| 主学习路线（建设中） | [`算子与编译优化专题`](./topic_discussion/compiler_graph_optimization/intro.md) | Part 01-04 | 导读：[intro](./topic_discussion/compiler_graph_optimization/intro.md)；正文：[casebook](./topic_discussion/compiler_graph_optimization/casebook.md)。算子、Triton、CUDA、图优化、fusion、lowering、schedule 和 backend 约束。 | 想从算子实现走向编译、Kernel 和端到端性能优化的学习者。 |
-| 横切支撑专题 | [`量化与压缩专题`](./topic_discussion/quantization/intro.md) | Part 00-03 | 导读：[intro](./topic_discussion/quantization/intro.md)；正文：[casebook](./topic_discussion/quantization/casebook.md)。PTQ、QAT、GPTQ、AWQ、FP8 与部署决策。 | 想同时考虑精度、显存、吞吐和部署取舍的学习者。 |
-| 横切支撑专题 | [`通信与并行专题`](./topic_discussion/communication_parallel/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/communication_parallel/intro.md)；正文：[casebook](./topic_discussion/communication_parallel/casebook.md)。NCCL、AllReduce、ZeRO、PP、TP 和并行验证。 | 想理解多卡训练和通信边界的学习者。 |
-| 横切支撑专题 | [`Profiling 专题`](./topic_discussion/profiling/intro.md) | Part 00-02 | 导读：[intro](./topic_discussion/profiling/intro.md)；正文：[casebook](./topic_discussion/profiling/casebook.md)。性能取证、trace 阅读、回归验证和行动决策。 | 想系统补性能意识与排障方法的学习者。 |
-| 横切支撑专题 | [`后训练与对齐专题`](./topic_discussion/post_training_alignment/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/post_training_alignment/intro.md)；正文：[casebook](./topic_discussion/post_training_alignment/casebook.md)。RLHF、DPO、GRPO、偏好数据与项目收口。 | 想从 SFT 继续走到偏好优化与对齐的学习者。 |
-| 基础支撑专题 | [`反向传播与训练机制专题`](./topic_discussion/backpropagation_training_mechanism/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/backpropagation_training_mechanism/intro.md)；正文：[casebook](./topic_discussion/backpropagation_training_mechanism/casebook.md)。autograd、backward、checkpointing、offload 与训练节奏。 | 想补训练机制底座的学习者。 |
-| 基础支撑专题 | [`大模型架构专题`](./topic_discussion/model_architecture/intro.md) | Part 01-02 | 导读：[intro](./topic_discussion/model_architecture/intro.md)；正文：[casebook](./topic_discussion/model_architecture/casebook.md)。结构演进、代表模型和 MoE / 稀疏化。 | 想补模型结构背景与横向对照的学习者。 |
+| 主学习路线 | [`推理优化（Inference Optimization）`](./topic_discussion/inference_optimization/intro.md) | FlashAttention、解码、PagedAttention、cache 与 benchmark。 | 想系统理解推理加速路径的学习者。 | ✅ 持续优化 |
+| 主学习路线 | [`显存优化（Memory Optimization）`](./topic_discussion/memory_performance_tuning/intro.md) | VRAM、activation、checkpointing、offload 和 trade-off。 | 想系统优化显存和端到端性能的学习者。 | ✅ 持续优化 |
+| 主学习路线（建设中） | [`算子优化（Operator Optimization）`](./topic_discussion/operator_optimization/intro.md) | Triton、CUDA、访存、fusion、autotune 和 kernel 到端到端的验证；图变换与 lowering 仍见编译与图优化专题。 | 想从算子实现走向 kernel 和端到端性能优化的学习者。 | 🛠 建设中 |
+| 主学习路线（建设中） | [`后训练优化（Post-Training Optimization）`](./topic_discussion/post_training_alignment/intro.md) | SFT 衔接、偏好数据、DPO、GRPO 与项目交付。 | 想从监督微调继续进入偏好优化与对齐的学习者。 | 🛠 建设中 |
+| 横切支撑专题 | [`量化与压缩（Quantization and Compression）`](./topic_discussion/quantization/intro.md) | PTQ、QAT、GPTQ、AWQ、FP8 与部署决策。 | 想同时考虑精度、显存、吞吐和部署取舍的学习者。 | ✅ 持续优化 |
+| 横切支撑专题 | [`通信与并行（Communication and Parallelism）`](./topic_discussion/communication_parallel/intro.md) | NCCL、AllReduce、ZeRO、PP、TP 和并行验证。 | 想理解多卡训练和通信边界的学习者。 | ✅ 持续优化 |
+| 横切支撑专题 | [`性能分析（Performance Analysis）`](./topic_discussion/profiling/intro.md) | 性能取证、trace 阅读、回归验证和行动决策。 | 想系统补性能意识与排障方法的学习者。 | ✅ 持续优化 |
+| 横切支撑专题（建设中） | [`多模态（Multimodal）`](./topic_discussion/multimodal/intro.md) | 以多模态推理为主线，覆盖视觉表示、对齐、视觉 token、推理成本和任务评测；训练作为共享前置。 | 想进入视觉语言模型、文档理解或图文推理的学习者。 | 🛠 建设中 |
+| 基础支撑专题 | [`监督微调与训练工程（Supervised Fine-Tuning and Training Engineering）`](./topic_discussion/fine_tuning_training/intro.md) | SFT、LoRA、训练控制、数据工程和项目准备。 | 想补齐监督微调与训练工程基础的学习者。 | ✅ 持续优化 |
+| 基础支撑专题 | [`反向传播与训练机制（Backpropagation and Training Mechanics）`](./topic_discussion/backpropagation_training_mechanism/intro.md) | autograd、backward、checkpointing、offload 与训练节奏。 | 想补训练机制底座的学习者。 | ✅ 持续优化 |
+| 基础支撑专题 | [`大模型架构（Model Architecture）`](./topic_discussion/model_architecture/intro.md) | 结构演进、代表模型和 MoE / 稀疏化。 | 想补模型结构背景与横向对照的学习者。 | ✅ 持续优化 |
+| 基础支撑专题 | [`编译与图优化（Compiler and Graph Optimization）`](./topic_discussion/compiler_graph_optimization/intro.md) | 图变换、IR、lowering、执行计划和 backend 约束。 | 想理解计算图如何变成可执行程序的学习者。 | ✅ 持续优化 |
 
 </details>
 
@@ -145,6 +150,7 @@ git clone https://github.com/datawhalechina/llm-algo-leetcode.git
 cd llm-algo-leetcode
 conda env create -f environment.yml
 conda activate llm_algo
+python -m pip install -r requirements/torch-cpu.txt
 jupyter lab
 ```
 
@@ -155,6 +161,17 @@ jupyter lab
 - 想自己控制 Python / PyTorch / CUDA 版本
 - 想做更稳定的离线调试
 - Part 03 / 04 需要本地 NVIDIA GPU
+
+如果要运行真实训练、显存或推理项目，请改用 CUDA 环境：
+
+```bash
+conda env create -f environment-gpu.yml
+conda activate llm_algo_gpu
+python -m pip install -r requirements/torch-cu128.txt
+jupyter lab
+```
+
+已有 CUDA PyTorch 的云端或 Colab 环境不需要执行上述安装；先运行项目环境预检，确认当前 Kernel 的 PyTorch、CUDA 和 GPU 可用。
 
 ### 方式 3：CNB 统一环境
 
@@ -222,11 +239,11 @@ The tutorial is organized around runnable implementations, experimental validati
 
 ## 🌐 Tutorial Overview
 
-This tutorial offers two ways to read: follow the `Part 00 -> Part 04` progression, or enter through the main routes for training, inference, memory, and operator/compiler optimization, then use quantization, profiling, and parallelism as supporting topics. We recommend starting with [`Part 02`](./02_PyTorch_Algorithms/intro.md) to build implementation intuition, then backfilling `Part 00` / `Part 01` as needed before moving to `Part 03` / `Part 04`; Route 4 is currently under construction, and `Part 05` is reserved for future expansion.
+This tutorial offers two ways to read: follow the `Part 00 -> Part 04` progression, or enter through the main routes for training, inference, memory, and operator/compiler optimization, then use quantization, profiling, parallelism, and multimodal learning as supporting topics. We recommend starting with [`Part 02`](./02_PyTorch_Algorithms/intro.md) to build implementation intuition, then backfilling `Part 00` / `Part 01` as needed before moving to `Part 03` / `Part 04`; Route 4 is currently under construction, and `Part 05` is reserved for future expansion.
 
 [topic_discussion](./topic_discussion/intro.md) organizes cross-Part topic paths, while [team_study](./team_study/intro.md) stores collaborative-learning records. The top of the page provides common topic entries; the asset and topic overviews below describe the main structure and topic coverage.
 
-![Tutorial structure overview](./image-1.png)
+![Tutorial learning map: from Parts to problem-driven system paths](./public/readme/tutorial_roadmap.svg)
 
 <details>
 <summary>📚 View the complete asset overview</summary>
@@ -247,18 +264,20 @@ You do not need to start from `00` in strict order. `00` is the prerequisite lan
 <details>
 <summary>🧭 View the complete topic overview</summary>
 
-| Layer | Entry | Coverage | Content Positioning | Suitable For |
+| Layer | Entry | Content Positioning | Suitable For | Status |
 | ---- | ---- | ---- | ---- | ---- |
-| Main Study Path | [Fine-Tuning Training Topic](./topic_discussion/fine_tuning_training/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/fine_tuning_training/intro.md); casebook: [casebook](./topic_discussion/fine_tuning_training/casebook.md). SFT, LoRA, training control, and project delivery. | Learners who want to go from SFT to a LoRA project closure. |
-| Main Study Path | [Inference Optimization Topic](./topic_discussion/inference_optimization/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/inference_optimization/intro.md); casebook: [casebook](./topic_discussion/inference_optimization/casebook.md). FlashAttention, decoding, PagedAttention, cache, and benchmark. | Learners who want practical inference acceleration. |
-| Main Study Path | [Memory and Performance Tuning Topic](./topic_discussion/memory_performance_tuning/intro.md) | Part 00-02 | Guide: [intro](./topic_discussion/memory_performance_tuning/intro.md); casebook: [casebook](./topic_discussion/memory_performance_tuning/casebook.md). VRAM, activation, checkpointing, offload, and trade-offs. | Learners who want to optimize memory usage and end-to-end performance. |
-| Main Study Path (In Progress) | [Operator and Compiler Optimization Topic](./topic_discussion/compiler_graph_optimization/intro.md) | Part 01-04 | Guide: [intro](./topic_discussion/compiler_graph_optimization/intro.md); casebook: [casebook](./topic_discussion/compiler_graph_optimization/casebook.md). Operators, Triton, CUDA, graph optimization, fusion, lowering, scheduling, and backend constraints. | Learners who want to move from operator implementation to compiler, kernel, and end-to-end optimization. |
-| Cross-Cutting Topic | [Quantization Topic](./topic_discussion/quantization/intro.md) | Part 00-03 | Guide: [intro](./topic_discussion/quantization/intro.md); casebook: [casebook](./topic_discussion/quantization/casebook.md). PTQ, QAT, GPTQ, AWQ, FP8, and deployment decisions. | Learners balancing accuracy, memory, throughput, and deployment cost. |
-| Cross-Cutting Topic | [Communication and Parallelism Topic](./topic_discussion/communication_parallel/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/communication_parallel/intro.md); casebook: [casebook](./topic_discussion/communication_parallel/casebook.md). NCCL, AllReduce, ZeRO, PP, TP, and validation. | Learners who want to understand multi-GPU scaling and communication cost. |
-| Cross-Cutting Topic | [Profiling Topic](./topic_discussion/profiling/intro.md) | Part 00-02 | Guide: [intro](./topic_discussion/profiling/intro.md); casebook: [casebook](./topic_discussion/profiling/casebook.md). Evidence collection, trace reading, regression validation, and action decisions. | Learners who want systematic performance diagnosis and debugging methods. |
-| Cross-Cutting Topic | [Post-Training Alignment Topic](./topic_discussion/post_training_alignment/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/post_training_alignment/intro.md); casebook: [casebook](./topic_discussion/post_training_alignment/casebook.md). RLHF, DPO, GRPO, preference data, and project closure. | Learners who want to continue from SFT into alignment and preference optimization. |
-| Foundation Topic | [Backpropagation and Training Mechanics Topic](./topic_discussion/backpropagation_training_mechanism/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/backpropagation_training_mechanism/intro.md); casebook: [casebook](./topic_discussion/backpropagation_training_mechanism/casebook.md). Autograd, backward, checkpointing, offload, and training rhythm. | Learners who want stronger training-mechanism foundations. |
-| Foundation Topic | [Model Architecture Topic](./topic_discussion/model_architecture/intro.md) | Part 01-02 | Guide: [intro](./topic_discussion/model_architecture/intro.md); casebook: [casebook](./topic_discussion/model_architecture/casebook.md). Structure evolution, representative models, and MoE/sparsity. | Learners who want structural background and model comparison. |
+| Main Study Path | [Inference Optimization Topic](./topic_discussion/inference_optimization/intro.md) | FlashAttention, decoding, PagedAttention, cache, and benchmark. | Learners who want practical inference acceleration. | ✅ Ongoing |
+| Main Study Path | [Memory Optimization Topic](./topic_discussion/memory_performance_tuning/intro.md) | VRAM, activation, checkpointing, offload, and trade-offs. | Learners who want to optimize memory usage and end-to-end performance. | ✅ Ongoing |
+| Main Study Path (In Progress) | [Operator Optimization Topic](./topic_discussion/operator_optimization/intro.md) | Triton, CUDA, memory access, fusion, autotuning, and kernel-to-end-to-end validation; graph rewrites and lowering remain in the compiler and graph optimization topic. | Learners who want to move from operator implementation to kernel and end-to-end optimization. | 🛠 In progress |
+| Main Study Path (In Progress) | [Post-Training Optimization Topic](./topic_discussion/post_training_alignment/intro.md) | SFT transition, preference data, DPO, GRPO, and project delivery. | Learners who want to continue from supervised fine-tuning into alignment. | 🛠 In progress |
+| Cross-Cutting Topic | [Quantization and Compression Topic](./topic_discussion/quantization/intro.md) | PTQ, QAT, GPTQ, AWQ, FP8, and deployment decisions. | Learners balancing accuracy, memory, throughput, and deployment cost. | ✅ Ongoing |
+| Cross-Cutting Topic | [Communication and Parallelism Topic](./topic_discussion/communication_parallel/intro.md) | NCCL, AllReduce, ZeRO, PP, TP, and validation. | Learners who want to understand multi-GPU scaling and communication cost. | ✅ Ongoing |
+| Cross-Cutting Topic | [Performance Analysis Topic](./topic_discussion/profiling/intro.md) | Evidence collection, trace reading, regression validation, and action decisions. | Learners who want systematic performance diagnosis and debugging methods. | ✅ Ongoing |
+| Cross-Cutting Topic (In Progress) | [Multimodal Topic](./topic_discussion/multimodal/intro.md) | Multimodal inference as the main line: visual representations, alignment, visual tokens, inference cost, and task evaluation; training is shared prerequisite. | Learners entering vision-language models, document understanding, or multimodal reasoning. | 🛠 In progress |
+| Foundation Topic | [Supervised Fine-Tuning and Training Engineering Topic](./topic_discussion/fine_tuning_training/intro.md) | SFT, LoRA, training control, data engineering, and project preparation. | Learners who want stronger supervised fine-tuning and training-engineering foundations. | ✅ Ongoing |
+| Foundation Topic | [Backpropagation and Training Mechanics Topic](./topic_discussion/backpropagation_training_mechanism/intro.md) | Autograd, backward, checkpointing, offload, and training rhythm. | Learners who want stronger training-mechanism foundations. | ✅ Ongoing |
+| Foundation Topic | [Model Architecture Topic](./topic_discussion/model_architecture/intro.md) | Structure evolution, representative models, and MoE/sparsity. | Learners who want structural background and model comparison. | ✅ Ongoing |
+| Foundation Topic | [Compiler and Graph Optimization Topic](./topic_discussion/compiler_graph_optimization/intro.md) | Graph rewrites, IR, lowering, execution plans, and backend constraints. | Learners who want to understand how computation graphs become executable programs. | ✅ Ongoing |
 
 </details>
 
@@ -315,6 +334,7 @@ git clone https://github.com/datawhalechina/llm-algo-leetcode.git
 cd llm-algo-leetcode
 conda env create -f environment.yml
 conda activate llm_algo
+python -m pip install -r requirements/torch-cpu.txt
 jupyter lab
 ```
 
@@ -323,6 +343,17 @@ Suitable for:
 - Controlling your own Python / PyTorch / CUDA versions
 - More stable offline debugging
 - Part 03 / 04 require a local NVIDIA GPU
+
+For real training, memory, or inference projects, use the CUDA environment instead:
+
+```bash
+conda env create -f environment-gpu.yml
+conda activate llm_algo_gpu
+python -m pip install -r requirements/torch-cu128.txt
+jupyter lab
+```
+
+Cloud runtimes or Colab sessions that already provide CUDA PyTorch do not need this installation. Run the project preflight first and reuse the current Kernel when its PyTorch, CUDA, and GPU checks pass.
 
 For environment details and platform differences, see [docs/guide.md](./guide.md).
 

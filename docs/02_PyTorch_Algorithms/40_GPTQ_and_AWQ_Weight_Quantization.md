@@ -17,82 +17,51 @@
 
 本节用一个极简 `WeightQuantizerSim` 模拟 GPTQ / AWQ 的核心直觉：GPTQ 更关注校准后的重构误差，AWQ 更强调激活感知和敏感通道保护。学完后，你应该能看清“校准 -> 分组 -> 量化 -> 保护 -> 反量化 -> 误差检查”这条权重量化链路。
 
+本节还会把三类对象放到同一条链路中比较：GPTQ 关注校准后的误差补偿，AWQ 关注激活感知和敏感通道保护，GGUF 负责量化权重的文件格式与部署封装。真实 artifact、backend 和 kernel 的验证继续连接到 [67. 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)。
+
 **关键词：** `GPTQ`, `AWQ`, `weight quantization`
+
+![GPTQ 与 AWQ 的校准路径](../public/02_PyTorch_Algorithms/40_gptq_awq_map_cn.svg)
 
 ---
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能区分权重、激活和 KV Cache 的量化对象，再观察校准数据如何影响低比特权重的误差。
 - [25. Quantization W8A16 | W8A16 量化](./25_Quantization_W8A16.md)
 - [26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化](./26_QLoRA_and_4bit_Quantization.md)
 - [P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8](../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.md)
 
-## 相关阅读
-
-- [41. FP8 and KV Cache Quantization | FP8 与 KV Cache 量化](./41_FP8_and_KV_Cache_Quantization.md)
-- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
-- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)
-
 ---
 
-### Step 1: 原理与痛点
+### Step 1: 为什么 4-bit 量化需要校准
 
-> **为什么不能只把 W8A16 继续压到 4-bit？**
->
-> 因为 bit 数降低以后，量化误差会明显放大。8-bit 量化通常还有比较宽的表示空间，但 4-bit 只有 16 个离散状态，如果仍然对所有权重一视同仁地量化，少数敏感通道的误差就可能被放大到影响模型输出。
+W8A16 已经说明低比特可以减少权重存储，但继续压到 4-bit 后，所有权重使用同一套规则可能放大敏感通道的误差。本节先建立一个判断框架：校准数据提供激活统计，分组 scale 控制局部动态范围，GPTQ / AWQ 再用不同方式处理误差或保护敏感通道。
 
-GPTQ 和 AWQ 都属于面向部署的后训练量化思路。它们不重新训练完整模型，而是利用校准数据判断权重和激活的统计特性，再决定 scale、分组方式和误差处理策略。
+本节只模拟机制变量，不生成真实 GPTQ / AWQ artifact。学习重点是看清输入、校准信息、量化决策和重构误差之间的关系。
 
-两者的直觉可以这样区分：
+### Step 2: 校准数据与分组 scale
 
-- **GPTQ**：更关注量化后如何让层输出重构误差尽量小；
-- **AWQ**：更关注哪些通道被激活放大、对输出更敏感，因此需要更保守地处理；
-- **共同点**：都不是简单按权重绝对值压缩，而是让校准信息参与量化决策。
+校准样本不是训练数据，而是用来观察激活分布的代表性输入。模拟器先按输入通道汇总激活强度，再把权重按 `group_size` 划分，每组使用独立 scale。需要观察两个变量：校准统计是否能区分敏感通道，以及分组粒度变化后误差和元数据如何变化。
 
-本节不会复现真实 GPTQ 的 Hessian 近似或 AWQ 的完整搜索流程，而是保留教学主线：用激活统计构造通道重要性，再用分组 scale 和敏感通道保护模拟它们的核心差异。
+| 变量 | 改变什么 | 观察结果 |
+|---|---|---|
+| `calibration_samples` | 激活统计的样本量 | 重要性估计是否稳定 |
+| `group_size` | 每组共享 scale 的范围 | 重构误差与 scale 数量 |
 
-### Step 2: 代码实现框架
+### Step 3: GPTQ 与 AWQ 的策略差异
 
-下面的代码会实现一个最小 `WeightQuantizerSim`。输入是一层 Linear 的二维权重矩阵 `weight`，可选输入是一批校准激活 `activations`。代码会把权重量化拆成六个动作：
+两种方法都属于部署前的权重量化，但关注点不同：
 
-| 动作 | 对应方法 / 变量 | 作用 |
-|------|------------------|------|
-| 统计重要性 | `_collect_importance` | 根据校准激活估计每个输入通道的重要程度 |
-| 分组 | `group_size` / `n_groups` | 每组单独计算 scale，避免全局 scale 被极端值支配 |
-| 敏感通道保护 | `protected_mask` | AWQ 模式下保留少量高重要性通道的原始权重 |
-| 量化 | `qweight` / `scales` | 把普通通道映射到低比特整数表示 |
-| 反量化 | `dequantize` | 用 scale 把整数权重恢复成近似浮点权重 |
-| 误差检查 | `mse` | 对比原始权重和恢复权重的重构误差 |
+- GPTQ：以层输出重构误差为主要观察对象；
+- AWQ：利用激活统计识别敏感通道，再对这些通道采取保护策略；
+- 共同点：都需要校准输入，且都不能仅凭权重绝对值判断最终质量。
 
-这个实现故意把“量化后的权重”和“被保护的权重”分开保存。这样读者可以清楚看到：普通通道走低比特量化，敏感通道则通过 mask 恢复为原始浮点值。
+本节的模拟结果只回答“分组、校准和保护策略如何影响局部误差”，真实模型质量和 backend 速度留给 67 节。
 
-### Step 3: 核心机制
+### Step 4: 实现、测试与结果解读
 
-分组对称量化的核心公式仍然很简单。对某一组权重 $W_g$，先计算 scale：
-
-$$
-scale_g = \frac{\max(|W_g|)}{q_{max}}
-$$
-
-再量化为整数：
-
-$$
-Q_g = \mathrm{clamp}\left(\mathrm{round}\left(\frac{W_g}{scale_g}\right), -q_{max}, q_{max}\right)
-$$
-
-反量化时再恢复为：
-
-$$
-\hat{W}_g = Q_g \cdot scale_g
-$$
-
-AWQ 的额外直觉是：不是所有通道都同等重要。如果校准激活显示某些输入通道经常被放大，那么这些通道对应的权重误差更容易影响输出。本节用 `importance` 选择每组内的 top-k 敏感通道，并用 `protected_mask` 让这些通道保留原始浮点权重。
-
-### Step 4: 动手实战
-
-**要求**：请补全下方 `WeightQuantizerSim`，跑通“校准 -> 分组 -> 量化 -> 保护 -> 反量化 -> 误差检查”这条链路。你需要重点完成六个位置：激活重要性统计、分组数量、敏感通道 mask、分组 scale、反量化恢复，以及 MSE 误差计算。
-
-完成后观察测试结果：`qweight` 应该是 INT8 容器里的低比特整数，`scales` 应该按输出通道和分组保存，AWQ 模式下 `protected_mask` 应该保护至少一部分敏感通道。只要恢复权重形状正确、前向输出形状正确、误差为非负，就说明最小权重量化闭环已经跑通。
+下面的题目区实现 `WeightQuantizerSim`，测试区检查量化权重 dtype、scale 形状、敏感通道标记、恢复形状和重构误差。完成后再阅读参考实现和解析，重点对照每个 TODO 如何改变量化状态。
 
 
 ```python
@@ -485,3 +454,121 @@ class WeightQuantizerSim(nn.Module):
 - **存储收益**：4-bit 权重量化能显著降低模型权重显存和加载带宽
 - **元数据成本**：分组越细，scale 越多，精度通常更好，但元数据开销也更大
 - **部署实践**：真实 GPTQ / AWQ 还涉及校准集选择、kernel 支持、group size、zero point、packing 格式和端到端精度评估
+
+### Step 5：可选 GPU 实验——测量 GPTQ / AWQ 模拟器
+
+![GPTQ AWQ GPU 机制实验流程](../public/02_PyTorch_Algorithms/40_gptq_awq_gpu_mechanism_flow.svg)
+
+实验从真实模型的 `q_proj` forward hook 取得校准激活，再在 GPU 上比较 GPTQ / AWQ 教学模拟器的校准耗时、分组和重构误差。它验证的是“真实模型状态上的机制模拟”，不生成真实 GPTQ / AWQ artifact，也不启动 vLLM / SGLang；证据等级记为 `gpu_simulation_on_real_model_state`。
+
+先运行 `dry_run` 检查环境，再切换到 `real_gpu`。`CALIBRATION_SAMPLES` 会控制重复校准文本的数量；真实 artifact、kernel、吞吐和任务质量转到 67 节。
+
+
+```python
+import json
+import platform
+import time
+from pathlib import Path
+
+RUN_MODE = 'dry_run'  # cpu / dry_run / real_gpu；dry_run 只做环境检查
+MODEL_ID = 'Qwen/Qwen2.5-0.5B-Instruct'  # real_gpu 使用真实权重和真实层输入
+CALIBRATION_PROMPTS = ['Explain quantization.', 'Why does KV Cache grow?', 'Compare GPTQ and AWQ.']
+SEED = 42
+OUT_FEATURES = 1024
+IN_FEATURES = 1024
+CALIBRATION_SAMPLES = 32
+GROUP_SIZE = 32
+BITS = 4
+PROTECT_RATIO = 0.05
+WARMUP = 2
+ITERS = 10
+OUTPUT_PATH = Path('benchmarks/results/40_gptq_awq_gpu.json')
+
+torch.manual_seed(SEED)
+cuda_available = torch.cuda.is_available()
+if RUN_MODE == 'real_gpu' and not cuda_available:
+    raise RuntimeError('RUN_MODE=real_gpu 但 CUDA 不可用，请先完成 GPU 环境预检。')
+device = torch.device('cuda' if RUN_MODE == 'real_gpu' else 'cpu')
+runtime = {'python': platform.python_version(), 'torch': torch.__version__, 'cuda': torch.version.cuda,
+           'cuda_available': cuda_available, 'device': torch.cuda.get_device_name(0) if cuda_available else 'cpu'}
+
+def _sync():
+    """确保 CUDA 异步操作完成后再读取计时或显存。"""
+    if device.type == 'cuda': torch.cuda.synchronize()
+
+def _measure(fn):
+    """测量一次校准模拟的平均耗时。"""
+    for _ in range(WARMUP): fn()
+    _sync(); start = time.perf_counter()
+    for _ in range(ITERS): fn()
+    _sync()
+    return round((time.perf_counter() - start) * 1000 / ITERS, 4)
+
+evidence_level = 'environment_preflight' if RUN_MODE == 'dry_run' else 'gpu_simulation_on_real_model_state'
+result = {'stage': evidence_level, 'run_mode': RUN_MODE, 'runtime': runtime, 'config': {
+    'out_features': OUT_FEATURES, 'in_features': IN_FEATURES, 'calibration_samples': CALIBRATION_SAMPLES,
+    'bits': BITS, 'group_size': GROUP_SIZE, 'protect_ratio': PROTECT_RATIO,
+    'warmup': WARMUP, 'iters': ITERS, 'seed': SEED, 'model_id': MODEL_ID,
+}, 'evidence_level': evidence_level}
+if RUN_MODE == 'dry_run':
+    result['decision'] = {'decision': 'ready_to_measure', 'reason': '仅完成环境与配置检查，尚未运行 GPU 校准测量。'}
+else:
+    # real_gpu 通过 forward hook 读取真实 q_proj 输入；cpu 模式保留小型确定性张量。
+    if RUN_MODE == 'real_gpu':
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, use_fast=True)
+        model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=torch.float16).to(device).eval()
+        if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+        calibration_texts = [CALIBRATION_PROMPTS[i % len(CALIBRATION_PROMPTS)] for i in range(CALIBRATION_SAMPLES)]
+        batch = tokenizer(calibration_texts, return_tensors='pt', padding=True, truncation=True, max_length=128).to(device)
+        source = model.model.layers[0].self_attn.q_proj
+        captured = {}
+        handle = source.register_forward_hook(lambda _m, inputs, _out: captured.setdefault('activations', inputs[0].detach()))
+        with torch.no_grad(): model(input_ids=batch['input_ids'], attention_mask=batch.get('attention_mask'), use_cache=False)
+        handle.remove()
+        weight = source.weight.detach().float()
+        activations = captured['activations'].reshape(-1, weight.shape[-1]).float()
+        OUT_FEATURES, IN_FEATURES = weight.shape
+        del model, source, batch, captured
+        if device.type == 'cuda': torch.cuda.empty_cache()
+    else:
+        weight = torch.randn(OUT_FEATURES, IN_FEATURES, device=device)
+        activations = torch.randn(CALIBRATION_SAMPLES, IN_FEATURES, device=device)
+    runs = {}
+    for method in ('gptq', 'awq'):
+        if device.type == 'cuda': torch.cuda.reset_peak_memory_stats()
+        sim = WeightQuantizerSim(bits=BITS, group_size=GROUP_SIZE, method=method, protect_ratio=PROTECT_RATIO).to(device)
+        elapsed = _measure(lambda: sim.fit(weight, activations))
+        restored = sim.dequantize()
+        peak = torch.cuda.max_memory_allocated() / 2**20 if device.type == 'cuda' else None
+        runs[method] = {'latency_ms': elapsed, 'peak_memory_mb': None if peak is None else round(peak, 2),
+                       'reconstruction_mse': round(float(sim.mse(weight)), 8),
+                       'protected_channels': int(sim.protected_mask.any(dim=0).sum())}
+    result['config'].update({'out_features': OUT_FEATURES, 'in_features': IN_FEATURES,
+                            'actual_activation_shape': list(activations.shape), 'actual_calibration_samples': int(batch['input_ids'].shape[0]) if RUN_MODE == 'real_gpu' else CALIBRATION_SAMPLES,
+                            'state_source': 'real_model_q_proj_hook' if RUN_MODE == 'real_gpu' else 'synthetic_cpu'})
+    result.update({'runs': runs, 'decision': {'decision': 'measure',
+        'reason': '比较真实模型状态上的 GPTQ/AWQ 模拟误差；不代表真实 artifact 或 backend 收益。'}})
+OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+OUTPUT_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+print(json.dumps(result, ensure_ascii=False, indent=2))
+```
+
+#### GPU 实验结果记录
+
+| 方法 | bits | group_size | calibration samples | protect_ratio | reconstruction MSE | latency (ms) | peak memory (MB) | evidence level |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| GPTQ simulation |  |  |  | 0 |  |  |  | gpu_simulation_on_real_model_state |
+| AWQ simulation |  |  |  |  |  |  |  | gpu_simulation_on_real_model_state |
+
+模拟器结果只说明校准统计和重构误差关系；真实 GPTQ / AWQ artifact、kernel 和任务质量需要转到 67。
+## 相关阅读
+
+完成校准、分组、敏感通道保护和误差检查后，可以继续阅读 GPTQ / AWQ 原论文与真实部署项目。
+
+- [GPTQ 原论文：GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers](https://arxiv.org/abs/2210.17323)
+- [AWQ 原论文：Activation-aware Weight Quantization for LLM Compression and Acceleration](https://arxiv.org/abs/2306.00978)
+- [AutoGPTQ 官方仓库](https://github.com/AutoGPTQ/AutoGPTQ)
+- [41. FP8 and KV Cache Quantization | FP8 与 KV Cache 量化](./41_FP8_and_KV_Cache_Quantization.md)
+- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
+- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)

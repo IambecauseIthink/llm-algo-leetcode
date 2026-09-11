@@ -1,69 +1,25 @@
-# 07. Visual Assets | 图册收口
+# 显存优化图片资产维护记录
 
-## 页面目标
+> 该文件只供维护者核对图片资产，不是学习路线中的第 7 个学习页面。学习者应直接从 `intro`、`01–06` 和 `walkthrough` 进入内容。
 
-这一页收口显存优化专题的关键图，方便后续把训练账本、checkpointing / offload、推理 cache、量化预算和最终验证串起来。
+## 资产清单
 
-## 图册职责
+| 资产 | 使用位置 | 作用 |
+|:---|:---|:---|
+| `memory_optimization_roadmap.svg` | `intro.md` | 展示 Task0–6、训练分支、推理 / 量化分支和系统扩展 |
+| `memory_optimization_knowledge_map.svg` | `intro.md` | 展示显存对象、策略和证据升级 |
+| `memory_ledger.svg` | `01_vram_ledger_and_metrics.md`、`casebook.md` | 对象 → 生命周期 → 证据 |
+| `training_pressure_diagnosis.svg` | `02_training_memory_pressure.md` | 改变输入 → 定位压力对象 → 选择候选策略 |
+| `checkpoint_offload_tradeoff.svg` | `03_checkpointing_and_offload.md` | 重算与搬运的代价转移 |
+| `kv_cache_budget.svg` | `04_inference_cache_and_memory_budget.md` | 请求增长 → Cache 状态 → 组织复用 → 容量证据 |
+| `quantization_memory_tool.svg` | `05_quantization_as_a_memory_tool.md` | 量化对象 → 处理时机 → 部署证据 |
+| `benchmark_tradeoff_decision.svg` | `06_benchmark_and_tradeoff_decision.md`、`casebook.md` | 固定条件 → 对照 → 预算 → Profiling → 决策 |
 
-`07` 不是装饰页，而是把 `01-06` 的显存关系压成一组能快速定位问题的图：
+`ledger_evidence_bridge.svg`、`training_memory_pressure.svg`、`checkpoint_offload_lifecycle.svg`、`kv_cache_roles.svg`、`quantization_object_timing.svg` 和 `memory_evidence_decision_loop.svg` 是历史细分图，暂保留在资产目录，正文不再引用。
 
-- 我的问题是训练显存还是推理显存？
-- 是 activation、optimizer state、KV cache，还是量化预算在主导峰值？
-- 当前动作是在省驻留、重算、搬运，还是压缩表示？
+## 维护规则
 
-## 建议图册
-
-- VRAM / memory ledger 总图
-- training memory pressure 图
-- checkpointing / offload trade-off 图
-- KV cache budget 图
-- quantization as memory tool 图
-- benchmark / keep-tune-switch 决策图
-
-## 当前已落地图
-
-### 01 VRAM / Memory Ledger
-
-![VRAM ledger](/topic_discussion/memory_performance_tuning/vram_ledger.svg)
-
-### 02 Training Memory Pressure
-
-![Training memory pressure](/topic_discussion/memory_performance_tuning/training_memory_pressure.svg)
-
-### 03 Checkpointing / Offload
-
-![Checkpointing and offload trade-off](/topic_discussion/memory_performance_tuning/checkpointing_offload.svg)
-
-### 04 KV Cache Budget
-
-![KV cache budget](/topic_discussion/memory_performance_tuning/kv_cache_budget.svg)
-
-### 05 Quantization as a Memory Tool
-
-![Quantization as a memory tool](/topic_discussion/memory_performance_tuning/quantization_memory_tool.svg)
-
-### 06 Benchmark / Keep-Tune-Switch
-
-![Memory benchmark decision flow](/topic_discussion/memory_performance_tuning/memory_benchmark_decision.svg)
-
-## 建议顺序
-
-1. 账本总图：对应 `01`
-2. 训练侧显存压力图：对应 `02`
-3. checkpointing / offload 图：对应 `03`
-4. 推理 cache 与预算图：对应 `04`
-5. 量化作为显存手段图：对应 `05`
-6. benchmark / 决策图：对应 `06`
-
-## 图的风格约束
-
-- 一张图只回答一个显存问题，不把训练、推理和部署强行塞进同一张图。
-- 正式资产优先用 `SVG`。
-- 图标题尽量直接说明“谁在占显存、代价换到哪里去了”。
-
-## 相关跳转
-
-- 回到 [显存优化专题入口](./intro.md)
-- 回到 [显存优化与性能调优正文](./casebook.md)
-- 回到 [显存优化与性能调优深入阅读](./walkthrough.md)
+- 正式图片使用 SVG，文件放在 `docs/public/topic_discussion/memory_performance_tuning/`。
+- 源 Markdown 只引用实际使用的图片，不在正文中保留图片占位说明。
+- 图片只表达概念关系，不承载代码实现、完整实验步骤或过长解释。
+- 修改源文件后，最后统一运行文档镜像同步脚本；不手动编辑 `docs/topic_discussion/` 下的镜像正文。

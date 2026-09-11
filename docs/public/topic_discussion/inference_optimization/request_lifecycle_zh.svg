@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#627d98"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #172b4d; }
+      .head { font: 700 18px sans-serif; fill: #172b4d; }
+      .text { font: 16px sans-serif; fill: #243b53; }
+      .small { font: 14px sans-serif; fill: #486581; }
+      .box { stroke-width: 2; rx: 14; }
+      .flow { stroke: #627d98; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .state { stroke: #45a36b; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .observe { stroke: #9fb3c8; stroke-width: 2; stroke-dasharray: 6 5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1200" height="620" fill="#f7fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">推理请求生命周期与指标归属</text>
+  <text x="600" y="70" text-anchor="middle" class="small">先看请求经过哪些阶段，再把每个阶段连接到可观察指标。</text>
+
+  <!-- 总：请求生命周期 -->
+  <rect x="35" y="105" width="190" height="82" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="130" y="138" text-anchor="middle" class="head">请求与组装</text>
+  <text x="130" y="165" text-anchor="middle" class="small">输入文本 · 批次 · dtype</text>
+
+  <rect x="270" y="105" width="190" height="82" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="365" y="138" text-anchor="middle" class="head">Prefill</text>
+  <text x="365" y="165" text-anchor="middle" class="small">处理输入文本</text>
+
+  <rect x="505" y="105" width="190" height="82" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="600" y="138" text-anchor="middle" class="head">首 token</text>
+  <text x="600" y="165" text-anchor="middle" class="small">Prefill 后的首次输出</text>
+
+  <rect x="740" y="105" width="190" height="82" fill="#fce7f3" stroke="#db2777" class="box"/>
+  <text x="835" y="138" text-anchor="middle" class="head">Decode</text>
+  <text x="835" y="165" text-anchor="middle" class="small">逐步生成词元</text>
+
+  <rect x="975" y="105" width="190" height="82" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="1070" y="138" text-anchor="middle" class="head">输出与传输</text>
+  <text x="1070" y="165" text-anchor="middle" class="small">流式返回 · 记录结果</text>
+
+  <path d="M225 146 H270" class="flow"/>
+  <path d="M460 146 H505" class="flow"/>
+  <path d="M695 146 H740" class="flow"/>
+  <path d="M930 146 H975" class="flow"/>
+
+  <!-- 分：跨 Prefill / Decode 的状态 -->
+  <rect x="440" y="230" width="320" height="68" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="600" y="258" text-anchor="middle" class="head">KV Cache：请求级状态</text>
+  <text x="600" y="282" text-anchor="middle" class="small">Prefill 写入 · Decode 读取并追加</text>
+  <path d="M365 187 V264 H440" class="state"/>
+  <path d="M760 264 H800 V187" class="state"/>
+
+  <!-- 分：阶段对应的观测指标 -->
+  <text x="717" y="335" text-anchor="middle" class="head">阶段对应的观测指标</text>
+
+  <rect x="260" y="365" width="210" height="90" fill="#ffffff" stroke="#e0a23b" class="box"/>
+  <text x="365" y="400" text-anchor="middle" class="head">Prefill</text>
+  <text x="365" y="430" text-anchor="middle" class="text">TTFT · Prefill 占比</text>
+
+  <rect x="495" y="365" width="210" height="90" fill="#ffffff" stroke="#45a36b" class="box"/>
+  <text x="600" y="400" text-anchor="middle" class="head">KV Cache</text>
+  <text x="600" y="430" text-anchor="middle" class="text">峰值显存 · 命中率</text>
+
+  <rect x="730" y="365" width="210" height="90" fill="#ffffff" stroke="#db2777" class="box"/>
+  <text x="835" y="400" text-anchor="middle" class="head">Decode</text>
+  <text x="835" y="430" text-anchor="middle" class="text">TPOT · 生成词元/秒</text>
+
+  <rect x="965" y="365" width="210" height="90" fill="#ffffff" stroke="#8069b5" class="box"/>
+  <text x="1070" y="400" text-anchor="middle" class="head">服务整体</text>
+  <text x="1070" y="430" text-anchor="middle" class="text">端到端 · 吞吐 · P99</text>
+
+  <path d="M330 187 V365" class="observe"/>
+  <path d="M600 298 V365" class="observe"/>
+  <path d="M835 187 V365" class="observe"/>
+  <path d="M1070 187 V365" class="observe"/>
+</svg>

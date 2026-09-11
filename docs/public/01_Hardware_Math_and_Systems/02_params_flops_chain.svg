@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="570" viewBox="0 0 1280 570">
+<defs>
+  <marker id="arrow02" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:28px;font-weight:700}.subtitle{font-size:15px;fill:#475569}
+    .group{font-size:19px;font-weight:700}.head{font-size:18px;font-weight:700}.body{font-size:15px}.small{font-size:13px;fill:#475569}
+    .panel{stroke:#94a3b8;stroke-width:2;rx:16}.item{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;rx:10}
+    .flow{stroke:#64748b;stroke-width:2.5;fill:none;marker-end:url(#arrow02)}
+  </style>
+</defs>
+<rect width="1280" height="570" fill="#f8fafc"/>
+<text x="640" y="42" text-anchor="middle" class="title">参数量与 FLOPs：从模型结构到实际利用率</text>
+<text x="640" y="69" text-anchor="middle" class="subtitle">先得到参数量，再计算前向与训练工作量，最后解释理论值和实测值的差距</text>
+
+<rect x="35" y="125" width="270" height="300" fill="#e0f2fe" class="panel"/>
+<text x="170" y="163" text-anchor="middle" class="group">模型结构</text>
+<rect x="62" y="190" width="216" height="76" class="item"/>
+<text x="170" y="220" text-anchor="middle" class="head">层数与隐藏维度</text>
+<text x="170" y="244" text-anchor="middle" class="small">Attention · FFN · LayerNorm</text>
+<rect x="62" y="285" width="216" height="76" class="item"/>
+<text x="170" y="315" text-anchor="middle" class="head">词表与权重共享</text>
+<text x="170" y="339" text-anchor="middle" class="small">结构参数汇总为参数量 P</text>
+<text x="170" y="397" text-anchor="middle" class="body">Q1：模型有多少参数？</text>
+
+<rect x="345" y="125" width="270" height="300" fill="#dcfce7" class="panel"/>
+<text x="480" y="163" text-anchor="middle" class="group">前向计算量</text>
+<rect x="372" y="190" width="216" height="76" class="item"/>
+<text x="480" y="220" text-anchor="middle" class="head">参数量 P</text>
+<text x="480" y="244" text-anchor="middle" class="small">模型规模的计算输入</text>
+<rect x="372" y="285" width="216" height="76" class="item"/>
+<text x="480" y="315" text-anchor="middle" class="head">token 数 T</text>
+<text x="480" y="339" text-anchor="middle" class="small">一次 workload 的工作量</text>
+<text x="480" y="397" text-anchor="middle" class="body">Q2：前向约为 2PT</text>
+
+<rect x="655" y="125" width="270" height="300" fill="#fef3c7" class="panel"/>
+<text x="790" y="163" text-anchor="middle" class="group">训练计算量</text>
+<rect x="682" y="190" width="216" height="76" class="item"/>
+<text x="790" y="220" text-anchor="middle" class="head">Forward</text>
+<text x="790" y="244" text-anchor="middle" class="small">计算损失并保存中间状态</text>
+<rect x="682" y="285" width="216" height="76" class="item"/>
+<text x="790" y="315" text-anchor="middle" class="head">Backward + Update</text>
+<text x="790" y="339" text-anchor="middle" class="small">梯度、参数更新与训练开销</text>
+<text x="790" y="397" text-anchor="middle" class="body">Q3：训练约为 6PT</text>
+
+<rect x="965" y="125" width="270" height="300" fill="#fce7f3" class="panel"/>
+<text x="1100" y="163" text-anchor="middle" class="group">利用率与瓶颈</text>
+<rect x="992" y="190" width="216" height="76" class="item"/>
+<text x="1100" y="220" text-anchor="middle" class="head">MFU 与实际耗时</text>
+<text x="1100" y="244" text-anchor="middle" class="small">理论 FLOPs / 时间 / 峰值算力</text>
+<rect x="992" y="285" width="216" height="76" class="item"/>
+<text x="1100" y="315" text-anchor="middle" class="head">带宽与通信等待</text>
+<text x="1100" y="339" text-anchor="middle" class="small">解释吞吐为何低于理论值</text>
+<text x="1100" y="397" text-anchor="middle" class="body">Q4：差距来自哪里？</text>
+
+<path d="M305 275H337" class="flow"/>
+<path d="M615 275H647" class="flow"/>
+<path d="M925 275H957" class="flow"/>
+</svg>

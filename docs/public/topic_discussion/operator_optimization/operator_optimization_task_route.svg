@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 28px sans-serif;fill:#17324d}.task{font:700 18px sans-serif;fill:#17324d}.text{font:16px sans-serif;fill:#334e68}.small{font:14px sans-serif;fill:#486581}.box{stroke:#829ab1;stroke-width:2;rx:14}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="650" fill="#f7fafc"/>
+  <text x="600" y="44" text-anchor="middle" class="title">算子优化学习路线：从语义正确到端到端验证</text>
+  <rect x="45" y="95" width="250" height="150" fill="#e6f6f5" class="box"/><text x="70" y="130" class="task">Task 0 · 语义与执行</text><text x="70" y="170" class="text">算子输入输出、GPU 执行</text><text x="70" y="202" class="text">先建立性能指标</text>
+  <path d="M295 170 H330" class="line"/>
+  <rect x="330" y="95" width="250" height="150" fill="#e6f6f5" class="box"/><text x="355" y="130" class="task">Task 1 · Kernel 基础</text><text x="355" y="170" class="text">tile、load / store</text><text x="355" y="202" class="text">正确性与最小实现</text>
+  <path d="M580 170 H615" class="line"/>
+  <rect x="615" y="95" width="250" height="150" fill="#fff4e6" class="box"/><text x="640" y="130" class="task">Task 2 · 访存与布局</text><text x="640" y="170" class="text">带宽、layout、occupancy</text><text x="640" y="202" class="text">解释 kernel 代价</text>
+  <path d="M865 170 H900" class="line"/>
+  <rect x="900" y="95" width="255" height="150" fill="#fff4e6" class="box"/><text x="925" y="130" class="task">Task 3 · 融合与组件</text><text x="925" y="170" class="text">减少中间张量与访存</text><text x="925" y="202" class="text">连接模型组件</text>
+  <path d="M1027 245 V300 H900" class="line"/>
+  <rect x="615" y="300" width="250" height="150" fill="#eef2ff" class="box"/><text x="640" y="335" class="task">Task 4 · 硬件执行</text><text x="640" y="375" class="text">Tensor Core、stream</text><text x="640" y="407" class="text">计算与搬运重叠</text>
+  <path d="M615 375 H580" class="line"/>
+  <rect x="330" y="300" width="250" height="150" fill="#eef2ff" class="box"/><text x="355" y="335" class="task">Task 5 · 调优与分析</text><text x="355" y="375" class="text">autotune、trace、归因</text><text x="355" y="407" class="text">比较候选配置</text>
+  <path d="M330 375 H295" class="line"/>
+  <rect x="45" y="300" width="250" height="150" fill="#f0f4f8" class="box"/><text x="70" y="335" class="task">Task 6 · 项目收口</text><text x="70" y="375" class="text">Block、workload、决策</text><text x="70" y="407" class="text">回到端到端收益</text>
+  <path d="M170 450 V510 H1030 V450" class="line"/>
+  <rect x="300" y="510" width="600" height="75" fill="#ffffff" class="box"/><text x="600" y="542" text-anchor="middle" class="task">验证出口</text><text x="600" y="570" text-anchor="middle" class="small">正确性 → kernel 指标 → trace 证据 → 固定 workload 的端到端结论</text>
+</svg>

@@ -1,6 +1,6 @@
 # 11. KV Cache and Memory Growth | KV Cache 与显存增长
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `推理优化`, `KV Cache`, `显存增长` | **目标人群：** 系统性能入门者
+**难度：** Medium | **环境：** CPU-first | **标签：** `推理优化`, `KV Cache`, `显存增长` | **目标人群：** 需要理解长上下文推理显存成本的学习者
 
 > 🚀 **云端运行环境**
 >
@@ -14,26 +14,24 @@
 
 ## 本节导读
 
-长上下文推理里，最先失控的往往不是 FLOPs，而是历史 token 被长期保存后的缓存成本。每多生成一个 token，模型都要在每层继续追加一份 K/V；上下文一长、batch 一大，显存压力就会沿着层数和序列长度一起放大。
+本节用缓存公式解释长上下文和并发带来的显存增长，再区分缓存表示规模与缓存组织方式。先计算单条请求的 KV Cache 状态账本，再把结果用于分析分页、复用和调度中的容量约束。
 
-这一页在整个教程的纵向主线里属于 `Part 01` 的推理显存基础页，优先服务 `推理优化路线`，也给 `显存优化路线` 补一层 cache 预算视角。学完这里，后面再看 `22 / 24 / 37 / 69 / 70` 时，你会更容易把它们都放回“cache 预算、prefix reuse 和并发边界”这条主线上理解；如果这里没学明白，后面很容易只看到分页、复用和调度技巧，却判断不清问题究竟出在 cache 本身太大，还是 cache 的组织与访问方式不合适。按专题归类，这一页同时属于 `推理优化专题`，并和 `显存优化专题` 共享一部分问题入口。
+在理解 Attention 如何产生和保存 Key、Value 后，本节把这些状态放进具体 workload，重点判断 KV Cache 会增长到多大、显存预算是否足够，以及下一步应改变表示还是改变组织方式。
+
 
 **关键词：** `KV cache`, `sequence length`, `memory growth`
 
+![本节概念关系](../public/01_Hardware_Math_and_Systems/11_kv_cache_growth_map.svg)
+
+
+---
 ## 前置阅读
 
-**导语：** 先把数据格式和显存账本对齐，再看 KV cache 的增长规律会更顺；如果你正在走 `推理优化路线`，这一页会直接服务后面的分页、复用和调度章节，因为 `22 / 24 / 37 / 69 / 70` 的很多判断，本质上都在围绕 cache 预算、prefix reuse 和并发边界展开。
-- [Group 1A: Numerical Foundations and Scale Estimation | 1A: 数值基础与算力估算](./1A.md)
-- [Group 1B: Single-GPU Hardware and Memory Optimization | 1B: 单卡硬件与访存优化](./1B.md)
-
-## 相关阅读
-
-**导语：** 把 KV cache 的增长规律先接到 attention 显存模型、分页管理和前缀复用三条线，会更容易分清哪些方法是在缩 cache，哪些是在改 cache 的组织方式。
-
-- [14. FlashAttention Memory Model | FlashAttention 显存模型](./14_FlashAttention_Memory_Model.md)
-- [22. vLLM PagedAttention | vLLM 分页注意力](../02_PyTorch_Algorithms/22_vLLM_PagedAttention.md)
-- [24. SGLang RadixAttention | SGLang RadixAttention](../02_PyTorch_Algorithms/24_SGLang_RadixAttention.md)
-
+**导语：** 先掌握数据类型、Attention 状态和显存账本，再计算序列长度与并发增加后 KV Cache 如何变化。
+- [Part 01 · 01 数据类型与精度](./01_Data_Types_and_Precision.md)
+- [Part 01 · 04 Attention 与显存优化](./04_Attention_Memory_Optimization.md)
+- [Part 01 · 06 显存计算与 ZeRO](./06_VRAM_Calculation_and_ZeRO.md)
+---
 ## Q1：为什么 KV cache 会随着上下文长度增长？
 
 <details>
@@ -65,6 +63,10 @@ $$
 
 ```python
 def kv_cache_bytes(seq_len, num_layers, num_kv_heads, head_dim, batch_size=1, dtype_bytes=2):
+    """估算 K 和 V 的理论存储量；不包含 allocator、workspace 和碎片。"""
+    values = (seq_len, num_layers, num_kv_heads, head_dim, batch_size, dtype_bytes)
+    if any(value <= 0 for value in values):
+        raise ValueError('序列长度、层数、头数、维度、batch 和 dtype 字节数必须为正数')
     return 2 * seq_len * num_layers * num_kv_heads * head_dim * batch_size * dtype_bytes
 
 examples = [(1024, 32, 32, 128), (2048, 32, 32, 128), (4096, 32, 32, 128)]
@@ -104,6 +106,7 @@ for seq_len, layers, kv_heads, head_dim in examples:
 
 ```python
 def kv_cache_gb(seq_len, num_layers, num_kv_heads, head_dim, batch_size=1, dtype_bytes=2):
+    """把 KV Cache 理论字节数换算为十进制 GB。"""
     return kv_cache_bytes(seq_len, num_layers, num_kv_heads, head_dim, batch_size, dtype_bytes) / 1e9
 
 seq_len = 4096
@@ -113,49 +116,91 @@ for name, kv_heads in [("MHA", 32), ("GQA", 8), ("MQA", 1)]:
     print(f"{name:>3s}: kv_heads={kv_heads:2d}, KV cache ≈ {kv_cache_gb(seq_len, num_layers, kv_heads, head_dim):5.2f} GB")
 ```
 
-## Q3：PagedAttention 和 MLA 分别在解决什么问题？
+## Q3：KV Cache 变大之后，应该优化缓存的组织还是表示？
 
 <details>
 <summary>点击展开查看解析</summary>
 
-这两个方法解决的层面不一样。
+先判断压力来自哪里：单 token 的缓存账本过大，优先考虑改变缓存表示；缓存容量可以接受，但多请求下预留和碎片造成浪费，则优先考虑改变缓存组织。表中的表示规模和分页数量仍是机制模型；要判断真实 backend 的显存、延迟和吞吐收益，需要固定 workload 测量。下面用一张决策表把三类问题分开。
 
-- **PagedAttention** 主要解决的是 **缓存分配和访问组织** 问题。
-  - 它把 KV cache 按页组织，避免长序列和多请求场景里出现连续大块显存分配困难。
-  - 它的重点不是把 K/V 表示本身压缩掉，而是让缓存的存储、搬运和复用更稳定。
+| 观察到的问题 | 优先改变的对象 | 代表机制 | 主要观察量 |
+| --- | --- | --- | --- |
+| 单 token KV 成本过大 | 缓存表示 | MQA / GQA / MLA | 每 token、每层的缓存字节数 |
+| 多请求预留或碎片明显 | 缓存组织 | PagedAttention | 页数、尾页浪费、复用情况 |
+| 前缀重复导致重复计算 | 缓存复用 | Prefix Cache（延伸） | 命中率、复用 token 数 |
 
-- **MLA (Multi-Head Latent Attention)** 主要解决的是 **表示压缩** 问题。
-  - 它把原本需要长期保存的 KV 表示压到更低维的潜变量空间里。
-  - 这样做的核心收益是直接降低每个 token 需要保留的缓存体积。
-
-可以把它们理解成两种不同方向的优化：
-- PagedAttention 是在优化“怎么管 cache”。
-- MLA 是在优化“cache 本身有多大”。
-
-前者偏系统实现，后者偏表示结构。两者都在缓解长上下文下的显存压力，但切入点不同。
 </details>
-### Q3小验证：方案对照
+### Q3小验证：缓存管理与表示压缩的对照
 
 把“缓存管理”和“表示压缩”分开看，再判断它们各自对显存的影响。
 
 ```python
 def paged_attention_pages(seq_len, page_size):
+    """计算分页所需页数；只观察分配粒度，不模拟真实 allocator。"""
+    if seq_len <= 0 or page_size <= 0:
+        raise ValueError('seq_len 和 page_size 必须为正数')
     return (seq_len + page_size - 1) // page_size
 
+def paged_cache_waste_tokens(seq_len, page_size):
+    """计算最后一页未被使用的 token 槽位。"""
+    pages = paged_attention_pages(seq_len, page_size)
+    return pages * page_size - seq_len
+
 def mla_cache_bytes(seq_len, num_layers, latent_dim, batch_size=1, dtype_bytes=2):
+    """估算 latent 表示的理论存储量；不是完整 MLA kernel 账本。"""
+    values = (seq_len, num_layers, latent_dim, batch_size, dtype_bytes)
+    if any(value <= 0 for value in values):
+        raise ValueError('序列长度、层数、latent_dim、batch 和 dtype 字节数必须为正数')
     return seq_len * num_layers * latent_dim * batch_size * dtype_bytes
 
-seq_len = 4096
-page_size = 128
-print(f"PagedAttention pages: {paged_attention_pages(seq_len, page_size)}")
-print(f"MLA cache example: {mla_cache_bytes(seq_len, 32, 64) / 1e9:.2f} GB (latent_dim=64)")
+def compare_cache_strategies(seq_len, page_size, base_kv_heads, head_dim, latent_dim, prefix_len=0, num_layers=32, batch_size=1, dtype_bytes=2):
+    """并列展示缓存组织与表示压缩的可观察量。
+
+    PagedAttention 关注页数和尾页浪费；MLA proxy 关注每 token 的表示大小；
+    prefix_len 只记录可复用的前缀 token 数。三者不是同一个指标，也不等于真实 backend 的端到端收益。
+    """
+    if prefix_len < 0 or prefix_len > seq_len:
+        raise ValueError('prefix_len 必须位于 [0, seq_len]')
+    base_bytes = kv_cache_bytes(seq_len, num_layers, base_kv_heads, head_dim, batch_size, dtype_bytes)
+    compressed_bytes = mla_cache_bytes(seq_len, num_layers, latent_dim, batch_size, dtype_bytes)
+    return {
+        'management': {
+            'pages': paged_attention_pages(seq_len, page_size),
+            'waste_tokens': paged_cache_waste_tokens(seq_len, page_size),
+        },
+        'representation': {
+            'base_kv_bytes': base_bytes,
+            'latent_bytes_proxy': compressed_bytes,
+            'toy_representation_saving_ratio': round(1 - compressed_bytes / base_bytes, 4),
+        },
+        'reuse': {
+            'prefix_reuse_tokens': prefix_len,
+        },
+    }
+
+result = compare_cache_strategies(4096, 128, 32, 128, 64, prefix_len=1024)
+print('management ->', result['management'])
+print('representation ->', result['representation'])
+assert result['management']['pages'] == 32
+assert result['management']['waste_tokens'] == 0
+assert result['reuse']['prefix_reuse_tokens'] == 1024
+assert 0 < result['representation']['toy_representation_saving_ratio'] < 1
+try:
+    paged_attention_pages(4096, 0)
+except ValueError:
+    print('✅ 分页参数校验通过')
+else:
+    raise AssertionError('page_size 为 0 时应报错')
 ```
 
-## ⚠️ 常见误区
+---
+## 相关阅读
 
-- `KV cache` 不是只和 token 数有关，它还和层数、batch size、KV 头数一起增长。
-- `MQA / GQA` 不是单纯改名字，而是在实打实地压低缓存体积。
-- `PagedAttention` 解决的是缓存管理和碎片化，不等于表示压缩。
-- `MLA` 解决的是表示体积，不等于把调度和分配问题也一并解决。
+本节可以从 KV Cache 公式回到 Attention 的头数设计，再继续进入分页管理、前缀复用和请求调度。
 
-这一页最重要的是记住三件事：KV cache 为什么会涨、头数为什么会放大或压缩它、以及不同优化到底在解决“管理”还是“表示”问题。
+- [04. Attention（MHA / GQA）](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [KV Cache 与 PagedAttention 论文](https://arxiv.org/abs/2309.06180)
+- [22. vLLM 与 PagedAttention](../02_PyTorch_Algorithms/22_vLLM_PagedAttention.md)
+- [24. SGLang 与 RadixAttention](../02_PyTorch_Algorithms/24_SGLang_RadixAttention.md)
+- [34. 前缀缓存与分块预填充](../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.md)
+---

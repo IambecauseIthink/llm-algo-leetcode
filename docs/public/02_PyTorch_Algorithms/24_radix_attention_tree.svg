@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 740" role="img" aria-labelledby="title desc">
-  <title id="title">RadixAttention prefix tree</title>
-  <desc id="desc">Shows shared prefix paths stored once in a radix tree and longest prefix matching for new requests.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 540" role="img" aria-labelledby="title desc">
+  <title id="title">RadixAttention 前缀树</title>
+  <desc id="desc">展示共享前缀如何在基数树中保存一次，以及新请求如何进行最长前缀匹配。</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#f8fafc"/>
@@ -21,43 +21,36 @@
     </style>
   </defs>
   <rect width="1660" height="740" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">RadixAttention: one shared prefix tree for many requests</text>
-  <text x="64" y="96" class="sub">Store shared prefixes once, then route each new prompt by longest-prefix match and reuse KV on the hit path.</text>
+  <text x="64" y="66" class="title">RadixAttention：多个请求共享一棵前缀树</text>
+  <text x="64" y="96" class="sub">公共前缀只保存一次，新请求沿最长前缀命中路径复用 KV Cache。</text>
 
   <rect x="90" y="150" width="1470" height="96" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="120" y="186" class="label">New request arrives</text>
-  <text x="120" y="220" class="small">match the request against cached paths and reuse the longest shared prefix.</text>
+  <text x="120" y="186" class="label">新请求到达</text>
+  <text x="120" y="220" class="small">与已缓存路径匹配，复用最长公共前缀。</text>
 
   <rect x="160" y="320" width="130" height="62" class="node" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="225" y="358" text-anchor="middle" class="label">root</text>
+  <text x="225" y="358" text-anchor="middle" class="label">根节点</text>
 
   <path d="M 225 382 L 225 470" class="share"/>
   <path d="M 225 470 L 420 470" class="share"/>
   <path d="M 420 470 L 620 470" class="share"/>
 
   <rect x="330" y="430" width="180" height="70" class="node" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="420" y="466" text-anchor="middle" class="label">shared prefix</text>
-  <text x="420" y="490" text-anchor="middle" class="small">stored once</text>
+  <text x="420" y="466" text-anchor="middle" class="label">共享前缀</text>
+  <text x="420" y="490" text-anchor="middle" class="small">只保存一次</text>
 
   <rect x="550" y="430" width="180" height="70" class="node" fill="#ecfeff" stroke="#0891b2"/>
-  <text x="640" y="466" text-anchor="middle" class="label">branch A</text>
-  <text x="640" y="490" text-anchor="middle" class="small">request A</text>
+  <text x="640" y="466" text-anchor="middle" class="label">分支 A</text>
+  <text x="640" y="490" text-anchor="middle" class="small">请求 A</text>
 
   <rect x="780" y="430" width="180" height="70" class="node" fill="#ecfeff" stroke="#0891b2"/>
-  <text x="870" y="466" text-anchor="middle" class="label">branch B</text>
-  <text x="870" y="490" text-anchor="middle" class="small">request B</text>
-
-  <path d="M 420 500 L 420 560" class="arrow"/>
-  <path d="M 640 500 L 640 560" class="arrow"/>
-  <path d="M 870 500 L 870 560" class="arrow"/>
+  <text x="870" y="466" text-anchor="middle" class="label">分支 B</text>
+  <text x="870" y="490" text-anchor="middle" class="small">请求 B</text>
 
   <rect x="1000" y="320" width="500" height="180" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="1030" y="358" class="label">How reuse works</text>
-  <text x="1030" y="392" class="small">1. compare the prompt with cached paths</text>
-  <text x="1030" y="422" class="small">2. reuse KV on the matched prefix</text>
-  <text x="1030" y="452" class="small">3. compute only the unmatched suffix</text>
+  <text x="1030" y="358" class="label">复用流程</text>
+  <text x="1030" y="392" class="small">1. 将 prompt 与缓存路径比较</text>
+  <text x="1030" y="422" class="small">2. 复用命中的前缀 KV</text>
+  <text x="1030" y="452" class="small">3. 只计算未命中的后缀</text>
 
-  <rect x="90" y="560" width="1470" height="110" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="120" y="598" class="label">Read it in one line</text>
-  <text x="120" y="632" class="small">PagedAttention organizes blocks per request; RadixAttention additionally shares KV across requests when their prefixes overlap.</text>
 </svg>

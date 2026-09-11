@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="760" viewBox="0 0 1500 760" role="img" aria-labelledby="title desc">
+  <title id="title">推理优化按需回补关系图</title>
+  <desc id="desc">从当前推理问题按知识缺口分流到结构、MoE、精度和计算量四类共享前置，补充后回到原来的学习问题。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#52606d"/>
+    </marker>
+    <style>
+      .title{font:700 29px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}
+      .sub{font:500 16px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#486581}
+      .group{font:700 19px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}
+      .head{font:700 18px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}
+      .body{font:500 15px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#243b53}
+      .small{font:500 14px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#52606d}
+      .box{stroke-width:2;rx:16}.flow{stroke:#52606d;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.bus{stroke:#829ab1;stroke-width:2;fill:none}
+    </style>
+  </defs>
+
+  <rect width="1500" height="760" fill="#f7fafc"/>
+  <text x="750" y="42" text-anchor="middle" class="title">按需回补：从当前问题找到共享前置</text>
+  <text x="750" y="72" text-anchor="middle" class="sub">主线继续沿请求链学习；只有遇到具体知识缺口时，才进入对应补充入口。</text>
+
+  <rect x="430" y="108" width="640" height="104" fill="#eef6ff" stroke="#4c8eda" class="box"/>
+  <text x="750" y="145" text-anchor="middle" class="group">当前推理问题</text>
+  <text x="750" y="178" text-anchor="middle" class="body">请求阶段、性能症状或部署约束已经明确，但解释它所需的前置知识不足</text>
+
+  <rect x="24" y="294" width="345" height="310" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="196" y="333" text-anchor="middle" class="head">结构基础</text>
+  <text x="196" y="371" text-anchor="middle" class="body">补什么</text>
+  <text x="196" y="399" text-anchor="middle" class="small">Block · Attention · Norm · MLP</text>
+  <text x="196" y="446" text-anchor="middle" class="body">解决什么</text>
+  <text x="196" y="474" text-anchor="middle" class="small">看懂 Prefill、Decode 和</text>
+  <text x="196" y="498" text-anchor="middle" class="small">不同 Attention 组织方式</text>
+  <text x="196" y="548" text-anchor="middle" class="body">入口</text>
+  <text x="196" y="576" text-anchor="middle" class="small">Part 02 · 05 / 08</text>
+
+  <rect x="385" y="294" width="345" height="310" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="557" y="333" text-anchor="middle" class="head">MoE 路由与负载</text>
+  <text x="557" y="371" text-anchor="middle" class="body">补什么</text>
+  <text x="557" y="399" text-anchor="middle" class="small">Router · Top-k · Load Balancing</text>
+  <text x="557" y="446" text-anchor="middle" class="body">解决什么</text>
+  <text x="557" y="474" text-anchor="middle" class="small">解释激活参数、路由偏斜和</text>
+  <text x="557" y="498" text-anchor="middle" class="small">专家间通信成本</text>
+  <text x="557" y="548" text-anchor="middle" class="body">入口</text>
+  <text x="557" y="576" text-anchor="middle" class="small">Part 02 · 06 / 07；Part 01 · 22</text>
+
+  <rect x="746" y="294" width="345" height="310" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="918" y="333" text-anchor="middle" class="head">dtype 与数值表示</text>
+  <text x="918" y="371" text-anchor="middle" class="body">补什么</text>
+  <text x="918" y="399" text-anchor="middle" class="small">bit / byte · FP16 · BF16 · INT8</text>
+  <text x="918" y="446" text-anchor="middle" class="body">解决什么</text>
+  <text x="918" y="474" text-anchor="middle" class="small">判断权重、激活和 KV Cache</text>
+  <text x="918" y="498" text-anchor="middle" class="small">改变了哪一类资源成本</text>
+  <text x="918" y="548" text-anchor="middle" class="body">入口</text>
+  <text x="918" y="576" text-anchor="middle" class="small">Part 01 · 01</text>
+
+  <rect x="1107" y="294" width="369" height="310" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="1291" y="333" text-anchor="middle" class="head">参数规模与计算量</text>
+  <text x="1291" y="371" text-anchor="middle" class="body">补什么</text>
+  <text x="1291" y="399" text-anchor="middle" class="small">参数量 · 激活参数 · FLOPs · 带宽</text>
+  <text x="1291" y="446" text-anchor="middle" class="body">解决什么</text>
+  <text x="1291" y="474" text-anchor="middle" class="small">把模型结构变化连接到</text>
+  <text x="1291" y="498" text-anchor="middle" class="small">显存、算力和通信预算</text>
+  <text x="1291" y="548" text-anchor="middle" class="body">入口</text>
+  <text x="1291" y="576" text-anchor="middle" class="small">Part 01 · 22</text>
+
+  <path d="M750 212 V250" class="flow"/>
+  <path d="M196 250 H1291" class="bus"/>
+  <path d="M196 250 V294" class="flow"/><path d="M557 250 V294" class="flow"/><path d="M918 250 V294" class="flow"/><path d="M1291 250 V294" class="flow"/>
+</svg>

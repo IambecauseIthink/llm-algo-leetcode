@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 740" role="img" aria-labelledby="title desc">
-  <title id="title">PagedAttention block table</title>
-  <desc id="desc">Shows logical token sequence mapped to fixed-size physical blocks through a block table in paged KV cache management.</desc>
+  <title id="title">PagedAttention 块表</title>
+  <desc id="desc">展示逻辑 token 序列如何通过块表映射到分页 KV Cache 的固定大小物理块。</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#f8fafc"/>
@@ -20,29 +20,29 @@
     </style>
   </defs>
   <rect width="1660" height="740" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">PagedAttention: logical sequence -> block table -> physical blocks</text>
-  <text x="64" y="96" class="sub">The cache is not one giant tensor; it is a set of fixed-size blocks reached through a block table.</text>
+  <text x="64" y="66" class="title">PagedAttention：逻辑序列 → 块表 → 物理块</text>
+  <text x="64" y="96" class="sub">KV Cache 不是一块连续大张量，而是通过块表访问固定大小的物理块。</text>
 
   <rect x="90" y="160" width="1470" height="104" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="120" y="196" class="label">Logical token stream</text>
-  <text x="120" y="228" class="small">tokens 0 ... 15 -> block 0, tokens 16 ... 31 -> block 1, tokens 32 ... 47 -> block 2</text>
-  <text x="120" y="252" class="small">decode allocates a new block only when the current one overflows.</text>
+  <text x="120" y="196" class="label">逻辑 token 序列</text>
+  <text x="120" y="228" class="small">token 0 ... 15 → 逻辑块 0，token 16 ... 31 → 逻辑块 1，token 32 ... 47 → 逻辑块 2</text>
+  <text x="120" y="252" class="small">decode 只有在当前块装满后才申请新块。</text>
 
   <rect x="90" y="330" width="520" height="200" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="120" y="368" class="label">Block table</text>
+  <text x="120" y="368" class="label">块表</text>
   <rect x="120" y="396" width="110" height="54" class="cell" fill="#e0f2fe" stroke="#60a5fa"/>
   <rect x="240" y="396" width="110" height="54" class="cell" fill="#e0f2fe" stroke="#60a5fa"/>
   <rect x="360" y="396" width="110" height="54" class="cell" fill="#e0f2fe" stroke="#60a5fa"/>
   <rect x="480" y="396" width="110" height="54" class="cell" fill="#e0f2fe" stroke="#60a5fa"/>
-  <text x="175" y="429" text-anchor="middle" class="small">logical 0</text>
-  <text x="295" y="429" text-anchor="middle" class="small">logical 1</text>
-  <text x="415" y="429" text-anchor="middle" class="small">logical 2</text>
-  <text x="535" y="429" text-anchor="middle" class="small">logical 3</text>
-  <text x="120" y="492" class="small">mapping: logical block id -> physical block id</text>
-  <text x="120" y="520" class="small">rebuilds a contiguous logical view from scattered physical blocks</text>
+  <text x="175" y="429" text-anchor="middle" class="small">逻辑块 0</text>
+  <text x="295" y="429" text-anchor="middle" class="small">逻辑块 1</text>
+  <text x="415" y="429" text-anchor="middle" class="small">逻辑块 2</text>
+  <text x="535" y="429" text-anchor="middle" class="small">逻辑块 3</text>
+  <text x="120" y="492" class="small">映射：逻辑块编号 → 物理块编号</text>
+  <text x="120" y="520" class="small">从分散的物理块恢复逻辑上的连续序列</text>
 
   <rect x="690" y="330" width="790" height="200" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="720" y="368" class="label">Physical block pool</text>
+  <text x="720" y="368" class="label">物理块池</text>
   <rect x="720" y="398" width="120" height="54" class="cell" fill="#f7fee7" stroke="#84cc16"/>
   <rect x="850" y="398" width="120" height="54" class="cell" fill="#f7fee7" stroke="#84cc16"/>
   <rect x="980" y="398" width="120" height="54" class="cell" fill="#f7fee7" stroke="#84cc16"/>
@@ -55,12 +55,12 @@
   <text x="1170" y="432" text-anchor="middle" class="small">B3</text>
   <text x="1300" y="432" text-anchor="middle" class="small">B4</text>
   <text x="1410" y="432" text-anchor="middle" class="small">...</text>
-  <text x="720" y="492" class="small">free blocks are assigned on demand</text>
+  <text x="720" y="492" class="small">空闲物理块按请求需要分配</text>
 
   <path d="M 350 330 C 350 300 500 300 500 330" class="arrow"/>
   <path d="M 1170 330 C 1170 300 980 300 980 330" class="arrow"/>
 
   <rect x="90" y="570" width="1470" height="110" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="120" y="608" class="label">Read it in one line</text>
-  <text x="120" y="642" class="small">PagedAttention reduces fragmentation by letting each request grow through logical block-table entries instead of owning one giant contiguous KV tensor.</text>
+  <text x="120" y="608" class="label">一句话理解</text>
+  <text x="120" y="642" class="small">PagedAttention 让请求通过块表逐步增长，减少每个请求独占一块连续 KV 大张量造成的碎片。</text>
 </svg>

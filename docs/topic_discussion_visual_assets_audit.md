@@ -79,7 +79,8 @@ Last updated: 2026-08-17
 | `request_lifecycle.svg` | `01_request_path_and_metrics.md` | 核心教学图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
 | `prefill_attention.svg` | `02_prefill_and_attention_kernel.md` | 核心教学图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
 | `decode_strategies.svg` | `03_decoding_strategies.md` | 核心教学图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
-| `kv_cache_scheduling.svg` | `04_kv_cache_and_scheduling.md` | 核心教学图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
+| `kv_cache_lifecycle_zh.svg` | `04_kv_cache_lifecycle_and_reuse.md` | 核心教学图 | Y | 已重做：覆盖增长、复用、容量边界，并桥接 07 | 保留在正文，后续同步 docs 镜像 |
+| `kv_cache_backend_mechanisms_zh.svg` | `04_kv_cache_lifecycle_and_reuse.md` | vLLM / SGLang 机制对照图 | Y | 新增：区分物理分页与前缀复用 | 保留在正文，后续同步 docs 镜像 |
 | `quantized_deployment.svg` | `05_quantized_inference_and_deployment.md` | 核心教学图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
 | `benchmark_decision.svg` | `06_benchmark_and_decision.md` | 路线收束图 / 决策图 | Y | 待审图本身，但页内职责合理 | 保留在正文，后续做可读性初审 |
 

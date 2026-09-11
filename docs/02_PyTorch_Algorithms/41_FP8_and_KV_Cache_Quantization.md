@@ -17,86 +17,49 @@
 
 本节用一个极简 `FP8KVCacheSim` 模拟两类推理量化：用对称低精度量化近似 FP8 张量，用分组 scale 量化 KV Cache。学完后，你应该能看清“量化值、scale、反量化、误差检查”这条闭环，以及为什么 KV Cache 通常需要按最后一维分组处理。
 
+本节关注运行时张量和 KV Cache：CPU 模拟解释 scale、分组和误差，`40` 继续处理 GPTQ/AWQ 权重量化，`67` 负责 GGUF、真实 FP8 kernel 和 backend 验证。
+
 **关键词：** `FP8`, `KV cache quantization`, `deployment`
+
+![FP8 与 KV Cache 量化路径](../public/02_PyTorch_Algorithms/41_fp8_kv_quant_flow_cn.svg)
 
 ---
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能区分权重量化与运行时张量量化，再观察 FP8 和 KV Cache 量化如何改变存储、带宽与误差。
 - [22. vLLM PagedAttention | vLLM 分页注意力](./22_vLLM_PagedAttention.md)
 - [25. Quantization W8A16 | W8A16 量化](./25_Quantization_W8A16.md)
 - [40. GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化](./40_GPTQ_and_AWQ_Weight_Quantization.md)
 
-## 相关阅读
-
-- [37. KV Cache Scheduling | KV Cache 调度](./37_KV_Cache_Scheduling.md)
-- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
-- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)
-
 ---
 
-### Step 1: 原理与痛点
+### Step 1: 为什么运行时还要量化 KV Cache
 
-> **为什么推理阶段还要关心 KV Cache 量化？**
->
-> 因为生成式推理不是只跑一次前向。每生成一个 token，模型都会把新的 Key / Value 写入缓存；上下文越长、并发越高，KV Cache 占用越大。对于长上下文服务，KV Cache 往往会成为显存容量和带宽压力的重要来源。
+生成式推理会持续追加 KV Cache；上下文越长、并发越高，缓存越容易成为显存容量和带宽压力。本节关注两个运行时对象：普通推理张量的低精度表示，以及 KV Cache 的分组量化。
 
-FP8 和 KV Cache 量化解决的是推理过程中的不同对象：FP8 更常用于降低部分张量的计算/带宽成本，KV Cache 量化则直接压缩长上下文缓存。两者的共同点是都需要保存 scale，并在计算前恢复到可用的浮点近似值。
+先记住一条主线：量化值、scale、原始形状和恢复误差必须一起保存，才能形成可检查的运行时状态。
 
-需要注意的是，本节并不复现真实硬件 FP8 格式（如 E4M3/E5M2），而是用对称 INT8 容器模拟“低精度浮点近似”的核心链路：先缩放、再取整、再用 scale 恢复。这样可以把教学重点放在量化闭环，而不是硬件编码细节上。
+### Step 2: FP8 近似量化的状态闭环
 
-### Step 2: 代码实现框架
+本节用 INT8 容器模拟低精度张量的保存路径：先根据 `absmax` 得到 scale，再把浮点值映射为整数，恢复时用同一个 scale 还原近似值。这里验证的是量化闭环，不是硬件 FP8 的 E4M3 / E5M2 编码或 Tensor Core kernel。
 
-下面的代码会实现一个最小 `FP8KVCacheSim`。它包含两条链路：一条用于普通推理张量的 FP8 近似量化，另一条用于 KV Cache 的分组量化。
+### Step 3: KV Cache 的分组量化
 
-代码拆成七个关键动作：
+KV Cache 沿最后一维分组，每组保存一套 scale。`kv_group_size` 越小，scale 对局部数值范围的适应性通常越强，但元数据和量化处理次数也会增加。需要同时观察缓存字节数、恢复误差和量化/恢复耗时。
 
-| 动作 | 对应方法 / 变量 | 作用 |
-|------|------------------|------|
-| 对称量化 | `_sym_quantize` | 计算 absmax、scale，并把张量映射成 int8 |
-| 对称反量化 | `_sym_dequantize` | 用 scale 把整数张量恢复成浮点近似值 |
-| FP8 记录 | `quantize_fp8` | 保存 FP8 近似量化值、scale 和原始形状 |
-| KV 分组 | `quantize_kv_cache` | 沿最后一维按 `kv_group_size` 切块量化 |
-| KV 恢复 | `dequantize_kv_cache` | 使用每个 group 的 scale 恢复 KV Cache |
-| 实验记录 | `fit` / `forward` | 跑通量化、恢复和前向返回 |
-| 误差检查 | `mse` | 衡量原始张量和恢复张量之间的重构误差 |
+| 变量 | 影响对象 | 主要观察 |
+|---|---|---|
+| `seq_len` | 缓存总量 | 长上下文压力 |
+| `kv_group_size` | scale 数量与局部误差 | 压缩比、MSE、耗时 |
+| `dtype` / 容器位宽 | 单元素存储 | 原始字节与量化字节 |
 
-这里最重要的是区分“全局 scale”和“分组 scale”。普通 hidden states 可以用一个全局 scale 做教学模拟；KV Cache 的最后一维跨度更大，因此按 group 保存 scale 更合理。
+### Step 4: 实现提示
 
-### Step 3: 核心机制
-
-对称量化的基本公式是：
-
-$$
-scale = \frac{q_{max}}{\max(|X|)}
-$$
-
-量化时：
-
-$$
-Q = \mathrm{clamp}(\mathrm{round}(X \cdot scale), -q_{max}, q_{max})
-$$
-
-反量化时：
-
-$$
-\hat{X} = \frac{Q}{scale}
-$$
-
-KV Cache 分组量化只是把这个过程应用到多个小块上。假设最后一维被切成若干组，那么每一组都有自己的 $scale_g$。这样能避免一个极端值把整条 hidden dimension 的量化范围拉大，从而降低普通位置的精度损失。
-
-### Step 4: 动手实战
-
-**要求**：请补全下方 `FP8KVCacheSim`，跑通“对称量化 -> 反量化 -> KV 分组量化 -> KV 恢复 -> 误差检查”这条链路。你需要重点完成七个位置：absmax、scale、量化值、FP8 状态记录、KV group 数、KV group 恢复和 MSE 误差。
-
-完成后观察测试结果：`fp8_q` 和 `kv_q` 应该使用 int8 容器保存低精度值，`fp8_scale` 和 `kv_scale` 负责恢复数值范围，恢复后的 hidden states 和 KV Cache 形状应与原始输入一致。
-
-### 提示
-
-- 先把 `_sym_quantize` 这条最小链路补完：`absmax -> scale -> q`。后面 FP8 和 KV Cache 都会复用这套逻辑。
-- `quantize_fp8` 这一段只是在记录状态，不要重复发明新的量化规则。
-- KV Cache 的关键不是新公式，而是“按最后一维分组，再对每组复用同一套量化/反量化逻辑”。
-- `mse` 放在最后做记账即可。先保证量化、恢复和 shape 都跑通，再回来看误差。
+- 先完成 `_sym_quantize`：`absmax → scale → q`。
+- `quantize_fp8` 记录低精度值、scale 和原始 shape。
+- `quantize_kv_cache` 沿最后一维分组，并为每组保存 scale。
+- 最后用恢复结果计算 MSE，并检查 shape 是否保持一致。
 
 
 ```python
@@ -145,7 +108,7 @@ class FP8KVCacheSim(nn.Module):
         self.fp8_q = q
         self.fp8_scale = scale
         # ==========================================
-        # TODO 2: 补完 FP8 / KV Cache 的状态记录
+        # TODO 2a: 记录 FP8 近似张量的原始 shape
         # 提示: 这里先记录 self.fp8_shape = tuple(x.shape)。
         # 后面 quantize_kv_cache 里再补 n_groups，用它初始化 scales。
         # ==========================================
@@ -164,7 +127,7 @@ class FP8KVCacheSim(nn.Module):
 
         last_dim = kv.size(-1)
         # ==========================================
-        # TODO 2: 补完 FP8 / KV Cache 的状态记录
+        # TODO 2b: 记录 KV Cache 的分组状态
         # 提示: n_groups 用向上取整计算，最后一组可以不足 kv_group_size。
         # ==========================================
         # n_groups = ???
@@ -208,7 +171,7 @@ class FP8KVCacheSim(nn.Module):
                 end = min(start + self.kv_group_size, last_dim)
                 scale = flat_scale[row, g]
                 # ==========================================
-                # TODO 3: 补完恢复与误差检查
+                # TODO 3a: 恢复当前 KV Cache 分组
                 # 提示: 先用当前 group 的 scale 恢复 flat[row, start:end]，
                 # 再把 restored_chunk 写回 flat_out 的同一区间。
                 # ==========================================
@@ -236,7 +199,7 @@ class FP8KVCacheSim(nn.Module):
 
     def mse(self, original: torch.Tensor, restored: torch.Tensor) -> torch.Tensor:
         # ==========================================
-        # TODO 3: 补完恢复与误差检查
+        # TODO 3b: 计算恢复误差
         # 提示: 把 original / restored 转成 float 后，相减平方再求平均。
         # ==========================================
         # error = ???
@@ -269,6 +232,13 @@ def test_fp8_kv_cache_quantization():
         assert out_hidden.shape == hidden.shape
         assert out_kv.shape == kv.shape
         assert float(sim.mse(hidden, hidden_restore)) >= 0.0
+
+        zero = torch.zeros(2, 7)
+        zero_kv = torch.zeros(1, 2, 7)
+        sim.fit(zero, zero_kv)
+        assert torch.isfinite(sim.dequantize_fp8()).all()
+        assert torch.isfinite(sim.dequantize_kv_cache()).all()
+        assert sim.kv_scale.shape[-1] == 2, '非整除的最后一维应向上取整分组'
 
         print('✅ FP8KVCacheSim 测试通过')
     except NotImplementedError as e:
@@ -340,7 +310,7 @@ class FP8KVCacheSim(nn.Module):
         self.fp8_q = q
         self.fp8_scale = scale
         # ==========================================
-        # TODO 2: 补完 FP8 / KV Cache 的状态记录
+        # TODO 2a: 记录 FP8 近似张量的原始 shape
         # 提示: 这里先记录 self.fp8_shape = tuple(x.shape)。
         # 后面 quantize_kv_cache 里再补 n_groups，用它初始化 scales。
         # ==========================================
@@ -360,7 +330,7 @@ class FP8KVCacheSim(nn.Module):
 
         last_dim = kv.size(-1)
         # ==========================================
-        # TODO 2: 补完 FP8 / KV Cache 的状态记录
+        # TODO 2b: 记录 KV Cache 的分组状态
         # 提示: n_groups 用向上取整计算，最后一组可以不足 kv_group_size。
         # ==========================================
         # n_groups = ???
@@ -405,7 +375,7 @@ class FP8KVCacheSim(nn.Module):
                 end = min(start + self.kv_group_size, last_dim)
                 scale = flat_scale[row, g]
                 # ==========================================
-                # TODO 3: 补完恢复与误差检查
+                # TODO 3a: 恢复当前 KV Cache 分组
                 # 提示: 先用当前 group 的 scale 恢复 flat[row, start:end]，
                 # 再把 restored_chunk 写回 flat_out 的同一区间。
                 # ==========================================
@@ -434,7 +404,7 @@ class FP8KVCacheSim(nn.Module):
 
     def mse(self, original: torch.Tensor, restored: torch.Tensor) -> torch.Tensor:
         # ==========================================
-        # TODO 3: 补完恢复与误差检查
+        # TODO 3b: 计算恢复误差
         # 提示: 把 original / restored 转成 float 后，相减平方再求平均。
         # ==========================================
         # error = ???
@@ -447,9 +417,9 @@ class FP8KVCacheSim(nn.Module):
 
 TODO 1：`_sym_quantize` 负责补完最小对称量化闭环。先用 `absmax = torch.max(torch.abs(x))` 找到动态范围，再用 `scale = qmax / absmax.clamp_min(self.eps)` 计算缩放系数，最后做 `round + clamp + int8` 得到低精度张量 `q`。
 
-TODO 2：`quantize_fp8` 和 `quantize_kv_cache` 负责补完状态记录。`self.fp8_shape = tuple(x.shape)` 用来保存原始 FP8 近似张量形状；`n_groups = (last_dim + self.kv_group_size - 1) // self.kv_group_size` 则决定 KV Cache 沿最后一维要切成多少组，并据此初始化分组 scale。
+TODO 2a/2b：`quantize_fp8` 和 `quantize_kv_cache` 负责补完状态记录。前者保存 `self.fp8_shape = tuple(x.shape)`；后者用 `n_groups = (last_dim + self.kv_group_size - 1) // self.kv_group_size` 决定 KV Cache 沿最后一维的分组数，并初始化分组 scale。
 
-TODO 3：`dequantize_kv_cache` 和 `mse` 负责补完恢复与误差检查。前者用每个 group 自己的 scale 恢复 `restored_chunk`，再写回 `flat_out`；后者用 `torch.mean((original.float() - restored.float()) ** 2)` 计算重构误差，完成“量化 -> 恢复 -> 评估”的最小闭环。
+TODO 3a/3b：`dequantize_kv_cache` 和 `mse` 负责补完恢复与误差检查。前者用每个 group 自己的 scale 恢复 `restored_chunk`，再写回 `flat_out`；后者用 `torch.mean((original.float() - restored.float()) ** 2)` 计算重构误差，完成“量化 -> 恢复 -> 评估”的最小闭环。
 
 **FP8 与 KV Cache 量化核心机制**
 - **FP8 近似**：用低精度值和 scale 保存张量，降低带宽和存储压力
@@ -460,3 +430,116 @@ TODO 3：`dequantize_kv_cache` 和 `mse` 负责补完恢复与误差检查。前
 - **硬件格式**：真实 FP8 通常涉及 E4M3 / E5M2、Tensor Core 支持和 kernel 路径，本节只模拟核心思想
 - **缓存收益**：KV Cache 量化对长上下文和高并发更有价值，因为缓存大小会随序列长度线性增长
 - **精度边界**：KV Cache 参与后续 attention，过度压缩可能影响生成质量，需要结合 perplexity、任务指标和在线效果验证
+
+### Step 5：可选 GPU 实验——测量 FP8 / KV Cache 模拟路径
+
+![FP8 KV Cache GPU 机制实验流程](../public/02_PyTorch_Algorithms/41_fp8_kv_gpu_mechanism_flow.svg)
+
+实验从真实模型的 `past_key_values` 取得一段实际 KV 状态，再比较分组量化的原始字节数、量化字节数、恢复误差、耗时和峰值显存。当前使用 INT8 容器模拟量化闭环，并把 K/V 拼成统一教学张量；它不代表真实 FP8 Tensor Core、backend 内部 KV 布局或 serving 收益，证据等级记为 `gpu_simulation_on_real_kv_state`。
+
+先运行 `dry_run` 检查环境，再切换到 `real_gpu`。结果必须同时记录配置的最大长度和实际 `prompt_tokens`；如果要研究长上下文增长，应改变输入长度并分别保存报告。
+
+
+```python
+import json
+import platform
+import time
+from pathlib import Path
+
+RUN_MODE = 'dry_run'  # cpu / dry_run / real_gpu；dry_run 只做环境检查
+MODEL_ID = 'Qwen/Qwen2.5-0.5B-Instruct'  # real_gpu 使用真实模型生成 KV Cache
+PROMPT = 'Explain how KV Cache grows during generation.'
+SEED = 42
+BATCH_SIZE = 1
+NUM_HEADS = 16
+SEQ_LEN = 512
+HEAD_DIM = 64
+KV_GROUP_SIZE = 32
+WARMUP = 5
+ITERS = 20
+OUTPUT_PATH = Path('benchmarks/results/41_fp8_kv_gpu.json')
+
+torch.manual_seed(SEED)
+cuda_available = torch.cuda.is_available()
+if RUN_MODE == 'real_gpu' and not cuda_available:
+    raise RuntimeError('RUN_MODE=real_gpu 但 CUDA 不可用，请先完成 GPU 环境预检。')
+device = torch.device('cuda' if RUN_MODE == 'real_gpu' else 'cpu')
+runtime = {'python': platform.python_version(), 'torch': torch.__version__, 'cuda': torch.version.cuda,
+           'cuda_available': cuda_available, 'device': torch.cuda.get_device_name(0) if cuda_available else 'cpu'}
+
+def _sync():
+    """确保 CUDA 异步操作完成后再读取计时或显存。"""
+    if device.type == 'cuda': torch.cuda.synchronize()
+
+def _measure(fn):
+    """测量量化和恢复过程的平均耗时。"""
+    for _ in range(WARMUP): fn()
+    _sync(); start = time.perf_counter()
+    for _ in range(ITERS): fn()
+    _sync()
+    return round((time.perf_counter() - start) * 1000 / ITERS, 4)
+
+shape = (BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM)
+evidence_level = 'environment_preflight' if RUN_MODE == 'dry_run' else 'gpu_simulation_on_real_kv_state'
+result = {'stage': evidence_level, 'run_mode': RUN_MODE, 'runtime': runtime, 'config': {
+    'shape': list(shape), 'kv_group_size': KV_GROUP_SIZE, 'warmup': WARMUP, 'iters': ITERS, 'seed': SEED, 'model_id': MODEL_ID,
+}, 'evidence_level': evidence_level}
+if RUN_MODE == 'dry_run':
+    result['decision'] = {'decision': 'ready_to_measure', 'reason': '仅完成环境与配置检查，尚未运行 GPU KV Cache 测量。'}
+else:
+    # real_gpu 从真实模型的 past_key_values 读取 KV；cpu 模式保留小型确定性张量。
+    if RUN_MODE == 'real_gpu':
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, use_fast=True)
+        model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=torch.float16).to(device).eval()
+        inputs = tokenizer(PROMPT, return_tensors='pt', truncation=True, max_length=SEQ_LEN).to(device)
+        actual_prompt_tokens = int(inputs['input_ids'].shape[1])
+        with torch.no_grad(): outputs = model(**inputs, use_cache=True, return_dict=True)
+        past = outputs.past_key_values
+        if hasattr(past, 'to_legacy_cache'): past = past.to_legacy_cache()
+        key, value = past[0][0], past[0][1]
+        kv = torch.cat([key, value], dim=1).float()
+        shape = tuple(kv.shape)
+        del model, outputs, past, inputs
+        if device.type == 'cuda': torch.cuda.empty_cache()
+    else:
+        kv = torch.randn(*shape, device=device)
+    result['config'].update({'shape': list(shape), 'prompt_tokens': actual_prompt_tokens if RUN_MODE == 'real_gpu' else None,
+                             'state_source': 'real_model_past_key_values' if RUN_MODE == 'real_gpu' else 'synthetic_cpu',
+                             'layout_note': 'K/V concatenated on head axis for teaching'})
+    sim = FP8KVCacheSim(kv_group_size=KV_GROUP_SIZE).to(device)
+    def quantize_and_restore():
+        sim.quantize_kv_cache(kv)
+        return sim.dequantize_kv_cache()
+    latency = _measure(quantize_and_restore)
+    restored = sim.dequantize_kv_cache()
+    raw_bytes = int(kv.numel() * kv.element_size())
+    quant_bytes = int(sim.kv_q.numel() * sim.kv_q.element_size() + sim.kv_scale.numel() * sim.kv_scale.element_size())
+    peak = torch.cuda.max_memory_allocated() / 2**20 if device.type == 'cuda' else None
+    result.update({'metrics': {'raw_bytes': raw_bytes, 'quantized_bytes_with_scale': quant_bytes,
+        'compression_ratio': round(raw_bytes / quant_bytes, 4), 'mse': round(float(sim.mse(kv, restored)), 8),
+        'quantize_restore_latency_ms': latency, 'peak_memory_mb': None if peak is None else round(peak, 2),
+        'restored_shape': list(restored.shape)},
+        'decision': {'decision': 'measure', 'reason': '仅观察 KV Cache 分组量化的容量、误差和恢复代价；不代表真实 serving 收益。'}})
+OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+OUTPUT_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+print(json.dumps(result, ensure_ascii=False, indent=2))
+```
+
+#### GPU 实验结果记录
+
+| 实验组 | shape | kv_group_size | 原始字节 | 量化字节（含 scale） | 压缩比 | MSE | 量化/恢复耗时 (ms) | peak memory (MB) | evidence level |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| FP16 KV Cache |  |  |  |  |  |  |  |  | gpu mechanism |
+| 分组量化 KV Cache |  |  |  |  |  |  |  |  | gpu mechanism |
+
+量化字节数包含 scale 元数据；真实 FP8 kernel、KV Cache serving 和端到端质量需要转到对应 backend 项目验证。
+## 相关阅读
+
+完成 FP8 scale、KV Cache 分组和误差检查后，可以继续阅读 FP8 格式、缓存调度和真实部署 backend。
+
+- [FP8 原论文：FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433)
+- [NVIDIA Transformer Engine 官方仓库](https://github.com/NVIDIA/TransformerEngine)
+- [37. KV Cache Scheduling | KV Cache 调度](./37_KV_Cache_Scheduling.md)
+- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
+- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)

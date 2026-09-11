@@ -14,75 +14,78 @@
 
 ## 本节导读
 
-本节先不训练模型，而是判断一批 SFT 数据是否具备进入正式训练的条件。你需要检查空回答、字段缺失、模板一致性、重复样本和评测覆盖，并把发现的问题按风险和修复成本整理出来。最终给出数据可直接训练、需要回修，还是应当暂缓使用的结论。
+本节先不训练模型，而是判断一批 SFT 数据是否具备进入正式训练的条件。它是第 62 节指令微调和第 60 节 LoRA 项目的数据准入环节：先检查空回答、字段缺失、模板一致性、重复样本和评测覆盖，再把发现的问题按风险和修复成本整理出来。最终给出数据可直接训练、需要回修，还是应当暂缓使用的结论。
 
 **关键词：** `SFT`, `data quality`, `template`, `evaluation`, `project`
 
 ---
 ## 前置阅读
 
-**导语：** 先把 SFT 样本构造、端到端训练闭环和数据工程里的关键风险理顺，再进入这个项目；本节默认你已经知道数据如何进 loss，重点转向这批数据是否值得进入正式训练。
+**导语：** 进入本项目前，先能说明 SFT 样本如何进入 loss，并能识别字段、模板和长度问题，再判断一批数据是否值得进入正式训练。
 - [09. SFT Training Loop | SFT 训练循环](./09_SFT_Training_Loop.md)
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
 - [30. Long Context Fine-Tuning | 长上下文微调](./30_Long_Context_Fine_Tuning.md)
 - [32. Data Engineering for SFT | SFT 数据工程](./32_Data_Engineering_for_SFT.md)
 
-## 相关阅读
 
-**导语：** 做完这页后，最自然的下一步是把可训练数据送入正式微调项目，或继续看受限预算下的数据与配置该怎么取舍。
-- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
-- [65. QLoRA Selection Project | QLoRA 选型项目](./65_QLoRA_Selection_Project.md)
----
-### Step 1: 定义 SFT 数据质量项目目标
-先回答一个问题：这批数据到底是拿来训练、回修，还是直接挡回去？
+### Step 1（项目设计）：明确数据准入问题
+本节面向已经理解 SFT 样本、监督范围和基本训练闭环的学习者。你不需要先训练模型，但需要能看懂 `prompt / response`、`messages` 和评测样例。这里要回答的是：这批数据现在能不能交给训练项目？
 
-- 固定任务目标、模板格式、数据来源和最小评测集合，保证后面的判断都在同一口径下进行。
-- 明确 baseline 数据口径：样本条数、prompt / response 字段、chat template、长度上限和评测样例数。
-- 先把“可训练”定义清楚：至少要满足字段完整、response 非空、重复率可控、长度口径可解释、评测覆盖核心任务。
-- 这一步的目标不是开始训练，而是先把数据是否具备进入训练的资格说清楚。
+本节只负责数据质量准入，不负责证明某个模型训练得更快或效果更好。
 
-### Step 2: 先确认样本、模板和评测口径合法
-数据质量项目必须先确认 baseline 数据合法，不能直接拿几条样本感觉良好就开训。
+| 实验层级 | 输入 | 主要操作 | 主要产物 |
+|:---|:---|:---|:---|
+| CPU 主实验 | 原始 SFT 样本 | 字段、模板、重复、长度和评测覆盖审计 | 清洗前后报告与 `accept / tune / reject` |
+| GPU 下游验证（可选） | 通过闸门的数据 | 交给 60 / 62 做固定口径训练或推理验证 | 训练质量与资源报告，不归因给 64 |
 
-- 先审计样本：总数、空 prompt、空 response、重复样本、超长样本和平均长度。
-- 再审计模板：字段是否完整、role 顺序是否稳定、response 是否落在最后一个 assistant turn。
-- 最后检查评测：核心任务是否有对应样例，评测样例数是否足够，是否能覆盖主要输出格式。
-- 如果 baseline 数据本身就不合法，后面的 loss 和 benchmark 都不可信。
+![SFT 数据质量项目关系图](../public/02_PyTorch_Algorithms/64_sft_data_quality_flow.svg)
 
-### Step 3: 用统一口径比较收益与代价
-数据质量项目不能只看“干净不干净”，还要看回修成本和训练收益是否匹配。
+先固定任务目标、数据来源、模板格式、长度口径和最小评测集合；CPU 审计检查规则，GPU 训练或推理才检查模型效果和资源代价。
+数据质量实验的基本原则是：固定审计规则，用同一套指标比较清洗前后的数据，而不是凭少量样本的印象判断质量。
 
-- 如果问题只集中在少量空 response 或轻微重复，可以进入 `tune`，优先做清洗或模板回修。
-- 如果字段缺失、模板错位或评测缺口很大，就不应该急着开训，而应直接进入 `reject` 或大幅回修。
-- 如果样本质量稳定、模板一致、评测覆盖到位，这批数据才值得进入后续训练项目。
-- 这一步的目标是把样本质量、修复成本和训练可行性一起收成决策，而不是只给一个统计表。
+### Step 2（项目设计）：固定数据基线与检查条件
+输入是原始 SFT 样本、对话记录和最小评测集合。先对原始版本运行一次完整审计，再决定是否清洗；几条样本的直观印象不能替代数据集统计。
 
-### Step 4: 输出数据质量项目结论
-数据质量项目最终不是输出“共有多少样本”，而是输出这批数据在当前任务下是否值得进入训练。
+| 检查对象 | 记录的指标 | 基线要回答的问题 |
+|:---|:---|:---|
+| 样本字段 | 样本数、空 prompt、空 response、重复数 | 样本是否有可用监督，是否存在重复放大 |
+| 长度风险 | 超过字符阈值的数量、长度分位数 | 是否可能在 tokenizer 截断时丢失关键信息 |
+| 对话模板 | 缺失字段、空 messages、assistant 收尾错误 | 数据能否按预期转换为训练模板 |
+| 评测覆盖 | 评测样例数、任务类型和输出格式 | 训练后是否有对应的验证入口 |
 
-- 项目结论建议统一成 `accept / tune / reject`。
-- 输出最小报告时，至少包含样本审计、模板审计、评测覆盖和下一轮动作。
-- 若进入 `tune`，下一轮优先回修模板字段、重复样本和评测缺口，而不是先去加训练技巧。
+实验动作：固定字段名和阈值 → 运行样本审计 → 运行模板审计 → 检查评测覆盖 → 保存原始 baseline。阈值是准入规则，不是模型质量指标。
 
-#### 图解：09 / 13 / 30 / 32 如何收束到 64 数据质量项目
+### Step 3（项目设计）：确定质量指标与清洗方案
+清洗实验的对照组是原始数据，处理组是按明确规则修复或过滤后的数据。比较的是数据风险下降了多少，以及为此损失了多少样本；它不能单独证明训练质量提升。
+
+清洗前后必须使用相同的审计函数、阈值和统计口径。建议按这个顺序执行：保留原始报告 → 只执行已说明的清洗动作 → 重新运行同一套审计 → 对照两份报告 → 决定是否交给 60 / 62。
+
+| 对比项 | 清洗前 | 清洗后 | 解释 |
+|:---|:---:|:---:|:---|
+| 样本数 | 原始数量 | 保留数量 | 计算删除成本 |
+| blocker | 原始数量 | 修复后数量 | 判断能否解除准入阻断 |
+| 重复与长度问题 | 原始数量 | 处理后数量 | 判断风险是否下降 |
+| 评测覆盖 | 原始覆盖 | 处理后覆盖 | 确认清洗没有丢掉验证入口 |
+
+字段缺失、空 response 或模板错位属于 blocker；轻微重复和长度异常可进入 `tune`。如果要验证 loss、任务指标、吞吐或显存，应把固定版本数据交给 60 / 62 的下游实验。
+
+### Step 4（项目设计）：确定报告字段与准入规则
+把审计结果转成训练项目可以执行的决定，而不是只输出一张统计表。
+
+| 条件 | 决策 |
+|:---|:---|
+| 存在会破坏训练目标或评测解释力的 blocker | `reject` |
+| 没有 blocker，但仍有重复、长度或评测缺口 | `tune` |
+| 必填字段、模板和评测覆盖满足当前规则 | `accept` |
+
+![SFT 数据质量准入决策](../public/02_PyTorch_Algorithms/64_sft_data_quality_decision.svg)
+
+- 报告至少包含审计结果、规则版本、清洗动作、保留样本数和下一轮动作。
+
+### Step 5（CPU）：实现并测试审计闭环
+请把前面的规则实现为四个可复用函数：样本审计、模板审计、项目决策和清洗前后对比。不需要重复实现 60 / 62 的训练循环。
 
 `64` 不重复实现训练循环，而是把前面几节的数据与训练口径收成一份训练前的质量审计报告。
-
-```text
-09 SFT data        input_ids / labels / loss mask
-      │
-13 End-to-end      train / val loop and minimal report
-      │
-30 Long context    truncation / length budget / task fit
-      │
-32 Data engineering template / fields / eval coverage / cleaning
-      ▼
-64 SFT Data Quality Project
-      ├─ sample audit
-      ├─ template audit
-      ├─ eval coverage review
-      └─ accept / tune / reject
-```
 
 项目页最小产物：
 
@@ -105,15 +108,50 @@ from typing import Dict, List
 
 ```python
 # TODO: 完成 SFT 数据质量项目的样本审计、模板审计和项目结论
-# 目标：把训练前的数据检查收束成一份可用于 accept / tune / reject 的项目报告
+# 目标：把训练前的数据检查收束成一份可用于 accept / tune / reject 的项目报告。
+# CPU 题目区只验证数据规则；它不能证明清洗后模型的训练效果或 GPU 资源收益。
 
 def audit_sft_samples(examples: List[Dict[str, str]], max_prompt_chars: int, max_response_chars: int) -> Dict[str, float]:
+    """统计空字段、重复样本、字符长度风险和平均 response 长度。
+
+    max_prompt_chars / max_response_chars 是字符审计阈值，不是 tokenizer 截断长度；
+    返回摘要字段必须能支持清洗前后对比。
+    """
+    # TODO 1：按 prompt/response 组合识别重复；分别统计空 prompt 与空 response。
+    # sample_count = ???；empty_prompt_count = ???；empty_response_count = ???；duplicate_count = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def audit_chat_template(records: List[Dict[str, object]], required_keys: List[str]) -> Dict[str, int]:
+    """检查必填字段、messages 是否为空以及 assistant 收尾是否正确。
+
+    records 中的 messages 应为 turn 列表；缺字段、空列表和错误收尾分别计数。
+    """
+    # TODO 2：required_keys 缺失计入 missing_key_count；最后一个 role 非 assistant
+    # 时计入 assistant_tail_error_count，不要把空 messages 当作正确模板。
+    # missing_key_count = ???；empty_messages_count = ???；assistant_tail_error_count = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def review_sft_data_project(sample_audit: Dict[str, float], template_audit: Dict[str, int], eval_cases: List[Dict[str, str]]) -> Dict[str, object]:
+    """根据样本、模板和评测覆盖审计输出数据准入决策。
+
+    返回 decision、eval_case_count、blockers 和 next_action；blocker 优先于普通问题。
+    """
+    # TODO 3：空 response、字段缺失、模板收尾错误等直接影响训练目标的问题，
+    # 应进入 blockers；不要仅按 issue 总数给出结论。
+    # blockers = ???；decision = ???；project_ready = ???；next_action = ???。
+    raise NotImplementedError("请先完成 TODO 代码！")
+
+def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[str, float]) -> Dict[str, float]:
+    """比较清洗前后的样本保留量和审计问题变化。
+
+    返回 removed_samples、issue_delta 和 issue_reduction_ratio；问题减少不等于模型质量提升。
+    `issue_count` 应由空字段、重复样本和超长样本等审计问题组成，并在前后报告中使用同一口径。
+    """
+    # TODO 4：使用 sample_count 与 issue_count；缺失字段不能静默当作 0。
+    # 提示：removed_samples = before.sample_count - after.sample_count；
+    #       issue_delta = before.issue_count - after.issue_count；
+    #       issue_reduction_ratio 以 before.issue_count 为分母，分母为 0 时按边界处理。
+    # removed_samples = ???；issue_delta = ???；issue_reduction_ratio = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 ```
@@ -170,6 +208,9 @@ def test_sft_data_quality_project():
         )
         ready = review_sft_data_project(clean_audit, clean_template, eval_cases)
         assert ready['decision'] == 'accept', '干净数据应可进入训练'
+        cleaning = summarize_cleaning_effect(sample_audit, clean_audit)
+        assert cleaning['removed_sample_count'] == 2, '清洗删除样本数统计错误'
+        assert cleaning['issue_delta'] > 0, '清洗前后问题数变化错误'
         print('所有测试通过！')
     except AssertionError as e:
         print(f'测试失败: {e}')
@@ -296,11 +337,29 @@ def review_sft_data_project(sample_audit: Dict[str, float], template_audit: Dict
         'next_action': next_action,
     }
 
+
+# TODO 4: 比较清洗前后的数据质量变化
+def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[str, float]) -> Dict[str, float]:
+    before_samples = int(before_audit['sample_count'])
+    after_samples = int(after_audit['sample_count'])
+    before_issues = int(before_audit['issue_count'])
+    after_issues = int(after_audit['issue_count'])
+    issue_delta = before_issues - after_issues
+    return {
+        'before_sample_count': before_samples,
+        'after_sample_count': after_samples,
+        'removed_sample_count': before_samples - after_samples,
+        'before_issue_count': before_issues,
+        'after_issue_count': after_issues,
+        'issue_delta': issue_delta,
+        'issue_reduction_ratio': round(issue_delta / before_issues, 4) if before_issues else 0.0,
+    }
+
 ```
 
 ### 解析
 
-这一页保留 `3` 个核心 TODO：样本审计、模板审计和项目结论。它不要求把数据清洗流水线全部重写，而是要求把训练前的数据质量判断收成可执行的项目闸门。
+这一页保留 `4` 个核心 TODO：样本审计、模板审计、项目结论和清洗前后对比。它不要求把数据清洗流水线全部重写，而是要求把训练前的数据质量判断收成可执行的项目闸门。
 
 **1. TODO 1: 审计 SFT 样本**
 - **实现方式**：遍历 `prompt / response` 样本，统计空字段、重复样本、超长样本和平均 response 长度。
@@ -312,31 +371,42 @@ def review_sft_data_project(sample_audit: Dict[str, float], template_audit: Dict
 - **关键点**：模板不稳定时，训练 loss 即使下降，也可能对应错误的监督目标。
 - **项目意义**：这一步把第 `32` 节的数据工程风险提前暴露在训练前，而不是把问题拖到项目后期。
 
-**3. TODO 3: 输出项目结论**
+**3. TODO 3：输出项目结论**
 - **实现方式**：把样本审计、模板审计和评测覆盖统一收成 `accept / tune / reject`。
 - **关键点**：blocker 要先于总 issue 数判断。像空 response、缺模板字段、assistant 收尾错误这类问题会直接破坏训练与评测解释力，应优先走 `reject`；只有在没有 blocker、但仍有重复样本或长度异常时，才进入 `tune`。
 - **项目意义**：这一步把 `64` 固定成训练前的数据质量闸门，而不是一组分散的清洗脚本。
-- **关键点**：项目结论不只依赖样本数，还要看 blocker 是否会直接破坏训练与评测解释力。
-- **项目意义**：这一步把 `64` 收成训练前的数据质量闸门，而不是单纯的清洗脚本集合。
+
+**4. TODO 4：比较清洗前后变化**
+- **实现方式**：用同一组字段比较保留样本数、问题数量和问题减少比例。
+- **关键点**：问题减少说明准入风险下降，不等于模型 loss 或任务质量一定提升。
+- **项目意义**：这一步为 60 / 62 的下游 GPU 对照提供版本差异和数据审计依据。
 
 ### 可选：统一项目报告导出
 默认关闭。完成样本审计、模板审计和评测样例检查后，再导出项目报告。报告模板见 `docs/verification/fine_tuning_projects.md`。
 
 ```python
 try:
-    from tools.fine_tuning_project_runtime import runtime_snapshot, save_project_report, validate_project_config
+    from tools.fine_tuning_project_runtime import preflight_runtime, runtime_snapshot, save_project_report, validate_project_config
 except ModuleNotFoundError:
+    preflight_runtime = lambda torch_module, run_mode='cpu', **kwargs: {'run_mode': run_mode, 'ready': False, 'reasons': ['共享运行时工具不可用']}
     runtime_snapshot = lambda: {'device': 'unknown'}
     validate_project_config = lambda config: []
     save_project_report = None
+RUN_MODE = 'cpu'  # cpu / dry_run / real_gpu；本节默认只运行 CPU 数据审计。
 PROJECT_ID = '64_sft_data_quality'
 PROJECT_RESULT_PATH = 'benchmarks/results/64_sft_data_quality.json'
-PROJECT_CONFIG = {'project': PROJECT_ID, 'model': 'template', 'dtype': 'fp32', 'batch_size': 1, 'seq_len': 128, 'steps': 1, 'seed': 42}
+PROJECT_CONFIG = {'project': PROJECT_ID, 'model': 'template', 'dtype': 'fp32', 'batch_size': 1, 'seq_len': 128, 'steps': 1, 'seed': 42, 'run_mode': RUN_MODE}
 RUN_PROJECT_EXPORT = False  # True 只保存已完成的数据质量报告。
 config_errors = validate_project_config(PROJECT_CONFIG)
 if config_errors:
     raise ValueError('; '.join(config_errors))
 print('runtime:', runtime_snapshot())
+if RUN_MODE == 'dry_run':
+    try:
+        import torch
+        print('dry_run:', preflight_runtime(torch, run_mode='dry_run'))
+    except ImportError as exc:
+        print({'run_mode': 'dry_run', 'ready': False, 'reasons': [f'缺少 torch：{exc}']})
 if RUN_PROJECT_EXPORT:
     if 'PROJECT_REPORT' not in globals():
         raise RuntimeError('请先组装完整的 PROJECT_REPORT')
@@ -346,3 +416,12 @@ if RUN_PROJECT_EXPORT:
     save_project_report(PROJECT_RESULT_PATH, PROJECT_REPORT)
 
 ```
+
+## 相关阅读
+
+完成字段、模板、重复和长度质量检查后，可以继续阅读数据集工具和正式微调项目，观察样本如何进入训练闭环。
+
+- [Hugging Face Datasets 官方文档](https://huggingface.co/docs/datasets)
+- [Hugging Face Datasets 官方仓库](https://github.com/huggingface/datasets)
+- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
+- [65. QLoRA Selection Project | QLoRA 选型项目](./65_QLoRA_Selection_Project.md)

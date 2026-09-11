@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="590" viewBox="0 0 1200 590">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+    <style>
+      text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+      .title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#475569}
+      .group{font-size:17px;font-weight:700;fill:#334155}.head{font-size:18px;font-weight:700}
+      .body{font-size:14px;fill:#334155}.small{font-size:13px;fill:#475569}
+      .panel{stroke-width:2;rx:18}.item{stroke-width:1.5;rx:12}
+      .flow{stroke:#64748b;stroke-width:2.8;fill:none;marker-end:url(#arrow)}
+      .branch{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      .label{font-size:13px;fill:#475569;paint-order:stroke;stroke:#f8fafc;stroke-width:6px;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="590" rx="24" fill="#f8fafc"/>
+  <text x="600" y="46" text-anchor="middle" class="title">性能分析：从现象到可复核证据</text>
+  <text x="600" y="74" text-anchor="middle" class="sub">先固定 workload，再分阶段测量、提出瓶颈假设，并选择能验证假设的工具</text>
+
+  <!-- Q1: workload and measurement -->
+  <rect x="36" y="112" width="250" height="350" fill="#eff6ff" stroke="#93c5fd" class="panel"/>
+  <text x="58" y="146" class="group">问题与工作负载</text>
+  <rect x="58" y="170" width="206" height="88" fill="#fff" stroke="#60a5fa" class="item"/>
+  <text x="78" y="200" class="head">固定 workload</text>
+  <text x="78" y="226" class="body">model · dtype · batch</text>
+  <text x="78" y="248" class="small">seq_len · warmup · repeats</text>
+  <rect x="58" y="306" width="206" height="88" fill="#fff" stroke="#60a5fa" class="item"/>
+  <text x="78" y="336" class="head">现象</text>
+  <text x="78" y="362" class="body">慢、抖动、OOM</text>
+  <text x="78" y="384" class="body">吞吐下降或尾延迟上升</text>
+
+  <!-- Q1 measurement -->
+  <rect x="334" y="112" width="250" height="350" fill="#f0fdf4" stroke="#86efac" class="panel"/>
+  <text x="356" y="146" class="group">测量与拆分</text>
+  <rect x="356" y="170" width="206" height="100" fill="#fff" stroke="#4ade80" class="item"/>
+  <text x="376" y="200" class="head">阶段耗时</text>
+  <text x="376" y="226" class="body">数据准备 · 前向 · 反向</text>
+  <text x="376" y="248" class="body">搬运 · 通信 · 同步</text>
+  <rect x="356" y="318" width="206" height="88" fill="#fff" stroke="#4ade80" class="item"/>
+  <text x="376" y="348" class="head">资源信号</text>
+  <text x="376" y="374" class="body">利用率 · 显存 · 带宽</text>
+  <text x="376" y="396" class="small">kernel 与等待</text>
+
+  <!-- Q2 diagnosis -->
+  <rect x="632" y="112" width="250" height="350" fill="#fffbeb" stroke="#fcd34d" class="panel"/>
+  <text x="654" y="146" class="group">假设与工具</text>
+  <rect x="654" y="170" width="206" height="100" fill="#fff" stroke="#f59e0b" class="item"/>
+  <text x="674" y="200" class="head">瓶颈假设</text>
+  <text x="674" y="226" class="body">算力 · 访存 · 搬运</text>
+  <text x="674" y="248" class="body">调度 · 同步 · 分配</text>
+  <rect x="654" y="318" width="206" height="88" fill="#fff" stroke="#f59e0b" class="item"/>
+  <text x="674" y="348" class="head">工具选择</text>
+  <text x="674" y="374" class="body">Summary · Trace</text>
+  <text x="674" y="396" class="small">Benchmark：延迟、吞吐、显存</text>
+
+  <!-- Q3 evidence and action -->
+  <rect x="930" y="112" width="234" height="350" fill="#faf5ff" stroke="#d8b4fe" class="panel"/>
+  <text x="952" y="146" class="group">证据与决策</text>
+  <rect x="952" y="188" width="190" height="96" fill="#fff" stroke="#a855f7" class="item"/>
+  <text x="972" y="218" class="head">证据链</text>
+  <text x="972" y="244" class="body">现象 → 指标 → 证据</text>
+  <text x="972" y="268" class="small">记录环境与 workload</text>
+  <rect x="952" y="318" width="190" height="88" fill="#fff" stroke="#a855f7" class="item"/>
+  <text x="972" y="348" class="head">下一步</text>
+  <text x="972" y="374" class="body">优化、复测或调整假设</text>
+  <text x="972" y="396" class="small">保留可复核证据</text>
+
+  <!-- main flow -->
+  <path d="M286 350H334" class="flow"/><text x="310" y="332" text-anchor="middle" class="label">拆分</text>
+  <path d="M584 350H632" class="flow"/><text x="608" y="332" text-anchor="middle" class="label">提出</text>
+  <path d="M882 350H930" class="flow"/><text x="906" y="332" text-anchor="middle" class="label">复核</text>
+
+  <!-- internal relations -->
+  <path d="M161 258V306" class="branch"/>
+  <path d="M459 270V318" class="branch"/><text x="475" y="300" class="label">归并信号</text>
+  <path d="M757 270V318" class="branch"/><text x="773" y="300" class="label">验证假设</text>
+  <path d="M1047 284V318" class="branch"/><text x="1063" y="305" class="label">形成动作</text>
+
+  <text x="600" y="520" text-anchor="middle" class="sub">CPU 可练习测量和分类；CUDA kernel、显存生命周期、设备搬运与通信利用率需要真实 GPU 证据</text>
+</svg>

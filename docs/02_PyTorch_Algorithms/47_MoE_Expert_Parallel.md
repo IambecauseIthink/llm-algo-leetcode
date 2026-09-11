@@ -18,7 +18,7 @@ MoE 不是简单地“把参数变多”，它真正难的地方在于：token �
 
 这是一节**机制原理节**：它和 `06`、`07` 是前后承接关系。`06` 主讲 router 如何选专家，`07` 主讲负载均衡损失如何约束路由；而 `47` 开始回答另一个问题：当专家真的被分到不同设备上后，路由结果会怎样变成 dispatch、热点和 all-to-all 通信成本。
 
-这一节不做工业级 expert parallel 实现，而是用纯 Python / PyTorch 风格的最小模拟，把 expert load、capacity、overflow 和通信账本串起来。一个实用判断可以先保持简单：如果路由已经明显偏斜，或者 overflow 很重，那么继续堆专家数并不会自动带来收益；只有当负载还能控住、通信开销没有压过稀疏激活收益时，MoE expert parallel 才值得继续放大。
+这一节用纯 Python / PyTorch 风格的最小模拟，把 expert load、capacity、overflow 和通信账本串起来。你会据此判断路由偏斜、overflow 和 all-to-all 开销是否已经抵消稀疏激活带来的收益。
 
 **关键词：** `expert parallel`, `dispatch`, `all-to-all`
 
@@ -26,19 +26,11 @@ MoE 不是简单地“把参数变多”，它真正难的地方在于：token �
 
 ## 前置阅读
 
-**导语：** 先把 MoE 路由、负载均衡和通信视角补齐，再进入 expert parallel，会更容易把“选哪个专家”和“专家如何跨设备落地”区分开。
+**导语：** 进入本节前，先能说明 Router 如何选择专家、负载均衡如何约束选择，再观察专家跨设备后如何产生 dispatch 和 all-to-all 通信。
 
 - [06. MoE Router | MoE 路由器](./06_MoE_Router.md)
 - [07. MoE Load Balancing Loss | MoE 负载均衡损失](./07_MoE_Load_Balancing_Loss.md)
 - [46. Communication Profiling with NCCL | NCCL 通信 Profiling](./46_Communication_Profiling_with_NCCL.md)
-## 相关阅读
-
-**导语：** 学完 expert parallel 后，下一步重点不是继续背概念，而是看它怎样进入 benchmark、通信分析和分布式项目闭环，确认稀疏激活带来的收益是否真的抵得过负载与通信代价。
-
-- [79. Distributed Parallel Benchmark | 分布式并行 Benchmark](./79_Distributed_Parallel_Benchmark.md)
-- [80. MoE Expert Parallel Benchmark | MoE 专家并行 Benchmark](./80_MoE_Expert_Parallel_Benchmark.md)
-- [81. Distributed Inference Project | 分布式推理项目](./81_Distributed_Inference_Project.md)
-
 ---
 ### Step 1: 核心思想与痛点
 
@@ -50,6 +42,9 @@ MoE 的核心是“稀疏激活”：每个 token 只激活少量专家，所以
 - 所有 token 计算完后，还要把结果 gather 回来。
 
 所以 MoE 专家并行的核心不是“让更多专家跑起来”，而是“让专家分布、token 路由和通信代价同时可控”。
+
+![MoE 专家并行总览](../public/02_PyTorch_Algorithms/47_expert_parallel_overview.svg)
+
 ### Step 2: 专家并行的实现框架
 
 这一节先把最小结构拆清楚：
@@ -61,6 +56,9 @@ MoE 的核心是“稀疏激活”：每个 token 只激活少量专家，所以
 - `dispatch_bytes` / `all_to_all_bytes`：近似估算通信代价。
 
 这不是完整的并行系统，但足够用来判断 MoE expert parallel 的瓶颈在负载还是通信。
+
+![MoE Dispatch 与 Combine 的数据流](../public/02_PyTorch_Algorithms/47_dispatch_combine_flow.svg)
+
 #### 图解：token 如何进入专家并行
 
 ```text
@@ -381,3 +379,12 @@ def compare_dense_vs_moe_cost(token_count, top_k, hidden_size, num_experts, byte
 **4. 这一页的边界**
 - 它讲的是 MoE 专家并行和通信代价。
 - 它不负责完整训练闭环，也不负责项目级 benchmark。
+## 相关阅读
+
+完成 expert load、capacity、overflow 和 all-to-all 账本后，可以继续阅读 MoE 论文、分布式实现与真实 benchmark。
+
+- [Switch Transformers 原论文](https://arxiv.org/abs/2101.03961)
+- [Megatron-LM 官方仓库](https://github.com/NVIDIA/Megatron-LM)
+- [79. Distributed Parallel Benchmark | 分布式并行 Benchmark](./79_Distributed_Parallel_Benchmark.md)
+- [80. MoE Expert Parallel Benchmark | MoE 专家并行 Benchmark](./80_MoE_Expert_Parallel_Benchmark.md)
+- [81. Distributed Inference Project | 分布式推理项目](./81_Distributed_Inference_Project.md)

@@ -1,37 +1,23 @@
-<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1280" height="720" fill="#F7F4EC"/>
-  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
-  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">KV Cache Budget</text>
-  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">In this topic, KV cache is first a budget object. Reuse, paging and compression are all judged by whether they create more usable context and concurrency.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>.title{font:700 29px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#526581}.label{font:700 18px sans-serif;fill:#172b4d}.txt{font:15px sans-serif;fill:#243b53}.small{font:14px sans-serif;fill:#526581}.card{stroke-width:2;rx:16}.flow{stroke:#486581;stroke-width:2.4;fill:none;marker-end:url(#arrow)}.dashed{stroke:#9fb3c8;stroke-width:2;fill:none;stroke-dasharray:7 6}</style>
+<rect width="1280" height="700" fill="#f7fafc"/>
+<text x="640" y="48" text-anchor="middle" class="title">KV Cache：请求状态如何变成容量边界</text>
+<text x="640" y="78" text-anchor="middle" class="sub">沿一次请求观察 Prefill、Decode、增长和回收，再选择分页或复用。</text>
 
-  <rect x="100" y="188" width="1080" height="84" rx="20" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
-  <text x="130" y="236" fill="#5B21B6" font-size="24" font-family="Arial, sans-serif" font-weight="700">Cache budget grows with layers × KV heads × sequence length × batch</text>
+<rect x="80" y="150" width="1120" height="110" rx="28" fill="#e6f0ff" stroke="#8fb3d8" stroke-width="2"/>
+<text x="640" y="188" text-anchor="middle" class="label">请求生命周期</text>
+<rect x="145" y="210" width="210" height="34" rx="17" fill="#fff" stroke="#8fb3d8"/><text x="250" y="233" text-anchor="middle" class="txt">请求进入</text>
+<rect x="430" y="210" width="210" height="34" rx="17" fill="#fff" stroke="#8fb3d8"/><text x="535" y="233" text-anchor="middle" class="txt">Prefill</text>
+<rect x="715" y="210" width="210" height="34" rx="17" fill="#fff" stroke="#8fb3d8"/><text x="820" y="233" text-anchor="middle" class="txt">Decode 逐 token</text>
+<rect x="1000" y="210" width="120" height="34" rx="17" fill="#fff" stroke="#8fb3d8"/><text x="1060" y="233" text-anchor="middle" class="txt">结束 / 回收</text>
+<path d="M355 227 H430" class="flow"/><path d="M640 227 H715" class="flow"/><path d="M925 227 H1000" class="flow"/>
 
-  <rect x="100" y="320" width="250" height="242" rx="22" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
-  <text x="126" y="358" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Natural growth</text>
-  <text x="126" y="392" fill="#92400E" font-size="16" font-family="Arial, sans-serif">longer context / more requests</text>
-  <text x="126" y="430" fill="#92400E" font-size="16" font-family="Arial, sans-serif">Check first whether the budget</text>
-  <text x="126" y="452" fill="#92400E" font-size="16" font-family="Arial, sans-serif">is simply too small for the target</text>
+<rect x="110" y="350" width="315" height="145" class="card" fill="#fff4d6" stroke="#e0b34f"/><text x="267" y="392" text-anchor="middle" class="label">状态增长</text><text x="267" y="427" text-anchor="middle" class="txt">每层 K / V 随 token 增长</text><text x="267" y="459" text-anchor="middle" class="small">长度 × batch × 层数</text>
+<rect x="482" y="350" width="315" height="145" class="card" fill="#e8f5ee" stroke="#76b893"/><text x="639" y="392" text-anchor="middle" class="label">物理组织</text><text x="639" y="427" text-anchor="middle" class="txt">Paged Block / Block Table</text><text x="639" y="459" text-anchor="middle" class="small">减少碎片，控制尾块浪费</text>
+<rect x="854" y="350" width="315" height="145" class="card" fill="#fce8e6" stroke="#d98b87"/><text x="1011" y="392" text-anchor="middle" class="label">状态复用</text><text x="1011" y="427" text-anchor="middle" class="txt">Prefix / Radix Cache</text><text x="1011" y="459" text-anchor="middle" class="small">命中长度影响 TTFT 与容量</text>
+<path d="M535 260 V300 H267 V350" class="flow"/><path d="M820 260 V300 H639 V350" class="flow"/><path d="M820 260 V300 H1011 V350" class="flow"/>
 
-  <rect x="390" y="320" width="250" height="242" rx="22" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
-  <text x="416" y="358" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Reuse / Paging</text>
-  <text x="416" y="392" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">prefix reuse, block paging,</text>
-  <text x="416" y="414" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">layout and fragmentation control</text>
-  <text x="416" y="452" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Best before jumping to compression</text>
-
-  <rect x="680" y="320" width="250" height="242" rx="22" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
-  <text x="706" y="358" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Scheduling</text>
-  <text x="706" y="392" fill="#166534" font-size="16" font-family="Arial, sans-serif">request ordering changes how</text>
-  <text x="706" y="414" fill="#166534" font-size="16" font-family="Arial, sans-serif">the cache is consumed in practice</text>
-  <text x="706" y="452" fill="#166534" font-size="16" font-family="Arial, sans-serif">Useful when budget looks okay</text>
-  <text x="706" y="474" fill="#166534" font-size="16" font-family="Arial, sans-serif">but real pressure stays high</text>
-
-  <rect x="970" y="320" width="210" height="242" rx="22" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
-  <text x="996" y="358" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Compression</text>
-  <text x="996" y="392" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">KV cache quantization</text>
-  <text x="996" y="430" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">Use after reuse / paging</text>
-  <text x="996" y="452" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">when budget is still too tight</text>
-
-  <rect x="100" y="598" width="1080" height="34" rx="12" fill="#ECFCCB" stroke="#65A30D" stroke-width="1.5"/>
-  <text x="126" y="620" fill="#365314" font-size="16" font-family="Arial, sans-serif">Routing rule: in this topic, KV cache is first a memory budget problem. Speed-related reading belongs to the inference-optimization topic.</text>
+<rect x="330" y="570" width="620" height="70" rx="22" fill="#fff" stroke="#829ab1" stroke-width="2"/><text x="640" y="600" text-anchor="middle" class="label">容量与服务指标</text><text x="640" y="625" text-anchor="middle" class="small">峰值显存 · 命中率 · 并发 · TTFT / TPOT · P99</text>
+<path d="M267 495 V530 H430 V570" class="flow"/><path d="M639 495 V570" class="flow"/><path d="M1011 495 V530 H850 V570" class="flow"/>
 </svg>

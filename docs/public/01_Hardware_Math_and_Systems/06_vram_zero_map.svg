@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#64748b"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#475569}
+    .group{font-size:19px;font-weight:700}.head{font-size:17px;font-weight:700}
+    .body{font-size:14px}.small{font-size:13px;fill:#475569}
+    .panel{stroke:#cbd5e1;stroke-width:2;rx:16}.item{stroke:#cbd5e1;stroke-width:1.5;rx:11}
+    .flow{stroke:#64748b;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    .branch{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    .dashed{stroke:#94a3b8;stroke-width:2;stroke-dasharray:7 6;fill:none;marker-end:url(#arrow)}
+    .line-label{font-size:13px;fill:#334155;paint-order:stroke;stroke:#f8fafc;stroke-width:6px;stroke-linejoin:round}
+  </style>
+</defs>
+
+<rect width="1280" height="700" fill="#f8fafc"/>
+<text x="640" y="42" text-anchor="middle" class="title">训练显存账本：从状态驻留到 ZeRO 决策</text>
+<text x="640" y="70" text-anchor="middle" class="sub">先拆训练状态，再比较 DDP 与 ZeRO 的分片方式，最后用 GPU workload 校准理论账本</text>
+
+<!-- Q1: training states -->
+<rect x="40" y="112" width="265" height="310" fill="#e0f2fe" class="panel"/>
+<text x="172" y="147" text-anchor="middle" class="group">训练状态</text>
+<rect x="70" y="172" width="205" height="70" fill="#fff" class="item"/>
+<text x="172" y="201" text-anchor="middle" class="head">参数与梯度</text>
+<text x="172" y="224" text-anchor="middle" class="small">dtype × 参数量 × 2 类状态</text>
+<rect x="70" y="258" width="205" height="70" fill="#fff" class="item"/>
+<text x="172" y="287" text-anchor="middle" class="head">优化器状态</text>
+<text x="172" y="310" text-anchor="middle" class="small">Adam 状态 / master weights</text>
+<rect x="70" y="344" width="205" height="48" fill="#eff6ff" class="item"/>
+<text x="172" y="374" text-anchor="middle" class="body">得到每参数字节数</text>
+
+<!-- Q2: strategy fork -->
+<rect x="350" y="112" width="315" height="310" fill="#f0fdf4" class="panel"/>
+<text x="507" y="147" text-anchor="middle" class="group">并行策略分叉</text>
+<rect x="380" y="172" width="255" height="86" fill="#fff" class="item"/>
+<text x="507" y="202" text-anchor="middle" class="head">DDP：完整复制</text>
+<text x="507" y="226" text-anchor="middle" class="small">每张 GPU 保存完整训练状态</text>
+<text x="507" y="246" text-anchor="middle" class="small">梯度同步是主要并行代价</text>
+<rect x="380" y="280" width="255" height="110" fill="#fff" class="item"/>
+<text x="507" y="309" text-anchor="middle" class="head">ZeRO：分片驻留</text>
+<text x="507" y="333" text-anchor="middle" class="small">ZeRO-1：optimizer state</text>
+<text x="507" y="353" text-anchor="middle" class="small">ZeRO-2：+ gradient</text>
+<text x="507" y="373" text-anchor="middle" class="small">ZeRO-3：+ parameter</text>
+
+<!-- Q3: ledger and decision -->
+<rect x="710" y="112" width="265" height="310" fill="#fef3c7" class="panel"/>
+<text x="842" y="147" text-anchor="middle" class="group">理论账本</text>
+<rect x="740" y="172" width="205" height="86" fill="#fff" class="item"/>
+<text x="842" y="202" text-anchor="middle" class="head">单卡状态占用</text>
+<text x="842" y="226" text-anchor="middle" class="small">参数 · 梯度 · optimizer</text>
+<text x="842" y="246" text-anchor="middle" class="small">理想均匀分片结果</text>
+<rect x="740" y="280" width="205" height="110" fill="#fff" class="item"/>
+<text x="842" y="309" text-anchor="middle" class="head">容量反推</text>
+<text x="842" y="333" text-anchor="middle" class="small">GPU 容量 − 教学预留</text>
+<text x="842" y="353" text-anchor="middle" class="small">最大参数规模</text>
+<text x="842" y="373" text-anchor="middle" class="small">仍不是实测峰值</text>
+
+<rect x="1020" y="112" width="220" height="310" fill="#fce7f3" class="panel"/>
+<text x="1130" y="147" text-anchor="middle" class="group">策略决策</text>
+<rect x="1048" y="172" width="164" height="86" fill="#fff" class="item"/>
+<text x="1130" y="202" text-anchor="middle" class="head">容量收益</text>
+<text x="1130" y="226" text-anchor="middle" class="small">单卡驻留下降</text>
+<text x="1130" y="246" text-anchor="middle" class="small">能否容纳模型</text>
+<rect x="1048" y="280" width="164" height="110" fill="#fff" class="item"/>
+<text x="1130" y="309" text-anchor="middle" class="head">代价权衡</text>
+<text x="1130" y="333" text-anchor="middle" class="small">通信 · 调度</text>
+<text x="1130" y="353" text-anchor="middle" class="small">吞吐 · 工程复杂度</text>
+<text x="1130" y="373" text-anchor="middle" class="small">形成候选策略</text>
+
+<!-- clear main flow -->
+<path d="M275 215H380" class="flow"/>
+<text x="328" y="199" text-anchor="middle" class="line-label">复制状态</text>
+<path d="M275 335H380" class="branch"/>
+<text x="328" y="319" text-anchor="middle" class="line-label">分片状态</text>
+<path d="M635 215H740" class="flow"/>
+<text x="685" y="201" text-anchor="middle" class="line-label">计算单卡状态</text>
+<path d="M635 335H700V215H740" class="branch"/>
+<path d="M945 215H1048" class="flow"/>
+<text x="995" y="201" text-anchor="middle" class="line-label">比较容量与代价</text>
+<path d="M945 335H1000V215H1048" class="branch"/>
+<path d="M842 258V280" class="branch"/>
+<path d="M1130 258V280" class="branch"/>
+
+<!-- validation exit -->
+<rect x="180" y="515" width="920" height="108" fill="#fff" class="panel"/>
+<text x="640" y="548" text-anchor="middle" class="group">GPU workload 验证</text>
+<text x="640" y="577" text-anchor="middle" class="body">固定 model · dtype · optimizer · batch · seq_len · checkpoint</text>
+<text x="640" y="600" text-anchor="middle" class="small">检查 peak allocated、reserved、step time、throughput 和 OOM；用实测校准理论账本</text>
+<path d="M1130 390V480H640V515" class="dashed"/>
+<text x="890" y="470" text-anchor="middle" class="line-label">选择候选策略后验证</text>
+
+<text x="640" y="665" text-anchor="middle" class="small">实线：账本与策略推导　　虚线：从理论决策进入真实 workload 验证</text>
+</svg>

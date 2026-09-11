@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">前缀缓存与分块预填充总览</title><desc id="d">公共前缀先命中缓存，未命中的后缀再按 chunk 进入 prefill 执行。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">前缀缓存与分块预填充</text><text x="50" y="83" class="s">前缀复用决定少算什么，分块执行决定剩余工作如何进入计算。</text>
+<rect x="55" y="190" width="225" height="110" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="167" y="232" text-anchor="middle" class="l">新请求</text><text x="167" y="263" text-anchor="middle" class="b">系统提示词 + 用户输入</text>
+<rect x="350" y="190" width="225" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="462" y="232" text-anchor="middle" class="l">最长前缀命中</text><text x="462" y="263" text-anchor="middle" class="b">复用已完成 prefill</text>
+<rect x="645" y="115" width="225" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="757" y="155" text-anchor="middle" class="l">可复用前缀</text><text x="757" y="185" text-anchor="middle" class="b">跳过重复计算</text>
+<rect x="645" y="260" width="225" height="100" class="box" fill="#fef3c7" stroke="#d97706"/><text x="757" y="300" text-anchor="middle" class="l">未命中后缀</text><text x="757" y="330" text-anchor="middle" class="b">切成多个 chunk</text>
+<rect x="940" y="190" width="205" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1042" y="232" text-anchor="middle" class="l">执行计划</text><text x="1042" y="263" text-anchor="middle" class="b">按块推进 prefill</text>
+<path d="M280 245H350M575 235L645 165M575 265L645 310M870 165L940 225M870 310L940 265" class="f"/>
+</svg>

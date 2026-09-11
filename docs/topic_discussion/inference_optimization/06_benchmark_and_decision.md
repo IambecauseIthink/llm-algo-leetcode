@@ -2,83 +2,34 @@
 
 ## 页面目标
 
-这一页负责把前面的机制判断收束到 `66` 的 benchmark report 里。
+把前面识别出的候选机制放回同一 workload 和服务目标，比较它们是否真的值得保留，并形成可以复查的项目决策。
 
-## 问题起点
+## 核心机制
 
-如果前面的 `01-05` 负责解释“慢在哪里、为什么会慢、有哪些候选动作”，那么 `06` 负责回答最后一个问题：**这次优化值不值得留下来**。
+`01–05` 负责解释瓶颈和候选动作，`06` 负责把它们放回同一套实验口径。公平比较要固定模型、backend、dtype、prompt tokens、generated tokens、batch、concurrency 和 cache policy，并确保 baseline 与 candidate 只改变一个主要变量。下图先展示从 workload 到决策的完整流程，表格再说明每个阶段需要产出什么。
 
-没有这一页，专题就会停在“知道很多技巧”；有了这一页，才算把技巧变成可复用的工程判断。
+![Benchmark 决策流程](../../public/topic_discussion/inference_optimization/benchmark_decision_zh.svg)
 
-## 你要先确认什么
+| 阶段 | 主要任务 | 关键输出 |
+|:---|:---|:---|
+| 固定 workload | 统一输入、请求分布和服务目标 | 可复现的实验条件 |
+| baseline / candidate | 只改变一个主要变量 | 成对运行结果 |
+| 指标与质量 | 采集 TTFT、TPOT、E2E、吞吐、P99、显存和质量 | 可比较的报告字段 |
+| 策略决策 | 对照约束和证据等级 | `accept / tune / reject` 与下一步动作 |
 
-- workload 是否固定。
-- baseline 和 candidate 是否只改一个变量。
-- TTFT、TPOT、throughput 和 peak memory 是否一起报。
+参考入口：论文 [MLPerf Inference Benchmark](https://arxiv.org/abs/1911.02549)；开源基准套件 [MLPerf Inference](https://github.com/mlcommons/inference)。
 
-## 项目闭环
+66 是核心综合项目；67、69、71 验证量化、Prefix Cache 和 MLA / KV Cache 等主题机制；68、70 分别扩展 Decode 策略和 Serving 调度。主题项目提供局部证据，最终仍需回到统一 workload 判断。
 
-```text
-workload config
-      │
-      ▼
-prefill/decode metrics
-      │
-      ▼
-bottleneck diagnosis
-      │
-      ▼
-baseline vs candidate comparison
-      │
-      ▼
-keep / tune / switch
-```
+## 判断框架
 
-## 为什么 `66` 是项目收口
+本节承接 `01–05` 的指标和机制判断。先明确服务目标：在线交互优先关注 TTFT / P99，离线批处理可能优先 throughput / cost；再检查报告是否记录下表字段。`accept` 表示当前约束下值得采用，`tune` 表示方向有效但证据或配置不足，`reject` 表示收益不足、代价过高或质量不达标。
 
-`66` 的价值不在于再讲一遍机制，而在于把前面的判断塞回同一个 workload。只有在同一个模型、backend、batch、prompt tokens、generated tokens、dtype 和 cache policy 下，下面这些结论才有意义：
+运行开关、结果文件和 JSON schema 见 [66–70 推理项目验证清单](../../verification/inference_projects.md)；CPU 可先验证指标聚合和决策逻辑，真实服务指标仍需固定 workload 的 GPU backend。
 
-- FlashAttention 值不值得保留；
-- speculative decoding 是真的更快，还是 acceptance 太低；
-- KV cache 管理是否真的让并发收益上来；
-- 量化到底是帮了忙，还是只是把代价换了个位置。
-
-## 判定原则
-
-- `keep`：收益不明显，或者代价太高。
-- `tune`：方向对，但需要继续调参、调度或压缩。
-- `switch`：收益稳定，且和目标场景匹配。
-
-## 报告应该怎么写
-
-一个合格的推理优化报告，至少要同时说明：
-
-- 你改的是 prefill、decode、cache 还是量化；
-- 这次改动对应的是哪一种瓶颈诊断；
-- 指标变化是否和目标场景一致；
-- 候选方案有没有引入新的副作用；
-- 下一步是继续调参，还是保留当前 baseline。
-
-![Benchmark decision flow](/topic_discussion/inference_optimization/benchmark_decision.svg)
-
-## 报告清单
-
-- workload 是否固定：模型、backend、batch、prompt tokens、generated tokens、dtype、cache policy。
-- 是否拆分 prefill 和 decode。
-- 是否同时报告 TTFT、TPOT、throughput 和 peak memory。
-- candidate 是否只改一个变量。
-- 主要瓶颈是否能解释下一步动作。
-
-## 文献与工程入口
-
-- [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md)
-- Profiling 专题：当报告还无法证明慢点在哪里时先回去补 profiling。
-- 推理优化 `01-05`：当报告还不能解释“为什么该切换/保留”时，回到对应问题页。
-
-## 经典阅读入口
-
-- [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md)
-
-## 项目结论
-
-`06` 不是新增机制页，而是把前面的判断变成最终结论。
+| 类别 | 最小字段 |
+|:---|:---|
+| 条件 | model、backend、dtype、prompt tokens、generated tokens、batch、concurrency、cache policy |
+| 性能 | TTFT、TPOT、E2E latency、throughput、P99、peak memory |
+| 策略约束 | quality、acceptance rate、cache hit rate 或公平性 |
+| 结论 | accept、tune、reject、下一步动作 |

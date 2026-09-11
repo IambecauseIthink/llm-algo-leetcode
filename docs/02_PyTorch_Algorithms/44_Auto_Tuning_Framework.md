@@ -15,7 +15,7 @@
 
 自动调优框架的核心不是“把参数全都扫一遍”，而是先明确目标、约束和搜索空间，再用统一评价函数筛掉不值得继续跑的配置。前面的 profiling 和显存分析页更多是在回答“瓶颈在哪里”，而 `44` 进一步回答“既然已经知道瓶颈了，接下来该怎样把配置搜索变成一个可复用的决策流程”。
 
-这一节不实现复杂的工业级 tuner，也不追求最优搜索算法，而是先用一个最小教学框架把三件事固定下来：先筛掉明显违反约束的配置，再用统一分数比较收益与代价，最后输出下一轮最值得验证的候选。它在 `42-45` 这条显存/性能补链里承担的是“从诊断走向决策”这一步：`42/43` 更偏机制与预算边界，`44` 把这些边界收成搜索流程，`45` 再把结果落到具体裁剪顺序。学完后，你应该能看清“目标/约束 -> feasible set -> score -> recommendation”这条调优闭环，而不是把 profiling 结果停留在观察层面。
+这一节用一个最小教学框架完成三步：筛掉违反约束的配置，用统一分数比较收益与代价，再输出下一轮最值得验证的候选。你会把 profiling 和显存账本中的观察量组织成“目标/约束 → feasible set → score → recommendation”的调优闭环，并把结果交给下一节的裁剪规划。
 
 **关键词：** `search space`, `constraint`, `score`, `early stop`
 
@@ -23,17 +23,10 @@
 
 ## 前置阅读
 
-**导语：** 这一节承接 profiling、调度和显存分析三条线：先知道瓶颈长什么样，再回来看哪些配置值得继续试，哪些应该尽早淘汰。
+**导语：** 进入本节前，先能读出 profiling 和显存分析中的约束，再观察哪些配置值得继续试、哪些应当尽早淘汰。
 - [13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
 - [36. Decode Scheduling | Decode 调度](./36_Decode_Scheduling.md)
 - [43. Unified Memory Management | 统一内存管理](./43_Unified_Memory_Management.md)
-
-## 相关阅读
-
-**导语：** 学完最小自动调优框架后，下一步重点是看搜索结果怎样收束成具体资源决策，并进入端到端优化验证。
-- [45. Memory Cut Planning | 显存裁剪规划](./45_Memory_Cut_Planning.md)
-- [49. Parallelism Strategy Selection | 并行策略选型](./49_Parallelism_Strategy_Selection.md)
-- [74. Profiling Driven End-to-End Optimization | profiling 驱动优化项目](./74_Profiling_Driven_End_to_End_Optimization.md)
 
 ---
 
@@ -43,9 +36,11 @@
 - 约束则可能是最大显存、最大延迟或最小精度阈值。
 - 只有目标和约束都明确，搜索空间才有意义。
 
+![自动调优总览](../public/02_PyTorch_Algorithms/44_auto_tuning_overview.svg)
+
 ### Step 2: 把搜索空间和评价函数写清楚
 
-![Auto Tuning Loop](/02_PyTorch_Algorithms/44_auto_tuning_loop.svg)
+![自动调优的候选评估](../public/02_PyTorch_Algorithms/44_search_score.svg)
 
 - 搜索空间至少包括配置名、关键超参和预估成本。
 - 评价函数要同时考虑收益和约束违反情况。
@@ -202,3 +197,13 @@ def recommend_tuning_config(configs: List[Dict[str, float]], max_memory_gb: floa
 **4. 这页的定位**
 - 自动调优框架最重要的是先过滤，再评分，最后推荐。
 - 没有约束过滤的搜索，通常只是在扩大无效实验成本。
+
+## 相关阅读
+
+完成约束筛选和候选评分后，可以继续把搜索结果收束成具体资源决策，并进入端到端优化验证。
+
+- [Optuna 官方文档](https://optuna.readthedocs.io/en/stable/)
+- [Optuna 官方仓库](https://github.com/optuna/optuna)
+- [45. Memory Cut Planning | 显存裁剪规划](./45_Memory_Cut_Planning.md)
+- [49. Parallelism Strategy Selection | 并行策略选型](./49_Parallelism_Strategy_Selection.md)
+- [74. Profiling Driven End-to-End Optimization | profiling 驱动优化项目](./74_Profiling_Driven_End_to_End_Optimization.md)

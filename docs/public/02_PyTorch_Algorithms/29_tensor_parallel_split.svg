@@ -1,49 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 780" role="img" aria-labelledby="title desc">
-  <title id="title">Tensor parallel split</title>
-  <desc id="desc">Shows column and row parallel decomposition of a linear layer with different communication patterns.</desc>
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#eff6ff"/>
-    </linearGradient>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
-    <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 14px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 16; ry: 16; }
-      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
-    </style>
-  </defs>
-  <rect width="1660" height="780" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">Tensor parallelism: split a linear layer by dimension</text>
-  <text x="64" y="96" class="sub">Column parallel splits output features; row parallel splits input features. The communication pattern changes with the split.</text>
-
-  <rect x="90" y="160" width="1470" height="120" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="120" y="196" class="label">Why tensor parallel exists</text>
-  <text x="120" y="230" class="small">a single large linear layer can still be too heavy even after model-level partitioning</text>
-  <text x="120" y="256" class="small">so we split the weight matrix itself and compute together across devices</text>
-
-  <rect x="100" y="330" width="680" height="180" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="130" y="368" class="label">Column parallel</text>
-  <text x="130" y="402" class="small">split output columns of W</text>
-  <text x="130" y="432" class="small">each GPU computes partial output features</text>
-  <text x="130" y="462" class="small">often needs All-Gather to assemble full output</text>
-
-  <rect x="880" y="330" width="680" height="180" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="910" y="368" class="label">Row parallel</text>
-  <text x="910" y="402" class="small">split input rows of W</text>
-  <text x="910" y="432" class="small">each GPU computes partial contributions</text>
-  <text x="910" y="462" class="small">often needs All-Reduce to sum outputs</text>
-
-  <path d="M 780 420 L 880 420" class="arrow"/>
-
-  <rect x="90" y="560" width="1470" height="150" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="120" y="598" class="label">What to remember</text>
-  <text x="120" y="632" class="small">1. tensor parallel splits the matrix itself, not the optimizer state or the batch.</text>
-  <text x="120" y="662" class="small">2. column and row parallel differ mainly in what needs to be communicated after local compute.</text>
-  <text x="120" y="692" class="small">3. the diagram should make the split direction and communication direction obvious.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 560" role="img" aria-labelledby="title desc">
+<title id="title">Tensor Parallelism 的列切分与行切分</title><desc id="desc">Column Parallel 产生分片输出并聚合，Row Parallel 产生局部结果并通过 All-Reduce 求和。</desc>
+<defs><linearGradient id="bg" x1="0" x2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2ff"/></linearGradient><style>
+.title{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:28px;font-weight:700;fill:#0f172a}.sub{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:500;fill:#475569}.label{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:18px;font-weight:700;fill:#111827}.small{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:13px;font-weight:500;fill:#334155}.box{stroke-width:3;rx:16;ry:16}.flow{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#arrow)}</style><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker></defs>
+<rect width="1500" height="560" fill="url(#bg)"/><text x="60" y="54" class="title">Tensor Parallelism：权重切分决定通信位置</text><text x="60" y="82" class="sub">列切分拼接输出，行切分求和局部结果；两层组合可以减少中间通信</text>
+<rect x="80" y="215" width="190" height="100" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="175" y="255" text-anchor="middle" class="label">输入 X</text><text x="175" y="285" text-anchor="middle" class="small">完整或局部特征</text>
+<rect x="370" y="130" width="260" height="120" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="500" y="175" text-anchor="middle" class="label">Column Parallel</text><text x="500" y="205" text-anchor="middle" class="small">切权重列 → 局部输出</text><text x="500" y="230" text-anchor="middle" class="small">需要 All-Gather</text>
+<rect x="370" y="330" width="260" height="120" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="500" y="375" text-anchor="middle" class="label">Row Parallel</text><text x="500" y="405" text-anchor="middle" class="small">切权重行 → 局部结果</text><text x="500" y="430" text-anchor="middle" class="small">需要 All-Reduce</text>
+<rect x="780" y="215" width="260" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="910" y="255" text-anchor="middle" class="label">两层组合</text><text x="910" y="285" text-anchor="middle" class="small">Column → Row</text>
+<rect x="1170" y="215" width="250" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="1295" y="255" text-anchor="middle" class="label">完整输出 Y</text><text x="1295" y="285" text-anchor="middle" class="small">通信与计算平衡</text>
+<path d="M270 250C315 210 325 190 370 190" class="flow"/><path d="M270 280C315 350 325 390 370 390" class="flow"/><path d="M630 190C700 190 710 250 780 250" class="flow"/><path d="M630 390C700 390 710 280 780 280" class="flow"/><path d="M1040 265L1170 265" class="flow"/>
 </svg>

@@ -1,53 +1,68 @@
-# 推理优化专题
+# 推理优化（Inference Optimization）
 
-## 专题定位
+> 专题类型：主学习路线　主服务目标：请求性能与 Serving 决策
 
-本专题用于串起推理优化主线：先看请求链路为什么慢，再看 prefill、decode、KV cache、调度和量化分别改的是哪一段，最后把判断收回 `66 / 67 / 68-70` 的 benchmark 与部署结论。这里重点关注 `TTFT / TPOT / throughput`；如果问题先表现为预算装不下，应优先转到显存优化专题。
+## 页面导语
 
-## Infra 层定位
+本专题面向希望定位 LLM 请求瓶颈、优化延迟与吞吐，并能做出 Serving 选择的学习者。学习重点是把请求性能问题转化为可测量的指标、可验证的机制和可复查的部署决策。
 
-推理优化主要位于 `L3 框架与运行时`、`L4 服务与模型优化`，同时受 `L2 算子/编译` 和 `L1 硬件带宽与显存` 约束。解码策略主要改变模型与请求行为，Attention/kernel 主要改变 L2，KV Cache 与调度主要改变 L3/L4，量化和并行部署则跨越 L2-L5。
+想沿着一个在线服务问题连续学习时，先读[推理优化问题链：从性能症状到项目决策](./walkthrough.md)；想按知识和实验顺序学习时，从下方 Task0 开始。
 
-## 同一内容的推理目标
+![推理优化专题主图：请求、Prefill、Decode、KV Cache 与 Serving](../../public/decorative/inference_optimization_topic_hero_light.svg)
 
-本专题把解码、KV Cache、调度和量化看成“请求执行策略”：核心问题是一个模型如何在固定 workload 下更快、更稳地完成请求。量化在这里是部署策略，需要同时比较 backend、dtype、TTFT、TPOT、吞吐、P99、显存和任务质量；显存下降不能直接推出服务变快。
+## 如何开始
 
-与显存专题共享同一来源 Notebook 时，所有学习者先理解共同机制，再按目标选择指标：推理目标关注请求链路、服务并发和端到端体验，最终输出是 backend / 策略 / dtype 的服务选型结论。
+按知识顺序学习时，从 Part 02 的 [2.6 核心推理优化](../../02_PyTorch_Algorithms/2_6.md) 进入，再按 Task0–6 依次学习。想先运行真实服务时，先按[使用指南](../../guide.md)完成 vLLM / SGLang 预检，再运行 66 的最小 backend 实验；遇到 Attention、KV Cache、MoE 或 dtype 知识缺口时，回补对应 Notebook。
 
-## 推荐入口
+路线图把请求阶段、Task0–6 的学习顺序和各阶段的验证出口放在一起。
 
-推荐从 Part 02 的 [2.6 核心推理优化](../../02_PyTorch_Algorithms/2_6.md) 开始；需要硬件和 Attention 前置时回补 Part 01 的 GPU、显存与访存内容。
+![推理优化学习路线：从请求链路到专项验证](../../public/topic_discussion/inference_optimization/inference_optimization_roadmap.svg)
 
-## 前置阅读
+## 主学习路线与验证出口
 
-- Part 01：GPU 架构、显存访问和 KV Cache 基础。
-- Part 02：优先完成 2.6，再进入 2.7-2.8 的 serving、量化和调度内容。
-- 运行真实 backend 前，先阅读 [使用指南](../../guide.md) 和具体 Notebook 的环境说明。
+下表按“要回答的问题 → 学习入口 → 验证出口”组织；先沿学习顺序阅读机制，再根据问题选择扩展内容和项目。
 
-## 主学习线
+| Task / 主题 | 本阶段要回答的问题 | 学习入口与验证出口 | 学习顺序 | 主要正文入口 |
+|:---|:---|:---|:---|:---|
+| Task0 · 请求结构与指标 | 一次请求如何经过 Attention、Prefill 和 Decode，并用 TTFT、TPOT 观察它？ | 核心：[Part 02 · 04 Attention（MHA / GQA）](../../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md) | 先理解 Attention，再建立请求和指标 | [01 请求链路与指标](./01_request_path_and_metrics.md) |
+| Task1 · Prefill 与 Attention Kernel | 为什么 Prefill 会受访存和中间矩阵影响，FlashAttention 改变了什么？ | 核心：[Part 01 · 03 GPU 架构与显存](../../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md) → [Part 01 · 14 FlashAttention 显存模型](../../01_Hardware_Math_and_Systems/14_FlashAttention_Memory_Model.md) → [Part 02 · 20 FlashAttention 模拟](../../02_PyTorch_Algorithms/20_FlashAttention_Sim.md)；扩展：[Part 01 · 24 SRAM 优化](../../01_Hardware_Math_and_Systems/24_SRAM_Optimization_Techniques.md) | GPU 约束 → 访存与 Tiling → Prefill | [02 Prefill 与 Attention Kernel](./02_prefill_and_attention_kernel.md) |
+| Task2 · KV Cache 状态与单步生成 | Decode 如何读写 KV Cache，采样、推测和多 Token 解码改变了什么？ | 核心：[Part 01 · 11 KV Cache 增长](../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.md) → [Part 02 · 21 解码策略](../../02_PyTorch_Algorithms/21_Decoding_Strategies.md)；扩展：[Part 02 · 23 投机解码](../../02_PyTorch_Algorithms/23_Speculative_Decoding.md)、[Part 02 · 35 多 Token 解码](../../02_PyTorch_Algorithms/35_Multi_Token_Decoding.md)；项目：[Part 02 · 68 投机解码基准](../../02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.md) | KV Cache 状态 → 单步生成 → Decode 加速 | [03 解码策略](./03_decoding_strategies.md) |
+| Task3 · KV Cache 生命周期 | KV Cache 如何保存状态、分页分配、复用前缀并控制容量边界？架构变化会改变什么？ | 核心：[Part 02 · 22 vLLM PagedAttention](../../02_PyTorch_Algorithms/22_vLLM_PagedAttention.md) → [Part 02 · 24 SGLang RadixAttention](../../02_PyTorch_Algorithms/24_SGLang_RadixAttention.md) → [Part 02 · 34 Prefix Cache 与 Chunked Prefill](../../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.md)；项目：[Part 02 · 69 Prefix Cache](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.md)；扩展：[Part 02 · 71 MLA](../../02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.md) | 状态保存 → 分页分配 → 前缀复用 → 容量治理 → 架构扩展 | [04 KV Cache 生命周期与复用](./04_kv_cache_lifecycle_and_reuse.md) |
+| Task4 · 多请求调度与 Serving | 多请求如何共享资源、排队并完成 Serving 调度？ | 核心：[Part 02 · 36 Decode 调度](../../02_PyTorch_Algorithms/36_Decode_Scheduling.md) → [Part 02 · 37 KV Cache 调度](../../02_PyTorch_Algorithms/37_KV_Cache_Scheduling.md) → [Part 02 · 38 Prefill / Decode 分离](../../02_PyTorch_Algorithms/38_Prefill_Decode_Disaggregation.md)；项目：[Part 02 · 70 Serving 调度](../../02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.md)；扩展：[Part 02 · 39 推理回退与分层](../../02_PyTorch_Algorithms/39_Inference_Fallback_and_Tiers.md)、[Part 02 · 79–81 分布式项目](../../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.md) | Decode 调度 → Cache 资源 → PD 分离 → Serving 验证 → 分布式扩展 | [07 Serving 调度与 PD 分离](./07_serving_scheduling_and_pd.md) |
+| Task5 · 量化部署与成本 | 权重和 KV 量化如何改变显存、速度、质量与 backend 选择？ | 核心：[Part 01 · 21 量化理论与 INT4/INT8](../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.md) → [Part 02 · 25 W8A16](../../02_PyTorch_Algorithms/25_Quantization_W8A16.md) → [Part 02 · 40 GPTQ / AWQ](../../02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.md) → [Part 02 · 41 FP8 / KV Cache 量化](../../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.md)；项目：[Part 02 · 67 量化推理与部署](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)；GGUF 走独立 backend | 表示与时机 → 权重 / KV 量化 → backend 验证 | [05 量化推理与部署](./05_quantized_inference_and_deployment.md) |
+| Task6 · 基准比较与决策 | 如何在统一 workload 下比较方案，并根据指标、质量和证据等级做出决策？ | 项目：[Part 02 · 66 推理性能比较](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md)；汇总 66–71 的结果 | 统一 workload → 比较指标 → 检查质量 → 输出 accept / tune / reject | [06 基准测试与决策](./06_benchmark_and_decision.md) |
 
-`Task1-6` 是学习路线，指向 `Part 00 / Part 01 / Part 02` 的具体小节；最后一列的 `01-06` 是专题正文页，只负责解释和串联。
+![推理优化知识地图：从请求对象到验证决策](../../public/topic_discussion/inference_optimization/inference_optimization_knowledge_map.svg)
 
-| Task | 学习内容 | 主学习线 | 专题正文 |
-|:---|:---|:---|:---|
-| Task1 | 推理结构地基 | `04 -> 05` | [01 Request Path and Metrics](./01_request_path_and_metrics.md) |
-| Task2 | Attention 与 prefill | `20 + Part 01:03/14/24` | [02 Prefill and Attention Kernel](./02_prefill_and_attention_kernel.md) |
-| Task3 | 解码算法 | `21 -> 23 -> 35 -> 36` | [03 Decoding Strategies](./03_decoding_strategies.md) |
-| Task4 | KV Cache、服务内存与请求 disaggregation | `Part 01:11 -> 22 -> 24 -> 34 -> 37 -> 38` | [04 KV Cache and Scheduling](./04_kv_cache_and_scheduling.md) |
-| Task5 | 量化推理与部署 | `Part 01:21 -> 25 -> 40 -> 41 -> 67` | [05 Quantized Inference and Deployment](./05_quantized_inference_and_deployment.md) |
-| Task6 | benchmark 与项目复盘 | `39 -> 66 -> 68 -> 69 -> 70` | [06 Benchmark and Decision](./06_benchmark_and_decision.md) |
+## 按需回补：架构与共享前置
 
-## 正文与跳转
+遇到架构、MoE、dtype 或精度方面的知识缺口时，从下表回补对应入口，再回到当前 Task 继续学习。
 
-先按上面的 `Task1-6` 走 notebook 主线；遇到“这几个小节之间怎么串”“为什么先看这条线”时，再回来看对应的专题正文 `01-06`。想看汇总版就进 [推理优化正文](./casebook.md)，想按完整故事线走一遍就进 [推理优化深入阅读](./walkthrough.md)。
+| 补充主题 | Notebook 入口 | 建议时机 |
+|:---|:---|:---|
+| 架构基础 | [05 LLaMA3 Block](../../02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.md)、[08 Architecture Tricks](../../02_PyTorch_Algorithms/08_Architecture_Tricks.md) | Task0 后按需阅读 |
+| MoE 架构 | [06 MoE Router](../../02_PyTorch_Algorithms/06_MoE_Router.md)、[07 MoE Load Balancing](../../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.md) | 需要 MoE 或进入多卡前 |
+| 硬件与精度 | [Part 01 · 01 数据类型与精度](../../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.md) | 需要补充 dtype、精度或表示基础时 |
+| MoE 计算 | [Part 01 · 22 MoE 参数与计算](../../01_Hardware_Math_and_Systems/22_MoE_Parameter_and_Compute.md) | 学 MoE 或分布式前按需回补 |
 
-如果问题已经跨到别的专题：
-[Profiling 专题](../profiling/intro.md) 负责定位慢在哪里，[显存优化专题](../memory_performance_tuning/intro.md) 负责看预算与吞吐取舍，[量化与压缩专题](../quantization/intro.md) 负责看低比特路线，[编译与图优化专题](../compiler_graph_optimization/intro.md) 负责看 backend、fusion 和 kernel schedule 差异。
+![架构与共享前置关系图：补充内容如何接入推理优化主线](../../public/topic_discussion/inference_optimization/architecture_and_prerequisites.svg)
 
-## 项目结论
+## 跨专题入口
 
-核心入口是 [66 推理性能对比](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md)；扩展项目包括 [67 量化部署](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)、[68 推测解码](../../02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.md)、[69 前缀缓存](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.md) 和 [70 服务调度](../../02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.md)。
+项目入口已经列在上面的主学习路线表中；需要按现象分流时阅读[推理优化判断手册](./casebook.md)，需要沿请求问题链连续阅读时阅读[推理优化问题链](./walkthrough.md)。如果问题跨到其他方向，可转到[性能分析](../profiling/intro.md)、[显存优化](../memory_performance_tuning/intro.md)、[量化与压缩](../quantization/intro.md)、[算子优化](../operator_optimization/intro.md)或[编译与图优化](../compiler_graph_optimization/intro.md)。
 
 ## 环境与验证
 
-基础机制可 CPU-first；真实吞吐、TTFT、TPOT 和 backend 对比需要 GPU 以及匹配的 vLLM / SGLang 运行环境。实验结论应同时记录模型、后端、数据类型、序列长度、并发度和结果文件。
+按实验目标选择环境组合：CPU 环境用于机制和指标逻辑，GPU 或 backend 环境用于真实性能与部署结果。
+
+| 实验类型 | 环境组合 | 适用内容 |
+|:---|:---|:---|
+| CPU 机制 | [base.txt](../../requirements/base.txt) + [torch-cpu.txt](../../requirements/torch-cpu.txt) | Attention、解码、指标和机制模拟 |
+| GPU / Transformers | [base.txt](../../requirements/base.txt) + [torch-cu128.txt](../../requirements/torch-cu128.txt) | GPU 延迟、吞吐和显存测量 |
+| vLLM backend | [torch-cu128.txt](../../requirements/torch-cu128.txt) + [inference-vllm.txt](../../requirements/inference-vllm.txt) | 66、67–71 的 vLLM 实验 |
+| SGLang backend | [torch-cu128.txt](../../requirements/torch-cu128.txt) + [inference-sglang.txt](../../requirements/inference-sglang.txt) | 66、69、70 的 SGLang 对照实验 |
+| Profiling | [torch-cu128.txt](../../requirements/torch-cu128.txt) + [profiling.txt](../../requirements/profiling.txt) | trace、TensorBoard 和性能证据 |
+
+每次真实实验都记录模型、后端、数据类型、序列长度、并发度和结果文件；用报告中的 `evidence level` 区分 smoke test 与稳定 benchmark。
+
+开始真实实验前，先看[使用指南](../../guide.md)中的环境边界；需要逐条执行时，使用[66–70 推理项目验证清单](../../verification/inference_projects.md)。

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">显存裁剪动作的选择</title><desc id="d">根据显存收益和计算、带宽、质量代价选择下一步动作。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">裁剪决策：显存收益换什么代价</text><text x="50" y="83" class="s">每个动作都要同时记录节省的显存和新增的计算、带宽或质量代价。</text>
+<rect x="55" y="190" width="230" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="170" y="232" text-anchor="middle" class="l">预算压力</text><text x="170" y="263" text-anchor="middle" class="b">距离 OOM 还有多少余量</text>
+<rect x="360" y="115" width="220" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="470" y="155" text-anchor="middle" class="l">重算</text><text x="470" y="185" text-anchor="middle" class="b">省激活，增加计算</text>
+<rect x="360" y="260" width="220" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="470" y="300" text-anchor="middle" class="l">卸载</text><text x="470" y="330" text-anchor="middle" class="b">省驻留，增加搬运</text>
+<rect x="655" y="190" width="220" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="765" y="232" text-anchor="middle" class="l">降并发或序列长</text><text x="765" y="263" text-anchor="middle" class="b">牺牲容量或吞吐</text>
+<rect x="950" y="190" width="190" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1045" y="232" text-anchor="middle" class="l">复测</text><text x="1045" y="263" text-anchor="middle" class="b">accept / tune / reject</text>
+<path d="M285 245L360 165M285 255L360 310M580 165L655 225M580 310L655 275M875 245H950" class="f"/>
+</svg>

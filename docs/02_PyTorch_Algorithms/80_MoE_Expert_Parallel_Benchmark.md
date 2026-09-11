@@ -14,6 +14,7 @@
 ## 本节导读
 
 本节要求你验证专家并行带来的吞吐收益是否足以覆盖通信和负载不均衡成本。固定 expert 数量、路由规则和 workload 后，比较 baseline 与 expert parallel 的吞吐、all-to-all 通信量、expert 负载分布和训练稳定性。最终给出是否采用该并行方案的 benchmark 结论。
+**主责与复用边界：** 本项目主责是 MoE token dispatch、expert 负载和 all-to-all 通信；显存优化只关注 expert 参数分摊与 activation / 通信缓冲的容量影响，推理优化只复用路由和吞吐观察，不在本项目内替代 71 的 MLA 或 70 的 serving 调度验证。
 
 **关键词：** `MoE`, `expert parallel`, `communication`, `imbalance`, `delivery`
 
@@ -28,7 +29,7 @@
 
 ## 相关阅读
 
-**导语：** 做完 MoE 专家并行 benchmark 后，最自然的下一步是把并行结论推进到分布式推理验证，或回看对齐场景下的系统收益。
+**导语：** 完成 MoE 专家并行 benchmark 后，用 81 检查分布式推理迁移条件；如果研究训练后的在线场景，再参考 86 的系统收益评估。
 - [81. Distributed Inference Logic Validation | 分布式推理逻辑验证](./81_Distributed_Inference_Project.md)
 - [86. DPO Online Benchmark | DPO 在线基准](./86_DPO_Online_Benchmark.md)
 ---
@@ -95,9 +96,13 @@ from typing import Dict, List
 # 目标：把通信与负载均衡结果整理成 benchmark 报告
 
 def summarize_moe_parallel_runs(runs: list[dict[str, float]]) -> dict[str, object]:
+    """null"""
+    # total_tokens = ???；mean_imbalance = ???；mean_comm_ms = ???；stable_runs = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def compare_moe_parallel_to_baseline(baseline: dict[str, float], candidate: dict[str, float]) -> dict[str, float]:
+    """null"""
+    # throughput_delta = ???；memory_delta = ???；communication_delta = ???；imbalance_delta = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def recommend_moe_parallel_run(
@@ -106,6 +111,8 @@ def recommend_moe_parallel_run(
     max_imbalance: float,
     min_stability: float,
 ) -> dict[str, object]:
+    """null"""
+    # imbalance_ok = ???；stability_ok = ???；decision = ???；reason = ???；next_action = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 ```

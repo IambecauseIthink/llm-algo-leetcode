@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">SFT 数据质量项目流程</title>
+  <desc id="desc">展示 09、13、30、32 节的知识如何汇聚到 64 节的数据质量准入项目。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .title { font-family: Noto Sans CJK SC; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-family: Noto Sans CJK SC; font-size: 19px; fill: #475569; }
+      .heading { font-family: Noto Sans CJK SC; font-size: 22px; font-weight: 700; fill: #0f172a; }
+      .text { font-family: Noto Sans CJK SC; font-size: 18px; fill: #334155; }
+      .small { font-family: Noto Sans CJK SC; font-size: 16px; fill: #475569; }
+      .code { font-family: Noto Sans CJK SC; font-size: 17px; font-weight: 700; fill: #0f172a; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="760" fill="#f8fafc"/>
+  <text x="800" y="52" text-anchor="middle" class="title">SFT 数据质量项目的工作边界</text>
+  <text x="800" y="86" text-anchor="middle" class="subtitle">把前置知识转成训练前的数据准入决策</text>
+
+  <rect x="70" y="145" width="330" height="190" rx="18" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/>
+  <text x="235" y="188" text-anchor="middle" class="heading">09 · SFT 训练循环</text>
+  <text x="235" y="235" text-anchor="middle" class="code">input_ids / labels / loss mask</text>
+  <text x="235" y="280" text-anchor="middle" class="text">明确哪些 token 参与监督</text>
+  <text x="235" y="310" text-anchor="middle" class="small">样本如何进入 loss</text>
+
+  <rect x="430" y="145" width="330" height="190" rx="18" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="595" y="188" text-anchor="middle" class="heading">13 · 端到端训练</text>
+  <text x="595" y="235" text-anchor="middle" class="code">train / val / report</text>
+  <text x="595" y="280" text-anchor="middle" class="text">定义训练与验证闭环</text>
+  <text x="595" y="310" text-anchor="middle" class="small">结果如何被记录和解释</text>
+
+  <rect x="790" y="145" width="330" height="190" rx="18" fill="#dcfce7" stroke="#4ade80" stroke-width="2"/>
+  <text x="955" y="188" text-anchor="middle" class="heading">30 · 长上下文微调</text>
+  <text x="955" y="235" text-anchor="middle" class="code">截断 / 长度预算 / 任务适配</text>
+  <text x="955" y="280" text-anchor="middle" class="text">检查长度与训练预算</text>
+  <text x="955" y="310" text-anchor="middle" class="small">避免无提示地截断样本</text>
+
+  <rect x="1150" y="145" width="380" height="190" rx="18" fill="#ffedd5" stroke="#fb923c" stroke-width="2"/>
+  <text x="1340" y="188" text-anchor="middle" class="heading">32 · SFT 数据工程</text>
+  <text x="1340" y="235" text-anchor="middle" class="code">字段 / 模板 / 评测覆盖 / 清洗</text>
+  <text x="1340" y="280" text-anchor="middle" class="text">检查数据是否可复用</text>
+  <text x="1340" y="310" text-anchor="middle" class="small">统一数据进入训练的格式</text>
+
+  <path d="M235 335 V405 H800 V455" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M595 335 V405 H800 V455" stroke="#64748b" stroke-width="3" fill="none"/>
+  <path d="M955 335 V405 H800 V455" stroke="#64748b" stroke-width="3" fill="none"/>
+  <path d="M1340 335 V405 H800 V455" stroke="#64748b" stroke-width="3" fill="none"/>
+
+  <rect x="490" y="455" width="620" height="170" rx="20" fill="#0f766e" stroke="#115e59" stroke-width="2"/>
+  <text x="800" y="505" text-anchor="middle" class="heading" fill="#ffffff">64 · SFT 数据质量项目</text>
+  <text x="800" y="548" text-anchor="middle" class="text" fill="#ecfeff">样本审计 · 模板审计 · 评测覆盖 · 清洗对比</text>
+  <text x="800" y="585" text-anchor="middle" class="small" fill="#ccfbf1">训练前判断数据是否可以进入下游项目</text>
+
+  <path d="M800 625 V670" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="380" y="680" width="840" height="52" rx="14" fill="#ccfbf1" stroke="#99f6e4" stroke-width="2"/>
+  <text x="800" y="713" text-anchor="middle" class="text">accept：进入训练  ·  tune：回修数据  ·  reject：暂缓使用</text>
+</svg>

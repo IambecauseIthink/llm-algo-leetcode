@@ -1,0 +1,46 @@
+<svg width="1280" height="560" viewBox="0 0 1280 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="560" fill="#F7F9FC"/>
+  <rect x="48" y="34" width="1184" height="492" rx="26" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="84" y="78" fill="#0F172A" font-size="27" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">评分、堆队列与过期记录如何协同</text>
+  <text x="84" y="108" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">先计算缓存价值，再用当前状态核对堆顶记录，最后完成容量决策。</text>
+
+  <rect x="78" y="164" width="210" height="118" rx="18" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+  <text x="130" y="202" fill="#92400E" font-size="21" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">当前状态</text>
+  <text x="108" y="236" fill="#92400E" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">命中次数 · 最近访问</text>
+  <text x="108" y="260" fill="#92400E" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">缓存大小 · 当前容量</text>
+
+  <rect x="322" y="164" width="210" height="118" rx="18" fill="#FFF7ED" stroke="#EA580C" stroke-width="2"/>
+  <text x="374" y="202" fill="#9A3412" font-size="21" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">计算评分</text>
+  <text x="350" y="236" fill="#9A3412" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">复用奖励 + 访问热度</text>
+  <text x="350" y="260" fill="#9A3412" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">减去容量成本</text>
+
+  <rect x="566" y="164" width="210" height="118" rx="18" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="624" y="202" fill="#1E3A8A" font-size="21" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">刷新堆</text>
+  <text x="594" y="236" fill="#1E3A8A" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">追加最新评分记录</text>
+  <text x="594" y="260" fill="#1E3A8A" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">历史记录暂时保留</text>
+
+  <rect x="810" y="164" width="210" height="118" rx="18" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="852" y="202" fill="#5B21B6" font-size="21" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">弹出并核对</text>
+  <text x="836" y="236" fill="#5B21B6" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">比较堆记录与当前状态</text>
+  <text x="836" y="260" fill="#5B21B6" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">识别有效记录和过期记录</text>
+
+  <rect x="1054" y="164" width="150" height="118" rx="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="1080" y="202" fill="#9D174D" font-size="21" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">容量决策</text>
+  <text x="1076" y="236" fill="#9D174D" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">驱逐低价值</text>
+  <text x="1076" y="260" fill="#9D174D" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">或继续保留</text>
+
+  <path d="M288 223H322M532 223H566M776 223H810M1020 223H1054" stroke="#475569" stroke-width="3"/>
+  <path d="M310 215L322 223L310 231M554 215L566 223L554 231M798 215L810 223L798 231M1042 215L1054 223L1042 231" fill="#475569"/>
+
+  <path d="M1129 282V350H183V282" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 7"/>
+  <path d="M175 294L183 282L191 294" fill="#64748B"/>
+  <text x="470" y="338" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">缓存再次被访问：更新命中次数和最近访问，重新计算评分</text>
+
+  <rect x="92" y="400" width="1062" height="54" rx="15" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="124" y="434" fill="#334155" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">过期记录：堆中的旧评分与当前状态不一致，弹出后跳过；有效记录才参与容量决策。</text>
+
+  <line x1="92" y1="486" x2="166" y2="486" stroke="#475569" stroke-width="3"/>
+  <text x="180" y="492" fill="#475569" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">实线：评分与容量决策主流程</text>
+  <line x1="590" y1="486" x2="664" y2="486" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 7"/>
+  <text x="678" y="492" fill="#475569" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">虚线：复用后的状态更新</text>
+</svg>

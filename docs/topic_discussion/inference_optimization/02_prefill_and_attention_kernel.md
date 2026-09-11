@@ -2,78 +2,30 @@
 
 ## 页面目标
 
-这一页回答的是：长 prompt 为什么会慢，FlashAttention 和 chunked prefill 具体改的是哪一段。
+从一个长 Prompt 请求开始，观察 Prefill 为什么会推高 `TTFT`，再区分 Attention 访存、Chunked Prefill 和 Prefix Cache 分别解决哪类问题。
 
-## 问题起点
+## 核心机制
 
-推理链路里，首 token 延迟往往最先暴露出 prefill 的代价。用户感受到的是“输入一大段上下文后，模型迟迟不出第一个 token”，但真正的问题常常不是模型参数量本身，而是：
+Prefill 处理已有 Prompt，Prompt 变长通常会推高 `TTFT`。先把“标准 Attention + 一次完整 Prefill”作为参考行为：不使用 FlashAttention、不分块，也不复用前缀，在固定 Prompt、模型和硬件下记录 `TTFT`、Attention 时间与峰值显存。再区分三类瓶颈：Attention 访存、单次 Prefill 规模，以及重复前缀计算。下图呈现基线与候选机制的关系，表格用于快速分流；三种机制可以协作，但不能视为同一种优化。
 
-- prompt 太长导致 attention 访存和中间写回膨胀；
-- prefill 把大量已有 token 一次性送进模型，导致 `TTFT` 被这一段主导；
-- backend 还在用对短 prompt 友好的实现，遇到长 prompt 就开始掉速。
+![Prefill 与 Attention 访存](../../public/topic_discussion/inference_optimization/prefill_attention_zh.svg)
 
-## 你要先确认什么
+| 机制 | 主要改变什么 | 适合解决的问题 |
+|:---|:---|:---|
+| 标准 Attention + 完整 Prefill（基线） | 一次处理完整 Prompt，不分块、不复用前缀 | 建立 `TTFT`、Attention 时间和峰值显存参照 |
+| FlashAttention | Attention 的访存路径和中间结果写回 | Attention 计算受 HBM 读写拖慢 |
+| Chunked Prefill | 长 Prompt 的处理和调度方式 | 单次 Prefill 过大、影响其他请求 |
+| Prefix Cache | 重复前缀是否重新计算 | 多请求共享相同前缀 |
 
-- TTFT 是否在长 prompt 下明显升高。
-- `prefill_share` 是否高于 decode。
-- attention 是否被中间 score 矩阵和 HBM 读写拖慢。
+参考入口：论文 [FlashAttention](https://arxiv.org/abs/2205.14135)；开源实现 [FlashAttention](https://github.com/Dao-AILab/flash-attention)。
 
-## 核心矛盾
+## 判断框架
 
-prefill 的核心矛盾不是“算力够不够”，而是“访存和中间结果要不要反复写回 HBM”。长上下文下，attention 的理论复杂度大家都知道，但真正把 TTFT 顶高的，往往是中间 score、softmax 和 value 聚合带来的内存路径。
+本节承接 `01` 的请求阶段和指标：先用 [20 FlashAttention Sim](../../02_PyTorch_Algorithms/20_FlashAttention_Sim.md) 理解 Attention 访存，再用 [34 Prefix Caching and Chunked Prefill](../../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.md) 观察长 Prompt 的分块与前缀复用，最后在 [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md) 中固定 workload，检查这些机制是否真的改善了请求表现。阅读下表时，先找最接近当前现象的一行，再决定下一步学习或实验。
 
-## 演化路径
-
-prefill 不是“先算一遍前向”这么简单。它要把已有 prompt 组织成上下文，同时完成 attention 计算。
-
-1. prompt 变长后，中间矩阵和带宽压力上升。
-2. naive attention 往往被 HBM 读写拖慢。
-3. FlashAttention 通过 tiling 和 online softmax 减少中间写回。
-4. chunked prefill 进一步把长 prompt 分块处理。
-5. 最终目标是把 TTFT 压下来，而不是只看 FLOPs。
-
-## 关键取舍
-
-这条线的 trade-off 很明确：
-
-- `FlashAttention` 主要换来更好的访存路径，但要求 kernel 和 backend 更匹配；
-- `chunked prefill` 主要解决超长 prompt 的工程落地问题，但会改变调度和 cache 的接入方式；
-- `prefix caching` 可以减少重复 prefill，但它解决的是“重复前缀”而不是“所有长 prompt 都慢”。
-
-因此，看到 TTFT 高时，不能把这三者混成一个动作，它们处理的是不同层面的瓶颈。
-
-![Prefill and attention kernel](/topic_discussion/inference_optimization/prefill_attention.svg)
-
-## 文献锚点
-
-- Dao et al., *FlashAttention*：理解 online softmax 和 tiling 为何能显著减少 HBM 写回。
-- Dao, *FlashAttention-2*：关注并行分工和 kernel 落地如何继续改进吞吐。
-- chunked prefill 相关工程资料：帮助理解长 prompt 在服务系统里的分块处理方式。
-
-## 常见误区
-
-- 只看 FLOPs，忽略 HBM/SRAM 访存。
-- 把 prefill 慢简单等同于模型本身慢。
-- chunked prefill 和 prefix caching 混为一谈。
-
-## 对应 Part 02
-
-- `20` FlashAttention Sim
-- `34` Prefix Caching and Chunked Prefill
-- `66` Inference Performance Comparison
-
-## 经典阅读入口
-
-- [03 GPU Architecture and Memory](../../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [14 FlashAttention Memory Model](../../01_Hardware_Math_and_Systems/14_FlashAttention_Memory_Model.md)
-- [24 SRAM Optimization Techniques](../../01_Hardware_Math_and_Systems/24_SRAM_Optimization_Techniques.md)
-- [20 FlashAttention Sim](../../02_PyTorch_Algorithms/20_FlashAttention_Sim.md)
-
-## 相关跳转
-
-- 看 `01`，确认指标口径。
-- 看 `04`，确认 prefill 结束后 cache 怎么接。
-
-## 本节要点
-
-prefill 优化的重点是减少访存和中间写回，把首 token 延迟压下来。
+| 观察到的现象 | 优先判断 | 下一步 |
+|:---|:---|:---|
+| Prompt 变长时 `TTFT` 持续升高 | Prefill 或 Attention 访存受限 | 检查 FlashAttention 和硬件支持 |
+| 长 Prompt 阻塞其他请求 | 单次 Prefill 影响调度 | 检查 Chunked Prefill |
+| 多请求包含相同前缀 | 重复计算占主要成本 | 检查 Prefix Cache |
+| `TTFT` 高但 Prefill 占比不高 | 排队、batch 组装或服务调度 | 进入 `04` / `06` |

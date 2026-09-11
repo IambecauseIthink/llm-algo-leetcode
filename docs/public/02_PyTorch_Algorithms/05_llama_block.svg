@@ -1,74 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 720" role="img" aria-labelledby="title desc">
-  <title id="title">LLaMA Block Diagram</title>
-  <desc id="desc">A modern decoder block showing RMSNorm, attention with RoPE and GQA, residual paths, and MLP.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 680" role="img" aria-labelledby="title desc">
+  <title id="title">LLaMA Decoder Block 主路径</title>
+  <desc id="desc">从隐藏状态经过两次 RMSNorm、Attention、残差连接和 SwiGLU MLP 的 Decoder Block 结构。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#eef2ff"/>
-    </linearGradient>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#eef2ff"/></linearGradient>
     <style>
-      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
-      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
-      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
-      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
-      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
-      .res { stroke: #ef4444; stroke-width: 4; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowRed); }
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 18; ry: 18; }
+      .flow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .residual { stroke: #e11d48; stroke-width: 3.5; stroke-dasharray: 9 7; fill: none; marker-end: url(#arrowRed); }
     </style>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
-    <marker id="arrowRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
-    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#e11d48"/></marker>
   </defs>
-  <rect width="1660" height="720" fill="url(#bg)"/>
-  <text x="64" y="66" class="title">LLaMA block: the canonical decoder layer</text>
-  <text x="64" y="96" class="sub">RMSNorm -> Attention (with RoPE / GQA / KV cache) -> residual -> RMSNorm -> SwiGLU -> residual</text>
+  <rect width="1600" height="680" fill="url(#bg)"/>
+  <text x="60" y="60" class="title">LLaMA Decoder Block：组件如何组装成一层</text>
+  <text x="60" y="90" class="sub">主路径负责变换隐藏状态；虚线表示残差把原始信息带回下一步</text>
 
-  <rect x="70" y="200" width="160" height="84" class="box" fill="#fff7ed" stroke="#f59e0b"/>
-  <text x="150" y="233" text-anchor="middle" class="label">Input</text>
-  <text x="150" y="257" text-anchor="middle" class="small">hidden state</text>
+  <rect x="60" y="240" width="170" height="88" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="145" y="275" text-anchor="middle" class="label">隐藏状态</text><text x="145" y="300" text-anchor="middle" class="small">输入 x</text>
+  <rect x="280" y="240" width="150" height="88" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="355" y="275" text-anchor="middle" class="label">RMSNorm</text><text x="355" y="300" text-anchor="middle" class="small">Attention 前</text>
+  <rect x="480" y="220" width="270" height="128" class="box" fill="#ecfccb" stroke="#65a30d"/>
+  <text x="615" y="260" text-anchor="middle" class="label">Attention</text><text x="615" y="287" text-anchor="middle" class="small">RoPE：处理位置</text><text x="615" y="310" text-anchor="middle" class="small">GQA：组织 Q / KV</text><text x="615" y="333" text-anchor="middle" class="small">KV Cache：保存历史状态</text>
+  <rect x="800" y="240" width="140" height="88" class="box" fill="#fff1f2" stroke="#e11d48"/>
+  <text x="870" y="275" text-anchor="middle" class="label">残差相加</text><text x="870" y="300" text-anchor="middle" class="small">x + Attention(x)</text>
+  <rect x="990" y="240" width="150" height="88" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="1065" y="275" text-anchor="middle" class="label">RMSNorm</text><text x="1065" y="300" text-anchor="middle" class="small">MLP 前</text>
+  <rect x="1190" y="220" width="270" height="128" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="1325" y="260" text-anchor="middle" class="label">SwiGLU MLP</text><text x="1325" y="287" text-anchor="middle" class="small">gate / up：两条升维路</text><text x="1325" y="310" text-anchor="middle" class="small">逐元素门控后 down</text><text x="1325" y="333" text-anchor="middle" class="small">也可替换为 MoE</text>
+  <rect x="1490" y="240" width="90" height="88" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="1535" y="275" text-anchor="middle" class="label">输出</text><text x="1535" y="300" text-anchor="middle" class="small">h</text>
 
-  <rect x="270" y="200" width="150" height="84" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="345" y="233" text-anchor="middle" class="label">RMSNorm</text>
-  <text x="345" y="257" text-anchor="middle" class="small">1st norm</text>
-
-  <rect x="480" y="170" width="280" height="144" class="box" fill="#ecfccb" stroke="#65a30d"/>
-  <text x="620" y="204" text-anchor="middle" class="label">Attention</text>
-  <text x="620" y="232" text-anchor="middle" class="small">GQA / KV cache / causal mask</text>
-  <text x="620" y="256" text-anchor="middle" class="small">RoPE on Q / K</text>
-  <text x="620" y="280" text-anchor="middle" class="small">multi-head mixing</text>
-
-  <rect x="810" y="200" width="120" height="84" class="box" fill="#fff1f2" stroke="#e11d48"/>
-  <text x="870" y="233" text-anchor="middle" class="label">Add</text>
-  <text x="870" y="257" text-anchor="middle" class="small">residual</text>
-
-  <rect x="980" y="200" width="150" height="84" class="box" fill="#eff6ff" stroke="#3b82f6"/>
-  <text x="1055" y="233" text-anchor="middle" class="label">RMSNorm</text>
-  <text x="1055" y="257" text-anchor="middle" class="small">2nd norm</text>
-
-  <rect x="1180" y="170" width="260" height="144" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
-  <text x="1310" y="204" text-anchor="middle" class="label">MLP / SwiGLU</text>
-  <text x="1310" y="232" text-anchor="middle" class="small">gate / up / down</text>
-  <text x="1310" y="256" text-anchor="middle" class="small">dense feed-forward path</text>
-  <text x="1310" y="280" text-anchor="middle" class="small">or MoE replacement</text>
-
-  <path d="M 230 242 L 270 242" class="arrow"/>
-  <path d="M 420 242 L 480 242" class="arrow"/>
-  <path d="M 760 242 L 810 242" class="arrow"/>
-  <path d="M 930 242 L 980 242" class="arrow"/>
-  <path d="M 1130 242 L 1180 242" class="arrow"/>
-
-  <path d="M 620 314 C 620 390 870 390 870 284" class="res"/>
-  <path d="M 1310 314 C 1310 404 620 404 620 314" class="res"/>
-
-  <rect x="150" y="430" width="1360" height="150" class="box" fill="#ffffff" stroke="#cbd5e1"/>
-  <text x="830" y="470" text-anchor="middle" class="label">What this block teaches</text>
-  <text x="180" y="508" class="small">1. normalize first to stabilize depth</text>
-  <text x="180" y="536" class="small">2. attention handles context mixing</text>
-  <text x="180" y="564" class="small">3. residual preserves the original signal</text>
-  <text x="780" y="508" class="small">4. second norm prepares the MLP branch</text>
-  <text x="780" y="536" class="small">5. SwiGLU expands and contracts features</text>
-  <text x="780" y="564" class="small">6. MoE can replace the dense MLP path</text>
+  <path d="M230 284 L280 284" class="flow"/><path d="M430 284 L480 284" class="flow"/><path d="M750 284 L800 284" class="flow"/><path d="M940 284 L990 284" class="flow"/><path d="M1140 284 L1190 284" class="flow"/><path d="M1460 284 L1490 284" class="flow"/>
+  <path d="M145 328 C145 430 870 430 870 328" class="residual"/>
+  <path d="M870 328 C870 500 1325 500 1325 348" class="residual"/>
+  <text x="450" y="458" class="small" fill="#be123c">残差保留输入信息，避免每个子层都从零重建表示</text>
+  <text x="985" y="528" class="small" fill="#be123c">第二条残差把 Attention 后的表示带入 MLP 输出</text>
 </svg>

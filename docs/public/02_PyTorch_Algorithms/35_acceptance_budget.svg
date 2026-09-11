@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">多 Token 解码的接受长度与收益</title><desc id="d">提议长度、连续接受数量和目标模型调用代价共同决定多 Token 解码收益。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">多 Token 解码：接受长度决定收益</text><text x="50" y="83" class="s">一次提出更多候选，只有连续接受才能减少后续单 Token 推进。</text>
+<rect x="60" y="190" width="240" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="180" y="232" text-anchor="middle" class="l">提议长度</text><text x="180" y="263" text-anchor="middle" class="b">最多尝试 K 个 token</text>
+<rect x="375" y="190" width="240" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="495" y="232" text-anchor="middle" class="l">连续接受</text><text x="495" y="263" text-anchor="middle" class="b">实际推进 N 个 token</text>
+<rect x="690" y="115" width="220" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="800" y="155" text-anchor="middle" class="l">N 较大</text><text x="800" y="185" text-anchor="middle" class="b">目标模型调用减少</text>
+<rect x="690" y="260" width="220" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="800" y="300" text-anchor="middle" class="l">N 较小</text><text x="800" y="330" text-anchor="middle" class="b">回退成本抵消收益</text>
+<rect x="980" y="190" width="160" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1060" y="232" text-anchor="middle" class="l">记录指标</text><text x="1060" y="263" text-anchor="middle" class="b">接受率 · 推进量</text>
+<path d="M300 245H375M615 235L690 165M615 265L690 310M910 165L980 225M910 310L980 265" class="f"/>
+</svg>

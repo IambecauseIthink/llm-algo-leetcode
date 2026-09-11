@@ -14,30 +14,20 @@
 
 ## 本节导读
 
-并行策略真正难的地方，不是记住 `DP / TP / PP / EP` 的定义，而是知道什么时候该先考虑“能不能放下”，什么时候该先考虑“互连扛不扛得住”，以及模型结构本身是否值得引入更复杂的切分方式。策略选错了，通信和等待会很快把理论收益吃掉。
+本节提供并行策略的约束判断顺序：先看显存，再看互连和模型结构，最后检查方案风险。
 
-这一页在整个教程的纵向主线里属于 `Part 01` 的并行选型基础页，优先服务 `监督微调路线` 的多卡扩展判断，也给后续 `通信与并行专题` 建立统一决策框架。学完这里，后面再看 `27 / 79 / 80 / 81` 以及多卡训练相关项目页时，你会更容易先做“fit gate -> interconnect gate -> structure gate”的排序，再决定先上哪类并行；如果这里没学明白，后面很容易把 `DP / TP / PP / EP` 当成固定搭配或流行名词，而说不清为什么当前问题首先卡在显存、互连还是模型结构。按专题归类，这一页主要属于 `通信与并行专题`，也直接支撑 `监督微调路线` 的训练工程判断。
+你将按“容量约束 → 互连条件 → 模型结构 → 风险验证”的顺序，把 DP、TP、PP 和 EP 放到同一组条件下比较，而不是只按策略名称做选择。
 
 **关键词：** `DP`, `TP`, `PP`
 
----
-
+![本节概念关系](../public/01_Hardware_Math_and_Systems/26_parallel_strategy_decision_map.svg)
 ## 前置阅读
 
 **导语：** 先把通信拓扑和显存切分的基础直觉接上，再看这页的并行策略选择，会更容易把“能不能放下”和“怎么切”连起来。
 
 - [05. Communication Topologies | 通信拓扑与分布式基石](./05_Communication_Topologies.md)
 - [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](./06_VRAM_Calculation_and_ZeRO.md)
-
-## 相关阅读
-
-**导语：** 如果还想把并行策略放回系统语境里看，可以接着看并行调度和通信优化，把它和实际多卡训练一起理解。
-
-- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
-- [27. Communication Scheduling Optimization | 通信调度优化](./27_Communication_Scheduling_Optimization.md)
-- [28. Fault Tolerance and Checkpointing | 容错与检查点](./28_Fault_Tolerance_and_Checkpointing.md)
----
-## Q1：什么时候优先考虑 DP、TP、PP、EP？
+## Q1：当前首先受显存、通信还是模型结构约束？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -69,6 +59,9 @@
 - EP 先解决“专家怎么分发”
 </details>
 
+### Q1小验证
+
+比较显存、互连和模型结构约束下的候选策略。
 
 ```python
 def rank_parallel_strategies(model_gb, gpu_gb, interconnect_bw_gbps, is_moe=False):
@@ -117,7 +110,7 @@ print('strategy choice should be ranked by fit, interconnect and structure gates
 
 ```
 
-## Q2：通信成本应该怎么判断？
+## Q2：不同并行策略会引入什么通信成本？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -144,6 +137,9 @@ $$\text{cost} \approx \text{latency} \times \text{次数} + \frac{\text{data vol
 如果频率高、带宽弱，策略再“高级”，最后也会被通信拖回去。
 </details>
 
+### Q2小验证
+
+估算不同并行策略的通信时间与同步压力。
 
 ```python
 def comm_time(freq, size_mb, bw_gbps, latency_us=2.0):
@@ -169,7 +165,7 @@ print('high frequency amplifies latency, weak bandwidth amplifies payload cost')
 
 ```
 
-## Q3：一个简单的决策框架是什么？
+## Q3：如何按约束选择 DP、TP、PP、EP？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -206,6 +202,9 @@ flowchart TD
 - 最后看结构门
 </details>
 
+### Q3小验证
+
+运行决策函数，检查策略选择是否遵循约束顺序。
 
 ```python
 def choose_parallel_plan(model_gb, gpu_gb, interconnect_bw_gbps, is_moe=False):
@@ -253,7 +252,7 @@ print('the plan is a gate sequence, not a single universal answer')
 
 ```
 
-## Q4：这页最容易犯的错是什么？
+## Q4：选择并行策略后，如何检查方案风险？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -270,6 +269,9 @@ print('the plan is a gate sequence, not a single universal answer')
 - **“TP 一定要跨机”**  
   不对。TP 更适合放在机内强互连上。
 </details>
+### Q4小验证
+
+检查方案是否暴露显存、通信或负载均衡风险。
 
 ```python
 def strategy_risk_summary(parallel_plan):
@@ -296,3 +298,14 @@ for plan in plans:
 print('the mistake is not choosing a plan, but ignoring the risk it introduces')
 
 ```
+
+## 相关阅读
+
+**导语：** 如果还想把并行策略放回系统语境里看，可以接着看并行调度和通信优化，把它和实际多卡训练一起理解。
+
+- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
+- [27. Communication Scheduling Optimization | 通信调度优化](./27_Communication_Scheduling_Optimization.md)
+- [28. Fault Tolerance and Checkpointing | 容错与检查点](./28_Fault_Tolerance_and_Checkpointing.md)
+- [PyTorch Distributed | PyTorch 分布式训练文档](https://pytorch.org/docs/stable/distributed.html)
+- [Megatron-LM | NVIDIA 开源大模型并行训练框架](https://github.com/NVIDIA/Megatron-LM)
+---

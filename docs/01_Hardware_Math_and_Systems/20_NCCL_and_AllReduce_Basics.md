@@ -16,26 +16,20 @@
 
 多卡训练扩不动，很多时候不是算子不够快，而是同步点太重。梯度要不要聚合、聚合走哪条链路、等待会不会把 step time 重新拉长，这些问题一旦没想清楚，GPU 数量上去之后也可能只是在放大通信成本。
 
-这一页在整个教程的纵向主线里属于 `Part 01` 的多卡通信基础页，优先服务 `监督微调路线` 的分布式训练判断，也给后续并行与系统优化页建立 collective 前置。学完这里，后面再看 `26 / 27 / 79` 以及多卡训练相关项目页时，你会更容易把“多卡同步”拆成更具体的判断：同步发生在哪里、频率高不高、通信有没有压过计算；如果这里没学明白，后面很容易把扩展效率问题都归因到“卡不够快”，而忽略 collective 本身已经成了 step time 的主瓶颈。按专题归类，这一页主要属于 `通信与并行专题`，也和 `监督微调路线` 的训练工程判断直接相连。
+本节把多卡通信放回一个可测量的训练步：先说明每张卡持有的局部梯度和参数状态，再追踪 collective 如何交换数据，最后用通信时间、step time 和扩展效率判断并行收益。它主要服务 `通信与并行专题`，也为分布式训练和系统优化提供通信指标。
+
 
 **关键词：** `NCCL`, `AllReduce`, `DP`
+
+![本节概念关系](../public/01_Hardware_Math_and_Systems/20_nccl_collective_map.svg)
 
 ---
 ## 前置阅读
 
-**导语：** 先把通信和并行层级对齐，再看 AllReduce 与 NCCL 会更顺；如果你正在走 `监督微调路线`，这里会直接服务多卡训练同步、effective batch 和扩展效率判断。
+**导语：** 先把通信和并行层级对齐，再看 AllReduce 与 NCCL 如何影响同步、effective batch 和扩展效率。
 
 - [Group 1C: Distributed Communication and Memory Sharing | 1C: 多卡通信与显存共享](./1C.md)
-- [Group 1E: Compiler Optimization and Hardware Ecosystem | 1E: 编译优化与硬件生态](./1E.md)
 - [13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](./13_Profiling_and_Bottleneck_Analysis.md)
-
-## 相关阅读
-
-**导语：** 把 AllReduce 放回 ZeRO、流水线并行和训练性能分析里看，更容易把通信原语和实际扩展效果连起来。
-
-- [27. ZeRO Optimizer Sim | ZeRO 优化器模拟](../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.md)
-- [28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.md)
-- [73. Training Performance Analysis | 训练性能分析](../02_PyTorch_Algorithms/73_Training_Performance_Analysis.md)
 ---
 ## Q1：NCCL 在分布式训练里到底解决什么问题？
 
@@ -50,7 +44,7 @@ NCCL 的作用，就是给这些通信原语提供高效实现，让多卡之间
 </details>
 ### Q1小验证：为什么多卡离不开通信库
 
-先记住：多卡不是把计算复制几份就结束了。
+对照局部梯度、参数状态和设备间同步，说明通信库在训练步中的具体作用。
 
 ```python
 def step_time(compute_ms, sync_ms, tasks):
@@ -142,9 +136,13 @@ print('phases:', ['reduce-scatter', 'all-gather'])
 
 ```
 
-## ⚠️ 常见误区
+---
+## 相关阅读
+把 AllReduce 放回 ZeRO、流水线并行和训练性能分析里，更容易把通信原语和实际扩展效果连起来。
+- [NCCL 官方文档](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/)：查阅集合通信原语、拓扑和通信环境。
+- [NCCL Tests](https://github.com/NVIDIA/nccl-tests)：用固定消息大小和 GPU 数量观察集合通信带宽。
+- [27. ZeRO Optimizer Sim | ZeRO 优化器模拟](../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.md)
+- [28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.md)
+- [73. Training Performance Analysis | 训练性能分析](../02_PyTorch_Algorithms/73_Training_Performance_Analysis.md)
 
-- NCCL 不是模型结构的一部分，但它会直接决定多卡训练是否顺畅。
-- AllReduce 不是唯一通信原语，但它是最常见、最关键的同步动作之一。
-- 多卡扩展不是“卡越多越快”，通信常常会限制实际收益。
-- 先看通信原语，再看拓扑和带宽，通常更容易定位分布式瓶颈。
+---

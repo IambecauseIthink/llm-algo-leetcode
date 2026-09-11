@@ -14,29 +14,21 @@
 
 ## 本节导读
 
-量化难点不在于把数值位宽机械地降下来，而在于理解低比特为什么会同时影响存储成本、带宽压力、算子吞吐和精度稳定性。模型变小了，不代表一定自动更快；真正的收益要看它减掉的是显存、访存，还是只是参数文件体积。
+量化的目标是在可接受的质量损失下，减少权重、激活或缓存的资源成本。本节将从量化对象、处理时机和交付形式出发，判断它具体改变了哪部分系统成本。
 
-这一页在整个教程的纵向主线里属于 `Part 01` 的量化基础页，优先服务 `推理优化路线`，也给 `显存优化路线` 和后续 `量化与压缩专题` 建立低比特判断前置。学完这里，后面再看 `25 / 40 / 41 / 65 / 67` 时，你会更容易把“更低位宽”翻译成更具体的系统判断：它到底是在减参数体积、减显存压力，还是在真正改善访存与吞吐；如果这里没学明白，后面很容易把量化当成统一收益按钮，而说不清 scale、离散化误差和执行路径为什么会一起决定结果。按专题归类，这一页主要属于 `量化与压缩专题`，并同时支撑推理与显存两条路线。
+沿着“理论容量 → scale 与量化粒度 → 处理时机与交付形式 → 质量与部署判断”的顺序，分析量化对象、介入时机和观察指标之间的关系。
 
 **关键词：** `INT8`, `INT4`, `scale`
 
----
+![量化对象与介入时机](../public/02_PyTorch_Algorithms/21_quantization_object_timing.svg)
 ## 前置阅读
 
-**导语：** 这一页先接上数据格式、参数量和 GPU 内存层级的判断，方便理解低比特量化为什么会同时影响存储、带宽和推理吞吐。
+**导语：** 先复习数据格式、参数量和 GPU 内存层级，再理解低比特量化如何改变存储、带宽和推理吞吐。
 
 - [01. Data Types and Precision | 大模型的数据格式与混合精度](./01_Data_Types_and_Precision.md)
 - [02. LLM Params and FLOPs | 大模型参数量与算力推导](./02_LLM_Params_and_FLOPs.md)
 - [03. GPU Architecture and Memory | GPU 物理架构与内存层级](./03_GPU_Architecture_and_Memory.md)
 
-## 相关阅读
-
-**导语：** 如果想把量化继续接到权重量化、KV cache 量化和部署决策上，可以沿这三页往下看。
-
-- [25. Quantization W8A16 | W8A16 量化](../02_PyTorch_Algorithms/25_Quantization_W8A16.md)
-- [41. FP8 and KV Cache Quantization | FP8 与 KV Cache 量化](../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.md)
-- [67. Quantized Inference and Deployment | 量化推理与部署](../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)
----
 ## Q1：为什么量化能显著减少显存和带宽压力？
 
 <details>
@@ -44,7 +36,7 @@
 
 如果把权重从 FP16 压到 INT8，单个参数的存储从 2 Bytes 变成 1 Byte，理论上权重显存约减半；如果压到 INT4，则理论上进一步降到 0.5 Byte，权重体积还会继续下降。
 
-一个最直观的 7B 模型例子可以帮助建立数量级直觉：
+下面用一个 7B 模型例子计算不同位宽下的权重存储量：
 
 | 权重格式 | 每参数字节数 | 7B 模型权重显存 | 相对 FP16 |
 | --- | --- | --- | --- |
@@ -149,51 +141,61 @@ q = round(x / scale) + zero_point
 
 这也是为什么真正落地时，量化不是“把 dtype 改小”这么简单，而是要同时决定 scale、zero point、分组粒度和累加精度。
 </details>
-### Q2小验证：实现 per-tensor 对称量化与反量化
+### Q2小验证：实现最小的 per-tensor 对称量化
 
-实现一个最简单的量化函数，输入浮点张量，输出量化整数和 scale。
+本题只实现一个最小分支：整个张量共用一组 scale，且 zero-point 固定为 0。非对称量化和 per-channel 量化先通过概念理解，不要求在本题完整实现。`num_bits=4` 时只模拟 4-bit 的数值范围，返回的 PyTorch Tensor 仍是 `torch.int8`，不代表真实 packed INT4 存储。
+
 
 ```python
 import torch
 
 
 def quantize_per_tensor(x, num_bits=8):
-    """
-    对张量做对称 per-tensor 量化。
+    """对张量做对称 per-tensor 量化。
 
-    Returns:
-        q: 量化后的整数张量
-        scale: 量化比例
+    `num_bits=4` 只控制逻辑量化范围；返回值仍用 int8 Tensor 保存，未实现 bit packing。
     """
     qmax = 2 ** (num_bits - 1) - 1
     scale = x.abs().max() / qmax if x.numel() > 0 else torch.tensor(1.0, device=x.device, dtype=x.dtype)
     scale = torch.clamp(scale, min=1e-8)
+    # 这里用 int8 承载量化整数，便于观察映射和误差；真实 INT4 需要额外 packing。
     q = torch.clamp(torch.round(x / scale), -qmax - 1, qmax).to(torch.int8)
     return q, scale
 
 
 def dequantize_per_tensor(q, scale):
+    """把量化整数恢复为 float32；不模拟真实 kernel 的累加路径。"""
     return q.to(torch.float32) * scale
+
+
+def per_channel_scales(x, axis=0, num_bits=8):
+    """返回 per-channel 对称量化的 scale，只用于观察粒度差异。"""
+    if x.ndim != 2 or axis not in (0, 1):
+        raise ValueError('示例只接受二维张量，axis 必须为 0 或 1')
+    qmax = 2 ** (num_bits - 1) - 1
+    reduce_dims = (1,) if axis == 0 else (0,)
+    scale = x.abs().amax(dim=reduce_dims, keepdim=True) / qmax
+    return torch.clamp(scale, min=1e-8)
 
 
 def test_quantize_per_tensor():
     x = torch.tensor([-1.0, -0.5, 0.0, 0.5, 1.0])
     q, scale = quantize_per_tensor(x, 8)
     x_hat = dequantize_per_tensor(q, scale)
-    assert q.dtype == torch.int8
-    assert x_hat.shape == x.shape
-    print('q:', q.tolist())
-    print('scale:', float(scale))
+    assert q.dtype == torch.int8 and x_hat.shape == x.shape
+    print('q:', q.tolist(), 'scale:', float(scale))
     print('x_hat:', x_hat.tolist())
     print('✅ quantize_per_tensor tests passed')
 
-# 运行测试
+
 test_quantize_per_tensor()
+
 ```
 
 ### Q2扩展验证：观察量化误差
 
 比较原始张量和反量化张量的误差。
+
 
 ```python
 # 直接观察 8-bit 和 4-bit 的量化误差差异
@@ -206,6 +208,10 @@ for bits in [8, 4]:
     mse = torch.mean((x - x_hat) ** 2).item()
     max_err = torch.max(torch.abs(x - x_hat)).item()
     print(f'{bits}-bit -> MSE={mse:.6f}, max_err={max_err:.6f}')
+
+matrix = torch.tensor([[1.0, 2.0, 3.0], [0.1, 0.2, 0.3]])
+print('per-tensor scale shape:', tuple(quantize_per_tensor(matrix, 8)[1].shape))
+print('per-channel scale shape:', tuple(per_channel_scales(matrix, axis=0, num_bits=8).shape))
 
 ```
 
@@ -225,60 +231,49 @@ def test_quantization_practice():
 test_quantization_practice()
 ```
 
-## Q3：PTQ、QAT、GPTQ、AWQ、GGUF 该怎么理解？
+## Q3：量化对象、处理时机和交付形式为什么会影响部署？
 
-<details>
-<summary>点击展开查看解析</summary>
+量化方案不能只按 INT4、INT8 的位宽来命名，还要同时看它改变了哪类状态、在哪个阶段发生，以及最终由哪个 backend 解释量化产物。可以沿着下面的链条判断：
 
-这几个名字其实不在同一层：
+| 量化对象 | 处理时机 | 典型产物 | 首先验证什么 |
+|---|---|---|---|
+| 权重 | 部署前 | GPTQ / AWQ / GGUF 文件 | 是否能加载、权重显存和质量 |
+| 权重与激活 | 训练中或运行时 | QAT 模型 / FP8 路径 | kernel、数值稳定性和吞吐 |
+| KV Cache | 请求执行中 | 低比特 Cache 表示 | 上下文容量、并发、延迟和质量 |
 
-- **PTQ / QAT** 先回答的是“量化发生在什么时候”
-- **GPTQ / AWQ** 回答的是“训练后量化时，用什么方法尽量保住精度”
-- **GGUF** 回答的是“量化结果最后怎么打包和分发”
+处理时机决定校准或训练成本，交付形式决定 backend 兼容性；因此“显存变小”只是候选收益，是否值得仍要回到固定 workload 做质量和性能验证。可以把判断顺序记成：量化对象决定影响哪类成本，处理时机决定如何获得量化参数，交付形式决定谁来解释量化产物。
 
-从原理上看，可以按三层来理解：
+这里的 PTQ 表示训练完成后的量化，QAT 表示训练或微调过程中模拟量化误差；GPTQ 和 AWQ 是常见的权重校准路线，GGUF 是文件格式与交付封装，不等同于一种通用量化算法。
 
-### 1) PTQ 和 QAT：量化介入的位置
-- **PTQ（Post-Training Quantization）**：先把模型训练完，再用少量校准数据估计 scale / zero point，把权重或激活映射到低比特空间。它的核心优点是成本低、落地快；缺点是量化误差没有在训练阶段被显式优化。
-- **QAT（Quantization-Aware Training）**：在训练或微调时就把量化误差“模拟”进去，让模型参数学会适应低比特表示。它的核心思路不是单纯更精确，而是把误差提前暴露给优化过程，让模型自己补偿。
+### Q3小验证：按处理时机和交付形式整理量化方法
 
-### 2) GPTQ 和 AWQ：训练后量化时，怎么减少误差
-- **GPTQ** 更像是“带误差补偿的权重量化”。它利用少量校准数据近似估计二阶信息，量化某一层时尽量把量化误差压到对输出影响最小的方向上。直觉上，它不是只看每个权重的大小，而是看“哪些改动更伤输出”，然后做局部修正。
-- **AWQ** 更强调“激活感知”。它会关注不同通道在真实输入下的重要性，尽量保护那些对输出更敏感的通道，让少数关键通道保留更高的表示质量。它的核心不是把所有权重平均压缩，而是先找出“最不能丢”的部分。
+把 PTQ、QAT、GPTQ、AWQ 和 GGUF 放回各自的层级，区分量化发生的时机、误差处理方法和最终交付形式。
 
-### 3) GGUF：量化结果如何被部署和加载
-- **GGUF** 更偏文件格式和生态封装，不是单一的量化算法。它会把量化后的权重、scale、元数据和加载所需的信息组织成便于本地推理引擎读取的形式。
-- 它的价值在于让量化模型更容易被 mmap、分发和跨工具链使用，所以更像“量化成果的交付格式”。
-
-如果把它们放到同一张图里看：
-
-- **PTQ / QAT**：决定“在哪一步量化”
-- **GPTQ / AWQ**：决定“量化时怎么尽量保精度”
-- **GGUF**：决定“量化完怎么存、怎么发、怎么加载”
-
-所以不要把它们当成谁更先进的单选题，而要看你当前要解决的问题：
-- 想快速落地，先看 PTQ
-- 想在 PTQ 下尽量少掉点精度，看 GPTQ / AWQ
-- 想把模型交付到本地推理生态，看 GGUF
-
-如果你要判断什么时候更适合保守量化或直接考虑 QAT，可以先看这几个典型场景：
-
-- 小模型生成任务对精度非常敏感
-- 激活值离群值明显，INT4 误差过大
-- 需要保持与基线几乎一致的输出质量
-
-</details>
-### Q3小验证：比较显存节省与误差
-
-把显存节省和误差放在一起看，判断量化是否值得。
 
 ```python
-# 直接对比 7B 模型在 FP16 / INT8 / INT4 下的显存节省
-base = calculate_weight_memory(7, 'fp16')
-for dtype in ['int8', 'int4']:
-    mem = calculate_weight_memory(7, dtype)
-    saving = 1 - mem / base
-    print(f'{dtype.upper():<4} memory={mem:.1f} GB, saving={saving:.0%}')
+def quantization_method_catalog():
+    """返回量化路径元数据，不代表具体 backend 的完整配置。"""
+    return {
+        'PTQ': {'stage': '训练完成后', 'artifact': '量化权重', 'backend': '取决于部署引擎'},
+        'QAT': {'stage': '训练或微调中', 'artifact': '量化感知模型', 'backend': '取决于部署引擎'},
+        'GPTQ': {'stage': '部署前校准', 'artifact': 'GPTQ 权重', 'backend': '支持 GPTQ 的引擎'},
+        'AWQ': {'stage': '部署前校准', 'artifact': 'AWQ 权重', 'backend': '支持 AWQ 的引擎'},
+        'GGUF': {'stage': '模型交付', 'artifact': '文件格式', 'backend': 'llama.cpp 等'},
+    }
+
+
+def select_quantization_path(method: str) -> dict:
+    """根据方法名返回后续实验应关注的阶段、产物和 backend。"""
+    catalog = quantization_method_catalog()
+    if method not in catalog:
+        raise ValueError(f'未知量化方法：{method}，可选值：{sorted(catalog)}')
+    return {'method': method, **catalog[method]}
+
+
+for method in ['PTQ', 'GPTQ', 'AWQ', 'GGUF']:
+    print(select_quantization_path(method))
+
+assert select_quantization_path('GGUF')['backend'] == 'llama.cpp 等'
 
 ```
 
@@ -297,7 +292,7 @@ QAT（Quantization-Aware Training）不是第一选择，但它在以下场景�
 - 如果目标是“快速落地”，先用 PTQ
 - 如果目标是“把低比特精度尽量拉回来”，再考虑 QAT
 
-QAT 的代价是训练流程更复杂、成本更高，但它能把量化误差直接纳入训练过程，是 PTQ 之外的重要补救路线。
+QAT 的代价是训练流程更复杂、成本更高，但它能把量化误差直接纳入训练过程，是 PTQ 之外的重要补救路线。下面的判断只用于组织实验，不是自动证明 QAT 一定优于 PTQ；最终仍要比较固定验证集上的质量和训练成本。
 </details>
 ### Q4小验证：什么时候该考虑 QAT？
 
@@ -354,7 +349,7 @@ print('QAT is worth considering when PTQ drop is too large and retraining budget
 - **“量化只影响权重”**  
   也不完整。推理时真正卡住性能的常常还包括激活、缓存和带宽。
 
-这一页只要记住一句话：量化的目标不是“把精度尽可能压低”，而是在“误差可接受”的前提下把显存和带宽压力降下来。
+量化配置的判断条件是：在误差可接受的前提下，显存和带宽压力是否下降。下面的风险函数只是教学用检查表，不是硬件性能或模型质量的预测器。
 </details>
 ### Q5小验证：量化配置里最常见的问题
 
@@ -363,6 +358,7 @@ print('QAT is worth considering when PTQ drop is too large and retraining budget
 
 ```python
 def quantization_risk(bitwidth, hardware_support=True, calibration_quality=1.0, activation_sensitive=False):
+    """用可解释条件做量化风险的教学筛查，不预测真实质量或吞吐。"""
     score = 0
     if bitwidth <= 4:
         score += 2
@@ -382,6 +378,7 @@ def quantization_risk(bitwidth, hardware_support=True, calibration_quality=1.0, 
         'risk_level': level,
         'risk_score': score,
         'bitwidth': bitwidth,
+        'evidence_level': 'teaching_checklist',
     }
 
 cases = [
@@ -394,3 +391,22 @@ for case in cases:
 print('quantization fails when bitwidth, calibration, and hardware support are all under pressure')
 
 ```
+
+---
+## 相关阅读
+
+**导语：** 学完本节后，可以沿权重量化、KV Cache 量化和部署验证继续学习。
+
+- [25. Quantization W8A16 | W8A16 量化](../02_PyTorch_Algorithms/25_Quantization_W8A16.md)
+- [41. FP8 and KV Cache Quantization | FP8 与 KV Cache 量化](../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.md)
+- [67. Quantized Inference and Deployment | 量化推理与部署](../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)
+
+**经典论文：**
+- [GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers](https://arxiv.org/abs/2210.17323)
+- [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://arxiv.org/abs/2306.00978)
+- [SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://arxiv.org/abs/2211.10438)
+
+**开源实现：**
+- [llama.cpp](https://github.com/ggml-org/llama.cpp)：GGUF 文件与本地推理 backend。
+- [vLLM Quantization](https://docs.vllm.ai/en/latest/features/quantization/)：量化模型在推理 backend 中的加载与执行入口。
+---
