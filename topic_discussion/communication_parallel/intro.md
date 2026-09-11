@@ -8,6 +8,10 @@
 
 这里重点关注切分层级与通信代价；并行结论必须同时解释计算、显存、通信和扩展效率的变化。若问题先表现为单机推理速度，应转到推理优化；若问题只剩单个通信 kernel 或算子实现，应转到算子优化；若涉及图变换、IR 或 backend 选择，再转到编译与图优化。
 
+![通信与并行：从状态切分到多卡收益](../../docs/public/topic_discussion/communication_parallel/communication_parallel_overview.svg)
+
+并行路线先说明切分了什么，再检查通信、同步和拓扑代价，最后用多卡实验判断显存和吞吐是否真的改善。
+
 ## 推荐入口
 
 推荐从 [Part 02 导学](../../02_PyTorch_Algorithms/intro.md) 的分布式与并行路线进入，再用 [Part 02 资产表](../../02_PyTorch_Algorithms/2_10.md) 定位 79、80、81 等项目节。专题正文可以作为并行策略的决策索引，不要求学习者一开始就拥有多卡机器。
@@ -19,6 +23,10 @@
 ## 主学习线
 
 `Task1-6` 是学习路线，指向 `Part 01 / Part 02` 的具体小节；最后一列的 `01-06` 是专题正文页，只负责解释和串联。
+
+![通信与并行学习路线：从切分目标到多卡决策](../../docs/public/topic_discussion/communication_parallel/communication_parallel_task_route.svg)
+
+上图先说明任务之间的推进关系；下表再展开每个任务对应的小节与正文入口。
 
 | Task | 学习内容 | 主学习线 | 专题正文 |
 |:---|:---|:---|:---|

@@ -23,6 +23,12 @@
 
 ## 当前已落地图
 
+### 00 通信与并行路线总图
+
+![通信与并行：从状态切分到多卡收益](../../docs/public/topic_discussion/communication_parallel/communication_parallel_overview.svg)
+
+这张图作为专题入口主图，说明状态切分、通信同步、拓扑执行和多卡决策之间的关系。
+
 ### 01 为什么系统会走向并行
 
 > 图示占位：Why systems move to parallelism 尚未生成。
