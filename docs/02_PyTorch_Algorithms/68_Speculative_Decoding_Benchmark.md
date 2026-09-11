@@ -13,7 +13,7 @@
 
 ## 本节导读
 
-本节要求你评估推测解码在固定 workload 下是否值得保留。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
+本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
 **主责与复用边界：** 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。
 
 **关键词：** `acceptance rate`, `draft cost`, `verify cost`, `benchmark`
@@ -29,13 +29,13 @@
 
 ## 相关阅读
 
-**导语：** 做完推测解码 benchmark 后，最自然的下一步是继续比较缓存与调度收益，或把结论推进到更完整的 serving 链路。
+**导语：** 完成推测解码 benchmark 后，用 69 比较缓存复用，用 70 比较请求调度；两者都应沿用本节的 workload 和指标口径。
 - [69. Prefix Caching Benchmark | 前缀缓存基准](./69_Prefix_Caching_Benchmark.md)
 - [70. Serving Scheduler Benchmark | 推理服务调度基准](./70_Serving_Scheduler_Benchmark.md)
 
-### Step 1–4：实验计划
+### Step 1：定义实验口径
 
-先按以下顺序执行：定义口径 → 建立 G0 baseline → 运行 CPU 机制实验 → 汇总指标并决策；下面的 Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。
+先固定模型、请求集和 speculative 配置，再建立 G0 baseline。下面的 Step 2 比较 baseline 与 candidate，Step 3 解释收益来源，Step 4 输出项目决策；Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。
 
 | 固定项 | 记录内容 |
 |:---|:---|
@@ -44,7 +44,8 @@
 | speculative 配置 | proposal length、verify policy、acceptance 定义 |
 | 质量门槛 | 输出一致性或任务指标、允许的误差 |
 
-### Step 2：建立 baseline
+### Step 2：建立 target baseline
+
 
 - G0 只运行 target，记录 TTFT、TPOT、E2E、吞吐、P99、峰值显存和质量。
 - G1 才运行 draft + target；两组必须使用同一 workload 和采样参数。
@@ -52,15 +53,26 @@
 
 ### Step 3：解释收益来源
 
-- 同时检查 acceptance rate、draft cost、verify cost、TPOT、吞吐和质量。
+
+- 同时检查 acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost、TPOT、吞吐和质量。CPU 模拟先给出每轮推进量，backend 实验再记录真实调用和时间。
 - acceptance rate 低或 verify 成本高时，吞吐收益不能直接归因于 speculative。
 - G2 一次只改变 proposal length 或 draft model，避免多个变量混合。
 
 ### Step 4：输出项目决策
 
+
 - 只有吞吐/延迟改善、质量达标且 acceptance 与 verify 成本可解释时，才可 `accept`。
 - 证据不足为 `tune`；质量不达标或性能退化为 `reject`。
 - 没有真实 draft + target backend 时，结论只能停留在 CPU 机制验证。
+
+质量和性能是两条独立的验收线：
+
+| 证据类别 | 主要指标 | 回答的问题 |
+|---|---|---|
+| 质量 / 机制 | 输出一致性、任务指标、acceptance rate、accepted tokens per round | 输出是否仍满足任务要求，推测链路是否按预期推进 |
+| 性能 | TTFT、TPOT、吞吐、P50、P99、峰值显存 | 请求通常多快、尾部是否稳定、资源代价是否可接受 |
+
+P50 表示典型请求延迟，P99 表示尾部请求延迟；它们只描述速度分布，不能替代质量校验。质量通过但 P99 明显恶化，或性能变快但质量未达门槛，都不能直接 `accept`。样本量不足时，P50 / P99 只能作为 smoke 观察值。
 #### 图解：20-24 如何收束到 68 推测解码基准
 
 ```text
@@ -74,7 +86,7 @@
 | 模块 | 必须记录 | 用途 |
 |:---|:---|:---|
 | baseline | TTFT、TPOT、throughput、P99、质量 | 保证比较合法 |
-| candidate | acceptance rate、draft cost、verify cost | 解释收益来源 |
+| candidate | acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost | 解释收益来源 |
 | 对比 | 吞吐增益、延迟变化、显存和质量 | 判断是否真的划算 |
 | 决策 | accept / tune / reject | 输出 benchmark 结论 |
 
@@ -161,6 +173,7 @@ def test_speculative_benchmark_template():
     assert simulation['corrected_tokens'] == 1, "分歧后的 correction token 统计不正确！"
     assert simulation['effective_output_tokens'] == 5, "有效输出 token 数统计不正确！"
     assert simulation['acceptance_rate'] == 0.8, "acceptance rate 计算不正确！"
+    assert simulation['accepted_tokens_per_round'] == 2.0, "每轮接受 token 数计算不正确！"
     assert simulation['round_trace'] == [
         {'round': 0, 'proposed': 3, 'accepted_prefix_length': 2, 'accepted': 2, 'rejected_token': 9, 'corrected': 1},
         {'round': 1, 'proposed': 2, 'accepted_prefix_length': 2, 'accepted': 2, 'rejected_token': None, 'corrected': 0},
@@ -181,6 +194,12 @@ def test_speculative_benchmark_template():
     assert summary['run_count'] == 2
     assert summary['best_throughput_run'] == 'spec'
     assert summary['avg_throughput'] == 117.5
+    try:
+        summarize_speculative_benchmark([{'name': 'invalid', 'throughput': 1.0}])
+    except KeyError:
+        pass
+    else:
+        raise AssertionError('缺少 acceptance_rate 时应明确报错！')
     comparison = compare_speculative_to_baseline(baseline, candidate)
     assert comparison['ttft_delta_ms'] == -10
     assert comparison['throughput_gain'] == 35
@@ -272,6 +291,7 @@ def simulate_speculative_decode(rounds, draft_ms_per_token=1.0, verify_ms_per_ro
             'corrected': int(accepted < len(draft)),
         })
     round_count = len(rounds)
+    accepted_tokens_per_round = accepted_tokens / round_count if round_count else 0.0
     return {
         'rounds': round_count,
         'proposed_tokens': proposed_tokens,
@@ -279,6 +299,8 @@ def simulate_speculative_decode(rounds, draft_ms_per_token=1.0, verify_ms_per_ro
         'corrected_tokens': corrected_tokens,
         'effective_output_tokens': accepted_tokens + corrected_tokens,
         'acceptance_rate': accepted_tokens / proposed_tokens if proposed_tokens else 0.0,
+        # 这是 CPU 机制模拟的每轮推进量，不是 backend 实测值
+        'accepted_tokens_per_round': accepted_tokens_per_round,
         'draft_cost_ms': proposed_tokens * draft_ms_per_token,
         'verify_cost_ms': round(round_count * verify_ms_per_round, 4),
         'fully_accepted_rounds': accepted_rounds,
@@ -286,6 +308,7 @@ def simulate_speculative_decode(rounds, draft_ms_per_token=1.0, verify_ms_per_ro
         'mechanism_metrics': {
             'proposed_tokens': proposed_tokens, 'accepted_tokens': accepted_tokens,
             'corrected_tokens': corrected_tokens, 'acceptance_rate': accepted_tokens / proposed_tokens if proposed_tokens else 0.0,
+            'accepted_tokens_per_round': accepted_tokens_per_round,
         },
         'cost_model_metrics': {
             'draft_cost_ms': proposed_tokens * draft_ms_per_token,
@@ -302,9 +325,13 @@ def summarize_speculative_benchmark(runs: List[Dict[str, float]]) -> Dict[str, o
     空列表只返回空摘要，不构成性能结论。"""
     if not runs:
         return {'run_count': 0, 'best_throughput_run': None, 'avg_acceptance_rate': 0.0, 'avg_throughput': 0.0}
-    best = max(runs, key=lambda item: item.get('throughput', 0.0))
-    avg_acceptance_rate = sum(item.get('acceptance_rate', 0.0) for item in runs) / len(runs)
-    avg_throughput = sum(item.get('throughput', 0.0) for item in runs) / len(runs)
+    required = {'name', 'acceptance_rate', 'throughput'}
+    missing = [sorted(required - set(item)) for item in runs if not required.issubset(item)]
+    if missing:
+        raise KeyError(f'每条 run 必须包含 {sorted(required)}，缺失字段：{missing}')
+    best = max(runs, key=lambda item: item['throughput'])
+    avg_acceptance_rate = sum(item['acceptance_rate'] for item in runs) / len(runs)
+    avg_throughput = sum(item['throughput'] for item in runs) / len(runs)
     return {'run_count': len(runs), 'best_throughput_run': best.get('name', 'run'),
             'avg_acceptance_rate': round(avg_acceptance_rate, 6),
             'avg_throughput': round(avg_throughput, 6)}
@@ -316,15 +343,20 @@ def compare_speculative_to_baseline(baseline: Dict[str, float], candidate: Dict[
 
     需要区分差值（gain / delta）与比值（speedup），并拒绝吞吐为 0 的 baseline。
     结果只表示报告层比较，不能替代真实 backend 的 TTFT、TPOT、P99 和质量校验。"""
-    baseline_throughput = baseline.get('throughput', 0.0)
+    required = {'ttft_ms', 'throughput', 'acceptance_rate', 'verify_cost_ms'}
+    for label, record in [('baseline', baseline), ('candidate', candidate)]:
+        missing = sorted(required - set(record))
+        if missing:
+            raise KeyError(f'{label} 缺少比较字段：{missing}')
+    baseline_throughput = baseline['throughput']
     if baseline_throughput <= 0:
         raise ValueError('baseline throughput 必须大于 0')
     return {
-        'ttft_delta_ms': candidate.get('ttft_ms', 0.0) - baseline.get('ttft_ms', 0.0),
-        'throughput_gain': candidate.get('throughput', 0.0) - baseline.get('throughput', 0.0),
-        'acceptance_rate': candidate.get('acceptance_rate', 0.0),
-        'verify_cost_delta': candidate.get('verify_cost_ms', 0.0) - baseline.get('verify_cost_ms', 0.0),
-        'throughput_speedup': candidate.get('throughput', 0.0) / baseline_throughput,
+        'ttft_delta_ms': candidate['ttft_ms'] - baseline['ttft_ms'],
+        'throughput_gain': candidate['throughput'] - baseline['throughput'],
+        'acceptance_rate': candidate['acceptance_rate'],
+        'verify_cost_delta': candidate['verify_cost_ms'] - baseline['verify_cost_ms'],
+        'throughput_speedup': candidate['throughput'] / baseline_throughput,
     }
 
 
@@ -389,11 +421,11 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
 
 **结果表模板**
 
-| 实验组 | acceptance rate | draft/verify cost | TTFT / TPOT | E2E / throughput / P99 | peak memory | quality | decision |
-|---|---:|---:|---:|---:|---:|---|---|
-| G0 target baseline | 不适用 | 不适用 | 待采集 | 待采集 | 待采集 | 参考输出 | 待判断 |
-| G1 speculative | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待判断 |
-| G2 单变量对照 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待判断 |
+| 实验组 | target / draft | proposal length | acceptance rate | accepted tokens / round | target forward calls | draft / verify cost (ms) | TTFT / TPOT | E2E / throughput / P99 | peak memory | quality / status | evidence level | decision |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| G0 target baseline | 待填写 / 不适用 | 不适用 | 不适用 | 不适用 | 待采集 | 不适用 | 待采集 | 待采集 | 待采集 | 参考输出 / 待填写 | gpu_baseline_smoke | 待判断 |
+| G1 speculative | 待填写 | 5 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 / 待填写 | real_backend_smoke | 待判断 |
+| G2 单变量对照 | 待填写 | 3 或 8 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 | 待采集 / 待填写 | real_backend_smoke | 待判断 |
 
 建议文件名分别使用 `68_speculative_H0_12GB.json` 与 `68_speculative_H1_24GB.json`；若使用多次重复运行，可在文件名或报告字段中保留 seed / repeat。24GB 平台不是 12GB 平台的替代品，而是第二个可复现实验条件。
 
@@ -485,16 +517,35 @@ print({'experiment_plan': experiment_plan})
 if RUN_REAL_SPECULATIVE and not DRAFT_MODEL_ID:
     raise ValueError('真实 speculative 实验必须先配置 DRAFT_MODEL_ID。')
 if RUN_REAL_SPECULATIVE:
-    server, log_path, port, selected_dtype, target_path, capability = start_speculative_vllm(
-        target_model_id=MODEL_ID, draft_model_id=DRAFT_MODEL_ID,
-        dtype='auto', proposal_length=PROPOSAL_LENGTH,
-        served_model_name=MODEL_ID,
-    )
-    try:
-        print({'speculative_capability': capability, 'port': port, 'dtype': selected_dtype})
-        # 真实 benchmark 应在这里运行 G1/G2，再保存统一报告。
-    finally:
-        stop_optional_vllm(server, log_path)
+    # 先探测 CLI 能力；不支持时保存 unsupported 报告，不加载模型。
+    from tools.backend_runtime import probe_vllm_speculative_support
+    capability = probe_vllm_speculative_support()
+    if capability['status'] != 'supported':
+        save_project_result(
+            RESULT_PATH, project='68', strategy='speculative', config=project_config,
+            metrics={}, quality={'status': 'unsupported', 'speculative_enabled': False},
+            decision={'decision': 'tune', 'reason': '当前 vLLM CLI 未发现可识别的 speculative 参数'},
+            strategy_metrics={'evidence_level': 'backend_capability_probe',
+                              'capability': capability},
+        )
+        print({'speculative_capability': capability, 'status': 'unsupported'})
+    else:
+        server, log_path, port, selected_dtype, target_path, capability = start_speculative_vllm(
+            target_model_id=MODEL_ID, draft_model_id=DRAFT_MODEL_ID,
+            dtype='auto', proposal_length=PROPOSAL_LENGTH,
+            served_model_name=MODEL_ID,
+        )
+        try:
+            print({'speculative_capability': capability, 'port': port, 'dtype': selected_dtype})
+            save_project_result(
+                RESULT_PATH, project='68', strategy='speculative', config=project_config,
+                metrics={}, quality={'status': 'not_evaluated', 'speculative_enabled': True},
+                decision={'decision': 'tune', 'reason': 'backend 已启动，但尚未运行 G1/G2 benchmark'},
+                strategy_metrics={'evidence_level': 'backend_started_no_metrics',
+                                  'capability': capability},
+            )
+        finally:
+            stop_optional_vllm(server, log_path)
 if RUN_BACKEND_SMOKE:
     server, log_path, port, selected_dtype, model_path = start_optional_vllm(
         model_id=MODEL_ID, model_source='auto', dtype='auto',
@@ -518,9 +569,15 @@ if RUN_BACKEND_SMOKE:
         )
     finally:
         stop_optional_vllm(server, log_path)
-# G1 接入真实 draft/target adapter 后，必须提供真实 metrics 再保存：
+# G1 接入真实 draft/target adapter 后，必须提供真实 metrics 再保存；strategy_metrics
+# 至少记录 acceptance_rate、accepted_tokens_per_round、target_forward_calls、
+# draft_cost_ms 和 verify_cost_ms，不能只保存 TTFT 或吞吐：
 # save_project_result(RESULT_PATH, project='68', strategy='speculative',
 #     config=project_config, metrics=metrics, quality=quality,
-#     strategy_metrics={'acceptance_rate': acceptance_rate, 'verify_cost_ms': verify_cost_ms},
+#     strategy_metrics={'acceptance_rate': acceptance_rate,
+#                       'accepted_tokens_per_round': accepted_tokens_per_round,
+#                       'target_forward_calls': target_forward_calls,
+#                       'draft_cost_ms': draft_cost_ms,
+#                       'verify_cost_ms': verify_cost_ms},
 #     decision=decision)
 ```

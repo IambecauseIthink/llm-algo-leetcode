@@ -36,20 +36,25 @@
 - [74. Profiling Driven End-to-End Optimization | Profiling 驱动的端到端优化](./74_Profiling_Driven_End_to_End_Optimization.md)
 
 ### Step 1: 定义任务与资源约束
-先把需求写成可检查的资源规格，而不是直接问哪个策略最省显存。至少明确模型、任务、数据规模、训练配置、目标 GPU 和交付指标。
+先把 76 的实验报告转换成一份可检查的预算问题：在同一模型、数据和 workload 下，哪些候选方案同时满足显存、吞吐和质量要求。75 不加载模型，也不重新训练；它只读取报告并执行筛选。
 
-| 规划输入 | 示例 | 作用 |
+| 项目 | 需要明确的内容 | 本节如何使用 |
 |:---|:---|:---|
-| 模型与任务 | Qwen2.5-0.5B / causal LM training | 确定参数、激活和质量指标的含义 |
-| 数据规模 | 样本数、平均 token、最大 seq_len | 判断 workload 是否具有代表性 |
-| 硬件档案 | 12GB Laptop GPU、RTX 4090 24GB、40GB GPU | 定义可用显存预算 |
-| 交付约束 | peak memory、吞吐、eval loss、训练时长 | 定义可接受方案 |
+| 输入报告 | 76 的 JSON；包含模型、dtype、batch、seq_len、硬件和候选指标 | 检查比较是否来自同一 workload，并读取候选方案 |
+| 预算条件 | `memory_cap_mb`、`min_samples_per_s`、`max_val_loss` | 定义“可行”：显存不超限、吞吐不低于下限、质量不超过上限 |
+| 候选方案 | `baseline`、`checkpoint`、`offload`、`hybrid` | 记录每个方案的可行性和淘汰原因 |
+| 输出结果 | `feasible_names`、`best_candidate`、`memory_saving_mb`、`throughput_ratio`、`decision` | 形成 `accept / tune / reject`，并给出下一步动作 |
 
+预算条件针对目标设备的可用显存，而不是显卡标称容量。模型、数据、dtype、batch、seq_len、训练步数和评测方式共同构成比较口径；其中任何一项改变，都应先重新运行 73 / 76，再让 75 读取新的报告。
 
-- 固定模型、数据、batch size、seq len、训练步数、评测指标和质量下限，保证后面的候选策略比较都在同一口径下进行。
-- 明确显存预算，例如单卡可用显存上限、最低可接受吞吐和最大允许的 val loss 退化；预算对应的是目标硬件的可用空间，不是理论显存下界。
-- 把候选策略先写清楚，例如 baseline、checkpoint、offload 或 batch 压缩，并标记它们分别是在减少 activation 驻留、转移存储位置，还是减少一次处理的 token 数。
-- 这一步的目标不是立刻选策略，而是先把“什么叫压缩成功”定义清楚。
+| 这一步先回答 | 不在这一步回答 |
+|:---|:---|
+| 当前 workload 的预算边界是什么；哪些指标会让候选被淘汰 | 哪个 kernel 更快、真实 OOM 边界在哪里、换一张 GPU 后 step time 是否相同 |
+
+因此，Step 1 的产物是“可执行的预算条件 + 明确的输入报告”，不是新的显存实测。
+
+![75 显存预算决策流程](../public/02_PyTorch_Algorithms/75_budget_decision_flow.svg)
+<div align="center"><strong>75 读取 GPU 实测结果，在 CPU 上执行预算筛选。</strong></div>
 
 ### Step 2: 区分实测证据与容量规划
 75 支持两种模式：`measured` 读取 76 在目标硬件上的真实 benchmark；`projected` 只根据账本和硬件预算做规划，不能证明吞吐、kernel 或 OOM 边界。换 GPU、模型、dtype、数据或 seq_len 后，必须重新运行 73 / 76。
@@ -90,8 +95,11 @@
 - 项目结论建议统一成 `accept / tune / reject`。
 - 输出最小报告时，至少包含预算口径、候选策略、核心指标差异、每个候选的淘汰原因和下一轮动作。
 - 若进入 `tune`，下一轮优先回调 batch、checkpoint 颗粒度、offload 范围或通信方式，而不是一次性叠加更多优化手段。
-- 最后运行预算敏感性：分别改变显存上限、吞吐下限和质量阈值，观察可行集合与最佳候选是否稳定。只有在阈值附近仍保持同一结论，才可以称为较稳定的预算决策。
+- 最后运行预算敏感性：分别改变显存上限、吞吐下限和质量阈值，观察可行集合与最佳候选是否稳定。报告中的 `sensitivity_summary` 汇总各场景的决策、最佳候选和可行集合；只有在阈值附近仍保持同一结论，才可以称为较稳定的预算决策。
 - 如果目标硬件与 76 报告中的 GPU 不一致，报告只能作为迁移前参考；最终结论应标为 `needs_target_hardware_validation`。
+
+![75 预算敏感性流程](../public/02_PyTorch_Algorithms/75_sensitivity_flow.svg)
+<div align="center"><strong>只改变预算阈值，观察可行集合和决策是否稳定。</strong></div>
 
 #### 图解：19 / 42 / 73 / 76 如何收束到 75 显存预算压缩项目
 
@@ -392,7 +400,7 @@ def decide_memory_budget_project(summary: Dict[str, object]) -> Dict[str, object
 这些结果说明：9600 MiB 预算下，FP32 baseline 和 BF16 长序列方案分别呈现不同的容量边界；11200 MiB 预算下 BF16 可以运行 seq_len=1024，但 checkpoint 只带来约 27 MiB 的额外显存收益。因此 BF16 在这个 workload 下比 checkpoint 更直接地解决了容量问题，checkpoint 仍需通过更高 activation 压力或 profiling 进一步判断。受当前 12GB GPU 容量限制，本项目不能把更高 activation 主导场景的结论写成已验证事实。
 ## Step 6（可选）：读取 73 / 76 的真实实验结果
 
-先运行下面的“75 项目配置”代码块，再运行后面的结果代码。它读取 73 的训练 baseline 和 76 的策略 benchmark，把真实测量结果转换为显存预算项目的决策。若结果文件不存在，先完成 73 和 76 的真实 GPU 实验。本节不下载模型，也不需要 vLLM；环境准备请先查看[使用指南中的项目环境预检与安装说明](../docs/guide.md#项目环境预检与安装)。
+先运行下面的“75 项目配置”代码块，再运行后面的结果代码。它读取 73 的训练 baseline 和 76 的策略 benchmark，把真实测量结果转换为显存预算项目的决策。若结果文件不存在，先完成 73 和 76 的真实 GPU 实验。本节不下载模型，也不需要 vLLM；环境准备请先查看[使用指南中的项目环境预检与安装说明](../guide.md#项目环境预检与安装)。
 
 ### 75 项目配置
 
@@ -514,10 +522,30 @@ if RUN_REAL_PROJECT:
                     'best_candidate': sensitivity_summary['best_candidate'],
                     'decision': sensitivity_decision['decision'],
                 })
+    decision_counts = {}
+    best_candidate_counts = {}
+    feasible_sets = {}
+    for row in sensitivity:
+        decision = row['decision']
+        decision_counts[decision] = decision_counts.get(decision, 0) + 1
+        best_name = row['best_candidate'] or '<none>'
+        best_candidate_counts[best_name] = best_candidate_counts.get(best_name, 0) + 1
+        feasible_key = ','.join(row['feasible_names']) or '<none>'
+        feasible_sets[feasible_key] = feasible_sets.get(feasible_key, 0) + 1
+    sensitivity_summary = {
+        'scenario_count': len(sensitivity),
+        'decision_counts': decision_counts,
+        'best_candidate_counts': best_candidate_counts,
+        'feasible_set_counts': feasible_sets,
+        'best_candidate_stable': len(best_candidate_counts) == 1,
+        'feasible_set_stable': len(feasible_sets) == 1,
+        'decision_stable': len(decision_counts) == 1,
+        'interpretation': 'stable' if len(best_candidate_counts) == 1 and len(feasible_sets) == 1 else 'sensitive_to_thresholds',
+    }
     project_result = {
         'task': 'task3_training_memory_optimization',
         'stage': 'memory_budget_decision',
-        'source': str(RESULT_76_PATH),
+        'source': str(RESULT_76_PATH.relative_to(PROJECT_ROOT)),
         'budget': BUDGET,
         'quality_floor': quality_floor,
         'evidence_mode': EVIDENCE_MODE,
@@ -530,6 +558,7 @@ if RUN_REAL_PROJECT:
         'summary': summary,
         'decision': decision,
         'sensitivity': sensitivity,
+        'sensitivity_summary': sensitivity_summary,
     }
     source_config = raw.get('config', {})
     project_result['planning_context']['measured_hardware'] = source_config.get('device')
@@ -543,6 +572,7 @@ if RUN_REAL_PROJECT:
     print('\n预算敏感性：')
     for row in sensitivity:
         print(f"memory_cap={row['memory_cap_mb']:.0f} MB, throughput_floor={row['min_samples_per_s']:.1f}, feasible={row['feasible_names']}, decision={row['decision']}")
+    print('预算敏感性汇总：', sensitivity_summary)
 else:
     print('跳过真实项目决策：保持 CPU-first 模式。')
 

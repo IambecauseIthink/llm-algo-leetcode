@@ -21,15 +21,10 @@
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能从通信时间线读出 collective、等待时间和 overlap，再把热点映射到具体缓解动作。
 - [05. Communication Topologies | 通信拓扑](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
 - [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.md)
 - [46. Communication Profiling with NCCL | NCCL 通信剖析](./46_Communication_Profiling_with_NCCL.md)
-
-## 相关阅读
-
-**导语：** 学完通信热点判断后，下一步重点不是继续背 collective 名词，而是看这些热点与缓解动作怎样进入 benchmark 和 MoE 场景，确认“看到了瓶颈”是否真的能转成有效收益。
-- [79. Distributed Parallel Benchmark | 分布式并行基准](./79_Distributed_Parallel_Benchmark.md)
-- [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)
 
 ---
 
@@ -39,10 +34,14 @@
 - 不同 collective 的热点位置不一样，不能用一个结论覆盖全部场景。
 - 先知道通信慢在哪里，后面才有替换空间。
 
+![通信热点识别总览](../public/02_PyTorch_Algorithms/48_comm_hotspot_overview.svg)
+
 ### Step 2: 写清替换和缓解策略
 
 - 可能的动作包括改 collective、改 bucket、改 overlap 或改分组方式。
 - 这些策略要和热点类型一一对应，而不是泛化成“多做 overlap”。
+
+![通信热点到缓解动作](../public/02_PyTorch_Algorithms/48_mitigation_decision.svg)
 
 ### Step 3: 判断是否值得继续单页展开
 
@@ -186,3 +185,12 @@ TODO 1：`summarize_comm_hotspots` 先回答“最慢的是哪段 collective”�
 TODO 2：`choose_comm_mitigation` 负责把热点映射成最小可执行动作。这里故意不展开复杂参数搜索，而是先把 `all_to_all`、`all_reduce` 和其他 collective 的首选缓解方向固定下来。
 
 TODO 3：`recommend_comm_followup` 用来判断这条通信链路是否已经复杂到值得单独扩页。如果热点定位和缓解动作已经形成稳定判断框架，就说明它不再只是 profiling 注释，而是一页完整的通信分析主题。
+
+## 相关阅读
+
+完成 collective、等待时间和缓解动作的判断后，可以继续用 NCCL 工具和分布式 benchmark 验证热点是否真正转化为收益。
+
+- [NCCL 官方仓库](https://github.com/NVIDIA/nccl)
+- [NCCL Tests 官方仓库](https://github.com/NVIDIA/nccl-tests)
+- [79. Distributed Parallel Benchmark | 分布式并行基准](./79_Distributed_Parallel_Benchmark.md)
+- [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)

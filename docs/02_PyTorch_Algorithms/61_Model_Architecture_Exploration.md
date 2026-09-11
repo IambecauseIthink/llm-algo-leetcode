@@ -15,41 +15,46 @@
 
 本节承接第 05 节的 Decoder Layer 组合小项目，把“一个结构能否正确实现”推进为“候选结构是否值得继续投入”。先固定 baseline、训练预算和部署边界，再比较候选结构的参数量、吞吐、loss、显存和实现复杂度。最终输出一份结构差异表，并说明候选方案应接受、调整还是淘汰。
 
-**实验分层：** Step 1-5 是 CPU-first 的结构解析、参数账本和候选决策练习；其中的显存、步时和得分只能作为估算或演示输入，不能写成 GPU 实测。Step 6 是可选 GPU 扩展，用真实模型读取 config、检查模块并在固定 workload 下记录资源；只有同一硬件、同一数据和同一评测口径下的结果，才能支持真实结构结论。
+实验先在 CPU 上完成结构解析、参数账本和候选决策，再用可选 GPU 扩展读取真实模型 config、检查模块，并在固定 workload 下记录资源。
 
-**本节机制边界：** 重点覆盖结构字段、MHA/GQA/MQA、Attention/FFN/Norm/Embedding 参数组成，以及 LoRA target modules 与结构的关系；Sparse / Linear Attention 只作为候选结构登记，不在本节实现完整 kernel；LoRA 训练交付由 60、LoRA 变体由 63、数据质量由 64、QLoRA 由 65 承接。
+重点覆盖结构字段、MHA/GQA/MQA、Attention/FFN/Norm/Embedding 参数组成，以及 LoRA target modules 与结构的关系；Sparse / Linear Attention 在这里作为候选结构登记，完整训练交付、数据质量和 QLoRA 选型可继续连接到 60、64 和 65。
 
 **关键词：** `baseline`, `candidate`, `architecture`, `trade-off`, `delivery`
 
 ---
 ## 前置阅读
 
-**导语：** 先把模型结构、结构技巧和最小训练闭环理顺，再进入这个项目；本节默认你已经知道模块怎么搭，重点转向结构改动是否值得继续训练或部署。
+**导语：** 进入本项目前，先能读出 Decoder Layer 的模块组成和参数来源，再比较结构改动是否值得继续训练或部署。
 
 - [05. LLaMA3 Block Tutorial | LLaMA3 Block 教程](./05_LLaMA3_Block_Tutorial.md)
 - [08. Architecture Tricks | 架构技巧](./08_Architecture_Tricks.md)
 - [09. SFT Training Loop | SFT 训练循环](./09_SFT_Training_Loop.md)
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
 
-## 相关阅读
 
-**导语：** 做完架构验证后，最自然的下一步是继续把结构决策放进指令微调项目，或和参数高效微调路线做对比。
+### Step 1（项目设计）：明确问题与实验目的
 
-- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
-- [63. LoRA Variants Benchmark | LoRA 变体对比项目](./63_LoRA_Variants_Benchmark.md)
+本节默认你已经看过 Block、Attention 和最小训练循环；现在不要求你发明新模型，而是练习判断一个结构改动是否值得进入下一轮实验。先写一条可检验的问题，例如“把 MHA 改成 GQA，能否在不超过参数预算的前提下减少 KV 投影规模”。
 
----
-### Step 1（CPU 项目设计）: 定义架构探索目标
+建立一份实验卡：baseline 结构、候选改动、训练数据、batch、seq_len、优化器、步数和评测指标。CPU 阶段只比较结构账本和预先给出的指标，不把示例数字当作真实训练结果。
 
-- 固定 baseline 结构、训练数据、batch size、seq len、优化器和训练步数。
-- 明确候选结构只改哪些模块，例如 attention、norm、FFN 或残差路径。
-- 统一记录参数量、step time、peak memory、train loss、val loss 和推理稳定性。
+| 实验要素 | 本节怎么填写 | 作用 |
+|:---|:---|:---|
+| 研究变量 | MHA/GQA/MQA、`intermediate_size`、层数或 `tie_word_embeddings` 之一 | 说明这轮只研究什么变化 |
+| 固定条件 | 模型、数据、dtype、batch、seq_len、训练步数和评测口径 | 防止把多个变化混成一个结论 |
+| 观察指标 | 参数量、理论权重字节数；GPU 扩展再记录步时、峰值显存和任务质量 | 连接结构变化与资源/效果 |
+| 产物 | 结构 profile、组件账本、baseline/candidate 差分和下一步动作 | 让别人能复查选择 |
 
-### Step 2（CPU 项目设计）: 读取结构并建立组件账本
-先从 config 提取 hidden size、layer 数、Attention heads、KV heads、intermediate size 和 vocab size，再将参数拆成 embedding、attention、MLP、norm 和 lm_head。参数与权重大小是 CPU 理论估算，不等于 CUDA allocator 的 peak memory。
+![架构候选的受控比较](../public/02_PyTorch_Algorithms/61_architecture_experiment_flow.svg)
+<div align="center"><strong>架构候选的受控比较：</strong>先固定条件并建立账本，再用差分结果决定是否进入 GPU 验证。</div>
 
-### Step 3（CPU 项目设计）: 检查结构合法性与 LoRA 插入位置
-检查 head 数能否整除 hidden size、KV heads 是否能被 Attention heads 整除，并确认候选 target modules 在真实模型中确实存在。结构账本可以提示资源变化，但不能替代真实模型加载。
+### Step 2（项目设计）：固定 baseline 与比较条件
+
+读取 hidden size、layer 数、Attention heads、KV heads、intermediate size 和 vocab size，并把参数拆成 embedding、attention、MLP、norm、lm_head。对每个组件记录公式、参数量和 dtype 字节数；这样候选结构改变时，能指出变化来自哪一部分。账本是容量下界，不包含 activation、workspace 或 allocator reserved。
+
+### Step 3（项目设计）：确定机制、指标与候选方案
+
+用小字典模拟一个模型 config，检查正数约束、hidden size 与 head 数的整除关系，以及 KV heads 是否能被 Attention heads 整除。随后把 `q_proj`、`k_proj`、`v_proj`、`o_proj` 或 FFN 投影登记为候选 target modules，并报告缺失名称；这里只检查结构接口，不加载权重，也不实现新的 kernel。
 
 | 结构字段 | 影响的组件 | 账本中观察什么 | 仍需真实验证什么 |
 |:---|:---|:---|:---|
@@ -58,41 +63,30 @@
 | `num_hidden_layers` | Attention、FFN、Norm 的层数 | 组件参数随层数的变化 | 端到端步时、workspace 和峰值显存 |
 | `tie_word_embeddings` | Embedding 与 LM Head | 是否重复计算输出头参数 | 真实 checkpoint 是否共享权重 |
 
-### Step 4（CPU 项目设计）: baseline 必须先合法
+### Step 4（项目设计）：确定报告字段与证据来源
 
-架构验证必须先确认 baseline 稳定可比，不能直接跳到候选结构分数比较。
-- 如果 baseline 的 loss、显存或吞吐口径本身不稳定，后面的候选架构就没有解释空间。
-- 至少要先确认 baseline 的参数量、资源占用和核心指标是可复现的。
+把 baseline 当作参照物，而不是一行示例数字。检查它是否同时有 `params`、`memory_mb`、`step_time_ms`、`score` 和 `deploy_cost`，并确认每个字段的单位和方向已经约定。缺字段时报告问题，不替它补一个看似合理的 GPU 数字。
 
-### Step 5（CPU 项目设计）: 把收益和代价一起做差分
+只有 baseline 口径完整，candidate 的差分才有意义；真实 GPU 的峰值显存、吞吐和 kernel 行为留给可选扩展。
 
-架构改动必须用统一口径同时看效果和成本，不能只看最终 score。
-- 如果候选结构只是把分数提高一点点，却明显抬高参数量或显存，它通常只能进入 `tune`，而不是直接 `accept`。
-- 真正值得 adopt 的结构，应该能在统一预算下给出更强的综合表现。
+### Step 5（CPU）：实现架构账本与候选比较
 
-### Step 6（项目决策；GPU 扩展可选）: 输出项目交付结论
+对每个 candidate 统一计算 `candidate - baseline`：参数、显存、步时、得分和部署成本分别记录正负方向。再用参数预算、显存上限、步时增量和部署成本上限过滤候选。
 
-- 架构验证最终不是输出“哪个结构更好看”，而是输出是否值得进入后续训练或部署。
-- 项目结论建议统一成 `accept / tune / reject`。
-- 若进入 `tune`，下一轮优先回调改动模块范围、容量预算或验证指标，而不是盲目继续扩结构。
-#### 图解：04-13 如何收束到 61 架构验证
+这里的 `score` 只是可比较的项目输入，不等于模型能力结论。候选若只提高分数却超出资源或部署约束，应进入 `tune`；没有候选满足全部约束时，应保留失败原因。
+
+### Step 6（项目决策）：给出下一步动作
+
+把候选表、差分表和约束检查合成一条决策：`accept` 表示可以进入扩展评测，`tune` 表示要调整结构范围或预算，`reject` 表示当前证据下不值得继续。
+
+CPU 结论只能说明结构假设和账本是否自洽；若要声称真实吞吐、峰值显存或 kernel 收益，必须在同一模型、数据、dtype 和硬件上运行 GPU 对照。
+![架构项目的证据分流](../public/02_PyTorch_Algorithms/61_architecture_decision_flow.svg)
+<div align="center"><strong>架构项目的证据分流：</strong>Step 6 根据约束和证据等级决定进入扩展评测、调整变量，还是停止当前方案。</div>
 
 `61` 不重复实现基础模块，而是把前面几节已经讲过的组件收成一份可比较的结构验证报告。
 
-```text
-04 Attention      attention pattern / head grouping / masking
-      │
-05 Block          norm / attention / FFN / residual wiring
-      │
-08 Tricks         architecture-level efficiency constraints
-      │
-09 SFT            input_ids / labels / loss mask consistency
-      │
-13 E2E report     train loss / val loss / step time / memory
-      │
-      ▼
-61 Architecture   baseline vs candidate + parameter ledger + delivery decision
-```
+
+前面的 04、05、08、09、13 分别提供 Attention、Block、架构约束、训练输入和评测口径；Step 6 将这些信息收成 baseline/candidate 对照和交付决策。
 
 项目页最小产物：
 
@@ -117,10 +111,10 @@ from typing import Dict, List
 
 
 ```python
-# 7 个核心 TODO：结构解析、合法性、参数账本、baseline、候选摘要、差异对比、项目决策
+# 7 个连续的核心 TODO：从结构读取走到项目决策
 # 目标：把结构变体转成可检查、可比较的项目报告；CPU 数字是估算，不是 GPU 实测。
 # 这些 TODO 只改变结构字段或决策输入，不实现新的 Attention kernel，也不模拟真实 GPU 吞吐。
-# TODO 0: 从模型 config 提取结构字段
+# TODO 1：从模型 config 提取结构字段
 def extract_architecture_profile(config: Dict[str, object]) -> Dict[str, object]:
     """提取结构字段，并根据 Attention/KV heads 判断 MHA、GQA 或 MQA。
 
@@ -129,7 +123,7 @@ def extract_architecture_profile(config: Dict[str, object]) -> Dict[str, object]
     # 提示：num_key_value_heads 缺省时按 num_attention_heads 处理。
     # num_attention_heads = ???；num_key_value_heads = ???；head_dim = ???；attention_type = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
-# TODO 0.5: 检查结构字段和 Attention 头数是否合法
+# TODO 2：检查结构字段和 Attention 头数是否合法
 def validate_architecture_profile(profile: Dict[str, object]) -> Dict[str, object]:
     """检查字段完整性、正数约束和两组 head 的整除关系。
 
@@ -139,7 +133,7 @@ def validate_architecture_profile(profile: Dict[str, object]) -> Dict[str, objec
     #       num_attention_heads % num_key_value_heads == 0。
     # required_keys = ???；issues = ???；ready = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
-# TODO 0.75: 建立组件级参数与理论权重账本
+# TODO 3：建立组件级参数与理论权重账本
 def build_architecture_parameter_ledger(profile: Dict[str, object], dtype_bytes: int = 2) -> Dict[str, object]:
     """拆分 Embedding、Attention、MLP、Norm 和 lm_head 的理论账本。
 
@@ -149,7 +143,7 @@ def build_architecture_parameter_ledger(profile: Dict[str, object], dtype_bytes:
     # component_params = ???；weight_bytes = ???；total_bytes = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
-# TODO 1: 检查 baseline 口径是否合法
+# TODO 4：检查 baseline 口径是否合法
 
 def validate_architecture_baseline(baseline: Dict[str, object]) -> Dict[str, object]:
     """检查 baseline 的参数、资源、得分和部署成本字段。
@@ -160,7 +154,7 @@ def validate_architecture_baseline(baseline: Dict[str, object]) -> Dict[str, obj
     # required_keys = ???；missing_keys = ???；issues = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
-# TODO 2: 汇总候选摘要
+# TODO 5：汇总候选摘要
 def summarize_architecture_candidates(candidates: List[Dict[str, object]], baseline_params: int) -> Dict[str, object]:
     """汇总候选数量、参数变化和可比较的候选名称。
 
@@ -170,7 +164,7 @@ def summarize_architecture_candidates(candidates: List[Dict[str, object]], basel
     # valid_candidates = ???；invalid_names = ???；summaries = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
-# TODO 3: 计算 baseline 和 candidate 的差分
+# TODO 6：计算 baseline 和 candidate 的差分
 def compare_architecture_pair(baseline: Dict[str, object], candidate: Dict[str, object]) -> Dict[str, object]:
     """计算 candidate 相对 baseline 的参数、资源、得分和部署成本差分。
 
@@ -180,7 +174,7 @@ def compare_architecture_pair(baseline: Dict[str, object], candidate: Dict[str, 
     # params_delta = ???；memory_delta = ???；score_delta = ???；deploy_delta = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
-# TODO 4: 输出项目推荐结论
+# TODO 7：输出项目推荐结论
 def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, object]], param_budget: int, max_deploy_delta: float, max_memory_delta_mb: int = 0, max_step_time_delta_ms: float = 0.0) -> Dict[str, object]:
     """按参数、部署成本、显存和步时约束输出 accept/tune/reject。
 
@@ -481,36 +475,36 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
 
 这一页保留 `7` 个核心 TODO：结构解析、结构合法性、组件参数账本、baseline 校验、候选摘要、差异对比和项目决策。前三个 TODO 把架构字段变成可检查的 CPU 理论账本，后四个 TODO 负责候选比较；它刻意保持轻量，避免把架构验证写成第二个完整训练交付页。
 
-**1. TODO 0：提取结构 profile**
+**1. TODO 1：提取结构 profile**
 - **实现方式**：从 config 读取层数、Hidden Size、Attention Heads、KV Heads、FFN 宽度和词表大小，并计算 `head_dim` 与 MHA/GQA/MQA 类型。
 - **边界**：缺省 `num_key_value_heads` 时按 MHA 处理；这是常见 Decoder-only config 的兼容约定，不是对所有模型格式的保证。
 
-**2. TODO 0.5：检查结构合法性**
+**2. TODO 2：检查结构合法性**
 - **实现方式**：检查维度为正、Hidden Size 能被 Attention Heads 整除、Attention Heads 能被 KV Heads 整除。
 - **边界**：检查通过不代表权重、模型实现或 kernel 一定可运行。
 
-**3. TODO 0.75：建立组件参数账本**
+**3. TODO 3：建立组件参数账本**
 - **实现方式**：按 Embedding、Attention、MLP、Norm 和 LM Head 分项统计参数，并按 `dtype_bytes` 给出理论权重大小。
 - **边界**：账本按 Qwen/LLaMA 类无 bias 投影、SwiGLU 三个 FFN 投影估算；没有包含 RoPE、activation、optimizer state、CUDA workspace、allocator reserved 和通信开销。遇到其他结构应先核对实现，再使用账本。
 
 **4-7. 其余 TODO**
 
-**4. TODO 1: 检查 baseline 口径是否合法**
+**4. TODO 4：检查 baseline 口径是否合法**
 - **实现方式**：检查 `params`、`memory_mb`、`step_time_ms`、`score`、`deploy_cost` 是否齐全，并把缺失或非法字段收进 `issues`。
 - **关键点**：baseline 不可信时，不应该直接进入 candidate 比较；这是项目闭环的第一道闸门。
 - **项目意义**：这一步把“baseline 必须先合法”真正落到代码层，而不是只停在正文里。
 
-**5. TODO 2: 汇总候选摘要**
+**5. TODO 5：汇总候选摘要**
 - **实现方式**：统计候选数量、候选名称、最佳候选、参数差分和改动模块并集。
 - **关键点**：这里先按 score 最高记录最佳候选，目的是生成候选面貌，不在这一步直接做项目结论。
 - **项目意义**：这一步让架构变体先变成可比较的候选池，而不是零散改动点列表。
 
-**6. TODO 3: 计算 baseline 和 candidate 的差分**
+**6. TODO 6：计算 baseline 和 candidate 的差分**
 - **实现方式**：统一计算 `param / memory / step time / score / deploy` 的 delta。
 - **关键点**：差分要保持同一口径，后面的项目决策才能同时看效果、资源和部署成本。
 - **项目意义**：这一步把“结构改了什么”推进到“这次改动值不值得继续验证”。
 
-**7. TODO 4: 输出项目推荐结论**
+**7. TODO 7：输出项目推荐结论**
 - **实现方式**：先校验 baseline，再按参数预算、显存、step time 和部署边界输出 `accept / tune / reject`。
 - **关键点**：`accept` 要求收益与边界同时达标；只要 score 提升但资源或部署边界仍偏高，就更适合 `tune`。
 - **项目意义**：这一步让页面真正回答“这次架构改动值不值得继续采用”，而不是只做候选排序。
@@ -547,3 +541,12 @@ if RUN_PROJECT_EXPORT:
     save_project_report(PROJECT_RESULT_PATH, PROJECT_REPORT)
 
 ```
+
+## 相关阅读
+
+完成结构字段、参数账本和候选决策后，可以继续阅读真实模型配置与架构实现，再进入微调项目比较结构改动的代价。
+
+- [LLaMA 原论文：LLaMA](https://arxiv.org/abs/2302.13971)
+- [Hugging Face Transformers 官方仓库](https://github.com/huggingface/transformers)
+- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
+- [63. LoRA Variants Benchmark | LoRA 变体对比项目](./63_LoRA_Variants_Benchmark.md)

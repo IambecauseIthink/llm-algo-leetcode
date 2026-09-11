@@ -15,7 +15,7 @@
 
 显存优化里最容易被忽略的一步，不是再找一个新技巧，而是先决定预算不够时到底该先裁什么。很多训练任务不是因为完全没有优化手段而跑不通，而是因为峰值来源没分清、预算余量没留够、裁剪顺序写得不够明确，最后在 checkpoint、offload、batch size 和模型规模之间来回试错。
 
-这是一节**机制判断节**：在 `42-45` 这条显存主线里，`42` 讲激活搬运这种动作手段，`43` 讲统一预算与常驻/峰值边界，`44` 讲搜索与调优框架，而 `45` 负责把这些信息收束成一份可执行的 `cut order`。学完后，你应该能先判断峰值来自哪里、预算要留多少 `headroom`，以及当资源不够时该按什么顺序裁剪，避免把显存优化做成无序试错。
+本节把前面的显存账本、统一预算和候选评分收束成一份可执行的 `cut order`。学完后，你应该能判断峰值来自哪里、预算要留多少 `headroom`，以及资源不足时应按什么顺序调整 activation、临时 buffer、batch size 或模型规模。
 
 **关键词：** `peak memory`, `buffer`, `headroom`, `cut order`
 
@@ -23,17 +23,10 @@
 
 ## 前置阅读
 
-**导语：** 这一节承接显存账本、激活裁剪和运行时预算三条线：先知道峰值来自哪里，再回来看预算不够时到底该先裁什么。
+**导语：** 进入本节前，先能从显存账本识别峰值来源，并能读出运行时预算，再决定哪一类对象应当优先调整。
 - [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
 - [19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](./19_Activation_Checkpointing_and_Activation_Offload.md)
 - [43. Unified Memory Management | 统一内存管理](./43_Unified_Memory_Management.md)
-
-## 相关阅读
-
-**导语：** 学完显存裁剪规划后，下一步重点是看这套 `cut order` 怎样回到真实瓶颈分析和预算压缩验证里，确认裁剪顺序是否真的能转成稳定收益。
-- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)
-- [74. Profiling Driven End-to-End Optimization | profiling 驱动优化项目](./74_Profiling_Driven_End_to_End_Optimization.md)
-- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)
 
 ---
 
@@ -42,6 +35,8 @@
 - 区分参数、激活、KV cache 和临时缓冲的峰值贡献。
 - 不要只看总显存，要看峰值是否集中在少数阶段。
 - 只有峰值来源清楚，裁剪顺序才可能合理。
+
+![显存裁剪规划总览](../public/02_PyTorch_Algorithms/45_memory_cut_overview.svg)
 
 ### Step 2: 明确预算留边和裁剪顺序
 
@@ -52,6 +47,8 @@
 ### Step 3: 输出是否值得继续单独展开
 
 - 如果峰值来源和裁剪顺序已经复杂到影响多个页面，就值得升级成专门的显存专题补页。
+
+![显存裁剪动作的选择](../public/02_PyTorch_Algorithms/45_cut_decision_matrix.svg)
 
 ### Step 4: 动手实战
 
@@ -207,3 +204,13 @@ TODO 1：`summarize_peak_sources` 先把“谁在制造最大峰值”说清楚�
 TODO 2：`plan_memory_cuts` 把“显存不够”从一句模糊结论变成可执行顺序。这里先筛出可裁剪组件，再按峰值贡献从大到小尝试裁剪，只把真正执行过的步骤写进 `cut_order`，并估计裁剪后的剩余峰值。
 
 TODO 3：`recommend_memory_followup` 负责判断这条显存链路是否已经复杂到值得独立扩页。如果已经形成稳定的峰值来源判断和裁剪顺序，就说明它不再只是零散备注，而是一页完整的显存规划主题。
+
+## 相关阅读
+
+完成 `cut order` 后，可以把裁剪顺序带回真实瓶颈分析和预算压缩项目，检查它是否转化为稳定收益。
+
+- [PyTorch CUDA 内存管理文档](https://pytorch.org/docs/stable/notes/cuda.html#cuda-memory-management)
+- [PagedAttention 原论文：Efficient Memory Management for Large Language Model Serving](https://arxiv.org/abs/2309.06180)
+- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)
+- [74. Profiling Driven End-to-End Optimization | profiling 驱动优化项目](./74_Profiling_Driven_End_to_End_Optimization.md)
+- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)

@@ -16,6 +16,7 @@
 
 本节要求你在统一 workload 下比较 ZeRO、Pipeline Parallelism 和 Tensor Parallelism。先明确模型规模、显存上限与吞吐目标，再记录各方案的显存、吞吐、延迟、通信量和 pipeline bubble。最终输出并行策略选择，并说明结论受哪些模型和硬件条件限制。
 **层级定位：** 本项目主落在 L3 分布式运行时，依赖 L2 的 NCCL 等通信库和 L1 的互联拓扑；集群资源申请、作业排队和跨团队资源治理属于 L5，不由本 benchmark 单独证明。
+**主责与复用边界：** 本项目主责是参数、梯度和 optimizer state 的切分、通信与扩展效率；显存优化路线复用各 rank 的显存分摊，性能分析专题复用通信等待和 trace 口径，推理服务的副本路由不在本项目内验证。
 
 **关键词：** `distributed training`, `benchmark`, `parallelism`
 
@@ -31,7 +32,7 @@
 
 ## 相关阅读
 
-**导语：** 做完并行策略 benchmark 后，最自然的下一步是继续看 MoE 专家并行，或回到端到端优化闭环验证策略是否真的成立。
+**导语：** 完成并行策略 benchmark 后，用 80 继续检查 MoE 专家并行的通信与负载均衡；如果需要验证端到端收益，再交给 74 做 profiling 闭环。
 - [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)
 - [74. Profiling-Driven End-to-End Optimization | 端到端 profiling 优化](./74_Profiling_Driven_End_to_End_Optimization.md)
 
@@ -87,6 +88,7 @@ import time
 
 ```python
 def benchmark_fn(fn, warmup=2, iters=5):
+    """null"""
     # ==========================================
     # TODO 1: 先做 warmup，再测量平均耗时
     # 提示: 用 time.perf_counter() 记录起止时间
@@ -104,6 +106,7 @@ def benchmark_fn(fn, warmup=2, iters=5):
 
 
 def summarize_parallel_result(base_metrics, parallel_metrics):
+    """null"""
     # ==========================================
     # TODO 2: 汇总 baseline / parallel 的核心指标差异
     # 提示: memory / latency / communication 越低越好，throughput 越高越好
@@ -128,6 +131,7 @@ def summarize_parallel_result(base_metrics, parallel_metrics):
 
 
 def format_parallel_report(strategy_name, summary, recommendation):
+    """null"""
     # ==========================================
     # TODO 3: 生成并行策略选型报告
     # 提示: 把策略名、核心指标变化和推荐结论放在一起

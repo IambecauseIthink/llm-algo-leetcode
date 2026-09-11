@@ -20,6 +20,8 @@
 
 **关键词：** `quantization`, `inference`, `deployment`
 
+![量化推理部署决策流程](/02_PyTorch_Algorithms/67_quantized_deployment_flow.svg)
+
 ---
 
 ## 前置阅读
@@ -32,21 +34,14 @@
 
 ## 相关阅读
 
-**导语：** 完成量化部署选型后，可以继续看 profiling 是否解释了收益来源，或者把部署结论推进到真实 serving 链路。
+**导语：** 完成量化部署选型后，用 74 检查收益是否有 profiler 证据；如果需要观察请求级行为，再进入 70 的 serving 调度基准。
 - [74. Profiling-Driven End-to-End Optimization | profiling 驱动的端到端优化](./74_Profiling_Driven_End_to_End_Optimization.md)
 - [70. Serving Scheduler Benchmark | 推理服务调度基准](./70_Serving_Scheduler_Benchmark.md)
 
 ### Step 1: 定义量化部署项目目标
-先回答一个问题：这次量化是为了解决显存、吞吐、延迟，还是部署成本？
+先固定模型、tokenizer、workload、硬件和 backend，再只改变量化 artifact 或量化格式。实验目标由显存、速度、质量和兼容性四类指标共同决定；低 bit 本身不是部署结论。
 
-先固定量化对象、格式、校准数据和 backend；CPU 只验证机制，GPU 才验证部署收益。
-
-- 固定模型、输入集、batch size、seq len、解码策略、硬件环境和推理后端。
-- 0.5B 用于 smoke，1.5B 用于真实 GPU 量化；两档结果分开记录。
-- 明确权重/激活对象、量化粒度和部署约束，并分开记录 calibration 与 evaluation。
-- 这一步的目标是先定义“可部署”的标准，而不是只追求更低 bit 数。
-
-先按 66 的方式划分实验组，再决定是否进入真实量化：
+先按 66 的 G0/G1/G2 方式划分实验组：
 
 | 组别 | 环境 | 实验内容 | 主要回答的问题 |
 |---|---|---|---|
@@ -56,11 +51,7 @@
 | G1 真实量化 | GPU/backend | 只改变一种量化格式或 artifact | 量化是否真的降低显存或延迟？ |
 | G2 格式/backend 对照 | GPU/backend | 比较多个已确认支持的格式或 backend | 收益是否来自量化本身且值得迁移？ |
 
-C0/C1 是本节必做的 CPU-first 主线；G0/G1 需要真实 GPU 和量化 artifact；G2 是可选扩展。没有真实 artifact 时，G1 只能停留在部署配置检查，不能填写量化收益数字。
-
-量化机制与实验变量的对应关系如下：权重量化主要影响模型存储和显存，激活量化还会影响运行时 kernel，GPTQ/AWQ 需要校准数据，量化 backend 决定实际执行路径。不要把 dtype、量化 bit 数和 backend 当成同一个变量同时修改。
-
-本项目把三类候选分开处理：GPTQ 是校准后权重 artifact，重点观察误差补偿、group size 和 backend kernel；AWQ 是激活感知权重 artifact，重点观察校准集、敏感通道保护和执行路径；GGUF 是文件格式与部署生态，重点观察格式是否被目标引擎加载，以及 CPU/GPU 混合执行和量化层支持。三者不能只按文件大小排序，也不能用一种 backend 的结果代表另外两种格式。
+C0/C1 是 CPU-first 主线；G0/G1 需要真实 GPU 和量化 artifact；G2 是可选扩展。没有真实 artifact 时，G1 只能报告链路检查，不能填写量化收益。量化 bit、dtype 和 backend 必须作为不同变量记录。
 
 | 候选 | 本项目要验证的机制 | 最小真实证据 |
 |---|---|---|
@@ -70,27 +61,38 @@ C0/C1 是本节必做的 CPU-first 主线；G0/G1 需要真实 GPU 和量化 art
 
 ### Step 2: 先确认 baseline 与量化口径合法
 
-先跑通 FP16/BF16 baseline，再在相同模型、tokenizer、workload、batch、并发、cache policy 和硬件下只改变量化 artifact。
+先跑通 FP16/BF16 baseline，再只替换量化 artifact 或量化格式。下面的表格用于检查两组实验是否真的同口径：
 
-- 记录量化格式、粒度、校准数据与版本；只修改推理 dtype 不算量化实验。
-- baseline 与 candidate 使用同一组延迟、吞吐、显存和输出质量指标。
-- GPTQ/AWQ 等校准方法还要记录 split、样本数和最大长度。
+| 条件 | G0 baseline | G1/G2 candidate |
+|---|---|---|
+| 模型与 tokenizer | 固定版本 | 与 G0 相同 |
+| workload | prompt、生成长度、batch、并发、cache policy | 与 G0 相同 |
+| 运行环境 | GPU、driver、PyTorch/CUDA、backend 版本 | 尽量相同 |
+| 唯一变量 | FP16/BF16 浮点权重 | 量化 artifact、格式或明确 backend |
+| 校准记录 | 不适用 | split、样本数、最大长度、版本 |
 
 ### Step 3: 用统一口径比较收益与代价
 
-同时比较性能、显存、数值误差和任务质量，避免只凭低 bit 或单项速度下结论。
+同时比较性能、显存、数值误差和任务质量；每个指标都要能追溯到同一组 workload 和结果文件。
 
-- latency / throughput 解释速度，peak VRAM 解释容量，error / task metric 解释质量。
-- 量化收益必须结合 batch、并发和 backend；压缩比不能代替真实显存峰值。
-- 任何指标改善都不能替代量化格式和 kernel 支持证据。
+| 指标组 | 记录字段 | 用来回答什么 |
+|---|---|---|
+| 性能 | latency / TTFT / TPOT / throughput | 是否更快，是否适合当前请求负载 |
+| 容量 | peak VRAM / load status | 是否装得下，是否提高并发或上下文上限 |
+| 质量 | error / task metric | 量化误差是否超过预算 |
+| 兼容性 | format / kernel evidence / backend version | 收益是否来自可复核的执行路径 |
 
 ### Step 4: 输出部署选型结论
 
-按性能、容量、质量和兼容性约束输出 accept / tune / reject。
+按质量门槛、兼容性和性能收益输出 accept / tune / reject：
 
-- 报告保留量化格式、粒度、校准信息、backend、硬件和完整 workload。
-- 未加载真实量化权重、未确认 kernel 或格式不支持时，只能报告链路检查，不能判定可部署。
-- tune 记录下一步是扩大回归、调整校准、改变粒度还是切换 backend。
+| 决策 | 条件 | 下一步 |
+|---|---|---|
+| accept | 真实 artifact 加载成功、kernel/格式已确认、质量达标且性能或容量有收益 | 保留配置并扩大 workload 回归 |
+| tune | 质量达标但收益不稳定，或校准、粒度、backend 仍需调整 | 补采数据或调整单一变量 |
+| reject | 质量超预算、无法加载、kernel 不支持或没有可接受收益 | 更换格式、backend 或回到 baseline |
+
+报告必须保留量化格式、粒度、校准信息、backend、硬件和完整 workload；没有真实加载和 kernel 证据时，只能报告链路检查。
 
 ### Step 5：CPU 实验——量化账本与误差机制
 
@@ -490,6 +492,8 @@ def recommend_quantized_deployment(summary, min_latency_delta_ms=5.0, min_throug
 
 ### Step 6（可选）：GPU/backend 实验——真实量化部署
 
+![GPU 量化实验流程](/02_PyTorch_Algorithms/67_quantized_gpu_experiment_flow.svg)
+
 **实验条件表**
 
 | 项目 | G0 baseline | G1 量化候选 | G2 格式/backend 对照 |
@@ -506,13 +510,15 @@ def recommend_quantized_deployment(summary, min_latency_delta_ms=5.0, min_throug
 | G0 | FP16/BF16 | 固定 | 固定 | 待采集 | 待采集 | 待采集 | 参考输出 | 成功/待确认 | 待判断 |
 | G1 | 真实量化格式 | 与 G0 相同 | 与 G0 相同 | 待采集 | 待采集 | 待采集 | 待采集 | 成功/待确认 | 待判断 |
 
+**执行顺序**：先运行 G0，确认浮点模型、backend 和固定 workload 能正常完成；再只替换量化 artifact 或量化启动参数运行 G1；最后把另一种格式或另一种 backend 作为 G2 单独重跑。每一组都要保留 `load_status`、`format`、`kernel_evidence`、`TTFT/latency`、`throughput`、`peak_vram` 和 `quality`，然后再生成 `accept / tune / reject`。
+
 **证据边界**：CPU 模拟只能支持存储量和误差机制结论。只有真实量化权重被 backend 加载、目标 kernel 或格式得到确认，并在相同 workload 下测量延迟、吞吐、显存和质量，才能支持量化部署收益结论。
 
 本节推荐的真实 GPU 数据口径是：Qwen2.5-1.5B-Instruct，WikiText-2 train 子集用于 calibration，validation 子集用于评估；0.5B 仅作为快速 smoke 档。
 数据准备单元只下载独立 split 并保存口径清单；当前的长度限制是字符级近似，真正执行 GPTQ/AWQ 前必须使用目标 tokenizer 重新截断和打包。
-按 66 的统一分组执行：G0 是浮点 baseline，G1 是单一真实量化格式，G2 才比较不同量化格式或 backend。推荐把 GPTQ、AWQ、GGUF 分别作为独立 G1 运行；只有它们都通过加载和 workload 校验后，才进入 G2 对照。只有真正加载量化权重或量化启动参数，才可记录量化收益；服务启动成功本身不等于量化收益成立。
+按 66 的统一分组执行：先固定模型、tokenizer、workload、backend 和硬件，运行 G0 浮点 baseline；再只替换一份真实量化 artifact，运行 G1；最后才把 GPTQ、AWQ、GGUF 或不同 backend 分别作为 G2 对照。G0 与 G1 必须写入同一份配对报告，至少包含加载状态、格式、kernel 证据、延迟、吞吐、峰值显存和质量字段。只有真正加载量化权重或量化启动参数，才可记录量化收益；服务启动成功本身不等于量化收益成立。GGUF 继续使用独立 backend 路径，不与 vLLM 的 GPTQ/AWQ 启动参数混写。
 
-默认保持 Practice-P1 的本地/模拟量化实验；需要接入 backend 时，将 `RUN_REAL_BACKEND` 改为 `True`。模型来源支持 `auto`、`modelscope`、`huggingface` 或本地目录，dtype 与端口由共享 helper 自动选择。当前 helper 尚未把 `QUANTIZATION_FORMAT` 转换为 GPTQ/AWQ/GGUF 专用启动参数，因此检测到真实量化格式时会主动停止；不同格式必须先接入对应 backend，不能把 artifact 加载成功等同于量化收益成立。
+默认保持 Practice-P1 的本地/模拟量化实验；需要接入 backend 时，将 `RUN_REAL_BACKEND` 改为 `True`。模型来源支持 `auto`、`modelscope`、`huggingface` 或本地目录，dtype 与端口由共享 helper 自动选择。当前 vLLM 路径会依次启动 G0 和 G1，并把两个结果合并保存；G2 需要修改 `QUANTIZATION_FORMAT` 或 backend 后另行运行。若目标格式或 backend 尚未接入专用启动参数，入口会主动停止，不能把 artifact 加载成功等同于量化收益成立。
 
 Colab / ModelScope：先确保 Notebook 位于仓库根目录（或先 clone 仓库），再运行下面单元；没有 GPU 时保留 `False`，不会阻断前面的 CPU-first 练习。
 
@@ -559,6 +565,7 @@ EVAL_DATASET = 'wikitext'  # 与 calibration 分开的评估数据集名称。
 EVAL_SPLIT = 'validation'  # 评估使用独立 split。
 EVAL_SAMPLES = 128  # 先做固定小样本 perplexity/质量评估。
 QUANTIZATION_ARTIFACT = None  # 真实量化权重或目录；None 时不能宣称量化收益。
+KERNEL_EVIDENCE = 'pending_manual_confirmation'  # backend 启动不等于目标量化 kernel 已确认。
 BATCH_SIZE = 1  # baseline 与量化候选必须保持一致。
 CONCURRENCY = 1  # 只在单独的并发实验中修改。
 NUM_PROMPTS = 5  # smoke 请求数；正式实验应扩大并重复。
@@ -574,6 +581,7 @@ project_config = shared_project_config(
     model=MODEL_ID, backend=BACKEND, dtype=DTYPE,
     quantization_format=QUANTIZATION_FORMAT, quantization_backend=QUANTIZATION_BACKEND,
     quantization_artifact=QUANTIZATION_ARTIFACT,
+    kernel_evidence=KERNEL_EVIDENCE,
     calibration_split=CALIBRATION_SPLIT, calibration_samples=CALIBRATION_SAMPLES,
     calibration_max_length=CALIBRATION_MAX_LENGTH, eval_dataset=EVAL_DATASET,
     eval_split=EVAL_SPLIT, eval_samples=EVAL_SAMPLES,
@@ -709,25 +717,83 @@ if RUN_REAL_BACKEND and QUANTIZATION_FORMAT == 'gguf':
     finally:
         stop_optional_vllm(server, log_path)
 
-if RUN_REAL_BACKEND and QUANTIZATION_FORMAT != 'gguf':
-    serving_model = QUANTIZATION_ARTIFACT or MODEL_ID
-    serving_source = 'local' if QUANTIZATION_ARTIFACT else MODEL_SOURCE
+def run_vllm_candidate(label, model_id, model_source, quantization_args, output_path):
+    """启动一个候选、运行固定 workload，并返回可与另一候选配对的报告。
+
+    G0 与 G1 只允许改变模型 artifact / 量化启动参数；服务名、dtype、
+    上下文长度和请求配置沿用同一组配置。函数不把服务启动成功解释为
+    量化收益，kernel 和任务质量仍需在报告中单独确认。
+    """
     server, log_path, port, selected_dtype, model_path = start_optional_vllm(
-        model_id=serving_model, model_source=serving_source, dtype=DTYPE,
-        max_model_len=MAX_MODEL_LEN,
-        served_model_name=MODEL_ID,
-        quantization_args=QUANTIZATION_LAUNCH_ARGS,
+        model_id=model_id, model_source=model_source, dtype=DTYPE,
+        max_model_len=MAX_MODEL_LEN, served_model_name=MODEL_ID,
+        quantization_args=quantization_args,
     )
     try:
         report = run_backend_benchmark(
             project='67', base_url=f'http://127.0.0.1:{port}', model=MODEL_ID,
-            label='vllm-deployment-smoke', output=RESULT_PATH,
+            label=label, output=output_path, backend=BACKEND,
             dtype=selected_dtype, cache_policy=CACHE_POLICY,
             batch=BATCH_SIZE, concurrency=CONCURRENCY, num_prompts=NUM_PROMPTS,
             max_tokens=MAX_TOKENS, warmup=WARMUP,
         )
-        print({'model_path': model_path, 'dtype': selected_dtype, 'port': port})
-        print(report['normalized_result'])
+        return {
+            'label': label, 'model_path': str(model_path),
+            'dtype': selected_dtype, 'port': port,
+            'report_path': str(output_path),
+            'load_status': 'backend_started_and_benchmark_completed',
+            'kernel_evidence': KERNEL_EVIDENCE,
+            'normalized_result': report.get('normalized_result', report),
+        }
     finally:
         stop_optional_vllm(server, log_path)
+
+
+if RUN_REAL_BACKEND and QUANTIZATION_FORMAT != 'gguf':
+    if BACKEND != 'vllm':
+        raise RuntimeError('当前 G0/G1 自动配对入口使用 vLLM；SGLang 请沿用独立 backend 入口并保持相同报告字段。')
+    if QUANTIZATION_FORMAT == 'none':
+        raise ValueError('配对实验需要 QUANTIZATION_FORMAT=gptq 或 awq；none 只运行 CPU/配置检查。')
+
+    result_root = Path(RESULT_PATH)
+    baseline_path = result_root.with_name(f'{result_root.stem}_g0_baseline.json')
+    candidate_path = result_root.with_name(f'{result_root.stem}_g1_{QUANTIZATION_FORMAT}.json')
+    baseline = run_vllm_candidate(
+        'g0-float-baseline', MODEL_ID, MODEL_SOURCE, None, baseline_path,
+    )
+    candidate = run_vllm_candidate(
+        f'g1-{QUANTIZATION_FORMAT}', QUANTIZATION_ARTIFACT, 'local',
+        QUANTIZATION_LAUNCH_ARGS, candidate_path,
+    )
+    paired_result = {
+        'schema_version': 'quantized-inference-project/v1',
+        'project': '67_quantized_inference_and_deployment',
+        'stage': 'matched_backend_measurement',
+        'config': project_config,
+        'comparison': {
+            'fixed': ['model_tokenizer', 'workload', 'backend', 'hardware', 'dtype_policy', 'cache_policy'],
+            'changed': ['quantization_artifact', 'quantization_format', 'quantization_launch_args'],
+        },
+        'baseline': baseline,
+        'candidate': candidate,
+        'quality': {
+            'status': 'pending_task_evaluation',
+            'note': 'backend benchmark 已完成；需补充相同输入的输出质量或 perplexity 后才能判定部署接受。',
+        },
+        'evidence_checks': {
+            'baseline_and_candidate_backend_started': True,
+            'quantization_format_metadata': ARTIFACT_INSPECTION.get('status'),
+            'kernel_evidence': KERNEL_EVIDENCE,
+            'task_quality': 'pending',
+        },
+        'decision': {
+            'decision': 'tune',
+            'reason': 'G0/G1 已完成同口径 backend 测量，但质量与 kernel 证据仍需人工核对。',
+            'next_action': 'verify_kernel_and_task_quality_then_compare_metrics',
+        },
+        'evidence_level': 'matched_backend_measurement_pending_quality',
+    }
+    result_root.parent.mkdir(parents=True, exist_ok=True)
+    result_root.write_text(json.dumps(paired_result, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(json.dumps(paired_result, ensure_ascii=False, indent=2))
 ```

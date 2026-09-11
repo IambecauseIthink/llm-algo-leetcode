@@ -13,9 +13,9 @@
 
 ## 本节导读
 
-自回归生成最朴素的路径是“一次生成一个 token”：模型前向一次、更新一次 KV Cache、再进入下一轮解码。这个流程清晰但开销很碎，尤其在长输出场景中，很多时间会消耗在反复进入 decoder、频繁调度 kernel 和维护 cache 状态上。
+自回归生成最朴素的路径是“一次生成一个 token”：每轮推进一次状态，再进入下一轮解码。输出越长，解码轮数越多，单轮推进量就越值得关注。
 
-本节关注一个更激进的方向：能不能在一次解码步里先提出多个候选 token，再用验证规则决定哪些可以接受、从哪里需要回退。你会实现一个极简版 `MultiTokenDecoderSim`，把“提议、验证、接受、回退”这条链路拆开，理解多 token 解码与投机解码之间的关系。
+本节关注一次解码步实际推进多少 token：先提出一段候选，再按顺序验证，保留连续通过的前缀，并在首次拒绝处回退。学习重点是接受长度、`progress_per_round` 和验证成本之间的关系；它与 23 节共享外层流程，但更关注单轮推进效率，并为 36 节的调度和 68 节的 backend 基准提供指标。
 
 **关键词：** `multi-token decoding`, `draft model`, `verification`, `rollback`
 
@@ -23,55 +23,48 @@
 
 ## 前置阅读
 
+**导语：** 进入本节前，先理解单 token 解码和投机验证的顺序，再观察一次请求如何在一轮中推进多个候选 token。
 - [21. Decoding Strategies | 解码策略](./21_Decoding_Strategies.md)
 - [23. Speculative Decoding | 投机解码](./23_Speculative_Decoding.md)
-- [22. vLLM PagedAttention | vLLM 分页注意力](./22_vLLM_PagedAttention.md)
-
-## 相关阅读
-
-- [36. Decode Scheduling | 解码调度](./36_Decode_Scheduling.md)
-- [38. Prefill-Decode Disaggregation | PD 分离](./38_Prefill_Decode_Disaggregation.md)
-- [68. Speculative Decoding Benchmark | 投机解码基准项目](./68_Speculative_Decoding_Benchmark.md)
 
 ---
 
-## Step 1: 原理与痛点
+### Step 1: 单轮多 Token 推进的机制
 
 单 token 解码的瓶颈在于每次只能推进一个 token：模型需要反复进入 decoder，KV Cache 也要频繁追加和读取。对短输出来说这不是大问题，但对长文本生成、代码生成、多轮对话这类场景，逐 token 调度会放大延迟和系统开销。
 
 Multi-Token Decoding 的目标不是“无条件一次吐出更多 token”，而是在可验证的前提下，让一次解码步尽量推进多个 token。如果连续几个候选 token 都能被接受，就减少了多轮单 token 解码；如果中途被拒绝，则立刻停止并回退到更保守的路径。
 
-它和 Speculative Decoding 的关系可以这样理解：Speculative Decoding 强调“草稿模型先生成，再由目标模型验证”；Multi-Token Decoding 更强调“一个解码步里尝试推进多个 token”。两者都在减少 token-level 往返，核心难点也都落在接受率、验证成本和回退策略上。
+本节与 Speculative Decoding 共享“提议—验证—回退”的外层流程。这里的提议者称为草稿模型（draft model），负责快速给出候选；目标模型（target model）负责验证。关注点不同：23 节重点解释分布校正，本节重点观察一轮最多推进多少 token，以及首次拒绝如何影响有效进度。这里的接受规则是教学用近似，不等同于 23 节的分布保持算法。
 
-## Step 2: 代码实现框架
+![多 Token 解码总览](../public/02_PyTorch_Algorithms/35_multi_token_overview.svg)
 
-下面的代码会模拟一条最小的多 token 解码链路。为了让重点清晰，我们不实现真实采样器，也不接入大模型，只用给定的 `draft_tokens`、`draft_probs` 和 `target_probs` 来模拟“草稿提议”和“目标验证”。
+### Step 2: 候选序列与验证状态
 
-这条链路拆成四个动作：
+先固定一轮验证所需的输入和状态，再观察候选如何从提议进入顺序验证。`draft_tokens`、`draft_probs` 和 `target_probs` 是机制模拟的输入，不代表真实模型前向。阅读表格时抓住一条状态链：提议序列 → 从左到右验证 → 首次拒绝 → 切分接受前缀和回退后缀。
 
-| 动作 | 对应方法 | 作用 |
+
+| 机制阶段 | 输入 / 状态 | 作用 |
 |------|----------|------|
-| 提议 | `propose` | 从草稿 token 中截取本轮最多可尝试的候选序列 |
-| 接受判断 | `_accept_token` | 比较目标概率和草稿概率，决定单个 token 是否可靠 |
-| 逐 token 验证 | `verify` | 从左到右验证候选 token，遇到首次拒绝就停止 |
-| 解码汇总 | `decode` | 返回提议、接受、拒绝位置和需要回退的后缀 |
+| 提议序列 | 草稿 token 与最大提议长度 | 截取本轮最多可尝试的候选序列 |
+| 接受判断 | 草稿概率与目标概率 | 判断单个候选 token 是否可靠 |
+| 顺序验证 | 候选序列与当前前缀 | 从左到右验证，首次拒绝后停止 |
+| 结果汇总 | 接受前缀、拒绝位置、回退后缀 | 区分可直接推进的 token 与待重新生成的 token |
 
-这个实现保留了多 token 解码最关键的控制流：先批量提议，再顺序验证，最后根据首次拒绝位置切分“可接受前缀”和“回退后缀”。
-
-## Step 3: 核心机制
+### Step 3: 连续接受、首次拒绝与有效推进
 
 多 token 解码的收益来自“连续接受”。如果本轮提出 4 个候选 token，并且前 3 个都通过验证，那么系统相当于用一次解码流程推进了 3 个 token；如果第 1 个就被拒绝，则这轮几乎没有收益，还需要回到保守生成路径。
 
-因此，提议长度和接受阈值需要平衡：
+因此，提议长度和接受阈值需要平衡；除了接受率，还要记录本轮实际推进了多少 token。`progress_per_round = accepted_len / len(proposed_tokens)` 表示一轮提议中真正写入输出前缀的比例；项目 benchmark 中可用 `accepted_tokens_per_round` 记录同一类指标。本节用一个简化规则来模拟接受判断：若目标模型给候选 token 的概率不低于草稿概率的一定比例，就认为它可以被接受。真实系统可能使用更严格的分布校正或其他验证协议；本节只保留“连续接受、首次拒绝、后缀回退”的控制流。
 
 | 参数 | 过大时的问题 | 过小时的问题 |
 |------|--------------|--------------|
 | `max_proposal_len` | 候选更激进，拒绝和回退概率更高 | 单轮推进短，加速效果有限 |
 | `min_accept_ratio` | 接受规则更严格，通过率下降 | 接受规则更宽松，可能引入更大偏差 |
 
-本节用一个简化规则来模拟接受判断：若目标模型给候选 token 的概率不低于草稿概率的一定比例，就认为它可以被接受。真实系统会使用更严格的分布校正或采样验证规则，但“连续接受、首次拒绝、后缀回退”的主线是一致的。
+![多 Token 解码的接受长度与收益](../public/02_PyTorch_Algorithms/35_acceptance_budget.svg)
 
-## Step 4: 动手实战
+### Step 4: 实现多 Token 解码器
 
 **要求**：请补全下方 `MultiTokenDecoderSim`，实现一个极简版的多 token 生成与验证模拟器。重点不是复杂采样，而是把“提议 -> 验证 -> 接受 / 回退”这条链路跑通。
 
@@ -84,10 +77,13 @@ import torch
 
 ```python
 class MultiTokenDecoderSim:
-    """极简版多 token 生成与验证模拟器。"""
+    """教学用的多 token 提议—验证模拟器。
+
+    本类只模拟候选前缀、首次拒绝和回退后缀，不代表真实推理 backend 的
+    概率校正、KV Cache 管理或吞吐收益。"""
 
     def __init__(self, max_proposal_len: int = 4, min_accept_ratio: float = 0.5):
-        if max_proposal_len <= 0:
+        if not isinstance(max_proposal_len, int) or isinstance(max_proposal_len, bool) or max_proposal_len <= 0:
             raise ValueError("max_proposal_len must be positive")
         if not (0.0 < min_accept_ratio <= 1.0):
             raise ValueError("min_accept_ratio must be in (0, 1]")
@@ -96,17 +92,25 @@ class MultiTokenDecoderSim:
         self.history: List[dict] = []
 
     def propose(self, draft_tokens: Sequence[int]) -> List[int]:
+        """把草稿序列截断为本轮允许验证的候选前缀。
+
+        空序列返回空列表；返回长度不超过 `max_proposal_len`。"""
         # ==========================================
         # TODO 1: 从草稿 token 中生成本轮候选序列
-        # 提示: 先把 draft_tokens 转成 list，再截取前 max_proposal_len 个 token
+        # 提示：先把 draft_tokens 转成 list，再截取前 max_proposal_len 个 token。
+        # 这个结果决定本轮最多验证多少个位置，不要修改输入序列。
         # ==========================================
         # proposed = ???
         return proposed
 
     def _accept_token(self, draft_prob: float, target_prob: float) -> bool:
+        """按教学用概率阈值判断一个候选是否通过验证。
+
+        这里的阈值规则用于观察控制流，不等同于严格的分布保持算法。"""
         # ==========================================
         # TODO 2: 判断单个候选 token 是否被目标模型接受
-        # 提示: 正常情况下，target_prob 至少要达到 draft_prob * min_accept_ratio
+        # 提示：正常情况下，target_prob 至少要达到
+        # draft_prob * min_accept_ratio；draft_prob <= 0 时单独处理。
         # ==========================================
         if draft_prob <= 0:
             return target_prob > 0
@@ -119,11 +123,23 @@ class MultiTokenDecoderSim:
         target_probs: torch.Tensor,
         draft_tokens: Sequence[int],
     ) -> Tuple[List[int], int | None]:
+        """从左到右验证候选，并在首次拒绝处停止。
+
+        `draft_probs` 和 `target_probs` 的第 i 行对应第 i 个候选位置；
+        返回已接受前缀以及首次拒绝的位置。"""
         proposed = self.propose(draft_tokens)
         accepted_tokens: List[int] = []
         rejected_at = None
         draft_probs = torch.as_tensor(draft_probs)
         target_probs = torch.as_tensor(target_probs)
+
+        if draft_probs.ndim != 2 or target_probs.ndim != 2:
+            raise ValueError("draft_probs 和 target_probs 必须是二维张量")
+        if draft_probs.shape != target_probs.shape or draft_probs.shape[0] < len(proposed):
+            raise ValueError("概率矩阵必须具有相同形状，并覆盖所有候选位置")
+        vocab_size = draft_probs.shape[1]
+        if any(not isinstance(token_id, int) or not 0 <= token_id < vocab_size for token_id in proposed):
+            raise ValueError("draft token id 必须是词表范围内的整数")
 
         for i, token_id in enumerate(proposed):
             draft_prob = float(draft_probs[i, token_id])
@@ -148,6 +164,9 @@ class MultiTokenDecoderSim:
         target_probs: torch.Tensor,
         draft_tokens: Sequence[int],
     ) -> dict:
+        """汇总接受前缀、拒绝位置、回退后缀和本轮推进比例。
+
+        `progress_per_round` 只表示本轮接受比例，不代表真实吞吐提升。"""
         proposed = self.propose(draft_tokens)
         accepted_tokens, rejected_at = self.verify(draft_probs, target_probs, draft_tokens)
         # ==========================================
@@ -160,6 +179,8 @@ class MultiTokenDecoderSim:
             "proposed_tokens": proposed,
             "accepted_tokens": accepted_tokens,
             "accepted_len": len(accepted_tokens),
+            # 本轮真正推进的 token 占提议长度的比例，和项目 benchmark 的指标对应
+            "progress_per_round": (len(accepted_tokens) / len(proposed)) if proposed else 0.0,
             "rejected_at": rejected_at,
             "rejected_suffix": rejected_suffix,
         }
@@ -193,9 +214,28 @@ def test_multi_token_decoder():
         assert result["proposed_tokens"] == [10, 20, 30]
         assert result["accepted_tokens"] == [10, 20]
         assert result["accepted_len"] == 2
+        assert result["progress_per_round"] == 2 / 3
         assert result["rejected_at"] == 2
         assert result["rejected_suffix"] == [30]
         assert len(sim.history) == 1
+
+        # 全部接受：本轮推进比例应为 1，且没有回退后缀
+        all_target = torch.zeros(4, 40)
+        for i, tok in enumerate([10, 20, 30, 31]):
+            all_target[i, tok] = 0.8
+        all_result = sim.decode(draft_probs, all_target, draft_tokens)
+        assert all_result["accepted_len"] == 3
+        assert all_result["progress_per_round"] == 1.0
+        assert all_result["rejected_at"] is None
+        assert all_result["rejected_suffix"] == []
+
+        # 改变提议长度时，推进量应随实际接受前缀变化
+        for proposal_len in (1, 2, 4):
+            variable_sim = MultiTokenDecoderSim(max_proposal_len=proposal_len, min_accept_ratio=0.6)
+            variable_tokens = [10, 20, 30, 31]
+            variable_result = variable_sim.decode(draft_probs, all_target, variable_tokens)
+            assert variable_result["accepted_len"] == proposal_len
+            assert variable_result["progress_per_round"] == 1.0
 
         print("✅ MultiTokenDecoderSim 测试通过！")
     except NotImplementedError as e:
@@ -229,10 +269,13 @@ test_multi_token_decoder()
 # TODO：下面是题目区的参考实现。
 
 class MultiTokenDecoderSim:
-    """极简版多 token 生成与验证模拟器。"""
+    """教学用的多 token 提议—验证模拟器。
+
+    本类只模拟候选前缀、首次拒绝和回退后缀，不代表真实推理 backend 的
+    概率校正、KV Cache 管理或吞吐收益。"""
 
     def __init__(self, max_proposal_len: int = 4, min_accept_ratio: float = 0.5):
-        if max_proposal_len <= 0:
+        if not isinstance(max_proposal_len, int) or isinstance(max_proposal_len, bool) or max_proposal_len <= 0:
             raise ValueError("max_proposal_len must be positive")
         if not (0.0 < min_accept_ratio <= 1.0):
             raise ValueError("min_accept_ratio must be in (0, 1]")
@@ -241,17 +284,25 @@ class MultiTokenDecoderSim:
         self.history: List[dict] = []
 
     def propose(self, draft_tokens: Sequence[int]) -> List[int]:
+        """把草稿序列截断为本轮允许验证的候选前缀。
+
+        空序列返回空列表；返回长度不超过 `max_proposal_len`。"""
         # ==========================================
         # TODO 1: 从草稿 token 中生成本轮候选序列
-        # 提示: 先把 draft_tokens 转成 list，再截取前 max_proposal_len 个 token
+        # 提示：先把 draft_tokens 转成 list，再截取前 max_proposal_len 个 token。
+        # 这个结果决定本轮最多验证多少个位置，不要修改输入序列。
         # ==========================================
         proposed = list(draft_tokens)[: self.max_proposal_len]
         return proposed
 
     def _accept_token(self, draft_prob: float, target_prob: float) -> bool:
+        """按教学用概率阈值判断一个候选是否通过验证。
+
+        这里的阈值规则用于观察控制流，不等同于严格的分布保持算法。"""
         # ==========================================
         # TODO 2: 判断单个候选 token 是否被目标模型接受
-        # 提示: 正常情况下，target_prob 至少要达到 draft_prob * min_accept_ratio
+        # 提示：正常情况下，target_prob 至少要达到
+        # draft_prob * min_accept_ratio；draft_prob <= 0 时单独处理。
         # ==========================================
         if draft_prob <= 0:
             return target_prob > 0
@@ -264,11 +315,23 @@ class MultiTokenDecoderSim:
         target_probs: torch.Tensor,
         draft_tokens: Sequence[int],
     ) -> Tuple[List[int], int | None]:
+        """从左到右验证候选，并在首次拒绝处停止。
+
+        `draft_probs` 和 `target_probs` 的第 i 行对应第 i 个候选位置；
+        返回已接受前缀以及首次拒绝的位置。"""
         proposed = self.propose(draft_tokens)
         accepted_tokens: List[int] = []
         rejected_at = None
         draft_probs = torch.as_tensor(draft_probs)
         target_probs = torch.as_tensor(target_probs)
+
+        if draft_probs.ndim != 2 or target_probs.ndim != 2:
+            raise ValueError("draft_probs 和 target_probs 必须是二维张量")
+        if draft_probs.shape != target_probs.shape or draft_probs.shape[0] < len(proposed):
+            raise ValueError("概率矩阵必须具有相同形状，并覆盖所有候选位置")
+        vocab_size = draft_probs.shape[1]
+        if any(not isinstance(token_id, int) or not 0 <= token_id < vocab_size for token_id in proposed):
+            raise ValueError("draft token id 必须是词表范围内的整数")
 
         for i, token_id in enumerate(proposed):
             draft_prob = float(draft_probs[i, token_id])
@@ -293,6 +356,9 @@ class MultiTokenDecoderSim:
         target_probs: torch.Tensor,
         draft_tokens: Sequence[int],
     ) -> dict:
+        """汇总接受前缀、拒绝位置、回退后缀和本轮推进比例。
+
+        `progress_per_round` 只表示本轮接受比例，不代表真实吞吐提升。"""
         proposed = self.propose(draft_tokens)
         accepted_tokens, rejected_at = self.verify(draft_probs, target_probs, draft_tokens)
         # ==========================================
@@ -305,6 +371,8 @@ class MultiTokenDecoderSim:
             "proposed_tokens": proposed,
             "accepted_tokens": accepted_tokens,
             "accepted_len": len(accepted_tokens),
+            # 本轮真正推进的 token 占提议长度的比例，和项目 benchmark 的指标对应
+            "progress_per_round": (len(accepted_tokens) / len(proposed)) if proposed else 0.0,
             "rejected_at": rejected_at,
             "rejected_suffix": rejected_suffix,
         }
@@ -344,3 +412,14 @@ class MultiTokenDecoderSim:
 - **接受率权衡**：提议越长，理论加速空间越大，但被拒绝和回退的概率也越高
 - **验证成本**：多 token 解码只有在验证成本低于逐 token 生成成本时才有收益
 - **系统联动**：真实实现通常还要和 KV Cache 管理、batch 调度、采样策略和投机解码校正规则一起设计
+
+## 相关阅读
+
+完成候选生成、逐 token 验证和回退后缀处理后，可以继续阅读投机解码论文、推理引擎接口和真实 benchmark。
+
+- [Medusa 原论文：Simple LLM Inference Acceleration Framework with Multiple Decoding Heads](https://arxiv.org/abs/2401.10782)
+- [vLLM Speculative Decoding 文档](https://docs.vllm.ai/en/latest/features/spec_decode.html)
+- [Part 02 · 22 vLLM 分页注意力](./22_vLLM_PagedAttention.md)
+- [Part 02 · 36 解码调度](./36_Decode_Scheduling.md)
+- [Part 02 · 38 Prefill / Decode 分离](./38_Prefill_Decode_Disaggregation.md)
+- [Part 02 · 68 投机解码基准项目](./68_Speculative_Decoding_Benchmark.md)

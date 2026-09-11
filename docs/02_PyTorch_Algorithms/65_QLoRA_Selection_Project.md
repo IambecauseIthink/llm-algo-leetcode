@@ -16,65 +16,55 @@
 
 本节要求你在显存预算和质量下限明确的情况下，比较全参数、LoRA 与 QLoRA 三种方案。统一记录显存、吞吐、训练稳定性和验证质量，确认量化收益是否足以覆盖额外误差与实现成本。最终输出当前预算下的方案选择及其适用边界。
 
-本项目只负责低比特训练适配的预算选型：重点是 NF4/QLoRA、LoRA 参数、训练显存和验证质量。它不验证 GPTQ/AWQ 的后训练部署，也不验证 GGUF 的文件格式与推理 backend；这些边界分别由 `40` 和 `67` 承担。
+本项目聚焦 NF4/QLoRA、LoRA 参数、训练显存和验证质量，并把结果与 `40` 的权重量化机制、`67` 的量化部署验证连接起来。
 
 **关键词：** `QLoRA`, `budget`, `memory`, `selection`, `project`
 
 ---
 ## 前置阅读
 
-**导语：** 先把 LoRA、有效 batch、端到端微调和量化基础理顺，再进入这个项目；本节默认你已经知道低比特与适配器怎么接起来，重点转向在预算约束下该不该用 QLoRA。
+**导语：** 进入本项目前，先能说明 LoRA、有效 batch 和低比特权重如何组合，再在预算约束下判断是否采用 QLoRA。
 - [10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)
 - [12. Gradient Accumulation | 梯度累积](./12_Gradient_Accumulation.md)
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
 - [40. GPTQ and AWQ | GPTQ 与 AWQ](./40_GPTQ_and_AWQ_Weight_Quantization.md)（交叉参考：部署侧权重量化，不是本项目候选）
 
-## 相关阅读
 
-**导语：** 做完这页后，最自然的下一步是把低资源训练结论继续推向量化部署，或者回到显存预算侧继续做更细的资源压缩判断。
-- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
-- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)
----
-### Step 1: 定义 QLoRA 选型目标与实验矩阵
-先回答一个问题：当前预算约束下，哪个方案能在训练可行、质量达标和吞吐可接受之间取得平衡？本节的 CPU 代码负责预算推演；真实显存与量化 kernel 仍需 GPU 验证。
+### Step 1（项目设计）：明确预算问题与实验目的
+本节默认你已经知道 LoRA、NF4 和冻结基座的基本含义；现在要回答的是：在给定显存上限、最低吞吐和质量下限时，应该保留全参数、LoRA 还是 QLoRA。先写下这三个约束，再决定哪些候选值得进入实验。CPU 代码负责预算推演，真实显存与量化 kernel 仍需 GPU 验证。
 
 | 实验层级 | 候选与变量 | 主要指标 | 结论边界 |
 |:---|:---|:---|:---|
 | CPU 主实验 | baseline / LoRA / QLoRA 的账本与规则 | 估算显存、可行性、候选排序 | 只能筛选方案，不能证明真实速度 |
 | GPU 验证（可选） | 固定数据、步数和评测，仅改变适配器或量化配置 | peak memory、step time、吞吐、val loss、OOM | 验证真实训练代价与质量 |
 
-固定任务、数据集、训练步数、batch size、seq len、评测指标和质量下限；候选只改变 LoRA / QLoRA 配置，不同时改变数据和训练口径。
+固定任务、数据集、训练步数、batch size、seq_len、评测指标和质量下限；候选只改变训练方式或量化配置，不同时改变数据和训练口径。
 
-### Step 2（CPU 项目设计）：建立预算与 baseline 口径
-低资源微调项目必须先确认 baseline 和预算口径稳定，否则显存收益无法解释。
+![QLoRA 的预算选型](../public/02_PyTorch_Algorithms/65_qlora_selection_flow.svg)
+<div align="center"><strong>QLoRA 的预算选型：</strong>先用账本筛选候选，再用 GPU 验证真实显存、速度和质量。</div>
 
-- 记录显存上限、最低吞吐和验证损失上限。
-- 拆分冻结底座、LoRA 参数、梯度、optimizer state、activation 和量化元数据。
-- 对 QLoRA 核对位宽、NF4 / double quant、target modules 和 rank。
-- 估算字段标记为 `estimated`；不要把账本数字写成 CUDA 峰值。
+### Step 2（项目设计）：固定 baseline 与预算条件
+先为 baseline、LoRA 和 QLoRA 分别列出冻结基座、可训练参数、梯度、optimizer state、activation 和量化元数据。全参数方案的 optimizer state 与梯度通常是主要差异来源；QLoRA 重点减少冻结基座的权重表示，但不会自动消除 activation 或 adapter 状态。
 
-### Step 3（GPU 验证设计）：固定 workload，只改变候选变量
-GPU 实验用于验证 CPU 预算推演是否接近真实训练，不是为了让每个学习者都跑完整训练。
+CPU 实验要核对 `bit_width`、NF4/double quant、rank、target_modules、batch 和 seq_len，并把每项估算标记为 `estimated`。账本用于筛选和解释，不能写成 CUDA 峰值。
 
-- 最小对照是同一 workload 下的 LoRA 与 QLoRA；全参数方案只有在显存足够时才加入。
-- 统一记录 peak memory、peak reserved、step time、tokens/s、train / val loss 和 OOM 状态。
-- 量化模型必须记录实际量化格式、加载是否成功和使用的 backend / kernel。
-- GPU 结果只能说明当前模型、数据、硬件和软件栈下的表现，不能外推到所有模型。
+### Step 3（项目设计）：确定量化机制、指标与候选方案
+最小 GPU 对照是同一模型、数据 split、dtype、batch、seq_len、steps 和 seed 下的 LoRA 与 QLoRA；显存足够时再加入全参数方案。先确认 QLoRA 模型确实按预期格式加载，再开始计时。
 
-### Step 4: 用统一口径比较收益与代价
-QLoRA 选型不能只看显存是否下降，还要把训练质量和工程代价一起算进去。
+统一记录 `peak_memory`、`peak_reserved`、`step_time`、`tokens/s`、`train_loss`、`val_loss` 和 OOM 状态，并记录量化格式、backend/kernel 与软件版本。结果只适用于当前模型、硬件和软件栈。
 
-- 至少统一比较 peak memory、step time、val loss 和是否满足质量下限。
-- 如果 QLoRA 只节省少量显存，却显著拉低质量或拖慢步时，它通常只能进入 `tune` 或 `reject`。
-- 如果 QLoRA 明显节省预算，同时质量退化可接受、吞吐也没有恶化到不可交付，就可以进入 `accept`。
-- 这一步的目标是把预算收益、训练代价和质量风险收成同一张项目判断表。
+### Step 4（项目设计）：确定报告字段与决策约束
+把 CPU 账本和 GPU 结果放进同一张对照表，依次检查：是否能加载、是否 OOM、是否低于显存上限、是否达到吞吐下限、是否通过质量门槛，以及额外 backend/量化维护成本是否可接受。
 
-### Step 5: 输出 QLoRA 选型结论
-低资源微调项目最终不是输出“哪个方案最省显存”，而是输出当前预算下最值得继续采用的方案。
+QLoRA 只节省少量显存却明显拖慢或损害质量时，进入 `tune` 或 `reject`；只有在预算收益、质量和工程代价同时满足约束时，才进入 `accept`。
 
-- 项目结论建议统一成 `accept / tune / reject`。
-- 输出最小报告时，至少包含候选配置、显存与步时差异、质量下限判断和下一轮动作。
-- 若进入 `tune`，下一轮优先回调 rank、target modules、量化位宽或 batch 策略，而不是先扩更多候选方案。
+### Step 5（CPU）：实现并测试 QLoRA 选型逻辑
+报告必须能让别人复算你的选择：保留预算约束、候选配置、账本估算、GPU 结果、质量判断、量化格式和下一步动作。最终结论统一为 `accept / tune / reject`，而不是只报告“QLoRA 最省显存”。
+
+若进入 `tune`，先指出失败约束：调整 rank、target_modules、量化位宽、batch 或 activation 策略；不要在没有定位问题前盲目增加候选。
+
+![65 Step 5：QLoRA 选型的 CPU 决策实现](../public/02_PyTorch_Algorithms/65_qlora_cpu_todo_flow.svg)
+<div align="center"><strong>QLoRA 选型的 CPU 决策实现：</strong>先检查预算，再筛选候选并保留每个失败约束。</div>
 
 #### 图解：10 / 12 / 13 / 25 / 26 如何收束到 65 QLoRA 选型项目
 
@@ -127,7 +117,11 @@ from typing import Dict, List
 # 目标：把 baseline / LoRA / QLoRA 的低资源微调比较收束成一份选型报告
 
 def build_memory_ledger(base_weight_mb: float, trainable_param_mb: float, gradient_mb: float, optimizer_state_mb: float, activation_mb: float, quant_metadata_mb: float = 0.0, peak_memory_mb: float = None, peak_reserved_mb: float = None, evidence: str = 'estimated') -> Dict[str, object]:
-    """汇总训练显存对象，并区分估算值与 CUDA 峰值。"""
+    """汇总训练显存对象，并区分账本估算与 CUDA 峰值。
+
+    `base_weight_mb` 等字段用于解释显存来源；只有实际采集后的
+    `peak_memory_mb` 和 `peak_reserved_mb` 才表示 CUDA 实测值。
+    """
     values = {
         'base_weight_mb': base_weight_mb, 'trainable_param_mb': trainable_param_mb,
         'gradient_mb': gradient_mb, 'optimizer_state_mb': optimizer_state_mb,
@@ -146,16 +140,23 @@ def build_memory_ledger(base_weight_mb: float, trainable_param_mb: float, gradie
 
 
 def validate_qlora_candidate(candidate: Dict[str, float]) -> List[str]:
-    # TODO 0：检查候选名称、显存、吞吐和验证损失
+    """检查候选是否具备进入预算筛选的完整测量字段。
+
+    缺字段、非有限数值或负资源值都应返回错误，不能静默进入排序。
+    """
+    # TODO 1：检查候选名称、显存、吞吐和验证损失
     # 提示：required = ('name', 'memory_mb', 'tokens_per_s', 'val_loss')。
     # 对数值字段检查可转换、有限且 memory_mb / tokens_per_s 不为负。
     # 返回错误列表；空列表表示候选可以进入排序。
     raise NotImplementedError("请先完成 TODO 代码！")
 
 def validate_budget_and_quality(budget: Dict[str, float], quality_floor: Dict[str, float]) -> Dict[str, object]:
-    """检查低资源微调项目的预算口径和质量下限是否完整。"""
+    """检查显存上限、吞吐下限和验证损失上限是否完整。
+
+    返回缺失字段和合法性结果；不为缺失阈值补默认值。
+    """
     # ==========================================
-    # TODO 1：检查预算与质量下限是否完整
+    # TODO 2：检查预算与质量下限是否完整
     # 提示：required_budget_keys = ['memory_cap_mb', 'min_tokens_per_s']。
     #       required_quality_keys = ['max_val_loss']。
     # 依次计算 budget_missing、quality_missing，再合并为 missing_keys。
@@ -178,16 +179,16 @@ def summarize_low_resource_candidates(candidates: List[Dict[str, float]], budget
 
     只返回通过全部门槛的候选名称；非法或缺失测量不能静默进入排序。
     """
-    """汇总低资源微调候选，筛出满足预算与质量的方案。"""
     # ==========================================
-    # TODO 2: 汇总低资源微调候选
-    # 提示：统计满足预算与质量的候选，并输出最省显存的可用方案。
-    # 这里至少要同时看 memory、tokens/s 和 val_loss，不能只看单一指标。
+    # TODO 3：汇总低资源微调候选
+    # 提示：逐个计算 within_memory、enough_throughput、within_val_loss；
+    #       三项都为 True 才能放入 feasible；否则记录候选名称和失败原因。
+    #       best_candidate 只从 feasible 中选择，不能只按显存排序。
     # ==========================================
     feasible = []
     rejected = []
     for candidate in candidates:
-        # TODO 2：对每个候选分别计算以下布尔变量：
+        # TODO 3：对每个候选分别计算以下布尔变量：
         # within_memory = candidate['memory_mb'] <= budget['memory_cap_mb']
         # enough_throughput = candidate['tokens_per_s'] >= budget['min_tokens_per_s']
         # within_val_loss = candidate['val_loss'] <= quality_floor['max_val_loss']
@@ -208,7 +209,7 @@ def decide_qlora_project(summary: Dict[str, object]) -> Dict[str, object]:
     """根据可行候选汇总给出 QLoRA 选型结论。"""
     # 返回 decision、reason 和 next_action；accept 只表示当前预算下值得继续验证。
     # ==========================================
-    # TODO 3：输出项目结论
+    # TODO 4：输出项目结论
     # 提示：读取 feasible_count、best_candidate、quality_failed_count。
     # 返回 decision / reason / next_action 三个字段。
     # 没有可行候选时 reject；QLoRA 是最优可行方案时 accept；否则通常进入 tune。
@@ -315,7 +316,7 @@ def build_memory_ledger(base_weight_mb: float, trainable_param_mb: float, gradie
 import math
 
 
-# TODO 0: 检查候选字段，避免无效测量进入排序
+# TODO 1：检查候选字段，避免无效测量进入排序
 def validate_qlora_candidate(candidate: Dict[str, float]) -> List[str]:
     errors = []
     required = ('name', 'memory_mb', 'tokens_per_s', 'val_loss')
@@ -337,7 +338,7 @@ def validate_qlora_candidate(candidate: Dict[str, float]) -> List[str]:
     return errors
 
 
-# TODO 1: 检查预算与质量下限
+# TODO 2：检查预算与质量下限
 def validate_budget_and_quality(budget: Dict[str, float], quality_floor: Dict[str, float]) -> Dict[str, object]:
     required_budget_keys = ['memory_cap_mb', 'min_tokens_per_s']
     required_quality_keys = ['max_val_loss']
@@ -354,7 +355,7 @@ def validate_budget_and_quality(budget: Dict[str, float], quality_floor: Dict[st
     }
 
 
-# TODO 2: 汇总低资源微调候选
+# TODO 3：汇总低资源微调候选
 def summarize_low_resource_candidates(candidates: List[Dict[str, float]], budget: Dict[str, float], quality_floor: Dict[str, object]) -> Dict[str, object]:
     feasible: List[Dict[str, float]] = []
     quality_failed = 0
@@ -382,7 +383,7 @@ def summarize_low_resource_candidates(candidates: List[Dict[str, float]], budget
     }
 
 
-# TODO 3: 输出项目结论
+# TODO 4：输出项目结论
 def decide_qlora_project(summary: Dict[str, object]) -> Dict[str, object]:
     feasible_count = summary['feasible_count']
     best_candidate = summary['best_candidate']
@@ -416,19 +417,23 @@ def decide_qlora_project(summary: Dict[str, object]) -> Dict[str, object]:
 
 ### 解析
 
-这一页保留 `3` 个核心 TODO：预算检查、候选汇总和项目结论。它不要求把量化训练过程重写一遍，而是要求把低资源微调的预算约束收成清晰的选型判断。
+这一页保留 `4` 个核心 TODO：候选校验、预算检查、候选汇总和项目结论。它不要求把量化训练过程重写一遍，而是要求把低资源微调的预算约束收成清晰的选型判断。
 
-**1. TODO 1: 检查预算与质量下限**
+**1. TODO 1：检查候选字段**
+- **实现方式**：检查候选名称、显存、吞吐和验证损失是否存在且可比较。
+- **关键点**：缺少真实测量的候选不能静默进入排序。
+
+**2. TODO 2：检查预算与质量下限**
 - **实现方式**：先把显存上限、吞吐下限和验证损失上限检查齐，再进入方案比较。
 - **关键点**：没有统一预算口径时，候选方案的显存或吞吐比较都没有解释力。
 - **项目意义**：这一步把 `65` 固定成预算约束下的选型页，而不是泛量化实验页。
 
-**2. TODO 2: 汇总低资源微调候选**
+**3. TODO 3：汇总低资源微调候选**
 - **实现方式**：按显存、吞吐和验证损失统一过滤候选，再选出最省显存的可行方案。
 - **关键点**：QLoRA 只有在质量和吞吐都没跌出边界时，显存收益才有意义。
 - **项目意义**：这一步把 `10 / 40 / 41` 的机制知识收成真正可比较的工程候选。
 
-**3. TODO 3: 输出项目结论**
+**4. TODO 4：输出项目结论**
 - **实现方式**：把候选可行性和最优方案统一收成 `accept / tune / reject`。
 - **关键点**：项目结论必须回答“当前预算下 QLoRA 是否值得继续采用”，而不是只输出一个候选名字。
 - **项目意义**：这一步把 `65` 收成低资源微调路线中的正式选型项目。
@@ -471,3 +476,12 @@ if RUN_PROJECT_EXPORT:
     save_project_report(PROJECT_RESULT_PATH, PROJECT_REPORT)
 
 ```
+
+## 相关阅读
+
+完成全参数、LoRA 与 QLoRA 的预算和质量比较后，可以继续阅读 QLoRA 原论文、低比特实现和量化部署项目。
+
+- [QLoRA 原论文：Efficient Finetuning of Quantized Language Models](https://arxiv.org/abs/2305.14314)
+- [bitsandbytes 官方仓库](https://github.com/bitsandbytes-foundation/bitsandbytes)
+- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
+- [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)

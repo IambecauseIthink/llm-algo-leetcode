@@ -6,6 +6,8 @@
 
 Part 02 按 10 个专题组组织：`2.1-2.6` 建立基础算子、模型、训练、显存和推理直觉，`2.7-2.9` 扩展到推理策略、量化、通信与并行，`2.10` 负责项目验证和工程收口。具体章节状态和逐节资产由组页与维护文档负责。
 
+![Part 02 大模型算法实战知识地图](../public/02_PyTorch_Algorithms/part02_learning_map.svg)
+
 ```mermaid
 flowchart TB
     P2[Part 2: PyTorch Algorithms]

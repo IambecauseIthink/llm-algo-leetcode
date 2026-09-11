@@ -23,18 +23,10 @@ RoPE 的做法不是给 token 额外加一个位置向量，而是把位置信�
 ---
 ## 前置阅读
 
-**导语：** 先把张量变换和注意力直觉理顺，再看位置信息如何进入 Query / Key 会更顺。
+**导语：** 先确认 Query / Key 的形状和注意力点积如何计算，再观察旋转角度和位置频率如何改变相对位置信息。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 16. Attention Mechanism Intro | 注意力机制导论](../00_Prerequisites/16_Attention_Mechanism_Intro.md)
-
-## 相关阅读
-
-**导语：** 理解 RoPE 后，可以继续看它如何进入多头注意力，以及相关算子在硬件和融合优化中的落地方式。
-
-- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
 
 ---
 ### Step 1: 核心思想与痛点
@@ -410,3 +402,12 @@ def apply_rotary_emb(
   - **NTK-aware Scaling：** 动态调整基频 （如从 10000 增大到 100000），降低高频分量的旋转速度。
   - **YaRN：** 结合低频外推和高频插值，在不同维度使用不同的缩放策略。
 - **工程实践：** LLaMA 2 使用线性插值支持 32K 上下文，Qwen 使用动态 NTK 支持 128K，这些技术使得 RoPE 成为当前大模型位置编码的事实标准。
+## 相关阅读
+
+先读 RoPE 的原始设计，再回到 Attention 实现观察旋转因子如何进入 Query / Key；如果继续研究长序列的执行代价，可以再阅读 GPU 架构与算子融合相关材料。
+
+- [RoFormer 原论文：Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [04. 多头注意力与 GQA](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

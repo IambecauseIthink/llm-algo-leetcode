@@ -29,18 +29,12 @@
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](../02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.md)
 
 
-## 相关阅读
-
-**导语：** 理解 MoE 的训练约束后，可以继续看显存、通信和 profiling 如何影响大规模 MoE 训练与部署。
-
-- [P1: 05. Communication Topologies | 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
-- [P1: 06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
-- [P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
-
 ---
 ### Step 1: 核心数学公式
 
 负载均衡损失的目标，是防止所有 token 长期挤向少数专家，导致 MoE 从稀疏专家系统退化成拥塞路由。
+
+![MoE 负载均衡：让路由真正可训练](../public/02_PyTorch_Algorithms/07_moe_balance.svg)
 
 为了让 $T$ 个 Token 均匀地分配给 $E$ 个专家，我们需要设计一个惩罚项，加到总的 CrossEntropy Loss 里。
 Mixtral / Switch Transformer 使用的经典公式：
@@ -89,7 +83,6 @@ expert 2: █████                 25%
 expert 3: █████                 25%
 ```
 
-![MoE 负载均衡示意图](/02_PyTorch_Algorithms/07_moe_balance.svg)
 
 负载均衡损失同时看两件事：
 
@@ -322,3 +315,14 @@ def compute_load_balancing_loss(
 - **数值稳定性**：使用 `scatter_add_` 而非循环累加，提升计算效率和数值稳定性。
 - **超参数调优**：$\alpha$ 通常设为 0.01，过大会影响主任务性能，过小则无法有效平衡负载。
 - **与主损失结合**：在实际训练中，将 `aux_loss` 加到 CrossEntropy Loss 上：`total_loss = ce_loss + aux_loss`。
+
+## 相关阅读
+
+负载均衡损失连接了路由公式和系统执行：论文用于确认目标，项目入口用于继续观察通信、显存和性能代价。
+
+- [Switch Transformers 原论文](https://arxiv.org/abs/2101.03961)
+- [Mixtral 开源模型说明](https://huggingface.co/docs/transformers/main/en/model_doc/mixtral)
+- [06. MoE 路由器](../02_PyTorch_Algorithms/06_MoE_Router.md)
+- [P1: 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
+- [P1: 显存计算与 ZeRO 优化](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
+- [P1: 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)

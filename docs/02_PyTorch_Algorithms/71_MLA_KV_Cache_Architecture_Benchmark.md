@@ -12,9 +12,9 @@
 
 ## 本节导读
 
-本节研究 DeepSeek 风格的 Multi-head Latent Attention（MLA）如何改变 KV Cache 的表示方式。先用 CPU 根据模型配置计算 MHA、GQA 与 MLA 的缓存账本，再把同一 workload 交给支持 MLA 的 backend 做可选验证。
+本节作为 Task 3 的架构扩展，研究 DeepSeek 风格的 Multi-head Latent Attention（MLA）如何改变 KV Cache 的表示方式。先用 CPU 根据模型配置计算 MHA、GQA 与 MLA 的缓存账本，再把同一 workload 交给支持 MLA 的 backend 做可选验证。
 
-MLA 不是 Prefix Cache，也不是普通量化：它改变模型内部保存的 KV 表示。真实模型候选为 `deepseek-ai/DeepSeek-V2-Lite`；如果 backend 或显存无法加载它，CPU 账本仍可完成，但不能把模拟结果写成真实速度或显存结论。
+MLA 不是 Prefix Cache，也不是 PagedAttention 或普通量化：它改变模型内部保存的 KV 表示。真实模型候选为 `deepseek-ai/DeepSeek-V2-Lite`；如果 backend 或显存无法加载它，CPU 账本仍可完成，但不能把模拟结果写成真实速度或显存结论。
 
 **主责与复用边界：** 71 负责 MLA 结构和 KV Cache 表示；显存优化复用缓存容量账本，74 负责 profiler trace，69 负责前缀复用，70 负责请求调度。本项目不把结构账本直接写成 backend 性能结论。
 ## 前置阅读

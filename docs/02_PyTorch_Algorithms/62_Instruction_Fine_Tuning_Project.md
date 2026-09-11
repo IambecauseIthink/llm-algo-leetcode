@@ -13,79 +13,81 @@
 
 ## 本节导读
 
-本节承接第 13 节的端到端 SFT 小项目，把“训练结果是否可信”推进为“指令微调是否可以交付”。你需要先审计 instruction、input、response 的字段和格式，再固定训练步数、评测集与资源预算，最后结合 train / val 指标和生成样例检查结果是否满足任务要求。最终给出可以交付、需要调整还是应该停止的判断。
+本节承接第 13 节的端到端 SFT 小项目，把“训练结果是否可信”推进为“指令微调是否可以交付”。第 64 节先回答数据是否具备训练条件，本节进一步固定 instruction、input、response 的任务格式、评测集与资源预算，再结合 train / val 指标和生成样例检查结果是否满足要求。它与第 60 节的分工是：本节判断指令微调任务能否交付，第 60 节在任务口径稳定后比较全参数与 LoRA 的更新成本。本节的 Hard 主要来自数据、格式、任务质量、资源和产物等多类证据的整合与决策。
 
 **关键词：** `instruction tuning`, `data audit`, `evaluation`, `delivery`
 
 ---
 ## 前置阅读
 
-**导语：** 先把 SFT 训练闭环、LoRA 适配和训练调度理顺，再进入这个项目；本节默认你已经知道训练怎么跑，重点转向数据模板、格式稳定性和交付判断。
+**导语：** 进入本项目前，先能运行 SFT 训练闭环、LoRA 适配和学习率调度，再把注意力转向数据模板、格式稳定性和交付判断。
 
 - [09. SFT Training Loop | SFT 训练循环](./09_SFT_Training_Loop.md)
 - [10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)
 - [11. LR Schedulers WSD Cosine | WSD 余弦学习率调度器](./11_LR_Schedulers_WSD_Cosine.md)
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
 
-## 相关阅读
 
-**导语：** 做完指令微调项目后，最自然的下一步是继续比较参数高效微调方案，或把这一轮训练结果推进到偏好优化与对齐项目。
+### Step 1：先把交付问题和对照组定下来
 
-- [63. LoRA Variants Benchmark | LoRA 变体对比项目](./63_LoRA_Variants_Benchmark.md)
-- [84. DPO Preference Project | DPO 偏好优化项目](./84_DPO_Preference_Project.md)
+本步只回答一个问题：这批指令数据是否已经具备进入 SFT 训练和评测的条件。最小任务是把 `instruction / input` 组成 prompt，把 `output` 作为 response，再检查模型回答和项目报告。
 
-### Step 1: 定义指令微调目标
+| 项目内容 | 本节设定 | 需要确认什么 |
+|:---|:---|:---|
+| 任务与输入 | 使用 `instruction / input → output`；CPU 默认使用 Notebook 内置的最小样例 | 字段映射和 prompt 模板正确 |
+| 数据与评测 | 固定训练 / 验证划分，并准备 `eval_cases` 评测样例；GPU 实验时再替换为明确的数据集和模型 | 训练和评测使用可复查的输入 |
+| CPU 检查 | 审计字段、模板、长度、评测输入和决策逻辑 | 数据能否进入训练 |
+| GPU SFT（可选） | 在配置单元中填写模型、数据、dtype、batch、seq_len、steps 和 seed | 比较基础模型与指令微调模型的 loss、生成质量和资源 |
+| 输出 | 保存数据审计、模型回答、loss、资源记录和项目报告 | 判断结果是否具备交付条件 |
 
-- 固定底座模型、训练数据、prompt 模板、batch size、seq len 和训练步数。
-- 明确 evaluation set 的构成，保证训练集和验证集的分工清晰。
-- 记录 instruction、input、response 的字段约定，避免样本格式漂移。
-- baseline 至少要回答两个问题：不用微调时格式是否稳定，已有微调方案是否已经能满足任务。
 
-| 实验组 | 环境 | 固定内容 | 主要验证 |
+![指令微调的交付判断链](../public/02_PyTorch_Algorithms/62_instruction_finetuning_flow.svg)
+<div align="center"><strong>指令微调项目实验流程：</strong>先定义任务并固定条件，再建立模型对照，最后汇总数据、质量、资源和产物证据。</div>
+
+### Step 2（CPU）：完成数据与格式准入实验
+
+输入是 instruction、input、response 记录和最小评测集合。先把训练前风险转成可复查的指标，再决定数据是否可以进入 GPU 训练。实验动作：固定字段和阈值 → 审计原始数据 → 检查模板格式 → 检查评测集合 → 记录 blocker 与普通问题 → 生成 CPU 数据报告。
+
+| 检查对象 | 记录指标 | 实验目的 | 失败影响 |
 |:---|:---|:---|:---|
-| CPU 机制 | CPU 或 GPU | 人工样例、字段和评测输入 | 数据、模板和决策逻辑 |
-| GPU SFT | 单卡 GPU | 模型、数据 split、dtype、batch、steps | train/val loss、资源和生成结果 |
+| 数据字段 | 样本数、空字段、重复数 | 判断是否存在可用监督 | 可能形成 blocker |
+| prompt 长度 | 超长样本数、长度分位数 | 判断是否可能被截断 | 可能丢失任务信息 |
+| 模板格式 | 缺字段、拼接异常、role 错误 | 判断训练输入是否稳定 | 形成格式 blocker |
+| 评测集合 | 样例数、任务类型、输出格式 | 判断训练后是否可验证 | 形成评测缺口 |
 
-CPU 结果不能证明模型效果；GPU 结果也必须同时保留数据审计和评测样例。
 
-### Step 2（CPU 项目设计）: 先做数据与格式合法性检查
+### Step 3（CPU）：实现并运行项目报告
+在题目区实现数据摘要、格式检查、样例抽检和项目决策；四个函数依次形成 CPU 报告检查链。完成后先运行题目区测试，再对照参考答案与解析检查字段口径和决策分支。
 
-指令微调必须先确认数据和格式口径可信，训练结论才有交付意义。
-- 训练前先做数据审计：样本数、空 response、重复样本、超长 prompt。
-- 再做格式抽检：是否存在缺字段、空 instruction、空 response 或模板拼接异常。
-- 如果数据和格式检查不通过，这一轮实验最多只能产出 blocker，而不是有效训练结论。
+![62 Step 3：CPU 题目区的最小实现](../public/02_PyTorch_Algorithms/62_instruction_cpu_todo_flow.svg)
+<div align="center"><strong>CPU 报告检查链：</strong>数据摘要 → 格式检查 → 样例抽检 → 项目决策。</div>
 
-### Step 3（GPU 项目设计，可选）: 用统一口径收训练与评测结果
+需要保存 CPU 报告时，将 `RUN_PROJECT_EXPORT` 改为 `True`。需要进行真实模型验证时，再进入 Step 4。
 
-训练和评测结果必须放在统一口径下比较，不能把指标改善和格式稳定性割裂开看。
-- 统一记录 train / val 指标、step time、资源消耗和最小样例抽检结果。
-- 输出至少一个“训练后回答样例”，验证格式、语气和任务完成度。
-- 如果训练指标变好，但格式抽检仍然失败，这一轮仍然不能直接 adopt。
+### Step 4（GPU，可选）：运行真实模型对照
+GPU 实验验证微调后的模型是否满足任务和资源要求；数据审计结果作为实验准入依据。基础模型和指令微调模型使用相同的评测样例、模板和统计口径。
 
-### Step 4: 输出项目交付结论
+| 实验对象 | 固定条件 | 主要指标 | 主要用途 |
+|:---|:---|:---|:---|
+| 基础模型 | 同一模型、评测样例和模板 | 格式稳定性、任务完成度 | 建立未微调基线 |
+| 指令微调模型 | 同一数据 split、dtype、batch、seq_len、steps 和 seed | train / val loss、生成质量 | 判断微调是否有效 |
+| 资源记录 | 与对照实验一致的 workload | step time、peak memory | 判断训练代价是否可接受 |
+| 项目验收 | 固定数据、格式和任务规则 | 数据、格式、任务指标 | 交给 Step 5 输出决策 |
 
-- 最终结论不只回答“能不能训”，而要回答“能不能交付”。
-- 项目结论建议统一成 `accept / tune / reject` 三档。
-- 若进入 `tune`，下一轮应优先回到数据模板、评测样本或训练配置，而不是盲目继续加步数。
+实验流程：固定数据和模板 → 评测基础模型 → 完成指令微调 → 在同一评测集生成结果 → 对比 loss、格式和任务完成度 → 记录资源 → 进入 Step 5。
 
-### Step 5（CPU 代码练习）: 实现数据、格式和输出评测
-下面的题目区只实现可在 CPU 检查的函数；真实 SFT 训练和 GPU 资源采集不放进题目区。
-#### 图解：09-13 如何收束到 62 指令微调项目
+### Step 5：把证据合成交付决策
+将 Step 2 的数据准入结果和 Step 4 的模型对照结果放在同一张报告中：先检查数据准入，再检查验证损失、格式/任务指标和资源是否达到预设门槛。项目决策综合数据准入、任务指标、资源记录和可复现产物；train loss 作为其中一项训练信号。
+
+| 决策 | 必须满足 | 下一步 |
+|:---|:---|:---|
+| `accept` | 数据无 blocker，任务指标达标，资源可接受 | 保存配置、评测集和模型产物 |
+| `tune` | 数据可用，但指标或资源仍需调整 | 回到数据模板、评测样例或训练配置 |
+| `reject` | 数据、格式或任务质量无法满足当前目标 | 更换数据或任务定义后重新审计 |
+
+#### 09-13 如何收束到 62 指令微调项目
 
 `62` 把 SFT 数据工程和训练闭环组合成一个项目交付模板。
-
-```text
-09 SFT data       instruction / input / response / labels
-      │
-10 LoRA           optional adapter tuning for instruction task
-      │
-11 Scheduler      lr schedule counted by optimizer update
-      │
-13 E2E report     train loss / val loss / instruction quality
-      │
-      ▼
-62 Instruction    data audit + format check + sample review + delivery decision
-```
 
 项目页最小产物：
 
@@ -139,9 +141,11 @@ def review_instruction_outputs(outputs: List[Dict[str, object]]) -> Dict[str, ob
     """汇总固定样例的格式通过率和任务通过率。
 
     输入记录至少包含 format_ok、task_ok；空列表时通过率应为 0.0。
-    通过率是样例级诊断，不等同于完整评测集的模型能力。
+    `format_ok` 检查输出格式，`task_ok` 检查最小任务目标；二者都是样例级诊断，
+    不等同于完整评测集的模型能力。GPU 生成结果可以沿用这些字段进入项目报告。
     """
     # 提示：分别统计 format_pass_count / task_pass_count，并保留样例总数。
+    #       不要把 format_ok 当成 task_ok，也不要用一个总通过率掩盖两类失败。
     # sample_count = ???；format_pass_count = ???；task_pass_count = ???；pass_rate = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
@@ -153,6 +157,7 @@ def build_instruction_project_report(summary: Dict[str, float], format_check: Di
     仅凭 CPU 审计不能输出真实训练效果的 accept。
     """
     # 提示：返回 decision、project_ready 和 next_action 三个核心字段。
+    #       先判断数据/格式 blocker，再判断样例格式和任务通过率；CPU 审计不能伪造 GPU accept。
     # blockers = ???；project_ready = ???；decision = ???；next_action = ???。
     raise NotImplementedError("请先完成 TODO 代码！")
 
@@ -389,3 +394,12 @@ if RUN_PROJECT_EXPORT:
     save_project_report(PROJECT_RESULT_PATH, PROJECT_REPORT)
 
 ```
+
+## 相关阅读
+
+完成模板、评测和交付判断后，可以继续阅读 Transformers / TRL 的训练接口，并将结果延伸到参数高效微调和偏好优化。
+
+- [Hugging Face TRL 官方仓库](https://github.com/huggingface/trl)
+- [Transformers Trainer 官方文档](https://huggingface.co/docs/transformers/main/en/main_classes/trainer)
+- [63. LoRA Variants Benchmark | LoRA 变体对比项目](./63_LoRA_Variants_Benchmark.md)
+- [84. DPO Preference Project | DPO 偏好优化项目](./84_DPO_Preference_Project.md)

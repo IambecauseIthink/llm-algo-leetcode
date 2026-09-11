@@ -21,18 +21,11 @@
 
 ## 前置阅读
 
-**导语：** 先把显存预算、激活卸载和单项内存优化手段补齐，再进入统一内存管理，会更容易把“单点节省”与“整体账本调度”区分开。
+**导语：** 进入本节前，先能从显存账本读出参数、激活、KV Cache 和临时工作集的占用，再观察这些对象如何共享预算和驻留空间。
 
 - [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
 - [19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载](./19_Activation_Checkpointing_and_Activation_Offload.md)
 - [42. Activation Offload | 激活卸载](./42_Activation_Offload.md)
-
-## 相关阅读
-
-**导语：** 学完统一内存管理后，下一步重点不是继续罗列内存名词，而是看它怎样进入自动调优和性能分析闭环，确认预算调整到底换来了多少峰值下降和多少步时代价。
-
-- [44. Auto Tuning Framework | 自动调优框架](./44_Auto_Tuning_Framework.md)
-- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)
 
 ---
 
@@ -42,9 +35,11 @@
 - 先看谁是常驻，谁是峰值，谁可以迁移。
 - 统一预算表后，才能讨论 offload 或统一调度是否值得。
 
+![统一内存管理总览](../public/02_PyTorch_Algorithms/43_unified_memory_overview.svg)
+
 ### Step 2: 把内存层次写成可比较账本
 
-![Unified Memory Map](/02_PyTorch_Algorithms/43_unified_memory_map.svg)
+![统一内存放置的权衡](../public/02_PyTorch_Algorithms/43_placement_tradeoff.svg)
 
 - 分别记录每类对象的大小、驻留位置和迁移开销。
 - 看峰值是否来自同一时刻的叠加，而不是单块对象本身。
@@ -222,3 +217,12 @@ def evaluate_memory_plan(baseline_peak_gb: float, planned_peak_gb: float, migrat
 **4. 这页的定位**
 - 统一内存管理先做账本，再做放置，最后才谈迁移策略。
 - 峰值下降和迁移开销必须一起看，否则很容易得到看似省显存、实际拖慢训练的方案。
+
+## 相关阅读
+
+完成统一预算表后，可以继续观察自动调优如何搜索配置，以及性能分析如何验证峰值下降和步时代价。
+
+- [PyTorch CUDA 内存管理文档](https://pytorch.org/docs/stable/notes/cuda.html#cuda-memory-management)
+- [ZeRO-Infinity 原论文：Breaking the GPU Memory Wall for Extreme Scale Deep Learning](https://arxiv.org/abs/2104.07857)
+- [44. Auto Tuning Framework | 自动调优框架](./44_Auto_Tuning_Framework.md)
+- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)

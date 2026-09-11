@@ -1,6 +1,6 @@
 # 76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目
 
-**难度：** Hard | **环境：** CPU 可完成正确性验证；GPU 用于策略 benchmark | **标签：** `显存优化`, `Checkpoint/Offload`, `基准对比` | **目标人群：** 项目决策练习者
+**难度：** Hard | **环境：** CPU 可完成正确性验证；GPU 用于策略 benchmark | **标签：** `显存优化`, `Checkpoint/Offload`, `基准对比` | **目标人群：** 准备比较训练显存策略的学习者
 
 > 🚀 **云端运行环境**
 >
@@ -17,7 +17,7 @@
 本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
 **主责与复用边界：** 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。
 
-> 运行提示：先查看[使用指南中的项目环境预检与安装说明](../docs/guide.md#项目环境预检与安装)，再打开真实 GPU 开关。CPU 路径只检查正确性；真实 GPU 路径必须先通过预检。
+> 运行提示：先查看[使用指南中的项目环境预检与安装说明](../guide.md#项目环境预检与安装)，再打开真实 GPU 开关。CPU 路径只检查正确性；真实 GPU 路径必须先通过预检。
 
 **关键词：** `activation`, `checkpoint`, `offload`, `memory`, `benchmark`
 
@@ -33,22 +33,29 @@
 
 ## 相关阅读
 
-**导语：** 做完这页后，先把结果交给 75 完成训练侧预算决策，再由 74 使用 profiling 对显存优化方案做端到端最终验证。
+**导语：** 完成 checkpoint / offload 对照并保存报告后，先把结果交给 75 完成训练侧预算决策，再由 74 使用 profiling 对显存优化方案做端到端最终验证。
 - [75. Memory Budget Compression Project | 显存预算压缩项目](./75_Memory_Budget_Compression_Project.md)
 - [74. Profiling Driven End-to-End Optimization | Profiling 驱动的端到端优化](./74_Profiling_Driven_End_to_End_Optimization.md)
 
 ---
 ### Step 1：显存策略与机制假设
-先明确每种策略改变了哪一段 activation 生命周期，以及代价转移到了哪里。
+训练前向过程中会产生中间激活值，反向传播需要再次读取其中一部分。四种策略的区别，就是决定这些激活值留在哪里、是否重新计算，以及是否在 CPU 和 GPU 之间搬运。Step 1 先明确实验目标和对照条件，再用图片理解策略差异。
 
-| 方案 | forward 结束后 activation | backward 时的动作 | 主要代价 |
+| 项目内容 | CPU：机制验证 | GPU：真实对照 | 实验约定 |
 |:---|:---|:---|:---|
-| baseline | 留在 GPU，等待 backward | 直接读取 | 显存驻留 |
-| checkpoint | 只保留检查点边界 | 重新执行部分 forward | 额外计算 |
-| offload | 保存到 CPU | backward 前搬回 GPU | 带宽、同步和 CPU 内存 |
-| hybrid | 同时使用两种机制 | 重算并搬运部分状态 | 综合代价 |
+| 实验目的 | 用小型张量检查四种策略的 loss、gradient 和 backward 语义 | 在同一训练 workload 下比较策略的显存收益与性能代价 | 关注激活显存是否下降，以及速度和质量是否可接受 |
+| 实验输入 | 使用固定张量和统一 loss，观察 saved tensors 或梯度结果 | 使用同一模型、随机输入、batch、seq_len、optimizer 和 seed | 策略之间只改变 activation 的保存方式 |
+| 实验对象 | 不加载真实模型；检查 baseline、checkpoint、offload、hybrid 的机制函数 | 默认使用 73 的模型和 workload，执行相同的训练 step | 不把 CPU 正确性结果当作真实显存收益 |
+| baseline | 激活值留在 GPU 的参照语义 | 记录 step time、吞吐、peak allocated、peak reserved、loss 和 OOM | 作为其他策略的显存和速度基线 |
+| checkpoint | 检查选定边界保存、其余部分重算的梯度语义 | 测量重算后的显存峰值和训练速度 | 用额外计算换取激活驻留空间 |
+| offload | 检查部分 backward 所需张量保存到 CPU 后仍能完成反向 | 测量 CPU-GPU 搬运、同步、显存和速度代价 | 用带宽、同步和 CPU 内存换取 GPU 空间 |
+| hybrid | 检查重算与部分搬运同时存在时的结果正确性 | 测量两类代价叠加后的显存和吞吐 | 只有在单一策略不足时再作为折中方案比较 |
+| 实验输出 | 输出机制检查、loss 和 gradient 结果 | 输出每种策略的状态、显存、速度、loss、OOM 和 JSON 报告 | 后续由 75 根据预算条件进行筛选 |
 
-这些是待验证的机制预期，不是实测结论。
+表中的 CPU 路径回答“策略实现是否保持训练语义”，GPU 路径回答“在当前 workload 下是否值得使用”；表内策略描述是待验证的机制预期，不是实测结论。
+
+![76 训练激活值的保存方式与代价](../public/02_PyTorch_Algorithms/76_strategy_lifecycle.svg)
+<div align="center"><strong>后续实验比较 GPU 显存、训练速度、可运行性和 loss。</strong></div>
 ### Step 2：比较口径与实验协议
 固定比较条件，只改变显存策略；不同 workload 或 dtype 必须另存报告。
 
@@ -59,7 +66,7 @@
 | workload | batch、seq_len、warmup、iters、seed | 保证压力和统计口径一致 |
 | 候选策略 | baseline、checkpoint、offload、hybrid | 形成可比较集合 |
 
-先用 CPU 检查 loss、gradient 和 step 语义，再用 GPU 采集真实显存、吞吐和 OOM。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。
+CPU 正确性检查和 GPU benchmark 是两条独立路径：前者检查 loss、gradient 和 step 语义，后者采集真实显存、吞吐和 OOM。它们共享策略定义与比较口径，但 GPU 运行不要求先执行 CPU 题目区。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。
 ### Step 3：指标与项目判定
 显存最低的方案不一定最值得采用；必须同时检查容量、速度和训练状态。
 
@@ -73,7 +80,7 @@
 报告中可用 `memory_saving = baseline_peak - candidate_peak` 和 `throughput_ratio = candidate_throughput / baseline_throughput` 表达取舍。`accept` 还要求候选未 OOM、显存和吞吐满足预算、质量不越过阈值，并达到有效显存收益；否则根据问题进入 `tune` 或 `reject`。最终预算裁决交给 75。
 ### Step 4：动手实战（CPU-first）
 
-**要求：** 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 `accept / tune / reject`。先运行 CPU 正确性测试，再将同一比较口径用于 Step 5 的真实 GPU benchmark。
+**要求：** 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 `accept / tune / reject`。CPU 题目区验证决策逻辑；Step 5 独立使用相同口径采集 GPU 报告。
 
 ```python
 from typing import Dict, List
@@ -393,9 +400,12 @@ print('CPU correctness test passed; this does not measure real GPU memory saving
 
 ## Step 5（可选）：真实 GPU 显存策略 benchmark
 
-本 Step 复用 73 的训练口径，在同一模型、固定输入和 FP32 + AdamW 配置下比较 baseline、activation checkpoint、CPU offload 和 hybrid。运行前会自动读取并校验 `benchmarks/results/73_real_gpu_training.json`；如果模型、batch、seq_len、dtype 或 optimizer 不一致，会要求先用相同 workload 重跑 73。提供 `smoke` 与 `pressure` 两档 workload：smoke 用于快速校验，pressure 用于提高 activation 压力。结果保存到 `benchmarks/results/76_real_gpu_memory.json`。
+本 Step 独立复用 73 的训练口径，在同一模型、固定输入和 FP32 + AdamW 配置下比较 baseline、activation checkpoint、CPU offload 和 hybrid。运行前会自动读取并校验 `benchmarks/results/73_real_gpu_training.json`；如果模型、batch、seq_len、dtype 或 optimizer 不一致，会要求先用相同 workload 重跑 73。提供 `smoke` 与 `pressure` 两档 workload：smoke 用于快速校验，pressure 用于提高 activation 压力。输出包括每个候选的运行状态、step time、吞吐、peak allocated、peak reserved、eval loss 以及预算决策，结果保存到 `benchmarks/results/76_real_gpu_memory.json`。
 
-这里的 offload 使用 PyTorch 的 `torch.autograd.graph.save_on_cpu` 保存 backward 所需张量，重点是教学 benchmark，不等同于生产训练框架中的完整 offload 调度。`eval_loss` 只是固定随机输入上的质量代理指标，不等同于真实数据集验证结果。`REPEATS=1` 用于快速 smoke；改为 3 后会把每种策略的独立运行结果和均值一起写入报告，用于检查收益稳定性。
+这里的 offload 使用 PyTorch 的 `torch.autograd.graph.save_on_cpu` 保存 backward 所需张量，重点是教学 benchmark，不等同于生产训练框架中的完整 offload 调度。`eval_loss` 只是固定随机输入上的质量代理指标，不等同于真实数据集验证结果。`REPEATS=1` 用于快速 smoke；改为 3 后会把每种策略的独立运行结果、均值和 `stability` 范围一起写入报告，用于检查收益是否稳定。出现 `partial_oom` 时，只能把成功运行的结果视为参考，不能当作完整重复实验。
+
+![76 GPU 策略对比流程](../public/02_PyTorch_Algorithms/76_gpu_strategy_benchmark.svg)
+<div align="center"><strong>先校验 73 的条件，再采集策略指标并保存 JSON。</strong></div>
 
 本节主线保持全参数训练口径：`Qwen2.5-0.5B + FP32 + AdamW`。如果要在 12GB 显存上测试更大模型或更长序列，应另设 LoRA / QLoRA 扩展实验：LoRA 主要减少可训练参数、梯度和 optimizer state，QLoRA 进一步压缩基座权重；它们不能与本节主线结果直接横向比较，但可以用于观察更大模型下 activation checkpoint / offload 的适用边界。
 
@@ -411,6 +421,8 @@ print('CPU correctness test passed; this does not measure real GPU memory saving
 ```python
 from pathlib import Path
 
+AUTO_INSTALL_REAL_DEPS = True  # 真实 GPU 开启时，只安装当前内核缺失的普通依赖。
+AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES = True  # 云端 PEP 668 环境允许安装普通依赖；不会重装 PyTorch。
 RUN_REAL_GPU = False  # 默认先运行 CPU 正确性检查；GPU benchmark 时显式改为 True。
 DTYPE_MODE = 'fp32'  # fp32：主线；bf16：显式扩展实验，启用 CUDA autocast。
 MODEL_ID = 'Qwen/Qwen2.5-0.5B-Instruct'  # 固定基座模型。
@@ -446,6 +458,7 @@ OUTPUT_RELATIVE_PATH = Path('benchmarks/results/76_real_gpu_memory.json')
 import json
 import gc
 import os
+import subprocess
 import sys
 import time
 from contextlib import nullcontext
@@ -462,6 +475,11 @@ if not (PROJECT_ROOT / 'tools/project_runtime.py').is_file():
             if (candidate / 'tools/project_runtime.py').is_file():
                 PROJECT_ROOT = candidate
                 break
+        else:
+            if Path('/content').is_dir() and not colab_root.exists():
+                subprocess.run(['git', 'clone', 'https://github.com/datawhalechina/llm-algo-leetcode.git', str(colab_root)], check=True)
+            if (colab_root / 'tools/project_runtime.py').is_file():
+                PROJECT_ROOT = colab_root
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from tools.project_runtime import ensure_output_path, resolve_project_root, environment_preflight, runtime_snapshot, standard_experiment_config, standard_training_metrics, validate_training_config
@@ -480,6 +498,19 @@ print(f'结果保存路径: {OUTPUT_PATH}')
 
 if RUN_REAL_GPU:
     import torch
+    if AUTO_INSTALL_REAL_DEPS:
+        import importlib.util
+        missing = [name for name in ('transformers',) if importlib.util.find_spec(name) is None]
+        if missing:
+            install_cmd = [sys.executable, '-m', 'pip', 'install', '-U', *missing]
+            markers = [Path(sys.prefix) / 'EXTERNALLY-MANAGED', Path(sys.executable).parent.parent / 'EXTERNALLY-MANAGED']
+            if any(marker.is_file() for marker in markers):
+                if not AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES:
+                    raise RuntimeError('检测到 PEP 668 受管 Python，请启用 AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES 或改用独立虚拟环境。')
+                install_cmd[3:3] = ['--break-system-packages']
+            print('使用当前 Notebook 内核安装缺失依赖：', missing)
+            subprocess.check_call(install_cmd)
+            print('依赖安装完成；如当前内核仍找不到 transformers，请重启内核后继续。')
     valid_dtype_modes = {'fp32', 'bf16'}
     valid_strategies = {'baseline', 'checkpoint', 'offload', 'hybrid'}
     if DTYPE_MODE not in valid_dtype_modes:
@@ -616,8 +647,18 @@ if RUN_REAL_GPU:
             key: round(sum(item[key] for item in successful) / len(successful), 3)
             for key in numeric_keys
         }
+        def value_range(key):
+            values = [item[key] for item in successful]
+            return round(max(values) - min(values), 3)
+        stability = {
+            'step_time_range_ms': value_range('step_time_ms'),
+            'throughput_range_samples_per_s': value_range('samples_per_s'),
+            'peak_memory_range_mb': value_range('peak_memory_mb'),
+            'successful_runs': len(successful),
+            'oom_runs': len(runs) - len(successful),
+        }
         status = 'ok' if len(successful) == len(runs) else 'partial_oom'
-        return {**successful[0], **aggregated, 'status': status, 'runs': runs, 'successful_runs': len(successful), 'oom_runs': len(runs) - len(successful)}
+        return {**successful[0], **aggregated, 'status': status, 'runs': runs, 'successful_runs': len(successful), 'oom_runs': len(runs) - len(successful), 'stability': stability}
 
     candidates = [run_strategy_repeated(name) for name in STRATEGIES]
     budget = {'memory_cap_mb': MEMORY_CAP_MB, 'min_samples_per_s': MIN_SAMPLES_PER_S}
@@ -647,6 +688,15 @@ if RUN_REAL_GPU:
         },
         'budget': budget, 'quality_floor': quality_floor,
         'candidates': candidates, 'summary': summary, 'decision': decision,
+        'repeat_summary': {
+            item['name']: {
+                'status': item.get('status'),
+                'successful_runs': item.get('successful_runs', 0),
+                'oom_runs': item.get('oom_runs', 0),
+                'stability': item.get('stability'),
+            }
+            for item in candidates
+        },
     }
     result['experiment'] = standard_experiment_config(result['config'])
     result['standard_metrics'] = {item['name']: standard_training_metrics(item) for item in candidates}

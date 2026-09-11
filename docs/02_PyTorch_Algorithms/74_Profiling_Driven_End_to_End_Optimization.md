@@ -21,7 +21,7 @@
 **实验分层：** CPU 验证报告链路，GPU 验证阶段耗时、kernel / 内存活动和同步证据；二者都不能代替另一方。
 **主责与复用边界：** 本项目主责是用 trace 检查显存优化解释是否成立；性能分析专题复用采集和归因方法，算子优化复用 kernel 证据，推理项目只作为扩展 workload，不在本项目重新选择量化、调度或并行策略。
 
-> 运行提示：先查看[使用指南中的项目环境预检与安装说明](../docs/guide.md#项目环境预检与安装)，再打开真实 profiling 开关。CPU 路径只合并报告；CUDA trace 必须先通过 GPU 预检。
+> 运行提示：先查看[使用指南中的项目环境预检与安装说明](../guide.md#项目环境预检与安装)，再打开真实 profiling 开关。CPU 路径只合并报告；CUDA trace 必须先通过 GPU 预检。
 
 **关键词：** `profiling`, `optimization`, `end-to-end`
 
@@ -46,11 +46,21 @@
 ### Step 1: 定义端到端优化目标
 先回答一个问题：这次优化到底要解决什么瓶颈，成功标准是什么？
 
+| 环节 | 本节内容 | 形成的证据 |
+|:---|:---|:---|
+| 输入 | 73 的训练 baseline、76 的候选比较、75 的预算决策，以及 baseline / candidate 的 profiler trace | 说明当前结论来自哪组模型、workload 和硬件 |
+| 操作 | 在相同 workload 下对照时间线，定位 forward、backward、重算、搬运或同步活动；一次只改一个变量 | 把“显存下降”或“变慢”连接到可观察的执行活动 |
+| 输出 | baseline / candidate 指标表、trace 路径、瓶颈类别、证据、下一步改动和决策 | 形成可复核的 `accept / tune / reject` 或证据缺口 |
+| 边界 | CPU 只检查报告合并和字段逻辑；只有 GPU trace 才能支持 CUDA 时间线、kernel 活动和搬运判断 | CPU 结果不能替代 profiling 证据，局部指标也不能直接升级为端到端结论 |
+
 - 主线固定模型、输入数据、batch size、seq len、硬件环境和运行后端，保证 trace 可比较；扩展 workload 必须另列为独立证据。
 - 明确优化目标，例如降低 step time、提升 throughput、降低 peak memory 或减少通信等待，并先回到 Task 1 的账本判断问题属于容量、带宽、计算还是同步。
 - 同时写清约束条件：训练任务要保留 loss / accuracy 约束，推理任务要保留精度、输出一致性或服务 SLA 约束。
 - Baseline 需要能稳定复现，不能只跑一次；建议至少 warm-up 若干轮，再测多轮平均值。
 - 这一步的目标是让后面的优化有判断标准，而不是只得到一组孤立数字。
+
+![74 profiling 端到端闭环](../public/02_PyTorch_Algorithms/74_end_to_end_profile_loop.svg)
+<div align="center"><strong>指标变化先由 trace 提出假设，再用同一 workload 复测。</strong></div>
 
 ### Step 2: 先确认 baseline 和 profiling 口径合法
 
@@ -72,6 +82,17 @@ profiling 项目必须同时看 step time、throughput、peak memory 和任务�
 - 如果某个改动只是在一项指标上变好，却让另一项变差，要把取舍写清楚。
 - 这一轮修改的目标是建立因果关系，而不是一次性把所有优化开关都打开。
 
+#### Roofline：把 profiler 指标解释成瓶颈假设
+
+Roofline 用算术强度把计算能力和内存带宽放到同一张图上：`arithmetic_intensity = FLOPs / memory_bytes`，可达到的性能上限近似为 `min(peak_FLOPs, bandwidth × arithmetic_intensity)`。算术强度较低时，带宽上限更可能先到达；算术强度较高时，计算上限更可能成为约束。它用于提出和检查瓶颈假设，不会替代端到端时间线。
+
+| 输入 | CPU 可验证的结果 | 只有 GPU profiler 才能确认的内容 |
+| --- | --- | --- |
+| FLOPs、访存字节数、峰值算力、显存带宽 | 算术强度、计算/带宽上限和理论 bound | kernel 的实际 FLOPs/s、实际带宽和硬件受限原因 |
+| 缺少 FLOPs 或字节计数 | 输出 `insufficient_evidence`，不做 bound 判断 | 需要 Nsight Compute 或可靠的硬件计数器导出 |
+
+因此，CPU 实验只检查公式和分类逻辑；GPU trace 如果没有 FLOP/DRAM counter，也只能记录 `roofline_status=not_collected`，不能把某个 kernel 直接写成 compute-bound 或 memory-bound。
+
 ### Step 4: 输出端到端优化结论
 
 端到端优化最终不是输出“某个热点是不是降了”，而是输出这次改动在当前任务约束下是否值得继续保留、微调或回退。
@@ -91,7 +112,7 @@ profiling 项目必须同时看 step time、throughput、peak memory 和任务�
 
 74 与 73、76、75 共用实验外层字段：模型、设备、dtype、workload、baseline / tuned、step time、throughput、peak memory、质量约束和 `accept / tune / reject`。74 额外保存 profiling 证据，因此不能只复制显存策略表。
 
-建议额外记录：`profile.tool`、`profile.top_operators`、`profile.compute_ratio`、`profile.memory_ratio`、`profile.communication_ratio`，以及 `bottleneck.category`、`bottleneck.evidence`、`bottleneck.optimization`。如果当前环境没有真实 profiler，允许这些字段为空，但不能把未测量内容写成结论。
+建议额外记录：`profile.tool`、`profile.top_operators`、`profile.compute_ratio`、`profile.memory_ratio`、`profile.communication_ratio`，以及 `bottleneck.category`、`bottleneck.evidence`、`bottleneck.optimization`。`trace.status=collected` 只表示文件已生成，不等于瓶颈已经确认；只有把时间线观察、指标变化和一次针对性复验连起来，才能升级为端到端优化结论。如果当前环境没有真实 profiler，允许这些字段为空，但不能把未测量内容写成结论。
 
 项目结果协议由 `tools/profiling_result_schema.py` 提供。它不会覆盖原始实验数据；真实 GPU 或 Colab 环境完成 profiling 后，可将结果保存为 `benchmarks/results/74_profiling_optimization.json`。
 
@@ -125,6 +146,28 @@ def synchronize_if_cuda():
     if torch is not None and torch.cuda.is_available():
         torch.cuda.synchronize()
 
+
+def estimate_roofline(flops, memory_bytes, peak_flops, bandwidth):
+    """用给定的理论参数估算 Roofline 上限；不读取 GPU 硬件计数器。"""
+    values = {
+        'flops': flops, 'memory_bytes': memory_bytes,
+        'peak_flops': peak_flops, 'bandwidth': bandwidth,
+    }
+    if any(value <= 0 for value in values.values()):
+        raise ValueError('flops/memory_bytes/peak_flops/bandwidth 必须为正数')
+    arithmetic_intensity = flops / memory_bytes
+    compute_roof = peak_flops
+    bandwidth_roof = bandwidth * arithmetic_intensity
+    attainable_roof = min(compute_roof, bandwidth_roof)
+    bound = 'compute' if compute_roof <= bandwidth_roof else 'memory'
+    return {
+        'arithmetic_intensity': arithmetic_intensity,
+        'compute_roof': compute_roof,
+        'bandwidth_roof': bandwidth_roof,
+        'attainable_roof': attainable_roof,
+        'bound': bound,
+        'evidence_level': 'theoretical_formula_only',
+    }
 
 def benchmark_fn(fn, warmup=3, iters=10):
     """测量 CPU/GPU 函数的平均耗时；GPU 需由同步函数包住测量区间。"""
@@ -222,6 +265,10 @@ def test_optimization_project_template():
         result = benchmark_fn(fn, warmup=0, iters=2)
         assert counter['n'] == 2, "benchmark 应该运行 iters 次"
         assert result >= 0.0, "平均耗时应该非负"
+        roofline = estimate_roofline(flops=2_000.0, memory_bytes=1_000.0, peak_flops=10.0, bandwidth=1.0)
+        assert roofline['arithmetic_intensity'] == 2.0
+        assert roofline['bound'] == 'memory'
+        assert roofline['evidence_level'] == 'theoretical_formula_only'
         for invalid in ({'warmup': -1, 'iters': 2}, {'warmup': 0, 'iters': 0}):
             try:
                 benchmark_fn(fn, **invalid)
@@ -300,6 +347,28 @@ def synchronize_if_cuda():
     if torch is not None and torch.cuda.is_available():
         torch.cuda.synchronize()
 
+
+def estimate_roofline(flops, memory_bytes, peak_flops, bandwidth):
+    """Estimate a theoretical Roofline bound; this does not collect hardware counters."""
+    values = {
+        'flops': flops, 'memory_bytes': memory_bytes,
+        'peak_flops': peak_flops, 'bandwidth': bandwidth,
+    }
+    if any(value <= 0 for value in values.values()):
+        raise ValueError('flops/memory_bytes/peak_flops/bandwidth must be positive')
+    arithmetic_intensity = flops / memory_bytes
+    compute_roof = peak_flops
+    bandwidth_roof = bandwidth * arithmetic_intensity
+    attainable_roof = min(compute_roof, bandwidth_roof)
+    bound = 'compute' if compute_roof <= bandwidth_roof else 'memory'
+    return {
+        'arithmetic_intensity': arithmetic_intensity,
+        'compute_roof': compute_roof,
+        'bandwidth_roof': bandwidth_roof,
+        'attainable_roof': attainable_roof,
+        'bound': bound,
+        'evidence_level': 'theoretical_formula_only',
+    }
 
 def collect_torch_profile(train_step_fn, output_dir='benchmarks/results/74_profile', warmup=2, iters=5):
     """Collect a short CPU/CUDA trace and return report metadata."""
@@ -414,6 +483,7 @@ def recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_
 - **这一题要解决什么**：把 profiling 优化流程压缩成一个最小可复用模板，保证每次优化都能留下可比较的指标和明确结论。
 - **为什么这样做**：性能优化不能只看单次运行结果，必须固定 baseline、测量同一组指标，并把改动前后的差异收敛成项目报告。
 - **带走的直觉**：profiling 的价值不是“找到一个慢点”，而是建立 `测量 -> 定位 -> 修改 -> 复测 -> 复盘` 的闭环。
+- **Roofline 的使用方式**：`estimate_roofline` 只检查算术强度和理论上限；没有硬件 FLOP/DRAM 计数器时，答案不能把结果写成真实的 compute-bound 或 memory-bound。
 
 **1. TODO 1 (benchmark_fn)**
 
@@ -451,18 +521,24 @@ def recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_
 
 本 Step 使用 76 的 `seq_len=768` FP32 workload，实际运行 baseline / checkpoint 的短训练 step，并保存 `torch.profiler` 的 CPU/CUDA trace。默认关闭；没有 GPU 时不要运行。它只负责采集证据，最终报告仍由后面的收口代码生成。
 
+![74 GPU trace 采集流程](../public/02_PyTorch_Algorithms/74_gpu_trace_collection.svg)
+<div align="center"><strong>trace 用于提供证据，瓶颈结论仍需人工解读和针对性复验。</strong></div>
+
 **可选的 MLA profiling 扩展：** 如果要验证 71 的 MLA / KV Cache 结构，应使用同一模型、输入长度和 backend，单独记录 prefill / decode、latent KV 读写、位置相关分量、kernel 时间和显存变化。71 负责回答“缓存表示如何变化”，74 负责回答“该表示在真实执行中带来什么时间与带宽代价”；当前训练 trace 代码不能仅通过替换模型名变成 MLA 推理 trace，因此没有对应 collector 时应标记为未采集。
 
 ```python
 from pathlib import Path
 
 RUN_REAL_PROFILE = False  # 默认先完成 CPU 报告收口；真实 GPU 采集时显式改为 True。
+AUTO_INSTALL_REAL_DEPS = True  # 真实 profiling 开启时，只安装当前内核缺失的普通依赖。
+AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES = True  # 云端 PEP 668 环境允许安装普通依赖；不会重装 PyTorch。
 PROFILE_MODEL_ID = 'Qwen/Qwen2.5-0.5B-Instruct'
 PROFILE_BATCH_SIZE = 1  # 必须与 76 的代表性 workload 对齐。
 PROFILE_SEQ_LEN = 768  # 只 profile 一个代表性 workload；其他长度另存 trace。
 PROFILE_WARMUP = 2  # 不计入 trace 结论的预热轮数。
 PROFILE_ITERS = 5  # 短 trace 采集轮数；只用于归因，不替代 73 / 76 的正式均值。
 PROFILE_STRATEGIES = ['baseline', 'checkpoint']  # 先采最小对照；candidate 应来自 76 的可行方案。
+ROOFLINE_COUNTER_SOURCE = 'not_collected'  # torch.profiler 默认不保证 FLOP/DRAM 硬件计数器。
 if PROFILE_BATCH_SIZE <= 0 or PROFILE_SEQ_LEN <= 0 or PROFILE_WARMUP < 0 or PROFILE_ITERS <= 0:
     raise ValueError('PROFILE_BATCH_SIZE/PROFILE_SEQ_LEN/PROFILE_ITERS 必须 > 0，PROFILE_WARMUP 不能为负数。')
 if not PROFILE_STRATEGIES or len(PROFILE_STRATEGIES) != len(set(PROFILE_STRATEGIES)):
@@ -488,6 +564,19 @@ from pathlib import Path
 
 if RUN_REAL_PROFILE:
     import torch
+    if AUTO_INSTALL_REAL_DEPS:
+        import importlib.util
+        missing = [name for name in ('transformers',) if importlib.util.find_spec(name) is None]
+        if missing:
+            install_cmd = [sys.executable, '-m', 'pip', 'install', '-U', *missing]
+            markers = [Path(sys.prefix) / 'EXTERNALLY-MANAGED', Path(sys.executable).parent.parent / 'EXTERNALLY-MANAGED']
+            if any(marker.is_file() for marker in markers):
+                if not AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES:
+                    raise RuntimeError('检测到 PEP 668 受管 Python，请启用 AUTO_INSTALL_ALLOW_BREAK_SYSTEM_PACKAGES 或改用独立虚拟环境。')
+                install_cmd[3:3] = ['--break-system-packages']
+            print('使用当前 Notebook 内核安装缺失依赖：', missing)
+            subprocess.check_call(install_cmd)
+            print('依赖安装完成；如当前内核仍找不到 transformers，请重启内核后继续。')
     from transformers import AutoConfig, AutoModelForCausalLM
 
     project_root = Path(os.environ.get('LLM_ALGO_PROJECT_ROOT', Path.cwd())).expanduser().resolve()
@@ -574,7 +663,7 @@ if RUN_REAL_PROFILE:
         'task': 'task3_training_memory_optimization', 'stage': 'real_profiler_trace',
         'config': {'model_id': PROFILE_MODEL_ID, 'batch_size': PROFILE_BATCH_SIZE, 'seq_len': PROFILE_SEQ_LEN, 'dtype': 'float32', 'strategies': PROFILE_STRATEGIES, 'warmup': PROFILE_WARMUP, 'iters': PROFILE_ITERS},
         'source_76': str(upstream_path.relative_to(project_root)), 'trace_root': str(trace_root.relative_to(project_root)),
-        'candidates': candidates, 'profile': {'tool': 'torch.profiler', 'activities': ['CPU', 'CUDA'], 'status': 'collected', 'trace_files_by_strategy': {item['name']: [str(path) for path in sorted((trace_root / item['name']).glob('*.pt.trace.json'))] for item in candidates}},
+        'candidates': candidates, 'profile': {'tool': 'torch.profiler', 'activities': ['CPU', 'CUDA'], 'status': 'collected', 'trace_files_by_strategy': {item['name']: [str(path.relative_to(project_root)) for path in sorted((trace_root / item['name']).glob('*.pt.trace.json'))] for item in candidates}},
     }
     report['experiment'] = standard_experiment_config({
         'model_id': PROFILE_MODEL_ID, 'backend': 'torch.profiler',
@@ -672,7 +761,7 @@ def build_upstream_report(reports):
         'schema_version': 'profiling-project/v1',
         'project': '74_profiling_driven_end_to_end_optimization',
         'stage': 'upstream_report_merge',
-        'sources': {name: str(path) for name, path in UPSTREAM_PATHS.items()},
+        'sources': {name: str(path.relative_to(project_root)) for name, path in UPSTREAM_PATHS.items()},
         'upstream': {
             '73_training_baseline': reports['73'].get('baseline'),
             '76_strategy_summary': reports['76'].get('summary'),
@@ -681,6 +770,11 @@ def build_upstream_report(reports):
             '75_decision': reports['75'].get('decision'),
         },
         'profiling': profiling,
+        'roofline': {
+            'status': 'not_collected',
+            'counter_source': ROOFLINE_COUNTER_SOURCE,
+            'evidence_level': 'no_hardware_counter_evidence',
+        },
         'decision': profile_decision,
     }
     report['experiment'] = standard_experiment_config(reports['76'].get('config', {}))

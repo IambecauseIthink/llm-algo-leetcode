@@ -13,83 +13,77 @@
 
 ## 本节导读
 
-长上下文推理里，KV Cache 不只是“能不能存下来”的问题。多个请求共享前缀、持续生成、不断进入和退出队列时，系统还要决定哪些 cache block 值得保留，哪些可以驱逐，以及高复用前缀是否应该留在更热的路径上。
+当多个请求共享前缀并持续生成时，KV Cache 会同时面临复用和容量压力。调度器需要记录每个缓存的大小、命中次数和最近访问时间，再根据这些状态决定缓存的保留顺序和驱逐顺序。
 
-本节用一个极简 `KVCacheSchedulerSim` 模拟 cache 命中、优先级评分、堆队列刷新和容量驱逐。学完后，你应该能看清 KV Cache Scheduling 的主线：用复用次数、最近访问时间和缓存大小共同决定缓存资源如何分配，而不是只按请求到达顺序管理 cache。
+本节沿着“请求访问 → 缓存状态 → 价值评分 → 优先级队列 → 容量驱逐”的顺序理解 KV Cache 调度。重点是看清访问热度、缓存容量和驱逐顺序之间如何相互影响，并建立从状态变化到调度决策的完整认知链。
 
-**关键词：** `KV cache scheduling`, `cache reuse`, `eviction`
+本节难度为 Hard，因为它需要同时理解缓存复用、容量约束、堆队列和状态更新之间的联系，并把这些机制组织成连续的调度过程。
+
+**关键词：** `KV Cache 调度`、`缓存复用`、`容量驱逐`
 
 ---
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能读出一个缓存块的容量、命中和最近访问状态，再观察这些状态如何影响保留与驱逐顺序。
 - [22. vLLM PagedAttention | vLLM 分页注意力](./22_vLLM_PagedAttention.md)
 - [34. Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充](./34_Prefix_Caching_and_Chunked_Prefill.md)
 - [36. Decode Scheduling | 解码调度](./36_Decode_Scheduling.md)
 
-## 相关阅读
-
-- [38. Prefill-Decode Disaggregation | PD 分离](./38_Prefill_Decode_Disaggregation.md)
-- [39. Inference Fallback and Tiers | 推理分层与回退策略](./39_Inference_Fallback_and_Tiers.md)
-- [70. Serving Scheduler Benchmark | 服务调度基准项目](./70_Serving_Scheduler_Benchmark.md)
-
 ---
 
-### Step 1: 原理与痛点
+### Step 1: 为什么 KV Cache 需要调度
 
-前缀缓存解决的是“相同前缀能不能复用”，PagedAttention 解决的是“KV Cache 怎么按 block 管理”。但在真实推理服务里，只知道“能复用”和“能分块”还不够：并发请求不断进来，缓存容量是有限的，系统必须决定哪些 cache 留在显存里，哪些 cache 可以被驱逐。
+先把问题拆成三个容易观察的变化：哪些内容可以复用、每段缓存占用多少空间、哪些缓存最近更常被访问。前缀缓存提供复用线索，分页管理把 KV Cache 组织成可分配的 block，请求推进过程则不断更新访问热度。多个请求同时生成时，调度器要把这些信息合在一起，安排缓存的保留和驱逐。
 
-KV Cache Scheduling 关注的就是这个决策过程。它不是单纯的缓存存取，而是在回答三个问题：
+| 观察入口 | 发生了什么 | 形成的调度依据 |
+|---|---|---|
+| 内容复用 | 同一前缀再次被访问 | 命中次数和复用价值 |
+| 空间占用 | 新请求需要更多 KV Cache block | 当前容量和驱逐压力 |
+| 访问热度 | 命中次数和最近访问不断变化 | 当前缓存价值和优先级 |
 
-- **谁更值得保留**：复用次数高、刚刚访问过、被多个请求共享的前缀，通常应该保留；
-- **谁应该被驱逐**：长期未访问、体积较大、复用价值低的缓存，应该优先释放；
-- **怎么避免错误驱逐**：缓存状态会不断更新，调度器需要识别旧的优先级记录，不能用过期信息做决策。
+![KV Cache 调度概念图：前置机制、缓存状态与容量决策](../public/02_PyTorch_Algorithms/37_kv_cache_scheduling_map.svg)
 
-这一步的核心直觉是：KV Cache 的价值不是固定的，它会随着请求访问、复用次数和时间变化动态改变。
 
-### Step 2: 代码实现框架
+### Step 2: 缓存状态与容量账本
 
-下面的代码会实现一个最小 cache scheduler。它不模拟真实 KV 张量，而是用 `prefix -> CacheEntry` 表示一段可复用缓存，并记录它的大小、命中次数、最近访问时间和保留优先级。
+先把每段可复用缓存看成一条状态记录，再把所有记录放进同一份容量账本。单条记录描述一个前缀的占用和访问历史，全局字段描述当前容量；这些信息共同为下一步的价值评估提供输入。
 
-代码拆成五个动作：
+| 字段层级 | 记录什么 | 对调度的作用 |
+|---|---|---|
+| 单条缓存：标识 | prefix 对应的缓存记录 | 判断访问是否命中同一前缀 |
+| 单条缓存：大小 | 这段缓存占用多少字节 | 计算新增缓存带来的容量压力 |
+| 单条缓存：命中次数 | 该前缀已经复用多少次 | 估计继续保留的复用价值 |
+| 单条缓存：最近访问 | 最近一次访问发生的时间 | 反映当前访问热度 |
+| 全局账本：容量 | 总容量和当前已分配容量 | 判断何时需要触发驱逐 |
 
-| 动作 | 对应方法 | 作用 |
-|------|----------|------|
-| 评分 | `_score` | 根据复用次数、最近访问和大小计算缓存保留价值 |
-| 刷新队列 | `_refresh_queue` | 把最新 priority 写入堆队列，供后续驱逐使用 |
-| 容量驱逐 | `_evict_until_fit` | 当容量不足时，持续移除低优先级缓存 |
-| 访问缓存 | `touch` | 处理一次 prefix 访问：命中则更新，未命中则新增 |
-| 状态导出 | `snapshot` | 按优先级输出当前缓存状态，便于观察调度结果 |
+### Step 3: 评分、堆队列与过期记录
 
-这里要特别注意：堆队列里可能存在同一个 prefix 的多条历史记录。因为每次命中都会刷新 priority，旧记录不会立刻删除，而是在弹出时用 `is_stale` 判断是否过期。这是很多缓存调度器里常见的懒删除思路。
+Step 2 的状态字段进入价值评估：复用次数体现未来命中机会，最近访问体现当前热度，缓存大小体现容量成本。教学实现把三者合成为一个可比较的保留分数，再交给优先级队列处理。评分可以写成：`score = 复用奖励 + 最近访问奖励 - 容量惩罚`。
 
-### Step 3: 核心机制
 
-本节用一个简化评分函数来表达缓存保留价值：
+| 机制 | 作用 | 设计时关注 |
+|---|---|---|
+| 评分 | 把缓存价值变成可比较的数字 | 复用、时间和容量共同影响分数 |
+| 堆队列 | 让低优先级缓存可以先被找到 | 刷新时追加当前记录，保留可追溯状态 |
+| 过期检查（stale check） | 弹出时重新核对当前 entry | 让驱逐依据跟随最新状态 |
+| 驱逐 | 容量不足时释放低价值缓存 | 超过容量时选择驱逐或降级路径 |
 
-\[
-score = reuse\_bonus + 0.5 	imes recency - 0.25 	imes size\_penalty
-\]
-
-其中：
-
-- `reuse_bonus` 来自命中次数，命中越多说明未来继续复用的可能性越高；
-- `recency` 来自最近访问时间，越新的缓存越可能还在热路径上；
-- `size_penalty` 来自缓存大小，越大的缓存占用越多显存，驱逐收益也更高。
-
-这个公式不是工业系统的固定答案，而是一个教学用的可解释策略。它把 LFU（看复用次数）、LRU（看最近访问）和容量成本（看大小）合在一起，让读者看到 cache scheduling 的基本权衡：**保留高价值缓存，同时在容量不足时释放低价值缓存**。
+![KV Cache 调度的评分、堆队列与过期记录](../public/02_PyTorch_Algorithms/37_kv_cache_score_heap.svg)
 
 ### Step 4: 动手实战
 
-**要求**：请补全下方 `KVCacheSchedulerSim`，实现一个极简版的 KV Cache 调度器。你需要重点完成五个关键位置：计算保留分数、刷新堆队列、识别过期堆项、创建新缓存条目，以及按优先级导出缓存状态。
+把前面的状态账本和评分机制落到代码中，再用访问事件复查缓存状态如何变化。表格列出每个实现位置的输入、动作和观察重点，完成后沿着“访问 → 评分 → 驱逐 → 快照”检查整条调度链。
 
-完成后观察测试中的日志：`add` 表示新增缓存，`reuse` 表示命中复用，`evict` 表示容量不足时触发驱逐。只要这三类事件能串起来，就说明你已经跑通了“复用 -> 评分 -> 驱逐 -> 快照”的缓存调度闭环。
+| 实现位置 | 输入或状态 | 应完成的动作 | 测试时观察 |
+| --- | --- | --- | --- |
+| `_score` | 命中次数、容量、最近访问 | 合成可比较的保留分数 | 复用多、访问近的缓存分数更高 |
+| `_refresh_queue` | 当前 entry | 追加最新的评分、时间和前缀 | 历史记录保留，等待弹出时核对 |
+| `_evict_until_fit` | 堆顶记录、当前 entry | 核对状态后释放所需容量 | 过期记录跳过，有效低分记录参与驱逐 |
+| `touch` / `snapshot` | 新旧前缀与当前状态 | 处理新增、复用并输出排序快照 | `snapshot` 只展示状态，`current_bytes` 维持容量约束 |
 
-### 提示
 
-- 复用次数高、最近访问近的缓存更应该保留。
-- 堆里可能有旧 priority，弹出时必须和最新 entry 对照。
-- `snapshot` 只负责展示排序，不改变内部状态。
+
 
 ```python
 import heapq
@@ -110,9 +104,12 @@ class CacheEntry:
 
 
 class KVCacheSchedulerSim:
-    """极简版 KV Cache 调度器。"""
+    """用优先级堆模拟可复用前缀的容量调度。"""
 
     def __init__(self, capacity_bytes: int = 1024):
+        """初始化容量账本、缓存状态和优先级队列。"""
+        if capacity_bytes <= 0:
+            raise ValueError('capacity_bytes must be positive')
         self.capacity_bytes = capacity_bytes
         self.current_bytes = 0
         self.time = 0
@@ -121,27 +118,32 @@ class KVCacheSchedulerSim:
         self.log: List[str] = []
 
     def _score(self, hits: int, size: int, last_used: int) -> float:
+        """根据复用次数、访问热度和容量成本计算保留分数。"""
         recency = 1.0 / (1.0 + max(self.time - last_used, 0))
         reuse_bonus = float(hits)
         size_penalty = size / max(self.capacity_bytes, 1)
         # ==========================================
         # TODO 1: 计算 cache entry 的保留优先级
         # 提示: 复用次数越多越该保留，越新越该保留，越大越需要惩罚
+        # 可用变量: reuse_bonus、recency、size_penalty；结果应为 float
         # ==========================================
         # score = ???
         return score
 
     def _refresh_queue(self, prefix: str):
+        """把当前 entry 的最新评分追加到优先级堆。"""
         entry = self.entries[prefix]
         entry.priority = self._score(entry.hits, entry.bytes, entry.last_used)
         # ==========================================
         # TODO 2: 把最新优先级写入堆队列
         # 提示: 这里要弹出低 priority 的缓存，因此不要对 priority 取负
+        # queue_item 应包含 (priority, last_used, prefix) 三个字段
         # ==========================================
         # queue_item = ???
         heapq.heappush(self.queue, queue_item)
 
     def _evict_until_fit(self, needed: int):
+        """在新增缓存前驱逐低价值 entry，直到容量可以容纳它。"""
         while self.current_bytes + needed > self.capacity_bytes and self.entries:
             while self.queue:
                 priority, last_used, prefix = heapq.heappop(self.queue)
@@ -151,6 +153,7 @@ class KVCacheSchedulerSim:
                 # ==========================================
                 # TODO 3: 跳过堆中的过期记录
                 # 提示: entry 的 priority 或 last_used 已变化时，旧堆项不再有效
+                # 可比较堆顶的 priority、last_used 与 entry 的当前字段
                 # ==========================================
                 # is_stale = ???
                 if is_stale:
@@ -165,6 +168,11 @@ class KVCacheSchedulerSim:
             self.log.append(f"evict:{prefix}")
 
     def touch(self, prefix: str, bytes_: int):
+        """访问一个前缀，更新命中状态或创建新的缓存 entry。"""
+        if not isinstance(prefix, str) or not prefix:
+            raise ValueError('prefix must be a non-empty string')
+        if bytes_ <= 0:
+            raise ValueError('bytes_ must be positive')
         if bytes_ > self.capacity_bytes:
             raise ValueError("single cache entry exceeds capacity")
 
@@ -181,6 +189,7 @@ class KVCacheSchedulerSim:
         # ==========================================
         # TODO 4: 创建新的 cache entry
         # 提示: 新 entry 的 hits 从 1 开始，last_used 使用当前 time
+        # entry 需要保存 prefix、bytes_、当前 time，并先使用 0.0 作为初始 priority
         # ==========================================
         # entry = ???
         self.entries[prefix] = entry
@@ -189,14 +198,17 @@ class KVCacheSchedulerSim:
         self.log.append(f"add:{prefix}")
 
     def schedule(self, requests: List[Tuple[str, int]]) -> List[str]:
+        """按给定访问顺序处理前缀请求并返回事件日志。"""
         for prefix, bytes_ in requests:
             self.touch(prefix, bytes_)
         return list(self.log)
 
     def snapshot(self) -> List[Tuple[str, int, float, int]]:
+        """按保留价值从高到低导出当前缓存状态。"""
         # ==========================================
         # TODO 5: 按优先级导出当前 cache 状态
         # 提示: 高 priority 在前；priority 相同则按 last_used 和 prefix 稳定排序
+        # ordered_entries 应是 CacheEntry 列表，不能修改 self.entries
         # ==========================================
         # ordered_entries = ???
         return [(e.prefix, e.bytes, round(e.priority, 4), e.hits) for e in ordered_entries]
@@ -211,6 +223,14 @@ class KVCacheSchedulerSim:
 # 测试你的实现
 def test_kv_cache_scheduler():
     try:
+        def expect_value_error(action, label):
+            try:
+                action()
+            except ValueError:
+                return
+            raise AssertionError(f'{label} 应拒绝非法输入')
+
+        expect_value_error(lambda: KVCacheSchedulerSim(capacity_bytes=0), 'capacity_bytes=0')
         sim = KVCacheSchedulerSim(capacity_bytes=128)
         requests = [
             ('a', 40),
@@ -232,11 +252,34 @@ def test_kv_cache_scheduler():
         priorities = [item[2] for item in snap]
         assert priorities == sorted(priorities, reverse=True)
 
+        # 评分应体现三条机制：更多复用、更近访问和更小容量成本。
+        hot_score = sim._score(hits=3, size=16, last_used=sim.time)
+        cold_score = sim._score(hits=1, size=16, last_used=0)
+        small_score = sim._score(hits=1, size=16, last_used=sim.time)
+        large_score = sim._score(hits=1, size=64, last_used=sim.time)
+        assert hot_score > cold_score
+        assert small_score > large_score
+
+        # 同一前缀被访问后，旧堆记录必须被识别为 stale，而不是重复驱逐同一 entry。
+        stale_sim = KVCacheSchedulerSim(capacity_bytes=80)
+        stale_sim.touch('hot', 32)
+        stale_sim.touch('hot', 32)
+        assert len(stale_sim.queue) >= 2
+        stale_sim.touch('cold', 64)
+        assert stale_sim.current_bytes <= stale_sim.capacity_bytes
+        assert len(stale_sim.entries) == len(set(stale_sim.entries))
+        assert stale_sim.current_bytes == sum(item.bytes for item in stale_sim.entries.values())
+
+        # 输入校验属于容量账本的边界条件，不应被宽泛异常处理吞掉。
+        expect_value_error(lambda: sim.touch('', 8), '空 prefix')
+        expect_value_error(lambda: sim.touch('bad-size', 0), '非正 bytes')
+        expect_value_error(lambda: sim.touch('too-large', 129), '超过容量的 entry')
+
         print('✅ KVCacheSchedulerSim 测试通过')
     except NotImplementedError as e:
         raise NotImplementedError('请先完成 TODO 代码！') from e
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
+    except (NameError, AttributeError) as e:
+        raise NotImplementedError('请先完成 TODO 代码或检查字段名！') from e
 
 
 test_kv_cache_scheduler()
@@ -271,9 +314,12 @@ class CacheEntry:
 
 
 class KVCacheSchedulerSim:
-    """极简版 KV Cache 调度器。"""
+    """用优先级堆模拟可复用前缀的容量调度。"""
 
     def __init__(self, capacity_bytes: int = 1024):
+        """初始化容量账本、缓存状态和优先级队列。"""
+        if capacity_bytes <= 0:
+            raise ValueError('capacity_bytes must be positive')
         self.capacity_bytes = capacity_bytes
         self.current_bytes = 0
         self.time = 0
@@ -282,27 +328,32 @@ class KVCacheSchedulerSim:
         self.log: List[str] = []
 
     def _score(self, hits: int, size: int, last_used: int) -> float:
+        """根据复用次数、访问热度和容量成本计算保留分数。"""
         recency = 1.0 / (1.0 + max(self.time - last_used, 0))
         reuse_bonus = float(hits)
         size_penalty = size / max(self.capacity_bytes, 1)
         # ==========================================
         # TODO 1: 计算 cache entry 的保留优先级
         # 提示: 复用次数越多越该保留，越新越该保留，越大越需要惩罚
+        # 可用变量: reuse_bonus、recency、size_penalty；结果应为 float
         # ==========================================
         score = reuse_bonus + 0.5 * recency - 0.25 * size_penalty
         return score
 
     def _refresh_queue(self, prefix: str):
+        """把当前 entry 的最新评分追加到优先级堆。"""
         entry = self.entries[prefix]
         entry.priority = self._score(entry.hits, entry.bytes, entry.last_used)
         # ==========================================
         # TODO 2: 把最新优先级写入堆队列
         # 提示: 这里要弹出低 priority 的缓存，因此不要对 priority 取负
+        # queue_item 应包含 (priority, last_used, prefix) 三个字段
         # ==========================================
         queue_item = (entry.priority, entry.last_used, prefix)
         heapq.heappush(self.queue, queue_item)
 
     def _evict_until_fit(self, needed: int):
+        """在新增缓存前驱逐低价值 entry，直到容量可以容纳它。"""
         while self.current_bytes + needed > self.capacity_bytes and self.entries:
             while self.queue:
                 priority, last_used, prefix = heapq.heappop(self.queue)
@@ -312,6 +363,7 @@ class KVCacheSchedulerSim:
                 # ==========================================
                 # TODO 3: 跳过堆中的过期记录
                 # 提示: entry 的 priority 或 last_used 已变化时，旧堆项不再有效
+                # 可比较堆顶的 priority、last_used 与 entry 的当前字段
                 # ==========================================
                 is_stale = (priority, last_used) != (entry.priority, entry.last_used)
                 if is_stale:
@@ -326,6 +378,11 @@ class KVCacheSchedulerSim:
             self.log.append(f"evict:{prefix}")
 
     def touch(self, prefix: str, bytes_: int):
+        """访问一个前缀，更新命中状态或创建新的缓存 entry。"""
+        if not isinstance(prefix, str) or not prefix:
+            raise ValueError('prefix must be a non-empty string')
+        if bytes_ <= 0:
+            raise ValueError('bytes_ must be positive')
         if bytes_ > self.capacity_bytes:
             raise ValueError("single cache entry exceeds capacity")
 
@@ -342,6 +399,7 @@ class KVCacheSchedulerSim:
         # ==========================================
         # TODO 4: 创建新的 cache entry
         # 提示: 新 entry 的 hits 从 1 开始，last_used 使用当前 time
+        # entry 需要保存 prefix、bytes_、当前 time，并先使用 0.0 作为初始 priority
         # ==========================================
         entry = CacheEntry(priority=0.0, last_used=self.time, prefix=prefix, hits=1, bytes=bytes_)
         self.entries[prefix] = entry
@@ -350,14 +408,17 @@ class KVCacheSchedulerSim:
         self.log.append(f"add:{prefix}")
 
     def schedule(self, requests: List[Tuple[str, int]]) -> List[str]:
+        """按给定访问顺序处理前缀请求并返回事件日志。"""
         for prefix, bytes_ in requests:
             self.touch(prefix, bytes_)
         return list(self.log)
 
     def snapshot(self) -> List[Tuple[str, int, float, int]]:
+        """按保留价值从高到低导出当前缓存状态。"""
         # ==========================================
         # TODO 5: 按优先级导出当前 cache 状态
         # 提示: 高 priority 在前；priority 相同则按 last_used 和 prefix 稳定排序
+        # ordered_entries 应是 CacheEntry 列表，不能修改 self.entries
         # ==========================================
         ordered_entries = sorted(self.entries.values(), key=lambda e: (-e.priority, e.last_used, e.prefix))
         return [(e.prefix, e.bytes, round(e.priority, 4), e.hits) for e in ordered_entries]
@@ -365,6 +426,16 @@ class KVCacheSchedulerSim:
 ```
 
 ### 解析
+
+题目区和答案区保留同样的 5 个 TODO；答案区只补全实现，不改变函数接口。下面的解析按 TODO 顺序解释机制，测试函数则用可观察的不变量检查实现是否正确。
+
+| TODO | 题目区要完成的机制 | 测试函数中的对应检查 |
+|---|---|---|
+| 1 | 评分函数把复用、热度和容量成本合成保留分数 | 评分方向单调性 |
+| 2 | 将最新状态追加到优先级堆 | 复用后堆中保留历史记录 |
+| 3 | 跳过过期堆记录，避免旧状态参与驱逐 | stale record 与容量不变量 |
+| 4 | 创建并登记新的缓存条目 | 新增、复用和非法输入 |
+| 5 | 以稳定顺序导出当前缓存快照 | priority 降序与账本一致性 |
 
 **1. TODO 1: 计算缓存保留优先级**
 - **实现方式**：`score = reuse_bonus + 0.5 * recency - 0.25 * size_penalty`
@@ -400,3 +471,119 @@ class KVCacheSchedulerSim:
 - **驱逐策略**：真实系统通常会混合 LRU、LFU、prefix sharing、租户优先级和请求 deadline
 - **显存安全**：单个 cache block 不能超过容量，否则应直接拒绝或走降级路径
 - **调度联动**：KV Cache 调度通常要和 decode scheduling、prefix caching、PagedAttention block 管理一起设计
+
+### Step 5: 可选 GPU：观察代表性 KV block 的显存占用
+
+本步把 Step 2 的容量账本连接到一次可复核的 CUDA 分配实验。它不加载模型，也不复现 vLLM / SGLang 的真实 KV Cache 调度；实验只回答一个问题：在给定 block 形状和 dtype 下，block 数量增加时，理论字节数与实际分配峰值如何变化。评分、堆队列和驱逐顺序仍由 CPU 题目区验证。
+
+开始实验前，先确认当前 Notebook 使用的是 GPU 内核；配置单元默认关闭实验，改为 `True` 后自动检查 CUDA、原生 BF16、参数范围、项目根目录和结果路径，并将运行条件与结果保存为 JSON。
+
+| 实验路径 | 使用资产 | 学习者操作 | 可以验证 / 不能直接推出 |
+| --- | --- | --- | --- |
+| CPU 机制验证 | 题目区 `KVCacheSchedulerSim` | 运行评分、堆队列、过期记录、驱逐顺序和容量账本测试 | 可以验证调度逻辑；不能推出 CUDA allocator 峰值或真实 KV block 布局 |
+| GPU 环境预检 | `tools/environment_preflight.py`、当前 Notebook runtime | 检查 CUDA、GPU、显存和 dtype 支持；需要时执行 `python tools/environment_preflight.py --gpu --packages torch` | 判断当前环境能否执行；不产生 backend 性能结论 |
+| GPU block probe | 配置单元、执行单元和 JSON 输出 | 固定 block 形状，单独改变 block 数量、token 数或 dtype；将 `RUN_GPU_BLOCK_PROBE` 改为 `True` | 可以比较代表性 block 的理论大小与实际分配；不能推出命中率、驱逐策略、TTFT 或吞吐 |
+| 真实 backend 扩展 | vLLM / SGLang、69 和 70 | 在匹配的单 GPU backend 中测量 KV Cache、并发和请求延迟 | 可以验证 backend 行为；本节的 synthetic probe 不能替代 backend 对比 |
+| 结果登记 | 本节最后的 GPU 实验记录表 | 每组新配置新增一行，不覆盖已有结果 | 形成可比较的 block footprint 记录 |
+
+真实 backend 数据应转到 [69 Prefix Caching Benchmark](./69_Prefix_Caching_Benchmark.md) 和 [70 Serving Scheduler Benchmark](./70_Serving_Scheduler_Benchmark.md)；本步结果只作为容量账本和实验设计的补充证据。
+
+#### 配置与测量
+
+配置单元只负责选择实验参数；执行单元负责环境检查、分配代表性 block、同步 CUDA、生成 JSON。每次只改变一个主要变量，便于把显存变化归因到 block 数量、token 数或 dtype。
+
+| 实验内容 | 固定或改变的条件 | 观察目的 |
+| --- | --- | --- |
+| 代表性 block | GPU_BLOCK_TOKENS、KV head 数、head dim | 对照理论字节数和实际分配 |
+| 容量压力 | GPU_BLOCK_COUNT | 观察 block 数量与峰值显存的关系 |
+| dtype | GPU_DTYPE | 比较 dtype 对 block footprint 的影响 |
+| 证据范围 | synthetic GPU block probe | 不推导真实 backend 的命中率、驱逐策略或吞吐 |
+
+
+```python
+"""配置单元：默认只检查配置，不启动 GPU。"""
+RUN_GPU_BLOCK_PROBE = False  # 改为 True 才会分配代表性 KV block。
+GPU_RESULT_PATH = 'benchmarks/results/37_kv_cache_block_probe.json'  # 相对项目根目录。
+GPU_BLOCK_COUNT = 16  # 只改变容量压力时修改；先从小规模开始。
+GPU_BLOCK_TOKENS = 128  # 每个 block 代表的 token 数。
+GPU_KV_HEADS = 8
+GPU_HEAD_DIM = 64
+GPU_DTYPE = 'float16'  # 可改为 bfloat16，但必须确认硬件原生支持。
+GPU_REPEATS = 3
+
+```
+
+
+```python
+"""执行单元：只测代表性 block 的分配，不启动模型或 backend。"""
+if RUN_GPU_BLOCK_PROBE:
+    import json
+    import time
+    from pathlib import Path
+    import torch
+
+    if not torch.cuda.is_available():
+        raise RuntimeError('GPU block probe 需要 CUDA；请先切换到 GPU runtime。')
+    if GPU_DTYPE not in {'float16', 'bfloat16'}:
+        raise ValueError('GPU_DTYPE 只能是 float16 或 bfloat16。')
+    if GPU_DTYPE == 'bfloat16' and not torch.cuda.is_bf16_supported(including_emulation=False):
+        raise RuntimeError('当前 GPU 不支持原生 BF16，请改用 float16。')
+    if any(value < 1 for value in (GPU_BLOCK_COUNT, GPU_BLOCK_TOKENS, GPU_KV_HEADS, GPU_HEAD_DIM, GPU_REPEATS)):
+        raise ValueError('block 数量、token 数、KV head 数、head dim 和 repeats 必须为正数。')
+
+    dtype = getattr(torch, GPU_DTYPE)
+    block_shape = (2, GPU_BLOCK_TOKENS, GPU_KV_HEADS, GPU_HEAD_DIM)
+    bytes_per_block = 1
+    for dim in block_shape:
+        bytes_per_block *= dim
+    bytes_per_block *= torch.empty((), dtype=dtype).element_size()
+    device = torch.device('cuda')
+    runs = []
+    for repeat_index in range(GPU_REPEATS):
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+        start = time.perf_counter()
+        blocks = [torch.empty(block_shape, device=device, dtype=dtype) for _ in range(GPU_BLOCK_COUNT)]
+        torch.cuda.synchronize()
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        peak_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        runs.append({'repeat': repeat_index, 'allocation_ms': round(elapsed_ms, 3), 'peak_memory_mb': round(peak_mb, 2), 'block_count': GPU_BLOCK_COUNT})
+        del blocks
+
+    project_root = next((p for p in [Path.cwd(), *Path.cwd().parents] if (p / 'benchmarks').is_dir()), Path.cwd())
+    output_path = project_root / GPU_RESULT_PATH
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    report = {
+        'task': 'kv_cache_block_footprint_probe',
+        'evidence_level': 'synthetic_gpu_block_probe',
+        'runtime': {'device': torch.cuda.get_device_name(0), 'gpu_memory_gb': round(torch.cuda.get_device_properties(0).total_memory / (1024 ** 3), 2), 'torch': torch.__version__, 'torch_cuda': torch.version.cuda, 'native_bf16_supported': torch.cuda.is_bf16_supported(including_emulation=False)},
+        'config': {'block_shape': block_shape, 'bytes_per_block_theoretical': bytes_per_block, 'total_bytes_theoretical': bytes_per_block * GPU_BLOCK_COUNT, 'block_count': GPU_BLOCK_COUNT, 'dtype': GPU_DTYPE, 'repeats': GPU_REPEATS},
+        'runs': runs,
+        'decision': {'decision': 'measure', 'reason': '仅观察代表性 KV block 的显存占用，不代表真实 backend 调度结论。'},
+    }
+    output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+else:
+    print('GPU block probe 未启动：将 RUN_GPU_BLOCK_PROBE 改为 True 后运行。')
+
+```
+
+#### GPU 实验记录
+
+完成执行单元后，每次改变 block 数量、token 数或 dtype 都新增一行；不要覆盖已有记录。
+
+| 配置组 | GPU / dtype | block shape | block 数量 | 理论单 block 字节数 | 峰值显存（MB） | 结果文件 |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| 例：本机 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+
+## 相关阅读
+
+完成缓存状态、价值评分和容量驱逐的模拟后，可以继续阅读 PagedAttention、前缀缓存和服务调度的实现。
+
+- [PagedAttention 原论文：Efficient Memory Management for Large Language Model Serving](https://arxiv.org/abs/2309.06180)
+- [vLLM 官方仓库](https://github.com/vllm-project/vllm)
+- [38. Prefill-Decode Disaggregation | PD 分离](./38_Prefill_Decode_Disaggregation.md)
+- [39. Inference Fallback and Tiers | 推理分层与回退策略](./39_Inference_Fallback_and_Tiers.md)
+- [70. Serving Scheduler Benchmark | 服务调度基准项目](./70_Serving_Scheduler_Benchmark.md)

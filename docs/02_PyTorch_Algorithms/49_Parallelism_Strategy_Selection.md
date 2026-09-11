@@ -21,15 +21,10 @@
 
 ## 前置阅读
 
+**导语：** 进入本节前，先能区分 DP、TP、PP 和 EP 的切分对象与通信代价，再根据瓶颈选择优先验证的组合。
 - [27. ZeRO Optimizer Sim | ZeRO 优化器模拟](./27_ZeRO_Optimizer_Sim.md)
 - [28. Pipeline Parallelism MicroBatch | Pipeline 并行与 MicroBatch](./28_Pipeline_Parallelism_MicroBatch.md)
 - [29. Tensor Parallelism Sim | Tensor Parallelism 模拟](./29_Tensor_Parallelism_Sim.md)
-
-## 相关阅读
-
-**导语：** 学完并行策略选型后，下一步重点不是继续罗列并行缩写，而是看候选方案排序怎样进入 benchmark 和 MoE 组合场景，确认“应该先试哪个”是否真的能带来更好的工程决策。
-- [79. Distributed Parallel Benchmark | 分布式并行基准](./79_Distributed_Parallel_Benchmark.md)
-- [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)
 
 ---
 
@@ -38,11 +33,15 @@
 - 先区分参数显存、激活显存、通信量和流水线气泡。
 - 如果瓶颈判断错了，并行切分方案通常会把问题从一处挪到另一处。
 
+![并行策略选择总览](../public/02_PyTorch_Algorithms/49_parallel_strategy_overview.svg)
+
 ### Step 2: 把并行组合写成显式候选
 
 - 候选可能是 `DP+ZeRO`、`TP+PP`、`EP+DP` 等组合。
 - 每个组合都要绑定自己的主要收益和副作用。
 - 先写清候选，后面才能谈 benchmark 和项目验证。
+
+![并行候选的收益与代价](../public/02_PyTorch_Algorithms/49_strategy_tradeoff.svg)
 
 ### Step 3: 判断是否值得单独展开
 
@@ -179,3 +178,12 @@ TODO 1：`summarize_parallel_bottlenecks` 先回答“当前最明显的并行�
 TODO 2：`rank_parallel_candidates` 负责把候选方案转成一个明确优先级列表。这里先不做复杂搜索，只要求把已有候选按 `score` 排序，形成最小可执行的实验顺序。
 
 TODO 3：`recommend_parallel_followup` 用来判断这条并行选型链路是否已经复杂到值得独立扩页。如果瓶颈足够明显、候选组合也不止一个，就说明它已经是稳定的选型问题，而不只是分散在多页里的补充说明。
+
+## 相关阅读
+
+完成 DP、TP、PP 和 EP 的切分对象与通信代价比较后，可以继续阅读并行框架实现和分布式基准，验证候选方案的排序是否可靠。
+
+- [Megatron-LM 原论文](https://arxiv.org/abs/2104.04473)
+- [DeepSpeed 官方仓库](https://github.com/microsoft/DeepSpeed)
+- [79. Distributed Parallel Benchmark | 分布式并行基准](./79_Distributed_Parallel_Benchmark.md)
+- [80. MoE Expert Parallel Benchmark | MoE 专家并行基准](./80_MoE_Expert_Parallel_Benchmark.md)
