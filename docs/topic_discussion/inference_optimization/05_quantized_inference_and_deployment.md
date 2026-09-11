@@ -2,118 +2,33 @@
 
 ## 页面目标
 
-本节回答：权重、激活和 KV Cache 量化分别改变什么成本，以及什么时候值得切换。
+从一个准备上线的模型开始：先观察模型装载、长上下文和并发分别受到什么约束，再区分权重、激活和 KV Cache 三类量化改变的是哪一部分成本。接着把量化算法或文件格式连接到 loader、backend 和 kernel，理解为什么同样的 bit 数在不同硬件和运行时上可能得到不同结果。完成量化对象、运行时和部署指标的对应后，你应该能够根据显存、速度、质量和部署支持条件，选择下一步要验证的量化路线，而不是只因为显存下降就切换方案。
 
-## 本节在路线中的位置
+## 核心机制
 
-本节对应 **Task5：量化推理与部署**。它承接 Task4 对 KV Cache、显存边界和服务并发的判断，把量化作为部署候选方案；完成后进入 67 量化部署项目，再由 66 将量化和其他推理策略放回同一 workload 综合比较。GPTQ / AWQ 是后训练权重量化方法，GGUF 是文件格式与部署封装；GGUF 需要对应的独立 backend，不能与 GPTQ/AWQ 共用一套启动参数。
+量化可以看成“资源占用与表示误差”的交换：降低 bit 可能减少装载、显存读写或计算成本，但收益取决于硬件、kernel 和 backend 是否真正支持这条低比特路径。比较方案前，先用同一模型、backend 和 workload 下的 FP16 / BF16 浮点部署建立基线。
 
-本节不把量化理解成单一的“降 bit”：权重量化主要改变模型驻留和带宽成本，激活量化影响运行态计算路径，KV Cache 量化直接影响长上下文和并发边界。三者必须分别记录适用条件和质量代价。
+还要区分量化的处理时机：GPTQ / AWQ 通常在部署前根据校准数据生成量化权重；FP8 可能由模型转换流程或运行时 kernel 处理；KV Cache 量化发生在请求执行期间。GGUF 是量化权重的文件格式与部署封装，需要匹配的 loader / backend；`llama.cpp` 是常见实现，不能把 GGUF 当成 GPTQ / AWQ 算法。
 
-## 问题起点
+参考入口：论文 [GPTQ](https://arxiv.org/abs/2210.17323) 与 [AWQ](https://arxiv.org/abs/2306.00978)；实现 [GPTQ](https://github.com/IST-DASLab/gptq)、[AWQ](https://github.com/mit-han-lab/llm-awq) 和 [llama.cpp](https://github.com/ggml-org/llama.cpp)。下面的图和表分别用于理解部署链与选择量化对象。
 
-量化常常被误写成“显存不够时的默认答案”。但推理场景下，量化真正要回答的是更具体的问题：
+![量化推理与部署](../../public/topic_discussion/inference_optimization/quantized_deployment_zh.svg)
 
-- 我是被权重驻留卡住，还是被带宽卡住，还是被 KV cache 顶住？
-- 我更敏感的是 TTFT、TPOT，还是 throughput / cost？
-- 这个 backend 和 deployment 栈对低比特支持到什么程度？
+| 分类 | 量化对象 | 对应小节 | 常见路线 / 格式 | 适用场景 |
+|:---|:---|:---|:---|:---|
+| FP16 / BF16 浮点部署（基线） | 未量化的权重与运行态张量 | `66` | 原始浮点模型、固定 backend | 为显存、速度、吞吐和质量提供对照 |
+| 权重量化 | 模型权重 | `25`、`40` | W8A16、GPTQ、AWQ、GGUF | 模型装不下、权重带宽或部署成本受限 |
+| 运行态量化 | 激活或计算张量 | `25`、`41` | FP8、低精度 activation | 计算和带宽成为瓶颈，且硬件 / kernel 支持目标 dtype |
+| Cache 量化 | KV Cache | `41` | FP8 KV Cache、专用 Cache 量化 | 长上下文或高并发时 Cache 预算不足 |
 
-只有先把约束说清楚，量化才是选型动作，而不是默认操作。
+## 判断框架
 
-## 你要先确认什么
+本节承接 `04` 的资源边界，先沿 `21 → 25 → 40 → 41` 理解量化机制，再用 `66` 的浮点模型结果作为 baseline，最后通过 [67 Quantized Inference and Deployment](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md) 验证真实部署。阅读下表时，先固定 bit 数、量化粒度、校准数据、目标 dtype、backend、硬件和质量指标，再根据现象选择下一步动作。
 
-- 你要优化的是显存、带宽还是部署成本。
-- 量化后 TTFT、TPOT、throughput 是否可接受。
-- 线上服务是否更敏感延迟还是吞吐。
-
-还要明确校准数据、量化粒度、目标 dtype、推理 backend、硬件架构和输出质量指标；如果这些条件没有固定，量化收益不能直接迁移到另一套服务环境。
-
-## 核心矛盾
-
-量化的核心矛盾是：低比特表示能省显存和带宽，但会引入精度误差、kernel 兼容性和部署复杂度。它从来不是“免费更快”，只能说是在某些 workload 下值得交换。
-
-## 演化路径
-
-量化不是一个统一动作，而是分别作用在不同部位。
-
-1. 权重量化降低模型驻留成本。
-2. 激活量化改变中间计算和带宽压力。
-3. KV cache 量化直接影响长上下文和并发边界。
-4. GPTQ / AWQ 更偏权重压缩。
-5. FP8 / KV cache quant 更偏部署侧平衡。
-
-## 关键取舍
-
-- 权重量化更像“把模型装下或提高 batch 的第一步”。
-- `GPTQ / AWQ` 更偏离线权重压缩与精度权衡。
-- `FP8` 更偏端到端部署栈是否愿意为低精度继续优化 kernel。
-- `KV cache quantization` 更像推理侧资源手段，尤其适合长上下文和高并发。
-
-最终判断要回到服务目标：
-
-- 在线交互更怕 TTFT / TPOT 退化；
-- 离线批处理更愿意为 throughput / cost 接受一定延迟变化。
-
-## 学习者交付物
-
-完成本节后，至少应形成一份可部署性判断：
-
-| 项目 | 最小内容 |
-|:---|:---|
-| 量化对象 | 权重、激活、KV Cache，或它们的组合 |
-| 配置 | bit 数、粒度、校准数据、dtype、backend 和硬件 |
-| 性能 | TTFT、TPOT、throughput、P99、peak memory |
-| 质量 | 输出误差、任务指标、perplexity 或其他质量约束 |
-| 部署结论 | accept / tune / reject，以及适用 workload |
-
-核心结论应能够说明：显存下降是否真的转化为服务收益，收益来自权重驻留、带宽、KV Cache 容量还是 batch 提升。
-
-> 正文暂不嵌入未审核图示；相关图册与占位说明见 [视觉资产页](./07_visual_assets.md)。
-
-## 文献锚点
-
-- GPTQ：帮助理解离线权重量化如何用近似最优重建减少精度损失。
-- AWQ：帮助理解按激活感知选择量化尺度的动机。
-- FP8 / KV cache quantization 相关资料：帮助理解部署侧怎样平衡吞吐、显存和质量。
-
-## 常见误区
-
-- 看到 peak memory 降了就认为方案一定更好。
-- 不分在线交互和离线批处理，直接比较量化收益。
-- 把推理量化和训练量化混在一起看。
-
-## 对应 Part 02
-
-- `25` Quantization W8A16
-- `40` GPTQ and AWQ Weight Quantization
-- `41` FP8 and KV Cache Quantization
-- `67` Quantized Inference and Deployment
-
-## 证据边界
-
-CPU 可以验证量化误差、字节数和预算计算；真实量化格式加载、kernel 适配、吞吐、显存和任务质量需要匹配 backend 与硬件的 GPU 实验。模型能够加载不等于量化收益已经成立。
-
-## 经典阅读入口
-
-- [21 Quantization Theory and INT4 INT8](../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.md)
-- [25 Quantization W8A16](../../02_PyTorch_Algorithms/25_Quantization_W8A16.md)
-- [40 GPTQ and AWQ Weight Quantization](../../02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.md)
-- [41 FP8 and KV Cache Quantization](../../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.md)
-- [67 Quantized Inference and Deployment](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)
-
-## 相关跳转
-
-- 看 `01`，先统一指标口径。
-- 看 `04`，确认 cache 是否已经是硬约束。
-- 看 `06`，把量化和其他候选方案一起比较。
-
-## 对应项目
-
-- **核心主题项目：** [67 Quantized Inference and Deployment](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.md)，验证量化模型的加载、性能、显存和质量约束。
-- **综合项目：** [66 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.md)，在统一 workload 下比较量化与其他策略。
-
-实践级别：没有真实 backend 时完成 Practice-P1 的本地模型加载和指标模板；接入 vLLM / SGLang 并确认低比特 kernel 支持后，才升级为 Practice-P2 量化部署实验。
-
-## 本节要点
-
-量化是推理优化的候选方案之一，不是默认答案；最终仍要回到 workload 和服务目标。
+| 观察到的现象 | 优先判断 | 下一步 |
+|:---|:---|:---|
+| 模型无法装入显存 | 权重驻留是主要约束 | 检查权重量化和 backend 格式 |
+| 格式可以加载但 backend 不支持 | loader 与运行时不匹配 | 检查 GGUF / GPTQ / AWQ 的 backend 和启动方式 |
+| 显存下降但速度没有改善 | 带宽或 kernel 没有受益 | 检查低比特 kernel 和 workload |
+| 长上下文 / 高并发受限 | KV Cache 占用过高 | 检查 KV Cache 量化 |
+| 速度提升但质量回归 | 量化误差超过目标 | 调整 bit、粒度或校准数据 |
