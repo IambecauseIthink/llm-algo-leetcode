@@ -3,20 +3,46 @@
   "project": "74_profiling_driven_end_to_end_optimization",
   "stage": "upstream_report_merge",
   "sources": {
-    "73": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/73_real_gpu_training.json",
-    "76": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/76_real_gpu_memory.json",
-    "75": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/75_memory_budget_decision.json"
+    "73": "benchmarks/results/73_real_gpu_training.json",
+    "76": "benchmarks/results/76_real_gpu_memory.json",
+    "75": "benchmarks/results/75_memory_budget_decision.json"
   },
   "upstream": {
     "73_training_baseline": {
-      "step_time_ms": 251.137,
-      "samples_per_s": 3.982,
-      "loss": 3.483021,
-      "peak_mem_mb": 9474.12,
-      "peak_reserved_mb": 10674.0
+      "step_time_ms": 482.753,
+      "samples_per_s": 2.072,
+      "loss": 11.477,
+      "peak_mem_mb": 9782.563,
+      "peak_reserved_mb": 10766.0,
+      "runs": [
+        {
+          "step_time_ms": 480.837,
+          "samples_per_s": 2.08,
+          "loss": 11.477463,
+          "peak_mem_mb": 9782.73,
+          "peak_reserved_mb": 10750.0
+        },
+        {
+          "step_time_ms": 482.176,
+          "samples_per_s": 2.074,
+          "loss": 11.477463,
+          "peak_mem_mb": 9782.48,
+          "peak_reserved_mb": 10774.0
+        },
+        {
+          "step_time_ms": 485.246,
+          "samples_per_s": 2.061,
+          "loss": 11.477463,
+          "peak_mem_mb": 9782.48,
+          "peak_reserved_mb": 10774.0
+        }
+      ]
     },
     "76_strategy_summary": {
       "candidate_count": 4,
+      "measured_count": 4,
+      "oom_count": 0,
+      "invalid_count": 0,
       "feasible_count": 3,
       "best_candidate": "checkpoint",
       "quality_failed_count": 0,
@@ -28,7 +54,7 @@
       "baseline_peak_memory_mb": 9782.74,
       "best_peak_memory_mb": 9450.76,
       "memory_saving_mb": 331.97999999999956,
-      "throughput_ratio": 0.8044825941821651
+      "throughput_ratio": 0.8765555002488801
     },
     "76_decision": {
       "decision": "tune",
@@ -37,6 +63,9 @@
     },
     "75_budget_summary": {
       "candidate_count": 4,
+      "measured_count": 4,
+      "oom_count": 0,
+      "invalid_count": 0,
       "feasible_count": 3,
       "best_candidate": "checkpoint",
       "quality_failed_count": 0,
@@ -46,25 +75,129 @@
         "baseline"
       ],
       "baseline_peak_memory_mb": 9782.74,
-      "throughput_ratio": 0.8044825941821651,
+      "throughput_ratio": 0.8765555002488801,
       "best_peak_memory_mb": 9450.76,
-      "memory_saving_mb": 331.97999999999956
+      "memory_saving_mb": 331.97999999999956,
+      "min_memory_saving_mb": 512.0,
+      "min_throughput_ratio": 0.7,
+      "evaluations": [
+        {
+          "name": "baseline",
+          "status": "feasible",
+          "reasons": []
+        },
+        {
+          "name": "checkpoint",
+          "status": "feasible",
+          "reasons": []
+        },
+        {
+          "name": "offload",
+          "status": "rejected",
+          "reasons": [
+            "throughput_below_floor"
+          ]
+        },
+        {
+          "name": "hybrid",
+          "status": "feasible",
+          "reasons": []
+        }
+      ]
     },
-    "75_decision": {
-      "decision": "tune",
-      "reason": "memory_saving_below_meaningful_threshold",
-      "next_action": "test_larger_pressure_or_optimizer_compression"
-    }
+    "75_decision": "tune"
   },
   "profiling": {
+    "status": "collected",
+    "tool": "torch.profiler",
+    "trace_dir": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_profile",
+    "trace_files": [
+      "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_profile/baseline/5070ti_1451665.1787726659006756386.pt.trace.json",
+      "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_profile/checkpoint/5070ti_1451665.1787726671091656545.pt.trace.json"
+    ],
+    "evidence": [
+      "trace_file_exists"
+    ],
+    "expected_strategies": [
+      "baseline",
+      "checkpoint"
+    ],
+    "missing_strategies": [],
+    "trace_files_by_strategy": {
+      "baseline": [
+        "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_profile/baseline/5070ti_1451665.1787726659006756386.pt.trace.json"
+      ],
+      "checkpoint": [
+        "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_profile/checkpoint/5070ti_1451665.1787726671091656545.pt.trace.json"
+      ]
+    },
+    "report_path": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/74_real_gpu_profile.json",
+    "top_operators": {
+      "baseline": "-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \n                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg       CPU Mem  Self CPU Mem      CUDA Mem  Self CUDA Mem    # of Calls  \n-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \n                                          ProfilerStep*         5.42%     166.709ms        65.36%        2.011s     502.864ms       0.000us         0.00%        7.649s        1.912s           0 B           0 B           0 B      -9.80 GB             4  \n                              Optimizer.step#AdamW.step         0.27%       8.454ms         2.37%      73.032ms      18.258ms       0.000us         0.00%        6.999s        1.750s           0 B         -16 B           0 B      -7.38 GB             4  \n                                    Command Buffer Full        34.36%        1.057s        34.36%        1.057s     300.326us        6.573s       336.16%        6.573s       1.867ms           0 B           0 B           0 B           0 B          3521  \n                                       cudaLaunchKernel        16.69%     513.675ms        20.27%     623.901ms      50.266us       0.000us         0.00%        6.552s     527.842us           0 B           0 B           0 B           0 B         12412  \n                                          ProfilerStep*         0.00%       0.000us         0.00%       0.000us       0.000us        2.001s       102.35%        2.001s     500.281ms           0 B           0 B           0 B           0 B             4  \n                                   aten::_foreach_lerp_         0.01%     221.818us         0.22%       6.664ms       1.666ms      63.749ms         3.26%        1.500s     375.023ms           0 B           0 B           0 B           0 B             4  \n                                aten::_foreach_addcdiv_         0.02%     659.761us         0.58%      17.849ms       4.462ms      88.746ms         4.54%        1.399s     349.865ms           0 B           0 B           0 B           0 B             4  \n                                    aten::_foreach_mul_         0.01%     412.401us         0.30%       9.324ms       1.165ms      86.498ms         4.42%        1.396s     174.492ms           0 B           0 B           0 B           0 B             8  \n                                               aten::mm         0.44%      13.482ms        15.00%     461.734ms     265.364us        1.093s        55.92%        1.140s     655.408us           0 B           0 B      15.12 GB      15.12 GB          1740  \n                                    aten::_foreach_add_         0.03%     835.161us         0.16%       5.054ms     631.714us      45.744ms         2.34%     998.549ms     124.819ms           0 B           0 B           0 B           0 B             8  \n-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \nSelf CPU time total: 3.077s\nSelf CUDA time total: 1.955s\n",
+      "checkpoint": "-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \n                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg       CPU Mem  Self CPU Mem      CUDA Mem  Self CUDA Mem    # of Calls  \n-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \n                                          ProfilerStep*        10.09%     382.405ms        62.80%        2.381s     595.129ms       0.000us         0.00%        5.481s        1.370s           0 B           0 B           0 B      -6.41 GB             4  \n                              Optimizer.step#AdamW.step         0.26%       9.853ms         2.05%      77.631ms      19.408ms       0.000us         0.00%        4.897s        1.224s           0 B         -16 B           0 B      -7.37 GB             4  \n                                    Command Buffer Full        30.74%        1.165s        30.74%        1.165s     318.754us        4.463s       193.12%        4.463s       1.221ms           0 B           0 B           0 B           0 B          3656  \n                                       cudaLaunchKernel        27.18%        1.030s        29.16%        1.105s      63.869us       0.000us         0.00%        4.451s     257.137us           0 B           0 B           0 B           0 B         17308  \n                                          ProfilerStep*         0.00%       0.000us         0.00%       0.000us       0.000us        2.370s       102.54%        2.370s     592.426ms           0 B           0 B           0 B           0 B             4  \n                                aten::_foreach_addcdiv_         0.01%     490.170us         0.71%      26.771ms       6.693ms      90.964ms         3.94%        1.910s     477.563ms           0 B           0 B           0 B           0 B             4  \n                                               aten::mm         0.74%      28.113ms         3.69%     139.934ms      65.882us        1.270s        54.96%        1.288s     606.385us           0 B           0 B      18.09 GB      18.09 GB          2124  \n                                   aten::_foreach_lerp_         0.01%     259.371us         0.64%      24.097ms       6.024ms      67.571ms         2.92%        1.284s     320.950ms           0 B           0 B           0 B           0 B             4  \n       autograd::engine::evaluate_function: MmBackward0         0.07%       2.466ms        20.20%     765.913ms       1.974ms       0.000us         0.00%        1.002s       2.583ms           0 B           0 B      13.43 GB      -4.42 GB           388  \n                                            MmBackward0         1.73%      65.750ms        20.14%     763.447ms       1.968ms       0.000us         0.00%        1.002s       2.583ms           0 B           0 B      17.86 GB      -4.45 GB           388  \n-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  \nSelf CPU time total: 3.791s\nSelf CUDA time total: 2.311s\n"
+    }
+  },
+  "roofline": {
     "status": "not_collected",
-    "tool": null,
-    "top_operators": [],
-    "evidence": []
+    "counter_source": "not_collected",
+    "evidence_level": "no_hardware_counter_evidence"
   },
   "decision": {
     "decision": "tune",
-    "reason": "upstream_reports_merged_but_profiling_evidence_missing",
-    "next_action": "collect_profile_and_rerun_same_workload"
+    "reason": "profiler_trace_collected_but_requires_bottleneck_interpretation",
+    "next_action": "interpret_trace_and_validate_one_change"
+  },
+  "experiment": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "backend": "torch",
+    "dtype": "float32",
+    "optimizer": "AdamW",
+    "batch_size": 1,
+    "seq_len": 768,
+    "warmup": 2,
+    "iters": 5,
+    "seed": 42,
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "workload": "pressure"
+  },
+  "standard_metrics": {
+    "baseline": {
+      "step_time_ms": 497.839,
+      "throughput_samples_per_s": 2.009,
+      "peak_memory_mb": 9782.74,
+      "peak_reserved_mb": 10750.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "checkpoint": {
+      "step_time_ms": 567.74,
+      "throughput_samples_per_s": 1.761,
+      "peak_memory_mb": 9450.76,
+      "peak_reserved_mb": 10896.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "offload": {
+      "step_time_ms": 1877.559,
+      "throughput_samples_per_s": 0.533,
+      "peak_memory_mb": 9448.33,
+      "peak_reserved_mb": 10404.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "hybrid": {
+      "step_time_ms": 783.478,
+      "throughput_samples_per_s": 1.276,
+      "peak_memory_mb": 9454.64,
+      "peak_reserved_mb": 10444.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    }
   }
 }
