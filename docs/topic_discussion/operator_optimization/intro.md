@@ -6,6 +6,10 @@
 
 本专题关注一个具体问题：同一个数学算子，为什么换一种 tile、数据布局、访存路径或 kernel 实现，性能和显存表现会不同？路线以 Part03 的 Triton 为主线，使用 Part01 建立硬件与执行模型，再用 Part04 的 CUDA 和系统机制理解更底层的优化边界。
 
+![算子优化：从数学语义到端到端收益](../../public/topic_discussion/operator_optimization/operator_optimization_overview.svg)
+
+算子优化先保证语义和数值正确，再通过 kernel、访存和执行证据判断局部改进是否真正传递到端到端 workload。
+
 ## 如何开始
 
 推荐先具备 Part02 的 Tensor、Attention 和 Block 基础，再按 Task0–6 推进。没有 GPU 时可以完成算子语义、CPU 正确性和成本模型；GPU 只用于验证 kernel 时间、编译成本、autotune、显存和端到端收益。
@@ -21,6 +25,10 @@
 
 `Task0-6` 是路线节点；表中的 `Part 01 · xx` 表示共享前置，未标注的入口主要来自 Part03 和 Part04。专题正文只提供判断框架，不替代 Notebook 中的实现和 benchmark。
 
+![算子优化学习路线：从语义正确到端到端验证](../../public/topic_discussion/operator_optimization/operator_optimization_task_route.svg)
+
+上图先给出 Task0–6 的学习顺序；下表再提供每个任务的具体 Notebook、项目入口和正文索引。
+
 | Task | 学习内容 | 主学习线 / 项目入口 | 学习顺序 | 专题正文 |
 |:---|:---|:---|:---|:---|
 | Task0 | 算子语义、GPU 执行与性能边界 | [Part 01 · 08 编程模型](../../01_Hardware_Math_and_Systems/08_Programming_Models_CUDA_Triton.md) → [Part 01 · 15 CUDA 执行模型](../../01_Hardware_Math_and_Systems/15_CUDA_Execution_Model.md) | 数学语义 → 并行执行 → 性能指标 | [01 为什么需要算子优化](./01_why_operator_optimization_matters.md) |
@@ -35,15 +43,15 @@
 
 核心路径先验证算子语义和数值正确性，再比较固定 shape 下的 kernel；扩展路径进入真实 GPU、动态 shape、Tensor Core、CUDA、autotune 和端到端 workload。节点变少、单个 kernel 变快或编译成功，都不能单独证明系统收益。
 
-| Task | 核心路径 | 扩展路径 | 学习顺序 | 环境级别 |
+| Task | 核心路径 | 扩展路径 | 学习顺序 | 运行环境 |
 |:---|:---|:---|:---|:---|
-| Task0 | Part 01 · 08、15 与指标定义 | 不同 GPU 执行模型对照 | 语义 → 执行 | Practice-P0 |
-| Task1 | Triton 01、04 与 Part 01 · 18 | CUDA kernel、Tensor Core | tile → kernel | Practice-P0/P1 |
-| Task2 | Part 01 · 16、24 与 Triton 12 | layout、occupancy、异步搬运 | memory → layout | Practice-P0/P1 |
-| Task3 | Part 01 · 19、Triton 03/06 | FlashAttention、复杂 fusion | 依赖 → fusion | Practice-P1/P2 |
-| Task4 | Part 01 · 23 与 CUDA 对照 | shared memory、stream、CUDA Graph | kernel → execution | Practice-P1/P2 |
-| Task5 | Triton autotune 与 profiling | 多 shape、多 GPU、多 backend 搜索 | 搜索 → 归因 | Practice-P1/P2 |
-| Task6 | Triton Block 项目 | 74 trace 与端到端比较 | 局部 → 系统 | Practice-P1/P2 |
+| Task0 | Part 01 · 08、15 与指标定义 | 不同 GPU 执行模型对照 | 语义 → 执行 | CPU · PyTorch |
+| Task1 | Triton 01、04 与 Part 01 · 18 | CUDA kernel、Tensor Core | tile → kernel | CPU 语义验证；可选单 GPU · Triton |
+| Task2 | Part 01 · 16、24 与 Triton 12 | layout、occupancy、异步搬运 | memory → layout | CPU 逻辑验证；单 GPU · Triton |
+| Task3 | Part 01 · 19、Triton 03/06 | FlashAttention、复杂 fusion | 依赖 → fusion | 单 GPU · Triton / CUDA |
+| Task4 | Part 01 · 23 与 CUDA 对照 | shared memory、stream、CUDA Graph | kernel → execution | 单 GPU · CUDA |
+| Task5 | Triton autotune 与 profiling | 多 shape、多 GPU、多 backend 搜索 | 搜索 → 归因 | 单 GPU · Triton；可选多 GPU |
+| Task6 | Triton Block 项目 | 74 trace 与端到端比较 | 局部 → 系统 | 单 GPU · Triton / Profiler |
 
 ### Part 01 共享前置
 

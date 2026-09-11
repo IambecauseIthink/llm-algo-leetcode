@@ -23,6 +23,12 @@
 
 ## 当前已落地图
 
+### 00 量化路线总图
+
+![量化路线：对象、时机、方法与部署证据](../../public/topic_discussion/quantization/quantization_strategy_map.svg)
+
+这张图作为专题入口主图，说明量化对象、处理时机、方法 / 格式和部署证据之间的关系。
+
 ### 01 Quantization Object / Error
 
 > 图示占位：Quantization objects and error routes 尚未生成。

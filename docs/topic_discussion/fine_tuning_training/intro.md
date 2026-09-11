@@ -35,15 +35,15 @@
 
 核心路径先建立结构、训练接口、数据准入和 LoRA 交付的共同口径；其中 32/33 是“项目准备核心”，只要求完成最小数据审计和 readiness 判断，不要求搭建完整数据平台。扩展路径再进入 MoE、真实结构探索、LoRA 变体、长上下文和 QLoRA。没有 GPU 的学习者可以先完成机制和 CPU-first 模板，有 GPU 的学习者再进入真实微调项目。
 
-| Task | 核心路径 | 扩展路径 | 环境级别 |
+| Task | 核心路径 | 扩展路径 | 运行环境 |
 |:---|:---|:---|:---|
-| Task0 | [00 PyTorch Warmup](../../02_PyTorch_Algorithms/00_PyTorch_Warmup.md) | — | Practice-P0 |
-| Task1 | [01 RMSNorm](../../02_PyTorch_Algorithms/01_RMSNorm_Tutorial.md)、[02 SwiGLU](../../02_PyTorch_Algorithms/02_SwiGLU_Activation.md) | — | Practice-P0 |
-| Task2 | [03 RoPE](../../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)、[04 Attention](../../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md) | 更复杂的 Attention 变体 | Practice-P0/P1 |
-| Task3 | [Part 02 · 05 LLaMA3 Block](../../02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.md)、[Part 02 · 08 架构技巧](../../02_PyTorch_Algorithms/08_Architecture_Tricks.md) | [Part 02 · 06 MoE Router](../../02_PyTorch_Algorithms/06_MoE_Router.md)、[Part 02 · 07 负载均衡](../../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.md) | 核心 P0/P1；扩展 P1 |
-| Task4 | [09 SFT](../../02_PyTorch_Algorithms/09_SFT_Training_Loop.md) → [10 LoRA](../../02_PyTorch_Algorithms/10_LoRA_Tutorial.md) | [31 LoRA Variants Theory](../../02_PyTorch_Algorithms/31_LoRA_Variants_Theory.md) | Practice-P0/P1 |
-| Task5 | [Part 02 · 32 SFT 数据工程](../../02_PyTorch_Algorithms/32_Data_Engineering_for_SFT.md) → [Part 02 · 33 微调准备度](../../02_PyTorch_Algorithms/33_Fine_Tuning_Readiness.md) → [Part 02 · 12 梯度累积](../../02_PyTorch_Algorithms/12_Gradient_Accumulation.md) → [Part 02 · 11 学习率调度器](../../02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine.md) → [Part 02 · 13 端到端微调实验](../../02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.md) | [Part 02 · 30 长上下文微调](../../02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning.md) | 项目准备核心 P0/P1；扩展 P1 |
-| Task6 | [Part 02 · 60 LoRA 微调项目](../../02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project.md) | [Part 02 · 61 模型架构探索](../../02_PyTorch_Algorithms/61_Model_Architecture_Exploration.md)、[Part 02 · 62 指令微调](../../02_PyTorch_Algorithms/62_Instruction_Fine_Tuning_Project.md)、[Part 02 · 63 LoRA 变体对比](../../02_PyTorch_Algorithms/63_LoRA_Variants_Benchmark.md)、[Part 02 · 64 SFT 数据质量](../../02_PyTorch_Algorithms/64_SFT_Data_Quality_Project.md)、[Part 02 · 65 QLoRA 选型](../../02_PyTorch_Algorithms/65_QLoRA_Selection_Project.md) | 核心 P1；扩展 P1/P2 |
+| Task0 | [00 PyTorch Warmup](../../02_PyTorch_Algorithms/00_PyTorch_Warmup.md) | — | CPU · PyTorch |
+| Task1 | [01 RMSNorm](../../02_PyTorch_Algorithms/01_RMSNorm_Tutorial.md)、[02 SwiGLU](../../02_PyTorch_Algorithms/02_SwiGLU_Activation.md) | — | CPU · PyTorch |
+| Task2 | [03 RoPE](../../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)、[04 Attention](../../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md) | 更复杂的 Attention 变体 | CPU · PyTorch；可选单 GPU |
+| Task3 | [Part 02 · 05 LLaMA3 Block](../../02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.md)、[Part 02 · 08 架构技巧](../../02_PyTorch_Algorithms/08_Architecture_Tricks.md) | [Part 02 · 06 MoE Router](../../02_PyTorch_Algorithms/06_MoE_Router.md)、[Part 02 · 07 负载均衡](../../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.md) | CPU · PyTorch；MoE 可选单 GPU |
+| Task4 | [09 SFT](../../02_PyTorch_Algorithms/09_SFT_Training_Loop.md) → [10 LoRA](../../02_PyTorch_Algorithms/10_LoRA_Tutorial.md) | [31 LoRA Variants Theory](../../02_PyTorch_Algorithms/31_LoRA_Variants_Theory.md) | CPU · PyTorch；可选单 GPU |
+| Task5 | [Part 02 · 32 SFT 数据工程](../../02_PyTorch_Algorithms/32_Data_Engineering_for_SFT.md) → [Part 02 · 33 微调准备度](../../02_PyTorch_Algorithms/33_Fine_Tuning_Readiness.md) → [Part 02 · 12 梯度累积](../../02_PyTorch_Algorithms/12_Gradient_Accumulation.md) → [Part 02 · 11 学习率调度器](../../02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine.md) → [Part 02 · 13 端到端微调实验](../../02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.md) | [Part 02 · 30 长上下文微调](../../02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning.md) | CPU · PyTorch；端到端实验可选单 GPU |
+| Task6 | [Part 02 · 60 LoRA 微调项目](../../02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project.md) | [Part 02 · 61 模型架构探索](../../02_PyTorch_Algorithms/61_Model_Architecture_Exploration.md)、[Part 02 · 62 指令微调](../../02_PyTorch_Algorithms/62_Instruction_Fine_Tuning_Project.md)、[Part 02 · 63 LoRA 变体对比](../../02_PyTorch_Algorithms/63_LoRA_Variants_Benchmark.md)、[Part 02 · 64 SFT 数据质量](../../02_PyTorch_Algorithms/64_SFT_Data_Quality_Project.md)、[Part 02 · 65 QLoRA 选型](../../02_PyTorch_Algorithms/65_QLoRA_Selection_Project.md) | 单 GPU · Transformers / PEFT |
 
 ## 学习方式与项目产出
 

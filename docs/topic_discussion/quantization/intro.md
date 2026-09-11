@@ -8,6 +8,10 @@
 
 模型权重、激活和 KV Cache 是被压缩的负载，不单独构成 Infra 层；Infra-L5 只在模型注册、版本发布、评测回归和资源治理等部署流程中介入。若问题已经明确是请求速度或显存预算，应转到推理优化或显存优化。
 
+![量化路线：对象、时机、方法与部署证据](../../public/topic_discussion/quantization/quantization_strategy_map.svg)
+
+量化路线先确认压缩对象和处理时机，再选择方法、格式与 backend，最后用同一 workload 验证显存、速度和质量。
+
 ## 推荐入口
 
 推荐从 [Part 02 导学](../../02_PyTorch_Algorithms/intro.md) 的量化与部署路线进入，再用 [Part 02 资产表](../../02_PyTorch_Algorithms/2_10.md) 定位 65、66、67 等项目节。量化专题是方法选择支撑线，可以按当前约束切入，不必从 PTQ 到部署完整顺读。
