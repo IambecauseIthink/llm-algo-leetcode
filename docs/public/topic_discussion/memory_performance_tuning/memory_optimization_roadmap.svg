@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#52606d"/></marker>
+<marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#3778b8"/></marker>
+</defs>
+<rect width="1500" height="900" fill="#f7fafc"/>
+<style>
+.title{font:700 30px sans-serif;fill:#172b4d}.subtitle{font:16px sans-serif;fill:#52606d}.section{font:700 20px sans-serif;fill:#172b4d}.node{font:700 17px sans-serif;fill:#172b4d}.body{font:15px sans-serif;fill:#243b53}.small{font:13px sans-serif;fill:#52606d}.box{stroke-width:2;rx:14}.inner{stroke:#cbd5e1;stroke-width:1.5;rx:9}.flow{stroke:#52606d;stroke-width:2.8;fill:none;marker-end:url(#arrow)}.branch{stroke:#3778b8;stroke-width:2.2;stroke-dasharray:8 6;fill:none;marker-end:url(#arrowBlue)}.evidence{stroke:#8069b5;stroke-width:2;stroke-dasharray:5 5;fill:none;marker-end:url(#arrowBlue)}
+</style>
+
+<text x="750" y="42" text-anchor="middle" class="title">显存优化路线：从对象识别到策略验证</text>
+<text x="750" y="75" text-anchor="middle" class="subtitle">先建立共同账本，再按训练、推理或系统问题选择验证分支。</text>
+
+<!-- 共同基础 -->
+<text x="750" y="116" text-anchor="middle" class="section">共同基础：显存对象与证据语言</text>
+<rect x="170" y="140" width="330" height="82" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+<text x="335" y="174" text-anchor="middle" class="node">显存对象</text>
+<text x="335" y="201" text-anchor="middle" class="small">训练状态 / 推理状态 / 临时工作区</text>
+<rect x="585" y="140" width="330" height="82" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+<text x="750" y="174" text-anchor="middle" class="node">生命周期与账本</text>
+<text x="750" y="201" text-anchor="middle" class="small">产生、驻留、释放、复用、字节数</text>
+<rect x="1000" y="140" width="330" height="82" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+<text x="1165" y="174" text-anchor="middle" class="node">压力与证据</text>
+<text x="1165" y="201" text-anchor="middle" class="small">峰值、reserved、OOM、代价与质量</text>
+<path d="M500 181 H585" class="flow"/><path d="M915 181 H1000" class="flow"/>
+
+<!-- 共同主线 -->
+<text x="750" y="265" text-anchor="middle" class="section">共同学习主线</text>
+<rect x="205" y="280" width="290" height="140" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+<text x="350" y="312" text-anchor="middle" class="node">Task 0 · 生命周期</text>
+<rect x="225" y="330" width="250" height="34" fill="#ffffff" class="inner"/><text x="350" y="352" text-anchor="middle" class="small">计算图与 saved tensors</text>
+<rect x="225" y="375" width="250" height="34" fill="#ffffff" class="inner"/><text x="350" y="397" text-anchor="middle" class="small">驻留 → 使用 → 释放</text>
+<rect x="605" y="280" width="290" height="140" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+<text x="750" y="312" text-anchor="middle" class="node">Task 1 · 显存账本</text>
+<rect x="625" y="330" width="250" height="34" fill="#ffffff" class="inner"/><text x="750" y="352" text-anchor="middle" class="small">dtype 与模型规模</text>
+<rect x="625" y="375" width="250" height="34" fill="#ffffff" class="inner"/><text x="750" y="397" text-anchor="middle" class="small">参数、梯度、activation、optimizer state</text>
+<rect x="1005" y="280" width="290" height="140" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+<text x="1150" y="312" text-anchor="middle" class="node">Task 2 · 训练策略</text>
+<rect x="1025" y="330" width="250" height="34" fill="#ffffff" class="inner"/><text x="1150" y="352" text-anchor="middle" class="small">累积、重算、搬运</text>
+<rect x="1025" y="375" width="250" height="34" fill="#ffffff" class="inner"/><text x="1150" y="397" text-anchor="middle" class="small">显存、时间与梯度一致性</text>
+<path d="M495 350 H605" class="flow"/><path d="M895 350 H1005" class="flow"/>
+<path d="M335 222 V280" class="branch"/><path d="M750 222 V280" class="branch"/><path d="M1165 222 V280" class="branch"/>
+
+<!-- 分支标题与分组 -->
+<text x="60" y="448" text-anchor="start" class="section">验证分支：按问题进入，不表示 Task3–6 必须串行</text>
+<rect x="45" y="500" width="350" height="205" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+<text x="220" y="535" text-anchor="middle" class="node">Task 3 · 训练侧主线</text>
+<rect x="80" y="560" width="280" height="52" fill="#ffffff" class="inner"/><text x="220" y="592" text-anchor="middle" class="body">固定 workload → baseline</text>
+<rect x="80" y="628" width="280" height="52" fill="#ffffff" class="inner"/><text x="220" y="660" text-anchor="middle" class="body">策略比较 → 预算 → trace</text>
+
+<rect x="435" y="500" width="350" height="205" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+<text x="610" y="535" text-anchor="middle" class="node">Task 4 · 推理 Cache</text>
+<rect x="470" y="560" width="280" height="52" fill="#ffffff" class="inner"/><text x="610" y="592" text-anchor="middle" class="body">增长 → 分页 → 复用</text>
+<rect x="470" y="628" width="280" height="52" fill="#ffffff" class="inner"/><text x="610" y="660" text-anchor="middle" class="body">容量、并发与服务约束</text>
+
+<rect x="825" y="500" width="350" height="205" fill="#f0eefb" stroke="#8069b5" class="box"/>
+<text x="1000" y="535" text-anchor="middle" class="node">Task 5 · 量化部署</text>
+<rect x="860" y="560" width="280" height="52" fill="#ffffff" class="inner"/><text x="1000" y="592" text-anchor="middle" class="body">对象 → 时机 → 格式</text>
+<rect x="860" y="628" width="280" height="52" fill="#ffffff" class="inner"/><text x="1000" y="660" text-anchor="middle" class="body">backend、kernel 与质量</text>
+
+<rect x="1215" y="500" width="240" height="205" fill="#f0eefb" stroke="#8069b5" class="box"/>
+<text x="1335" y="535" text-anchor="middle" class="node">Task 6 · 系统扩展</text>
+<rect x="1240" y="560" width="190" height="52" fill="#ffffff" class="inner"/><text x="1335" y="592" text-anchor="middle" class="body">切分 → 显存分摊</text>
+<rect x="1240" y="628" width="190" height="52" fill="#ffffff" class="inner"/><text x="1335" y="660" text-anchor="middle" class="body">通信 → 多卡证据</text>
+
+<!-- 分支关系：只表示可进入的关系，不表示 Task3–6 必须串行 -->
+<path d="M1150 420 V455 H220 V500" class="branch"/>
+<path d="M750 420 V455 H610 V500" class="branch"/>
+<path d="M750 420 V455 H1000 V500" class="branch"/>
+<path d="M750 420 V455 H1335 V500" class="branch"/>
+
+<!-- 横向证据层：不再添加底部总结文字 -->
+<rect x="300" y="745" width="900" height="90" fill="#f7f3ff" stroke="#8069b5" class="box"/>
+<text x="750" y="780" text-anchor="middle" class="section">横向证据层</text>
+<text x="750" y="810" text-anchor="middle" class="body">CPU 机制检查  →  单 GPU 实测  →  backend / 多卡验证</text>
+<path d="M220 705 V725 H430 V745" class="evidence"/><path d="M610 705 V745" class="evidence"/><path d="M1000 705 V725 H1070 V745" class="evidence"/><path d="M1335 705 V725 H1070 V745" class="evidence"/>
+</svg>

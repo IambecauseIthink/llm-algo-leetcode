@@ -1,36 +1,26 @@
-<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1280" height="720" fill="#F7F4EC"/>
-  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
-  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Training Memory Pressure</text>
-  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">OOM is often a combined effect of batch, activations and optimizer state, not a single bad parameter choice.</text>
-
-  <rect x="88" y="188" width="510" height="376" rx="24" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
-  <text x="116" y="226" fill="#92400E" font-size="24" font-family="Arial, sans-serif" font-weight="700">What grows during training</text>
-  <rect x="116" y="270" width="160" height="56" rx="12" fill="#FFF7D6" stroke="#D97706" stroke-width="1.5"/>
-  <text x="150" y="304" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Batch / seq</text>
-  <rect x="314" y="270" width="160" height="56" rx="12" fill="#FFF7D6" stroke="#D97706" stroke-width="1.5"/>
-  <text x="340" y="304" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Activations</text>
-  <rect x="116" y="354" width="160" height="56" rx="12" fill="#FFF7D6" stroke="#D97706" stroke-width="1.5"/>
-  <text x="136" y="388" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Gradients</text>
-  <rect x="314" y="354" width="160" height="56" rx="12" fill="#FFF7D6" stroke="#D97706" stroke-width="1.5"/>
-  <text x="330" y="388" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Optimizer state</text>
-  <path d="M276 298H314" stroke="#92400E" stroke-width="3"/>
-  <path d="M276 382H314" stroke="#92400E" stroke-width="3"/>
-  <path d="M234 326V354" stroke="#92400E" stroke-width="3"/>
-  <path d="M394 326V354" stroke="#92400E" stroke-width="3"/>
-  <text x="116" y="462" fill="#92400E" font-size="17" font-family="Arial, sans-serif">Effective batch makes activation and gradient pressure persist</text>
-  <text x="116" y="488" fill="#92400E" font-size="17" font-family="Arial, sans-serif">through forward/backward windows, not just at one instant.</text>
-
-  <rect x="648" y="188" width="532" height="376" rx="24" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
-  <text x="678" y="226" fill="#1E3A8A" font-size="24" font-family="Arial, sans-serif" font-weight="700">Typical symptom routing</text>
-  <text x="678" y="272" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">OOM at start of step → likely resident states too large</text>
-  <text x="678" y="304" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">OOM mid / late step → activation or accumulation likely dominates</text>
-  <text x="678" y="336" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Throughput falls after "saving memory" → time-for-space cost is too high</text>
-  <rect x="678" y="388" width="448" height="116" rx="18" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
-  <text x="704" y="426" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Read next:</text>
-  <text x="704" y="456" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• checkpointing / offload when activations dominate</text>
-  <text x="704" y="480" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• benchmark decision when savings are unclear</text>
-
-  <rect x="88" y="602" width="1092" height="30" rx="10" fill="#ECFCCB" stroke="#65A30D" stroke-width="1.5"/>
-  <text x="116" y="622" fill="#365314" font-size="16" font-family="Arial, sans-serif">Rule of thumb: do not ask “how big can batch be” before asking “which object makes the peak explode”.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480">
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 Z" fill="#486581"/></marker>
+    <style>.title{font:700 30px sans-serif;fill:#17324d}.subtitle{font:16px sans-serif;fill:#486581}.label{font:700 21px sans-serif;fill:#17324d}.text{font:16px sans-serif;fill:#334e68}.box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1200" height="480" fill="#f7fafc"/>
+  <text x="600" y="48" text-anchor="middle" class="title">训练显存压力：从输入到策略代价</text>
+  <text x="600" y="78" text-anchor="middle" class="subtitle">输入条件改变驻留对象，策略再把代价转移到计算、带宽或通信</text>
+  <rect x="55" y="145" width="300" height="210" fill="#e6f6f5" class="box"/>
+  <text x="205" y="192" text-anchor="middle" class="label">输入条件</text>
+  <text x="100" y="245" class="text">micro-batch / sequence length</text>
+  <text x="100" y="285" class="text">accumulation / dtype</text>
+  <text x="100" y="325" class="text">模型规模 / 可训练参数</text>
+  <path d="M355 250 H450" class="line"/>
+  <rect x="450" y="145" width="300" height="210" fill="#fff4e6" class="box"/>
+  <text x="600" y="192" text-anchor="middle" class="label">压力对象</text>
+  <text x="495" y="245" class="text">activation：forward / backward</text>
+  <text x="495" y="285" class="text">gradient / optimizer state</text>
+  <text x="495" y="325" class="text">effective batch 与峰值阶段</text>
+  <path d="M750 250 H845" class="line"/>
+  <rect x="845" y="145" width="300" height="210" fill="#e0e7ff" class="box"/>
+  <text x="995" y="192" text-anchor="middle" class="label">策略代价</text>
+  <text x="890" y="245" class="text">累积：增加微步</text>
+  <text x="890" y="285" class="text">checkpoint：增加重算</text>
+  <text x="890" y="325" class="text">offload / sharding：搬运或通信</text>
 </svg>

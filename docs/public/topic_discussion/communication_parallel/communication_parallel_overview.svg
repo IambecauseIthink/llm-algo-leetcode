@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>.title{font:700 29px sans-serif;fill:#17324d}.sub{font:15px sans-serif;fill:#526581}.label{font:700 18px sans-serif;fill:#17324d}.txt{font:15px sans-serif;fill:#334e68}.small{font:14px sans-serif;fill:#486581}.card{stroke-width:2;rx:18}.flow{stroke:#486581;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.guide{stroke:#9fb3c8;stroke-width:2;fill:none;stroke-dasharray:7 6}</style>
+<rect width="1280" height="700" fill="#f7fafc"/>
+<text x="640" y="48" text-anchor="middle" class="title">通信与并行：从“放不下”到“跑得快”</text>
+<text x="640" y="78" text-anchor="middle" class="sub">先确定状态如何切分，再判断同步、拓扑和负载是否吃掉了多卡收益。</text>
+
+<rect x="480" y="115" width="320" height="105" rx="28" fill="#e6f0ff" stroke="#8fb3d8" stroke-width="2"/>
+<text x="640" y="157" text-anchor="middle" class="label">多卡执行问题</text><text x="640" y="190" text-anchor="middle" class="txt">显存容量 · 计算规模 · 扩展效率</text>
+
+<rect x="85" y="295" width="270" height="150" class="card" fill="#e8f5ee" stroke="#76b893"/><text x="220" y="338" text-anchor="middle" class="label">状态切分</text><text x="220" y="372" text-anchor="middle" class="txt">数据 · 参数 · 激活 · 专家</text><text x="220" y="405" text-anchor="middle" class="small">先回答“每张卡保存什么”</text>
+<rect x="505" y="295" width="270" height="150" class="card" fill="#fff4d6" stroke="#e0b34f"/><text x="640" y="338" text-anchor="middle" class="label">协同交换</text><text x="640" y="372" text-anchor="middle" class="txt">AllReduce · AllGather</text><text x="640" y="405" text-anchor="middle" class="small">同步点决定等待成本</text>
+<rect x="925" y="295" width="270" height="150" class="card" fill="#fce8e6" stroke="#d98b87"/><text x="1060" y="338" text-anchor="middle" class="label">执行条件</text><text x="1060" y="372" text-anchor="middle" class="txt">PCIe / NVLink · overlap</text><text x="1060" y="405" text-anchor="middle" class="small">拓扑、bubble、负载不均</text>
+<path d="M640 220 V255 H220 V295" class="flow"/><path d="M640 220 V295" class="flow"/><path d="M640 255 H1060 V295" class="flow"/>
+
+<rect x="260" y="525" width="760" height="92" rx="24" fill="#fff" stroke="#829ab1" stroke-width="2"/>
+<text x="640" y="562" text-anchor="middle" class="label">证据与决策</text><text x="640" y="592" text-anchor="middle" class="txt">显存分摊 · 通信时间 · 同步等待 · 吞吐 · 扩展效率</text>
+<path d="M220 445 V480 H390 V525" class="flow"/><path d="M640 445 V525" class="flow"/><path d="M1060 445 V480 H890 V525" class="flow"/>
+<text x="640" y="662" text-anchor="middle" class="small">并行策略的价值 = 切分带来的收益 − 通信、同步和拓扑代价。</text>
+</svg>

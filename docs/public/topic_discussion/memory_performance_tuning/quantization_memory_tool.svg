@@ -1,40 +1,22 @@
-<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1280" height="720" fill="#F7F4EC"/>
-  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
-  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Quantization as a Memory Tool</text>
-  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">In this topic, quantization is judged by what memory object it compresses and whether the saved budget is worth the time or quality cost.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>.title{font:700 29px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#526581}.label{font:700 18px sans-serif;fill:#172b4d}.txt{font:15px sans-serif;fill:#243b53}.small{font:14px sans-serif;fill:#526581}.card{stroke-width:2;rx:16}.flow{stroke:#486581;stroke-width:2.4;fill:none;marker-end:url(#arrow)}</style>
+<rect width="1280" height="700" fill="#fbfcfe"/>
+<text x="640" y="48" text-anchor="middle" class="title">量化作为显存工具：先选对象，再看时机</text>
+<text x="640" y="78" text-anchor="middle" class="sub">权重、激活和 KV Cache 处在不同生命周期，不能用同一套部署假设处理。</text>
 
-  <rect x="98" y="188" width="320" height="374" rx="24" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
-  <text x="126" y="226" fill="#5B21B6" font-size="24" font-family="Arial, sans-serif" font-weight="700">Weight quantization</text>
-  <text x="126" y="264" fill="#5B21B6" font-size="18" font-family="Arial, sans-serif">Main question:</text>
-  <text x="126" y="292" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">Can the model fit in the first place?</text>
-  <rect x="126" y="336" width="260" height="150" rx="18" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
-  <text x="152" y="372" fill="#5B21B6" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
-  <text x="152" y="404" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• W8A16</text>
-  <text x="152" y="428" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• GPTQ</text>
-  <text x="152" y="452" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• AWQ</text>
-  <text x="126" y="528" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">Good when resident weight size is the hard limit.</text>
+<rect x="60" y="130" width="300" height="410" rx="24" fill="#e6f0ff" stroke="#8fb3d8" stroke-width="2"/><text x="210" y="172" text-anchor="middle" class="label">压缩对象</text>
+<rect x="95" y="215" width="230" height="72" class="card" fill="#fff" stroke="#8fb3d8"/><text x="210" y="246" text-anchor="middle" class="label">权重</text><text x="210" y="271" text-anchor="middle" class="small">部署前装载 / 带宽</text>
+<rect x="95" y="315" width="230" height="72" class="card" fill="#fff" stroke="#8fb3d8"/><text x="210" y="346" text-anchor="middle" class="label">激活</text><text x="210" y="371" text-anchor="middle" class="small">运行时计算 / kernel</text>
+<rect x="95" y="415" width="230" height="72" class="card" fill="#fff" stroke="#8fb3d8"/><text x="210" y="446" text-anchor="middle" class="label">KV Cache</text><text x="210" y="471" text-anchor="middle" class="small">请求期间 / 并发容量</text>
 
-  <rect x="480" y="188" width="320" height="374" rx="24" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
-  <text x="508" y="226" fill="#1E3A8A" font-size="24" font-family="Arial, sans-serif" font-weight="700">Activation precision</text>
-  <text x="508" y="264" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Main question:</text>
-  <text x="508" y="292" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Can the live path lower bandwidth / memory use?</text>
-  <rect x="508" y="336" width="260" height="150" rx="18" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
-  <text x="534" y="372" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
-  <text x="534" y="404" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• FP8</text>
-  <text x="534" y="428" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• backend low-precision kernels</text>
-  <text x="508" y="528" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Good when the stack already supports low precision end-to-end.</text>
+<rect x="470" y="170" width="330" height="330" rx="28" fill="#fff4d6" stroke="#e0b34f" stroke-width="2"/><text x="635" y="218" text-anchor="middle" class="label">处理时机</text>
+<text x="635" y="275" text-anchor="middle" class="txt">离线转换</text><text x="635" y="300" text-anchor="middle" class="small">GPTQ · AWQ · W8A16</text>
+<text x="635" y="354" text-anchor="middle" class="txt">运行时计算</text><text x="635" y="379" text-anchor="middle" class="small">FP8 · 低精度 kernel</text>
+<text x="635" y="433" text-anchor="middle" class="txt">请求执行期间</text><text x="635" y="458" text-anchor="middle" class="small">KV Cache 量化</text>
+<path d="M325 251 H410 V275 H470" class="flow"/><path d="M325 351 H420 V354 H470" class="flow"/><path d="M325 451 H410 V433 H470" class="flow"/>
 
-  <rect x="862" y="188" width="320" height="374" rx="24" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
-  <text x="890" y="226" fill="#166534" font-size="24" font-family="Arial, sans-serif" font-weight="700">KV cache quantization</text>
-  <text x="890" y="264" fill="#166534" font-size="18" font-family="Arial, sans-serif">Main question:</text>
-  <text x="890" y="292" fill="#166534" font-size="16" font-family="Arial, sans-serif">Can context length / concurrency fit the budget?</text>
-  <rect x="890" y="336" width="260" height="150" rx="18" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
-  <text x="916" y="372" fill="#166534" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
-  <text x="916" y="404" fill="#166534" font-size="16" font-family="Arial, sans-serif">• FP8 KV cache</text>
-  <text x="916" y="428" fill="#166534" font-size="16" font-family="Arial, sans-serif">• dedicated cache quantization</text>
-  <text x="890" y="528" fill="#166534" font-size="16" font-family="Arial, sans-serif">Good when cache growth, not weights, is the budget wall.</text>
-
-  <rect x="98" y="604" width="1084" height="28" rx="10" fill="#ECFCCB" stroke="#65A30D" stroke-width="1.5"/>
-  <text x="126" y="622" fill="#365314" font-size="16" font-family="Arial, sans-serif">Routing rule: first identify which object must fit. Only then choose whether weight, activation, or KV cache quantization is the right memory action.</text>
+<rect x="910" y="160" width="300" height="150" class="card" fill="#e8f5ee" stroke="#76b893"/><text x="1060" y="205" text-anchor="middle" class="label">部署兑现</text><text x="1060" y="240" text-anchor="middle" class="txt">格式 · loader · backend</text><text x="1060" y="270" text-anchor="middle" class="small">是否真的走目标 kernel</text>
+<rect x="910" y="370" width="300" height="150" class="card" fill="#fce8e6" stroke="#d98b87"/><text x="1060" y="415" text-anchor="middle" class="label">结果判断</text><text x="1060" y="450" text-anchor="middle" class="txt">峰值显存 · 延迟 · 吞吐</text><text x="1060" y="480" text-anchor="middle" class="small">质量与 accept / tune / reject</text>
+<path d="M800 270 H850 V235 H910" class="flow"/><path d="M800 430 H850 V445 H910" class="flow"/>
 </svg>

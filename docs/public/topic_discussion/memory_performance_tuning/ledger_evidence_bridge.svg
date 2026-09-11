@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 30px sans-serif;fill:#17324d}.label{font:700 22px sans-serif;fill:#17324d}.text{font:17px sans-serif;fill:#334e68}.small{font:15px sans-serif;fill:#486581}.box{stroke:#829ab1;stroke-width:2;rx:18}.line{stroke:#486581;stroke-width:4;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="520" fill="#f7fafc"/>
+  <text x="600" y="52" text-anchor="middle" class="title">显存账本如何进入实验</text>
+  <rect x="70" y="125" width="300" height="250" fill="#e6f6f5" class="box"/>
+  <text x="220" y="172" text-anchor="middle" class="label">理论账本</text>
+  <text x="115" y="225" class="text">对象：参数 / activation / Cache</text>
+  <text x="115" y="265" class="text">规模：元素数量与 dtype</text>
+  <text x="115" y="305" class="text">生命周期：何时驻留</text>
+  <text x="115" y="345" class="text">用途：提出显存假设</text>
+  <path d="M370 250 H495" class="line"/>
+  <text x="432" y="222" text-anchor="middle" class="small">固定条件</text>
+  <rect x="495" y="125" width="300" height="250" fill="#fff4e6" class="box"/>
+  <text x="645" y="172" text-anchor="middle" class="label">匹配 workload</text>
+  <text x="540" y="225" class="text">模型与 revision</text>
+  <text x="540" y="265" class="text">dtype、batch、seq_len</text>
+  <text x="540" y="305" class="text">训练阶段或请求阶段</text>
+  <text x="540" y="345" class="text">硬件与软件版本</text>
+  <path d="M795 250 H920" class="line"/>
+  <text x="857" y="222" text-anchor="middle" class="small">采集证据</text>
+  <rect x="920" y="125" width="210" height="250" fill="#eef2ff" class="box"/>
+  <text x="1025" y="172" text-anchor="middle" class="label">实测与决策</text>
+  <text x="950" y="225" class="text">peak / reserved</text>
+  <text x="950" y="265" class="text">时间 / 吞吐</text>
+  <text x="950" y="305" class="text">质量 / OOM</text>
+  <text x="950" y="345" class="text">accept / tune / reject</text>
+  <text x="600" y="445" text-anchor="middle" class="small">账本提出假设；匹配 workload 的 GPU 运行才验证峰值、代价和容量边界。</text>
+</svg>

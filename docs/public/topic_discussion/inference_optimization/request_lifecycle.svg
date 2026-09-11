@@ -1,33 +1,33 @@
 <svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="1280" height="720" fill="#F7F4EC"/>
   <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
-  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Inference Request Lifecycle</text>
-  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">A single request gets slower for different reasons at different stages. Metrics should follow the stage, not replace it.</text>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">推理请求生命周期</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">一次请求在不同阶段变慢的原因不同，指标应对应具体阶段，而不是替代阶段分析。</text>
 
   <rect x="88" y="190" width="170" height="94" rx="18" fill="#DCEAFE" stroke="#2563EB" stroke-width="2"/>
-  <text x="118" y="225" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Request</text>
-  <text x="108" y="256" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">prompt, batch, dtype,</text>
+  <text x="118" y="225" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">请求</text>
+  <text x="108" y="256" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">prompt、batch、dtype</text>
   <text x="108" y="278" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">cache policy</text>
 
   <rect x="300" y="190" width="190" height="94" rx="18" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
   <text x="333" y="225" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Prefill</text>
-  <text x="326" y="256" fill="#92400E" font-size="16" font-family="Arial, sans-serif">attention kernel,</text>
-  <text x="326" y="278" fill="#92400E" font-size="16" font-family="Arial, sans-serif">TTFT, long prompt</text>
+  <text x="326" y="256" fill="#92400E" font-size="16" font-family="Arial, sans-serif">Attention kernel</text>
+  <text x="326" y="278" fill="#92400E" font-size="16" font-family="Arial, sans-serif">TTFT、长 prompt</text>
 
   <rect x="532" y="190" width="204" height="94" rx="18" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
   <text x="570" y="225" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">KV Cache</text>
-  <text x="554" y="256" fill="#166534" font-size="16" font-family="Arial, sans-serif">paging, reuse,</text>
-  <text x="554" y="278" fill="#166534" font-size="16" font-family="Arial, sans-serif">growth, memory cap</text>
+  <text x="554" y="256" fill="#166534" font-size="16" font-family="Arial, sans-serif">分页、复用</text>
+  <text x="554" y="278" fill="#166534" font-size="16" font-family="Arial, sans-serif">增长、显存上限</text>
 
   <rect x="778" y="190" width="204" height="94" rx="18" fill="#FBCFE8" stroke="#DB2777" stroke-width="2"/>
   <text x="816" y="225" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Decode</text>
-  <text x="800" y="256" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">sampling, draft +</text>
-  <text x="800" y="278" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">verify, scheduling</text>
+  <text x="800" y="256" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">采样、draft +</text>
+  <text x="800" y="278" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">verify、调度</text>
 
   <rect x="1024" y="190" width="156" height="94" rx="18" fill="#E9D5FF" stroke="#7C3AED" stroke-width="2"/>
-  <text x="1056" y="225" fill="#5B21B6" font-size="22" font-family="Arial, sans-serif" font-weight="700">Report</text>
+  <text x="1056" y="225" fill="#5B21B6" font-size="22" font-family="Arial, sans-serif" font-weight="700">报告</text>
   <text x="1044" y="256" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">TTFT / TPOT /</text>
-  <text x="1044" y="278" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">throughput / mem</text>
+  <text x="1044" y="278" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">吞吐 / 显存</text>
 
   <path d="M258 237H300" stroke="#374151" stroke-width="3"/>
   <path d="M490 237H532" stroke="#374151" stroke-width="3"/>
@@ -39,25 +39,25 @@
   <path d="M1009 229L1024 237L1009 245" fill="#374151"/>
 
   <rect x="88" y="346" width="1092" height="132" rx="24" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
-  <text x="116" y="384" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Metric Routing</text>
-  <text x="116" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">TTFT high → check Prefill first</text>
-  <text x="454" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">TPOT high → check Decode and Cache</text>
-  <text x="842" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">Peak memory high → check Cache and Quantization</text>
-  <text x="116" y="452" fill="#374151" font-size="18" font-family="Arial, sans-serif">Throughput low → inspect batching, scheduling, acceptance rate and cache organization together</text>
+  <text x="116" y="384" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">指标定位</text>
+  <text x="116" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">TTFT 高 → 先看 Prefill</text>
+  <text x="454" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">TPOT 高 → 看 Decode 与 Cache</text>
+  <text x="842" y="418" fill="#374151" font-size="18" font-family="Arial, sans-serif">峰值显存高 → 看 Cache 与量化</text>
+  <text x="116" y="452" fill="#374151" font-size="18" font-family="Arial, sans-serif">吞吐低 → 一起检查 batching、调度、接受率和 cache 组织</text>
 
   <rect x="88" y="516" width="340" height="116" rx="18" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
-  <text x="114" y="552" fill="#92400E" font-size="21" font-family="Arial, sans-serif" font-weight="700">What this page is for</text>
-  <text x="114" y="585" fill="#92400E" font-size="16" font-family="Arial, sans-serif">It separates the request lifecycle into stages so that</text>
-  <text x="114" y="607" fill="#92400E" font-size="16" font-family="Arial, sans-serif">later optimization pages can argue about one bottleneck</text>
-  <text x="114" y="629" fill="#92400E" font-size="16" font-family="Arial, sans-serif">at a time instead of mixing all metrics together.</text>
+  <text x="114" y="552" fill="#92400E" font-size="21" font-family="Arial, sans-serif" font-weight="700">这张图解决什么问题</text>
+  <text x="114" y="585" fill="#92400E" font-size="16" font-family="Arial, sans-serif">把请求拆成几个阶段，</text>
+  <text x="114" y="607" fill="#92400E" font-size="16" font-family="Arial, sans-serif">后续每次只定位一个主要瓶颈，</text>
+  <text x="114" y="629" fill="#92400E" font-size="16" font-family="Arial, sans-serif">避免把所有指标混在一起。</text>
 
   <rect x="468" y="516" width="320" height="116" rx="18" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
-  <text x="494" y="552" fill="#1E3A8A" font-size="21" font-family="Arial, sans-serif" font-weight="700">Used by pages</text>
-  <text x="494" y="585" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">01 Request Path and Metrics</text>
-  <text x="494" y="607" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">06 Benchmark and Decision</text>
+  <text x="494" y="552" fill="#1E3A8A" font-size="21" font-family="Arial, sans-serif" font-weight="700">对应正文</text>
+  <text x="494" y="585" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">01 请求链路与指标</text>
+  <text x="494" y="607" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">06 Benchmark 与决策</text>
 
   <rect x="828" y="516" width="352" height="116" rx="18" fill="#DCFCE7" stroke="#22C55E" stroke-width="2"/>
-  <text x="854" y="552" fill="#166534" font-size="21" font-family="Arial, sans-serif" font-weight="700">Rule of thumb</text>
-  <text x="854" y="585" fill="#166534" font-size="16" font-family="Arial, sans-serif">Why is it slow? → Prefill / Decode / Cache</text>
-  <text x="854" y="607" fill="#166534" font-size="16" font-family="Arial, sans-serif">Why does it not fit? → Cache / Quantization</text>
+  <text x="854" y="552" fill="#166534" font-size="21" font-family="Arial, sans-serif" font-weight="700">快速判断</text>
+  <text x="854" y="585" fill="#166534" font-size="16" font-family="Arial, sans-serif">为什么慢？→ Prefill / Decode / Cache</text>
+  <text x="854" y="607" fill="#166534" font-size="16" font-family="Arial, sans-serif">为什么装不下？→ Cache / 量化</text>
 </svg>

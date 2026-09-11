@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 29px sans-serif;fill:#17324d}.sub{font:16px sans-serif;fill:#486581}
+      .head{font:700 18px sans-serif;fill:#17324d}.txt{font:15px sans-serif;fill:#334e68}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="430" fill="#f7fafc"/>
+  <text x="600" y="44" text-anchor="middle" class="title">显存证据如何收束为项目决策</text>
+  <text x="600" y="72" text-anchor="middle" class="sub">每一步都保留输入、对照、指标和约束，结论才可复查</text>
+
+  <rect x="35" y="155" width="165" height="145" fill="#e6f6f5" class="box"/>
+  <text x="117" y="200" text-anchor="middle" class="head">机制假设</text>
+  <text x="65" y="240" class="txt">压力来自哪里</text>
+  <text x="65" y="270" class="txt">准备候选策略</text>
+
+  <rect x="235" y="155" width="165" height="145" fill="#e0e7ff" class="box"/>
+  <text x="317" y="200" text-anchor="middle" class="head">Baseline</text>
+  <text x="265" y="240" class="txt">固定 workload</text>
+  <text x="265" y="270" class="txt">记录峰值与时间</text>
+
+  <rect x="435" y="155" width="165" height="145" fill="#fff4e6" class="box"/>
+  <text x="517" y="200" text-anchor="middle" class="head">Candidate</text>
+  <text x="465" y="240" class="txt">一次改变策略</text>
+  <text x="465" y="270" class="txt">保留质量检查</text>
+
+  <rect x="635" y="155" width="165" height="145" fill="#fef3c7" class="box"/>
+  <text x="717" y="200" text-anchor="middle" class="head">指标比较</text>
+  <text x="665" y="240" class="txt">显存与吞吐</text>
+  <text x="665" y="270" class="txt">时间与质量</text>
+
+  <rect x="835" y="155" width="165" height="145" fill="#fde2e2" class="box"/>
+  <text x="917" y="200" text-anchor="middle" class="head">约束判断</text>
+  <text x="865" y="240" class="txt">预算 / 质量门槛</text>
+  <text x="865" y="270" class="txt">证据是否充分</text>
+
+  <rect x="1035" y="155" width="130" height="145" fill="#f0f4f8" class="box"/>
+  <text x="1100" y="200" text-anchor="middle" class="head">决策</text>
+  <text x="1060" y="240" class="txt">accept</text>
+  <text x="1060" y="270" class="txt">tune / reject</text>
+
+  <path d="M200 227 H235" class="line"/><path d="M400 227 H435" class="line"/>
+  <path d="M600 227 H635" class="line"/><path d="M800 227 H835" class="line"/>
+  <path d="M1000 227 H1035" class="line"/>
+</svg>

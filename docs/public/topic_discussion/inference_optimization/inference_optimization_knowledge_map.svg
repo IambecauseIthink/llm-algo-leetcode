@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="860" viewBox="0 0 1500 860">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 Z" fill="#52606d"/>
+    </marker>
+    <style>
+      .title{font:700 30px sans-serif;fill:#172b4d}.sub{font:16px sans-serif;fill:#486581}
+      .group{font:700 19px sans-serif;fill:#172b4d}.head{font:700 18px sans-serif;fill:#172b4d}
+      .text{font:15px sans-serif;fill:#243b53}.small{font:13px sans-serif;fill:#52606d}
+      .box{stroke-width:2;rx:14}.flow{stroke:#52606d;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+      .link{stroke:#829ab1;stroke-width:1.8;fill:none;stroke-dasharray:7 5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1500" height="860" fill="#f7fafc"/>
+  <text x="750" y="42" text-anchor="middle" class="title">推理优化知识地图：请求条件如何改变计算、状态与服务结果</text>
+  <text x="750" y="76" text-anchor="middle" class="sub">先看请求由什么组成，再看它如何经过计算、状态管理和服务组织，最后用同一组指标验证变化。</text>
+
+  <!-- 总：请求条件 -->
+  <rect x="24" y="104" width="1452" height="170" fill="#eef6ff" stroke="#8ab4df" class="box"/>
+  <text x="46" y="133" class="group">请求条件：决定工作量、可复用状态和运行约束</text>
+
+  <rect x="48" y="158" width="330" height="88" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="213" y="188" text-anchor="middle" class="head">输入规模</text>
+  <text x="213" y="214" text-anchor="middle" class="small">Prompt 长度 · 输出长度 · batch</text>
+
+  <rect x="402" y="158" width="330" height="88" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="567" y="188" text-anchor="middle" class="head">请求组合</text>
+  <text x="567" y="214" text-anchor="middle" class="small">并发度 · 到达间隔 · 重复前缀</text>
+
+  <rect x="756" y="158" width="330" height="88" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="921" y="188" text-anchor="middle" class="head">模型结构</text>
+  <text x="921" y="214" text-anchor="middle" class="small">MHA / GQA / MLA · MoE · 层宽</text>
+
+  <rect x="1110" y="158" width="330" height="88" fill="#f9f0e8" stroke="#bd7b3a" class="box"/>
+  <text x="1275" y="188" text-anchor="middle" class="head">运行条件</text>
+  <text x="1275" y="214" text-anchor="middle" class="small">GPU · dtype · quantization · backend</text>
+
+  <!-- 分：机制对象 -->
+  <rect x="24" y="312" width="1452" height="290" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+  <text x="46" y="341" class="group">机制对象：同一请求会同时经过四条相互关联的处理链</text>
+
+  <rect x="48" y="370" width="330" height="178" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="213" y="402" text-anchor="middle" class="head">计算阶段</text>
+  <text x="213" y="431" text-anchor="middle" class="text">Prefill：批量处理输入</text>
+  <text x="213" y="456" text-anchor="middle" class="text">Decode：逐步生成 token</text>
+  <text x="213" y="493" text-anchor="middle" class="small">Attention 访问模式决定计算与访存压力</text>
+  <text x="213" y="518" text-anchor="middle" class="small">FlashAttention、采样策略改变执行路径</text>
+
+  <rect x="402" y="370" width="330" height="178" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="567" y="402" text-anchor="middle" class="head">状态管理</text>
+  <text x="567" y="431" text-anchor="middle" class="text">KV Cache：保存历史 K / V</text>
+  <text x="567" y="456" text-anchor="middle" class="text">Paged / Radix：组织物理块</text>
+  <text x="567" y="493" text-anchor="middle" class="small">Prefix Cache 复用重复前缀</text>
+  <text x="567" y="518" text-anchor="middle" class="small">容量边界决定驱逐、等待与回退</text>
+
+  <rect x="756" y="370" width="330" height="178" fill="#eef2f5" stroke="#829ab1" class="box"/>
+  <text x="921" y="402" text-anchor="middle" class="head">服务组织</text>
+  <text x="921" y="431" text-anchor="middle" class="text">Batching：合并可执行请求</text>
+  <text x="921" y="456" text-anchor="middle" class="text">Scheduling：分配计算与 Cache</text>
+  <text x="921" y="493" text-anchor="middle" class="small">Prefill / Decode 的资源竞争</text>
+  <text x="921" y="518" text-anchor="middle" class="small">PD 分离与多请求协作</text>
+
+  <rect x="1110" y="370" width="330" height="178" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="1275" y="402" text-anchor="middle" class="head">部署表示</text>
+  <text x="1275" y="431" text-anchor="middle" class="text">权重与 KV Cache 的 dtype</text>
+  <text x="1275" y="456" text-anchor="middle" class="text">量化格式与执行 kernel</text>
+  <text x="1275" y="493" text-anchor="middle" class="small">模型装载路径影响可用显存</text>
+  <text x="1275" y="518" text-anchor="middle" class="small">backend 决定真实执行方式</text>
+
+  <!-- 主关系：输入条件到机制对象 -->
+  <path d="M213 246 V370" class="flow"/>
+  <path d="M567 246 V370" class="flow"/>
+  <path d="M921 246 V370" class="flow"/>
+  <path d="M1275 246 V370" class="flow"/>
+  <path d="M378 459 H402" class="flow"/>
+  <path d="M732 459 H756" class="flow"/>
+  <path d="M1086 459 H1110" class="flow"/>
+
+  <!-- 分：可观测结果 -->
+  <rect x="24" y="640" width="1452" height="170" fill="#f2effc" stroke="#a795d0" class="box"/>
+  <text x="46" y="669" class="group">可观测结果：用同一 workload 判断收益是否真实</text>
+
+  <rect x="48" y="696" width="330" height="88" fill="#eef6ff" stroke="#4c8eda" class="box"/>
+  <text x="213" y="726" text-anchor="middle" class="head">首 token 延迟</text>
+  <text x="213" y="752" text-anchor="middle" class="small">TTFT · Prefill 时间 · 首次响应</text>
+
+  <rect x="402" y="696" width="330" height="88" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="567" y="726" text-anchor="middle" class="head">生成效率</text>
+  <text x="567" y="752" text-anchor="middle" class="small">TPOT · Decode 速度 · 输出吞吐</text>
+
+  <rect x="756" y="696" width="330" height="88" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+  <text x="921" y="726" text-anchor="middle" class="head">服务稳定性</text>
+  <text x="921" y="752" text-anchor="middle" class="small">P50 / P99 · 排队 · Cache 命中</text>
+
+  <rect x="1110" y="696" width="330" height="88" fill="#f9f0e8" stroke="#bd7b3a" class="box"/>
+  <text x="1275" y="726" text-anchor="middle" class="head">资源与质量</text>
+  <text x="1275" y="752" text-anchor="middle" class="small">峰值显存 · 质量 · 加载与回退</text>
+
+  <!-- 机制到结果：保持列对齐，避免交叉 -->
+  <path d="M213 548 V696" class="flow"/>
+  <path d="M567 548 V696" class="flow"/>
+  <path d="M921 548 V696" class="flow"/>
+  <path d="M1275 548 V696" class="flow"/>
+</svg>

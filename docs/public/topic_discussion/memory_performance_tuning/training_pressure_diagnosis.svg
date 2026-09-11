@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>.title{font:700 29px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#526581}.label{font:700 18px sans-serif;fill:#172b4d}.txt{font:15px sans-serif;fill:#243b53}.small{font:14px sans-serif;fill:#526581}.card{stroke-width:2;rx:15}.flow{stroke:#486581;stroke-width:2.4;fill:none;marker-end:url(#arrow)}</style>
+<rect width="1280" height="700" fill="#fbfcfe"/>
+<text x="640" y="48" text-anchor="middle" class="title">训练显存压力：先定位，再选择代价</text>
+<text x="640" y="78" text-anchor="middle" class="sub">只改变一个压力条件，观察峰值出现在哪个阶段、哪类对象占主导。</text>
+
+<rect x="420" y="120" width="440" height="92" rx="24" fill="#e6f0ff" stroke="#8fb3d8" stroke-width="2"/>
+<text x="640" y="158" text-anchor="middle" class="label">输入条件</text>
+<text x="640" y="188" text-anchor="middle" class="txt">micro-batch · sequence length · dtype · accumulation</text>
+<path d="M640 212 V255" class="flow"/>
+
+<path d="M640 255 L365 330 H915 Z" fill="#fff4d6" stroke="#e0b34f" stroke-width="2"/>
+<text x="640" y="299" text-anchor="middle" class="label">阶段与对象定位</text>
+<text x="640" y="326" text-anchor="middle" class="small">把“显存变高”拆成可验证的原因</text>
+<rect x="100" y="390" width="300" height="105" class="card" fill="#fff" stroke="#8fb3d8"/><text x="250" y="429" text-anchor="middle" class="label">forward / backward</text><text x="250" y="460" text-anchor="middle" class="txt">activation、临时张量</text><text x="250" y="483" text-anchor="middle" class="small">随 batch、序列长度变化</text>
+<rect x="490" y="390" width="300" height="105" class="card" fill="#fff" stroke="#8fb3d8"/><text x="640" y="429" text-anchor="middle" class="label">optimizer step</text><text x="640" y="460" text-anchor="middle" class="txt">参数、梯度、optimizer state</text><text x="640" y="483" text-anchor="middle" class="small">更新阶段持续驻留</text>
+<rect x="880" y="390" width="300" height="105" class="card" fill="#fff" stroke="#8fb3d8"/><text x="1030" y="429" text-anchor="middle" class="label">allocator / OOM</text><text x="1030" y="460" text-anchor="middle" class="txt">reserved、碎片、容量边界</text><text x="1030" y="483" text-anchor="middle" class="small">需要结合 peak 观测</text>
+<path d="M510 330 V350 H250 V390" class="flow"/><path d="M640 330 V390" class="flow"/><path d="M770 330 V350 H1030 V390" class="flow"/>
+
+<rect x="205" y="545" width="870" height="78" rx="22" fill="#e8f5ee" stroke="#76b893" stroke-width="2"/>
+<text x="640" y="578" text-anchor="middle" class="label">策略选择依据</text><text x="640" y="607" text-anchor="middle" class="txt">缩小单步规模 · 重算 activation · 搬运状态 —— 显存、时间、吞吐和质量一起比较</text>
+<path d="M250 495 V520 H370 V545" class="flow"/><path d="M640 495 V545" class="flow"/><path d="M1030 495 V520 H910 V545" class="flow"/>
+</svg>
