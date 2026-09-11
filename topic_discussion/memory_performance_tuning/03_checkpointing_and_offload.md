@@ -2,74 +2,56 @@
 
 ## 页面目标
 
-本节回答的是：为什么 checkpointing 和 offload 会成为训练显存优化主线，以及它们分别在拿什么换空间。
+本节回答：确认 activation 是训练峰值主因后，应该缩小单次计算、减少状态保存，还是改变状态驻留位置？学习者需要能把显存压力、机制变化、代价来源和验证指标连成一条判断链。
 
-## 问题起点
+## 核心机制
 
-当确认 activation 是训练峰值主因后，针对这类瓶颈主要有两条路线：
+训练侧的 activation 策略有三个切入点：改变一次计算处理多少数据，改变反向前保存多少状态，或改变状态暂时存放在哪一层内存。它们都可能降低 GPU 峰值，但代价分别落在更新节奏、额外计算或设备间传输上。
 
-- 少存一些，回头再算；
-- 先存着，但搬到别的存储层。
+| 机制方向 | 改变的对象 | 主要代价 | 适合提出的实验问题 |
+|:---|:---|:---|:---|
+| 调整单次计算规模 | micro-batch、累积步数和一次更新的样本量 | 更新节奏与吞吐 | 单步峰值下降后，训练口径是否仍一致？ |
+| 减少状态保存 | 部分 activation 不再完整驻留 | 反向阶段重算 | 显存收益是否值得额外计算？ |
+| 改变状态驻留 | activation 暂时离开 GPU | 搬运、同步和带宽等待 | 搬运是否抵消显存收益？ |
+| 组合策略 | 同时改变多个维度 | 多种代价叠加 | 在预算和质量门槛下是否仍可行？ |
 
-这正是 checkpointing 和 offload 的本质区别。它们都在处理 activation 驻留，却通过完全不同的代价模型完成；它们不是训练显存优化的全部方案。
+两种机制都不会自动减少参数、梯度或 optimizer state。它们的收益必须回到同一 workload 下的 `peak memory`、`step time`、吞吐、质量和 OOM 状态进行判断。
 
-## 你要先确认什么
+## 从显存压力到代价转移
 
-- activation 是否已经是训练峰值主因。
-- 当前系统更能接受重算，还是更能接受搬运。
-- 带宽、PCIe / NVLink 路径是否足以支撑 offload。
+判断顺序应保持稳定：先看单次计算规模，再看反向状态的保存方式，最后看状态是否需要跨设备搬运。这样可以先排除改变过多变量的方案，再把计算和带宽代价带入比较。
 
-## 核心矛盾
+| 机制方向 | 解决的问题 | 改变的对象 | 主要代价 | 先验证什么 |
+|:---|:---|:---|:---|:---|
+| 调整单次计算规模 | 单次输入放不下，但仍希望保持一次更新看到的样本量 | 单次 activation 规模与更新节奏 | 更多 micro-step、吞吐变化 | loss 缩放、梯度对齐、参数更新次数 |
+| 减少状态保存 | 反向所需的中间 activation 过多 | activation 的保存方式 | 反向重算 | 输出/输入梯度、区段边界、粒度 |
+| 改变状态驻留 | activation 暂时不用但又不能丢弃 | activation 的存储位置 | 搬出、搬回、同步和带宽 | 预算可行性、单程/往返理论代价 |
 
-`checkpointing` 的矛盾是“少留状态，但后向时要多做一次前向片段重算”；`offload` 的矛盾是“状态仍然存在，但需要跨存储层搬运并等待返回”。两者都不是免费收益，差别只在于你把代价付给计算还是传输。
+共同的 GPU 观察量是 `peak memory`、`step time`、吞吐和 OOM；训练质量指标也要保持可比。CPU 练习用于验证机制和账本关系，不能替代 GPU 对重算、搬运和 allocator 峰值的实测。完成机制练习后，再把候选方案放进固定 workload，比较显存收益和时间代价。
 
-## 演化路径
+![Checkpoint 与 Offload：两种显存代价转移](../../docs/public/topic_discussion/memory_performance_tuning/checkpoint_offload_tradeoff.svg)
 
-1. 先识别 activation 是否值得优化。
-2. 用 checkpointing 把一部分状态从“存储”改成“重算”。
-3. 用 offload 把状态从 GPU 驻留改成外部存储层驻留。
-4. 再用 profiling 看重算和搬运是否把时间赔过头。
+## 判断与验证
 
-## 从机制到项目证据
+先确认 activation 确实是主要压力，再按“固定口径 → 比较策略 → 检查预算 → 解释峰值”的证据链形成候选方案：
 
-本节的关键不是背诵 checkpoint 和 offload 的定义，而是为每个候选方案写清楚三件事：减少了哪类 GPU 驻留、把代价转移到重算还是搬运、需要用哪一个指标证明代价可接受。对应项目链是 [73 Training Performance Analysis](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) 先建立 baseline，再用 [76 Activation / Checkpoint / Offload Benchmark](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb) 比较候选，由 [75 Memory Budget Compression](../../02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb) 按预算门槛做选择，最后由 [74 Profiling Driven Optimization](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) 检查重算、搬运和 kernel 代价是否真的解释了结果。
+| 证据阶段 | 要固定或改变什么 | 主要回答的问题 | 结果形式 |
+|:---|:---|:---|:---|
+| 基线 | 固定模型、dtype、batch、seq_len、warmup、iters 和 seed | 当前峰值和吞吐是多少？ | baseline |
+| 策略比较 | 只改变 checkpoint、offload 或 hybrid | 显存收益换来了多少时间代价？ | candidate metrics |
+| 预算决策 | 改变显存上限、吞吐下限和质量门槛 | 可行策略集合是否稳定？ | accept / tune / reject |
+| 证据解释 | 对照 profiler 的阶段和 trace | 峰值变化来自 activation、重算还是搬运？ | 可复查解释 |
 
-## 关键取舍
+候选策略的选择可以先按压力对象和代价做初筛：
 
-- `checkpointing` 更适合计算相对便宜、重算可接受的片段。
-- `offload` 更适合显存太紧但外部带宽还可承受的环境。
-- 两者可以组合，但组合后更需要 benchmark，不然很容易只看到显存下降，看不到训练时间恶化。
+| 当前压力 | 优先尝试 | 需要重点观察 | 不应直接推出的结论 |
+|:---|:---|:---|:---|
+| 单次计算规模过大 | 调整 micro-batch 与累积步数 | 单步峰值、有效 batch、吞吐 | 不能把有效 batch 当成单次 forward batch |
+| 只差少量显存，计算余量充足 | Checkpointing | 峰值、重算时间、吞吐 | 不能认为所有 workload 都会同样节省显存 |
+| 显存压力明显，但 CPU 内存和带宽充足 | Offload | 搬运时间、同步和传输重叠 | 不能把账本中的转移量写成真实 GPU 收益 |
+| 单一策略仍无法满足预算 | Hybrid | 重算与搬运是否叠加，是否出现新瓶颈 | 不能只因为显存最低就接受方案 |
+| 质量或吞吐门槛严格 | 先保留 baseline，再逐项比较 | loss、eval loss、step time、OOM | 不能用短 smoke test 代替稳定结论 |
 
-## 先看对象，再看策略
+机制练习先建立可读的预算、梯度和生命周期模型；它们不替代固定 workload 下的 GPU 测量，也不能把理论搬运量、重算量直接写成真实收益。
 
-| 如果主要问题是 | 优先考虑 | 不要误判为 |
-|---|---|---|
-| 单个 micro-batch 的激活峰值 | Gradient Accumulation 或减小 micro-batch | 它不会减少参数和优化器状态 |
-| 反向所需的中间激活过多 | Checkpointing | 它不会自动减少总参数显存 |
-| GPU 激活驻留超过预算，但主机带宽可承受 | Offload | 模拟中的传输时间不是实际 PCIe/NVLink 测量 |
-
-`42 Activation Offload` 只做可读的预算模拟：它根据激活块大小、预计复用距离和假设带宽计算“理论上搬多少、估算多久”。它不创建真实 CUDA tensor，也不实现 pinned memory、异步拷贝或传输重叠。因此它只能帮助学习者建立代价模型，不能替代 `76` 的真实 GPU benchmark。
-
-本节的出口不是选出一个永远最优的策略，而是写出一条可验证的假设：例如“checkpoint 预计减少激活驻留，但允许不超过某个吞吐损失”；随后由 `73 / 76 / 75` 用同一 workload 验证，再由 `74` 检查假设是否与 profiler 证据一致。
-
-> 正文暂不嵌入未审核图示；相关图册与占位说明见 [视觉资产页](./07_visual_assets.md)。
-
-## 文献锚点
-
-- activation checkpointing 经典论文：理解时间换空间的基本模式。
-- activation offload / memory hierarchy 相关资料：理解搬运路径为什么常成为隐藏成本。
-
-## 对应 Part 02
-
-- [19 Activation Checkpointing and Activation Offload](../../02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload.ipynb)
-- [42 Activation Offload](../../02_PyTorch_Algorithms/42_Activation_Offload.ipynb)
-- [73 Training Performance Analysis](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb)、[76 Activation / Checkpoint / Offload Benchmark](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb)、[74 Profiling Driven End-to-End Optimization](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb)
-
-## 典型阅读入口
-
-- [02 Training Memory Pressure](./02_training_memory_pressure.md)
-- [06 Benchmark and Trade-off Decision](./06_benchmark_and_tradeoff_decision.md)
-
-## 本节要点
-
-checkpointing 和 offload 都是在省 activation，但一个主要赔计算，一个主要赔传输。
+CPU 可以验证梯度对齐、状态变化和策略账本；GPU 才能确认真实峰值、重算时间、搬运时间、吞吐和 OOM 边界。最终出口是 [73](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) → [76](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb) → [75](../../02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb) → [74](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb)。
