@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="540" viewBox="0 0 1280 540" role="img" aria-labelledby="title desc">
+<title id="title">MoE：从总容量到系统决策</title>
+<desc id="desc">从 Dense 与 MoE 的参数容量出发，经过 Router、容量控制、专家计算和跨设备通信，最后比较显存、吞吐、质量与尾延迟。</desc>
+<defs>
+  <marker id="arrow22" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:28px;font-weight:700}.subtitle{font-size:15px;fill:#475569}
+    .group{font-size:19px;font-weight:700}.head{font-size:18px;font-weight:700}.body{font-size:15px}.small{font-size:13px;fill:#475569}
+    .panel{stroke:#94a3b8;stroke-width:2;rx:16}.item{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;rx:10}
+    .flow{stroke:#64748b;stroke-width:2.5;fill:none;marker-end:url(#arrow22)}
+  </style>
+</defs>
+<rect width="1280" height="540" fill="#f8fafc"/>
+<text x="640" y="42" text-anchor="middle" class="title">MoE：从总容量到系统决策</text>
+<text x="640" y="69" text-anchor="middle" class="subtitle">总参数不等于单 token 计算；Router 把容量收益转化为计算、通信和负载均衡问题</text>
+
+<rect x="35" y="125" width="270" height="300" fill="#e0f2fe" class="panel"/>
+<text x="170" y="163" text-anchor="middle" class="group">模型容量</text>
+<rect x="62" y="190" width="216" height="70" class="item"/>
+<text x="170" y="218" text-anchor="middle" class="head">Dense FFN ↔ MoE Experts</text>
+<text x="170" y="241" text-anchor="middle" class="small">单个 FFN 与多个专家</text>
+<rect x="62" y="278" width="216" height="70" class="item"/>
+<text x="170" y="306" text-anchor="middle" class="head">总参数与活跃参数</text>
+<text x="170" y="329" text-anchor="middle" class="small">E 个专家 · top-k 激活</text>
+<rect x="62" y="366" width="216" height="42" class="item"/>
+<text x="170" y="392" text-anchor="middle" class="small">活跃 FFN FLOPs 只是部分计算</text>
+
+<rect x="345" y="125" width="270" height="300" fill="#dcfce7" class="panel"/>
+<text x="480" y="163" text-anchor="middle" class="group">Router 与容量</text>
+<rect x="372" y="190" width="216" height="70" class="item"/>
+<text x="480" y="218" text-anchor="middle" class="head">token 分数 → top-k</text>
+<text x="480" y="241" text-anchor="middle" class="small">决定每个 token 的专家路径</text>
+<rect x="372" y="278" width="216" height="70" class="item"/>
+<text x="480" y="306" text-anchor="middle" class="head">capacity factor</text>
+<text x="480" y="329" text-anchor="middle" class="small">限制每个专家接收的 token</text>
+<rect x="372" y="366" width="216" height="42" class="item"/>
+<text x="480" y="392" text-anchor="middle" class="small">负载均衡 · overflow · drop</text>
+
+<rect x="655" y="125" width="270" height="300" fill="#fef3c7" class="panel"/>
+<text x="790" y="163" text-anchor="middle" class="group">计算与通信代价</text>
+<rect x="682" y="190" width="216" height="70" class="item"/>
+<text x="790" y="218" text-anchor="middle" class="head">专家 FFN 计算</text>
+<text x="790" y="241" text-anchor="middle" class="small">活跃专家承担矩阵乘</text>
+<rect x="682" y="278" width="216" height="70" class="item"/>
+<text x="790" y="306" text-anchor="middle" class="head">token 搬运</text>
+<text x="790" y="329" text-anchor="middle" class="small">dispatch / gather / All-to-All</text>
+<rect x="682" y="366" width="216" height="42" class="item"/>
+<text x="790" y="392" text-anchor="middle" class="small">热点、拥塞与尾部等待</text>
+
+<rect x="965" y="125" width="270" height="300" fill="#fce7f3" class="panel"/>
+<text x="1100" y="163" text-anchor="middle" class="group">系统决策</text>
+<rect x="992" y="190" width="216" height="70" class="item"/>
+<text x="1100" y="218" text-anchor="middle" class="head">单卡执行 ↔ 专家并行</text>
+<text x="1100" y="241" text-anchor="middle" class="small">容量、带宽与部署条件</text>
+<rect x="992" y="278" width="216" height="70" class="item"/>
+<text x="1100" y="306" text-anchor="middle" class="head">质量与吞吐</text>
+<text x="1100" y="329" text-anchor="middle" class="small">固定 workload 下比较</text>
+<rect x="992" y="366" width="216" height="42" class="item"/>
+<text x="1100" y="392" text-anchor="middle" class="small">显存 · 通信时间 · 尾延迟</text>
+
+<path d="M305 275H337" class="flow"/>
+<text x="321" y="260" text-anchor="middle" class="small">选择</text>
+<path d="M615 275H647" class="flow"/>
+<text x="631" y="260" text-anchor="middle" class="small">路由</text>
+<path d="M925 275H957" class="flow"/>
+<text x="941" y="260" text-anchor="middle" class="small">验证</text>
+</svg>
