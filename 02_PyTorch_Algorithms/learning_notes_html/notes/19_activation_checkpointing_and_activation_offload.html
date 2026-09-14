@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 19 | Activation Checkpointing and Activation Offload</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 19 | Activation Checkpointing | 激活检查点</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 19 | 零基础导学关卡</p>
-        <h1>Activation Checkpointing and Activation Offload</h1>
+        <h1>Activation Checkpointing | 激活检查点</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">19_Activation_Checkpointing_and_Activation_Offload.ipynb</span>
-          <span class="pill">Checkpointing</span><span class="pill">Offload</span><span class="pill">Memory</span>
+          <span class="pill">显存优化</span><span class="pill">激活值</span><span class="pill">Checkpointing</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,412 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="124b2c6a891f527f2744b476c13973940f62a7e1b5d7acca9470869f2f43c4ef">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../19_Activation_Checkpointing_and_Activation_Offload.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>19. Activation Checkpointing | 激活检查点</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> GPU-optional
+<strong>标签：</strong> <code>显存优化</code>, <code>激活值</code>, <code>Checkpointing</code> | <strong>目标人群：</strong> 显存优化学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>训练大模型时，参数只是显存账本的一部分；随着训练规模和上下文长度变化，计算过程中产生的中间状态也会形成资源压力。本节围绕这类训练状态建立观察口径，帮助你把显存占用、计算时间和传输代价放在同一个问题中理解。</p>
+<p>学习完成后，你应该能够判断训练显存压力出现在哪个阶段，说明资源代价发生了什么转移，并为后续实验提出可比较的观察指标。相关实现和真实 workload 测量放在后续实验步骤中展开。</p>
+<p><strong>关键词：</strong> <code>checkpointing</code>, <code>recompute</code></p>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 使用 checkpoint 包裹当前 block</li><li>TODO 2: 生成 segment 边界</li><li>TODO 3: 完成当前 segment 的前向函数并调用 checkpoint</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先看训练闭环、反向传播和显存账本，再进入 checkpointing：本节关注的是当前反向路径需要哪些激活，哪些中间结果可以通过重算来换取显存空间。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+<li><a href="18_activation_and_loss_backward.html">18. Activation and Loss Backward | 激活与损失反向</a></li>
+<li><a href="../../../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb">P0: 20. Profiling and Memory Ledger | 性能分析与显存账本</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心思想与痛点</h3>
+<p>训练时，前向产生的部分 activation 要留到反向使用；序列长度、batch 或层数增加后，这些驻留状态可能成为显存压力。面对同一个压力，系统可以继续保存、在反向时重算，或先把暂时不用的状态搬到其他存储层。
+本节重点是 checkpoint 的“重算换空间”机制；下面的表格先比较三条路径的代价转移，主图再给出整体关系，后续 Step 深入重算边界、生命周期和粒度。</p>
+<table>
+<thead>
+<tr>
+<th>处理方式</th>
+<th>反向阶段发生什么</th>
+<th>代价转移到哪里</th>
+<th>首先观察什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>直接保存</td>
+<td>直接读取前向留下的 activation</td>
+<td>GPU 显存</td>
+<td>峰值是否超过预算</td>
+</tr>
+<tr>
+<td>Checkpoint</td>
+<td>重新执行选定区段的前向</td>
+<td>计算时间</td>
+<td>重算是否拖慢 step</td>
+</tr>
+<tr>
+<td>Offload</td>
+<td>把状态取回后继续反向</td>
+<td>CPU-GPU 带宽与同步</td>
+<td>搬运是否抵消收益</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/19_checkpoint_offload.svg" alt="训练显存优化：保存、重算，还是搬运？"></p>
+<h3>Step 2: 激活值重计算原理</h3>
+<p>Checkpoint 为选定区段减少中间结果的长期保存，在反向需要时重新执行对应的前向计算。它把部分显存压力转成计算时间，但不会删除参数、梯度或 optimizer state。</p>
+<p>判断一次重算是否正确，要同时看三件事：重算得到的输出是否与普通前向一致，输入梯度是否一致，以及随机状态或外部副作用是否会改变重算结果。实际收益还取决于激活在总显存账本中的占比和区段粒度。</p>
+<table>
+<thead>
+<tr>
+<th>机制环节</th>
+<th>发生的事情</th>
+<th>需要保持的条件</th>
+<th>观察指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前向保存</td>
+<td>保留区段边界和反向所需的少量状态</td>
+<td>输入关系和随机状态可恢复</td>
+<td>保存对象与 activation 账本</td>
+</tr>
+<tr>
+<td>反向重算</td>
+<td>重新执行区段内部前向，再继续求梯度</td>
+<td>重算输出与原前向一致</td>
+<td>输入梯度、输出误差</td>
+</tr>
+<tr>
+<td>代价转移</td>
+<td>减少部分显存驻留，增加计算</td>
+<td>参数、梯度和 optimizer state 不被误计入收益</td>
+<td>step time、吞吐和 peak memory</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: 检查点生命周期与粒度</h3>
+<p>checkpoint 为一段前向计算建立重算边界：前向阶段保留边界输入和必要状态，反向阶段重新执行区段内部的前向，再继续计算梯度。它不是“完全不保存激活”，而是改变哪些状态长期驻留。</p>
+<p>实现单位可以是一个 Transformer Block，也可以是连续 Block 组成的 segment。粒度越细，保存点和调度开销可能增加；粒度越粗，单次重算范围可能增加。被包裹的区段应尽量没有外部副作用；如果包含 dropout 或其他随机操作，还要确认随机状态在重算前后保持一致。下面的表格把生命周期和粒度选择对应到可观察的代价。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/19_checkpoint_lifecycle.svg" alt="Checkpoint：区段边界保留，内部激活在反向时重算"></p>
+<table>
+<thead>
+<tr>
+<th>观察对象</th>
+<th>checkpoint 改变什么</th>
+<th>checkpoint 不改变什么</th>
+<th>需要验证的代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>区段内部 activation</td>
+<td>减少反向前长期驻留的中间结果</td>
+<td>参数、梯度和 optimizer state</td>
+<td>重算次数、step time</td>
+</tr>
+<tr>
+<td>区段边界状态</td>
+<td>仍可能需要保留或重新提供</td>
+<td>反向所需的输入关系</td>
+<td>输出与输入梯度是否一致</td>
+</tr>
+<tr>
+<td>checkpoint 粒度</td>
+<td>决定保存点数量和单次重算范围</td>
+<td>不提供固定显存节省比例</td>
+<td>peak memory、吞吐和 OOM 边界</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 4: 实现并验证 checkpoint 路径</h3>
+<p>题目区只实现三个相互关联的函数；每个 TODO 都对应前面一个机制环节。输入假定为不原地修改隐藏状态的 Block 序列，测试区负责比较普通前向、逐 Block checkpoint 和分段 checkpoint 的输出与输入梯度。</p>
+<table>
+<thead>
+<tr>
+<th>题目区函数</th>
+<th>对应机制</th>
+<th>TODO 重点</th>
+<th>验证方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_with_checkpointing</code></td>
+<td>逐 Block 重算</td>
+<td>TODO 1：用 checkpoint 包裹当前 Block</td>
+<td>输出和输入梯度与普通前向一致</td>
+</tr>
+<tr>
+<td><code>build_checkpoint_segments</code></td>
+<td>segment 边界</td>
+<td>TODO 2：生成不重叠、覆盖完整 Block 序列的半开区间</td>
+<td>检查空段、尾段和非法粒度</td>
+</tr>
+<tr>
+<td><code>run_with_segment_checkpointing</code></td>
+<td>分段重算</td>
+<td>TODO 3：绑定当前 segment 并按顺序执行</td>
+<td><code>segment_size=1</code> 与逐 Block 路径一致</td>
+</tr>
+</tbody>
+</table>
+<p>实现时重点观察：checkpoint 减少的是区段内部激活驻留；参数、梯度和 optimizer state 仍然存在；粒度变化会同时影响保存点数量和重算范围。</p>
+<h3>提示</h3>
+<ul>
+<li>逐 Block 版本可以把 <code>checkpoint(...)</code> 包在每个 block 前向外面；不要在 TODO 中修改 block 参数或原地改写输入。</li>
+<li>分段版本要先确定 <code>[start:end]</code>，再定义只接收一个 Tensor 的 segment forward 函数。</li>
+<li>注意 Python 闭包不要错误捕获循环变量；每次循环都要绑定当前 segment。</li>
+<li><code>segment_size=1</code> 在本实现中应与逐 Block checkpoint 对齐；segment 越大，保存点更少，但每次反向重算的片段更长。</li>
+<li><code>use_reentrant=False</code> 是当前 PyTorch 文档中常用的非重入实现；实际项目仍应按当前版本文档和模型约束确认选项。</li>
+<li>先保证逐层和分段两种实现都能通过 CPU correctness，再比较不同 <code>segment_size</code> 的代价。</li>
+</ul>
+<h3>工程要点</h3>
+<ul>
+<li>Checkpointing 是<strong>用重算换显存</strong>：减少部分中间激活驻留，但不会删除参数、梯度或 optimizer state。</li>
+<li>Offload 是<strong>用搬运换显存</strong>，与 checkpointing 的代价路径不同；机制对照见 <a href="42_activation_offload.html">42. 激活卸载</a>。</li>
+<li>激活占比、序列长度、模型深度和 checkpoint 粒度共同决定收益，不能预设固定节省比例。</li>
+<li>本节只验证机制和 CPU correctness；真实 GPU 峰值、吞吐和 step time 由 <code>73 / 76</code> 的固定 workload 实验测量。</li>
+</ul>
+<h3>测试</h3>
+<p>运行下面的测试单元：默认先验证开启 checkpointing 后的输出与反向传播 correctness。GPU 峰值观察必须显式设置 <code>RUN_REAL_GPU=True</code>，因为 Notebook 自动启动 GPU workload 可能抢占学习者已有进程的显存，也可能在不同设备上直接 OOM；显式开关能让学习者先确认 workload、空闲显存和进程状态。这里的 GPU 结果仍只是 toy observation，真实模型的显存、吞吐和 step time 对比请在 <code>73</code> 建立 baseline，并在 <code>76</code> 比较 checkpoint / offload / hybrid。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 10</summary><pre><code>class SimpleTransformerBlock(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.ffn = nn.Sequential(
+            nn.Linear(dim, dim * 4),
+            nn.ReLU(),
+            nn.Linear(dim * 4, dim)
+        )
+        self.norm = nn.LayerNorm(dim)
+
+    def forward(self, x):
+        # 制造一个比较大的激活值内存开销
+        out = self.ffn(self.norm(x))
+        return x + out
+
+def run_without_checkpointing(blocks: nn.ModuleList, x: torch.Tensor):
+    &quot;&quot;&quot;不使用 checkpoint 执行所有 Block。
+
+    Args:
+        blocks: 按顺序排列的 Transformer Block 列表。
+        x: 输入隐藏状态，形状通常为 [batch, seq, dim]。
+
+    Returns:
+        所有 Block 执行后的隐藏状态。
+    &quot;&quot;&quot;
+    for block in blocks:
+        x = block(x)
+    return x
+
+def run_with_checkpointing(blocks: nn.ModuleList, x: torch.Tensor):
+    &quot;&quot;&quot;对每个 Block 单独启用梯度 checkpoint。
+
+    Args:
+        blocks: 按顺序排列的 Transformer Block 列表。
+        x: 输入隐藏状态，必须参与梯度计算才能观察反向传播。
+
+    Returns:
+        经过逐 Block checkpoint 的输出隐藏状态。
+
+    Note:
+        前向阶段少保存中间激活，反向阶段重新执行 Block；
+        这里使用 use_reentrant=False。
+    &quot;&quot;&quot;
+    for block in blocks:
+        # ==========================================
+        # TODO 1: 使用 checkpoint 包裹当前 block
+        # 提示：使用 use_reentrant=False，并返回新的 x
+        # ==========================================
+        # x = ???
+        pass
+    return x
+
+def build_checkpoint_segments(num_blocks: int, segment_size: int):
+    &quot;&quot;&quot;生成覆盖全部 Block 的半开区间 `(start, end)`。&quot;&quot;&quot;
+    if num_blocks &lt; 0:
+        raise ValueError(&quot;num_blocks must be non-negative&quot;)
+    if segment_size &lt;= 0:
+        raise ValueError(&quot;segment_size must be positive&quot;)
+
+    # ==========================================
+    # TODO 2: 生成 segment 边界
+    # 提示：从 0 开始按 segment_size 向前推进；最后一个区间可以不足 segment_size。
+    # ranges = ???
+    # ==========================================
+    pass
+
+def run_with_segment_checkpointing(blocks: nn.ModuleList, x: torch.Tensor, segment_size: int = 2):
+    &quot;&quot;&quot;将连续 Block 分成固定大小的 segment 后启用 checkpoint。
+
+    Args:
+        blocks: 按顺序排列的 Transformer Block 列表。
+        x: 输入隐藏状态，形状通常为 [batch, seq, dim]。
+        segment_size: 每个 checkpoint 包含的 Block 数量，必须为正数；
+            最后一个 segment 可以不足该大小。
+
+    Returns:
+        经过分段 checkpoint 的输出隐藏状态。
+
+    Note:
+        segment_size=1 接近逐 Block checkpoint；更大的 segment
+        通常减少保存点，但可能扩大单次重算范围。
+    &quot;&quot;&quot;
+    if segment_size &lt;= 0:
+        raise ValueError(&quot;segment_size must be positive&quot;)
+
+    for start, end in build_checkpoint_segments(len(blocks), segment_size):
+        segment = blocks[start:end]
+
+        # ==========================================
+        # TODO 3: 完成当前 segment 的前向函数并调用 checkpoint
+        # 注意：闭包需要绑定本轮的 segment，不能在循环结束后才读取变量
+        # ==========================================
+        # def segment_forward(hidden, segment=segment): ...
+        # x = checkpoint(segment_forward, x, use_reentrant=False)
+        pass
+    return x
+</code></pre></details><details><summary>题目与测试代码 · Cell 12</summary><pre><code># 运行此单元格以测试你的实现
+def _run_cpu_correctness_check():
+    torch.manual_seed(42)
+    dim = 128
+    num_layers = 5  # 特意让最后一个 segment 不完整
+    blocks = nn.ModuleList([SimpleTransformerBlock(dim) for _ in range(num_layers)])
+    segments = build_checkpoint_segments(num_layers, segment_size=2)
+    assert segments == [(0, 2), (2, 4), (4, 5)], &quot;segment 边界应覆盖尾段且不重叠&quot;
+    assert build_checkpoint_segments(num_layers, segment_size=1) == [(i, i + 1) for i in range(num_layers)]
+    try:
+        build_checkpoint_segments(num_layers, segment_size=0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(&quot;segment_size=0 应被拒绝&quot;)
+    x_normal = torch.randn(2, 32, dim, requires_grad=True)
+    x_ckpt = x_normal.detach().clone().requires_grad_(True)
+
+    out_normal = run_without_checkpointing(blocks, x_normal)
+    loss_normal = out_normal.sum()
+    loss_normal.backward()
+    grad_normal = x_normal.grad.detach().clone()
+
+    out_ckpt = run_with_checkpointing(blocks, x_ckpt)
+    loss_ckpt = out_ckpt.sum()
+    loss_ckpt.backward()
+    grad_ckpt = x_ckpt.grad.detach().clone()
+
+    assert torch.allclose(out_normal, out_ckpt, atol=1e-5, rtol=1e-4), &quot;checkpoint 前后输出不一致&quot;
+    assert torch.allclose(grad_normal, grad_ckpt, atol=1e-5, rtol=1e-4), &quot;checkpoint 前后输入梯度不一致&quot;
+
+    x_segment = x_normal.detach().clone().requires_grad_(True)
+    out_segment = run_with_segment_checkpointing(blocks, x_segment, segment_size=2)
+    out_segment.sum().backward()
+    assert torch.allclose(out_normal, out_segment, atol=1e-5, rtol=1e-4), &quot;分段 checkpoint 前后输出不一致&quot;
+    assert torch.allclose(grad_normal, x_segment.grad, atol=1e-5, rtol=1e-4), &quot;分段 checkpoint 前后输入梯度不一致&quot;
+
+    x_one = x_normal.detach().clone().requires_grad_(True)
+    out_one = run_with_segment_checkpointing(blocks, x_one, segment_size=1)
+    assert torch.allclose(out_ckpt, out_one, atol=1e-5, rtol=1e-4), &quot;segment_size=1 应与逐层 checkpoint 一致&quot;
+    print(&quot;✅ CPU correctness 测试通过：逐层与分段 checkpoint 的输出和梯度保持一致。&quot;)
 
 
+def _run_gpu_memory_check():
+    # 清空显存
+    torch.cuda.empty_cache()
 
+    # 使用配置中的 toy workload，观察当前模型结构下的峰值显存。
+    dim = GPU_DIM
+    num_layers = GPU_NUM_LAYERS
+    blocks = nn.ModuleList([SimpleTransformerBlock(dim) for _ in range(num_layers)]).cuda()
+
+    # 按 GPU_BATCH_SIZE 和 GPU_SEQ_LEN 创建输入，实际数值以配置单元为准。
+    x_input = torch.randn(GPU_BATCH_SIZE, GPU_SEQ_LEN, dim, device='cuda', requires_grad=True)
+
+    print(&quot;1. 测试不开启 Checkpointing 的显存占用...&quot;)
+    torch.cuda.reset_peak_memory_stats()
+    out_normal = run_without_checkpointing(blocks, x_input)
+    out_normal.sum().backward()
+    mem_normal = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    print(f&quot;   Peak VRAM (Normal): {mem_normal:.2f} MB&quot;)
+
+    del out_normal
+    x_input.grad = None
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
+
+    print(&quot;\n2. 测试开启 Checkpointing 的显存占用...&quot;)
+    out_ckpt = run_with_checkpointing(blocks, x_input)
+    out_ckpt.sum().backward()
+    mem_ckpt = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    print(f&quot;   Peak VRAM (Checkpointing): {mem_ckpt:.2f} MB&quot;)
+
+    savings = (1 - mem_ckpt / mem_normal) * 100
+    print(f&quot;\n显存节省: {savings:.1f}%&quot;)
+
+    if mem_ckpt &lt;= mem_normal:
+        print(f&quot;✅ GPU 显存测试通过。显存节省 {savings:.1f}%&quot;)
+        if savings &lt; 5:
+            print(&quot; 注意：显存节省效果较小。这是因为：&quot;)
+            print(&quot;   - 模型层数较少（20层），激活值占总显存比例不高&quot;)
+            print(&quot;   - 在更深的模型或更长的序列中，节省效果可能更明显，但仍需实测&quot;)
+            print(&quot;   - 这里只能说明当前 toy workload 的结果；真实模型需要在固定 workload 下单独测量&quot;)
+        else:
+            print(&quot; 实际显存节省效果取决于模型深度、序列长度和 GPU 架构。&quot;)
+            print(&quot;   在更深的模型或更长的序列中，节省效果可能更明显；具体结果仍取决于 workload。&quot;)
+    else:
+        raise AssertionError(&quot;显存占用反而增加了，请检查实现是否正确。&quot;)
+
+
+def test_gradient_checkpointing():
+    try:
+        _run_cpu_correctness_check()
+
+        if RUN_REAL_GPU and torch.cuda.is_available():
+            _run_gpu_memory_check()
+        else:
+            print(&quot;⏭️ GPU 峰值实验默认关闭；如需观察 toy workload，请设置 RUN_REAL_GPU=True，并先确认显存预算。&quot;)
+
+    except torch.cuda.OutOfMemoryError as e:
+        print(f&quot;⏭️ GPU toy workload 发生 OOM，未形成显存结论：{e}&quot;)
+        return
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        elif isinstance(e, AssertionError):
+            print(f&quot;代码可能未完成，导致了断言失败: {e}&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了运行时错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+
+
+test_gradient_checkpointing()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="checkpoint-call-contract">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">唯一核心 TODO：在循环中更新 x = checkpoint(block, x, use_reentrant=False)</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先读调用契约：把每个 Block 的前向交给 checkpoint</h2>
 
@@ -1133,22 +1539,14 @@ result.sum().backward()</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="checkpoint-call-contract-0">
-                <span>先把 TODO 改写成普通等价式 x = block(x)，确认自己能指出函数、输入和返回值，再替换为 checkpoint 调用。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-call-contract-1">
-                <span>完成唯一核心 TODO，并逐项核对参数顺序：block 在前、x 在后、use_reentrant=False 是关键字参数。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-call-contract-2">
-                <span>若报“Tensor object is not callable”，检查是否误把 block(x) 的结果放在第一个参数；若输出链路不对，检查是否忘记给 x 重新赋值。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="checkpoint-memory-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">测试契约：正常前向与 checkpoint 前向都执行 backward，并比较 max_memory_allocated</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再读测试：结果要能 backward，收益看 CUDA 峰值</h2>
 
@@ -1252,15 +1650,7 @@ print(peak_mb)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="checkpoint-memory-test-0">
-                <span>在 GPU 环境运行可见测试，确认普通版本和 checkpoint 版本都能完成 backward，而不只是函数能返回张量。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-memory-test-1">
-                <span>若 mem_ckpt 反而更高，先确认两轮之间是否删除旧输出、清空 input.grad 并重置峰值统计，再检查 TODO 是否真的包裹了每个 block。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="checkpoint-memory-test-2">
-                <span>用一句话写出本节边界：checkpoint 优化的是训练激活显存，不等同于 activation offload，也不会减少参数或优化器状态本身。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1284,16 +1674,29 @@ print(peak_mb)</code></pre></div>
     const predictData = {"checkpoint-call-contract":{"answer":0,"revealNote":"checkpoint 的第一个参数是函数，后面才是函数输入；返回值必须重新保存到 x。"},"checkpoint-memory-test":{"answer":0,"revealNote":"Checkpoint 的时间开销和激活恢复主要发生在 backward；只跑 forward 看不到完整训练闭环。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "19";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-124b2c6a891f";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

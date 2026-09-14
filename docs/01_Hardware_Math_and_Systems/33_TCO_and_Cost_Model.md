@@ -1,6 +1,6 @@
 # 33. TCO and Cost Model | 算力评估与 TCO 模型
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `成本评估`, `TCO` | **目标人群：** 需要做 GPU 选型和预算判断的学习者
+**难度：** Medium | **环境：** CPU-first | **标签：** `系统工程`, `成本评估`, `TCO` | **目标人群：** 硬件约束学习者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页的重点不是报一个最低价格，而是把采购、能耗、运维、迁移和风险放进同一个判断框架里。
+---
+
+## 本节导读
+
+算力采购和部署决策，真正难的地方从来不是找到最低报价，而是把采购、能耗、运维、迁移、停机和替换风险放进同一张长期账本里看。只比较单卡价格，很容易把后续运行成本和系统切换代价完全漏掉。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的系统决策收口页，不是某条主学习路线的核心机制页，但会给后续硬件选型、部署和长期维护补一层总账判断。学完这里，后面再看 `67` 以及 `Part 04` 的系统优化页时，你会更容易把成本判断和硬件选型、编译适配、长期维护放回同一条决策链；如果这里没学明白，后面很容易只按采购价格或单次 benchmark 做决策，而忽略能耗、运维、迁移和停机风险这些会持续累积的长期成本。按专题归类，这一页更接近全教程的系统背景收口，也和 `编译与图优化专题`、`推理优化路线` 共享一部分部署判断视角。
 
 **关键词：** `TCO`, `cost`, `power`
+
+---
 ## 前置阅读
 
 **导语：** 这一页先把编译、选型和成本判断放到同一条判断链里，再看 TCO 为什么不能只看单卡报价。
@@ -28,7 +36,7 @@
 - [29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度](./29_CUDA_Stream_Advanced_Scheduling.md)
 - [30. Dynamic Shape Handling | 动态 Shape 处理](./30_Dynamic_Shape_Handling.md)
 - [31. GPU Virtualization and MIG | GPU 虚拟化与 MIG](./31_GPU_Virtualization_and_MIG.md)
-
+---
 ## Q1：TCO 为什么比单卡报价更重要？
 
 <details><summary>点击展开查看解析</summary>

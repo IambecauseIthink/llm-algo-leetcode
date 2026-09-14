@@ -35,14 +35,15 @@ flowchart TB
 > 导航说明：侧边栏和组级入口默认收起，先看总览，再点开具体组页。
 > 组页是知识包，不需要把整组一次性读完；先抓主线，再按需要查看同组章节页。
 > Part 1 不只是知识目录，也是 Part 2-5 的共同前置底座。
+> 说明：下表按“组页实际收录范围”统计；少数桥接页会在多个组里重复出现，用来服务不同阅读路径，不视为挂错。
 
 | 学习组 | 核心职责 | 当前内容映射 | 每组多少节 |
 |:---|:---|:---|:---|
 | [1A](./1A.md) | 建立数量级与资源账本 | [01](./01_Data_Types_and_Precision.ipynb)、[02](./02_LLM_Params_and_FLOPs.ipynb)、[21](./21_Quantization_Theory_and_INT4_INT8.ipynb)、[22](./22_MoE_Parameter_and_Compute.ipynb) | 4 |
-| [1B](./1B.md) | 识别单卡瓶颈与访存路径 | [03](./03_GPU_Architecture_and_Memory.ipynb)、[04](./04_Attention_Memory_Optimization.ipynb)、[23](./23_TensorCore_Deep_Dive.ipynb)、[24](./24_SRAM_Optimization_Techniques.ipynb)、[25](./25_Sparse_Computation_and_Sparse_Attention.ipynb) | 5 |
-| [1C](./1C.md) | 刻画多卡通信边界与切分代价 | [05](./05_Communication_Topologies.ipynb)、[06](./06_VRAM_Calculation_and_ZeRO.ipynb)、[26](./26_Parallel_Strategy_Decision_Framework.ipynb)、[27](./27_Communication_Scheduling_Optimization.ipynb)、[28](./28_Fault_Tolerance_and_Checkpointing.ipynb) | 5 |
-| [1D](./1D.md) | 掌握运行时调度与算子映射 | [07](./07_CPU_GPU_Heterogeneous_Scheduling.ipynb)、[08](./08_Programming_Models_CUDA_Triton.ipynb)、[29](./29_CUDA_Stream_Advanced_Scheduling.ipynb)、[30](./30_Dynamic_Shape_Handling.ipynb)、[31](./31_GPU_Virtualization_and_MIG.ipynb) | 5 |
-| [1E](./1E.md) | 建立编译优化与选型判断 | [09](./09_AI_Compilers_and_Graph_Optimization.ipynb)、[10](./10_Domestic_AI_Chips_Overview.ipynb)、[32](./32_TVM_MLIR_Deep_Practice.ipynb)、[33](./33_TCO_and_Cost_Model.ipynb) | 4 |
+| [1B](./1B.md) | 识别单卡瓶颈与访存路径 | [03](./03_GPU_Architecture_and_Memory.ipynb)、[04](./04_Attention_Memory_Optimization.ipynb)、[11](./11_KV_Cache_and_Memory_Growth.ipynb)、[12](./12_TensorCore_and_Mixed_Precision.ipynb)、[13](./13_Profiling_and_Bottleneck_Analysis.ipynb)、[14](./14_FlashAttention_Memory_Model.ipynb)、[23](./23_TensorCore_Deep_Dive.ipynb)、[24](./24_SRAM_Optimization_Techniques.ipynb)、[25](./25_Sparse_Computation_and_Sparse_Attention.ipynb) | 9 |
+| [1C](./1C.md) | 刻画多卡通信边界与切分代价 | [05](./05_Communication_Topologies.ipynb)、[06](./06_VRAM_Calculation_and_ZeRO.ipynb)、[20](./20_NCCL_and_AllReduce_Basics.ipynb)、[26](./26_Parallel_Strategy_Decision_Framework.ipynb)、[27](./27_Communication_Scheduling_Optimization.ipynb)、[28](./28_Fault_Tolerance_and_Checkpointing.ipynb) | 6 |
+| [1D](./1D.md) | 掌握运行时调度与算子映射 | [07](./07_CPU_GPU_Heterogeneous_Scheduling.ipynb)、[08](./08_Programming_Models_CUDA_Triton.ipynb)、[15](./15_CUDA_Execution_Model.ipynb)、[16](./16_Warp_Block_SharedMemory_Basics.ipynb)、[17](./17_CUDA_Stream_and_Asynchrony.ipynb)、[18](./18_Triton_Block_Model.ipynb)、[19](./19_Operator_Fusion_Introduction.ipynb)、[29](./29_CUDA_Stream_Advanced_Scheduling.ipynb)、[30](./30_Dynamic_Shape_Handling.ipynb)、[31](./31_GPU_Virtualization_and_MIG.ipynb) | 10 |
+| [1E](./1E.md) | 建立编译优化与选型判断 | [09](./09_AI_Compilers_and_Graph_Optimization.ipynb)、[10](./10_Domestic_AI_Chips_Overview.ipynb)、[19](./19_Operator_Fusion_Introduction.ipynb)、[32](./32_TVM_MLIR_Deep_Practice.ipynb)、[33](./33_TCO_and_Cost_Model.ipynb) | 5 |
 
 ## Learning Path | 学习路径
 

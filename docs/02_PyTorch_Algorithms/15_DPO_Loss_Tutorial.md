@@ -1,6 +1,6 @@
 # 15. DPO Loss Tutorial | 直接偏好优化损失教程
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `DPO`, `RLHF`, `对齐` | **目标人群：** 模型微调与工程部署
+**难度：** Hard | **环境：** CPU-first | **标签：** `后训练对齐`, `DPO`, `偏好优化` | **目标人群：** 训练机制学习者
 
 > 🚀 **云端运行环境**
 >
@@ -47,6 +47,23 @@ DPO 的切入点更直接：既然偏好数据本身已经告诉我们“哪个�
 > **DPO 的本质：**
 > 作者通过数学推导证明了：Reward Model 的奖励得分 $r(x,y)$ 可以隐式地由语言模型的概率 $P_	heta(y|x)$ 表达出来。因此，我们只需要**Actor 模型和 Reference 模型**，直接在一对一比较的样本上（Chosen vs Rejected）最大化对数似然差值。
 
+#### DPO 和 PPO 的差异
+
+DPO 不是把 PPO 换个名字，而是把偏好对齐的训练对象、训练信号和工程复杂度都压缩掉一层。
+
+| 维度 | PPO / RLHF | DPO |
+|:---|:---|:---|
+| 需要的模型 | Actor + Reference + Reward Model + Critic | 主要是 Policy + Reference |
+| 训练信号 | reward / advantage / rollout | chosen vs rejected 的偏好对比 |
+| 工程复杂度 | 高，链路长，状态多 | 低，loss 直接、实现更轻 |
+| 显存压力 | 大，多个模型和状态同时驻留 | 小很多，更适合工程落地 |
+| 适合场景 | 需要完整 RLHF 语义时 | 已有偏好数据，希望快速做对齐时 |
+
+#### `beta` 和数据构造
+
+- `beta` 控制 policy 相对 reference 偏移的力度；太小会学得慢，太大容易偏离参考分布。
+- chosen / rejected 不是任意两条回复，而是同一个 prompt 下的偏好对。
+- 所以 DPO 的关键不是“算一个 loss”，而是先把偏好数据配成正确的 pair，再把 pair 变成稳定的 logprob 差值。
 ### Step 2: DPO 损失代码框架
 需要四组对齐的数据：选中的 Logprobs ($y_w$) 和拒绝的 Logprobs ($y_l$)，分别来自当前策略模型（Policy）和冻结的参考模型（Reference）。计算它们之间的隐式奖励差，并将其送入 `-F.logsigmoid()` 以获得最终梯度损失。
 这一节的实现链路就是先算 chosen / rejected 的隐式奖励，再组合成 DPO logits，最后得到损失。
@@ -80,6 +97,50 @@ DPO 的切入点更直接：既然偏好数据本身已经告诉我们“哪个�
 ```python
 import torch
 import torch.nn.functional as F
+
+
+def dpo_loss(
+    policy_chosen_logps: torch.Tensor,
+    policy_rejected_logps: torch.Tensor,
+    reference_chosen_logps: torch.Tensor,
+    reference_rejected_logps: torch.Tensor,
+    beta: float = 0.1,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """
+    直接偏好优化 (DPO) 的损失函数实现
+
+    Args:
+        policy_chosen_logps: 当前模型在 chosen 样本上的对数概率和，形状 [batch_size]
+        policy_rejected_logps: 当前模型在 rejected 样本上的对数概率和，形状 [batch_size]
+        reference_chosen_logps: 参考模型在 chosen 样本上的对数概率和，形状 [batch_size]
+        reference_rejected_logps: 参考模型在 rejected 样本上的对数概率和，形状 [batch_size]
+        beta: 偏好系数 (温度超参)，控制偏离参考模型的程度
+
+    Returns:
+        losses: DPO 损失，形状 [batch_size]
+        chosen_rewards: 隐式的 chosen 奖励，形状 [batch_size]
+        rejected_rewards: 隐式的 rejected 奖励，形状 [batch_size]
+    """
+    if not (
+        policy_chosen_logps.shape == policy_rejected_logps.shape
+        == reference_chosen_logps.shape == reference_rejected_logps.shape
+    ):
+        raise ValueError("policy / reference 的 chosen-rejected logps 形状必须一致")
+    if beta <= 0:
+        raise ValueError("beta 必须是正数")
+
+    # chosen / rejected 各自相对 reference 的隐式奖励
+    pi_logratios_chosen = policy_chosen_logps - reference_chosen_logps
+    pi_logratios_rejected = policy_rejected_logps - reference_rejected_logps
+
+    chosen_rewards = beta * pi_logratios_chosen
+    rejected_rewards = beta * pi_logratios_rejected
+
+    # chosen 比 rejected 更好时，logits 应该更大，loss 才会更小
+    logits = chosen_rewards - rejected_rewards
+    losses = -F.logsigmoid(logits)
+
+    return losses, chosen_rewards, rejected_rewards
 ```
 
 

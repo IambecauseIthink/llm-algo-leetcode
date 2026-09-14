@@ -1,0 +1,34 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Activation Offload Trade-off</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Offload reduces GPU residency by moving cold activations out, then pays them back as transfer time later.</text>
+  <rect x="104" y="204" width="232" height="110" rx="20" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="160" y="244" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Activation Set</text>
+  <text x="130" y="278" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">some blocks are hot,</text>
+  <text x="130" y="300" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">some can wait off device</text>
+  <rect x="388" y="204" width="232" height="110" rx="20" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="446" y="244" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Offload</text>
+  <text x="416" y="278" fill="#92400E" font-size="16" font-family="Arial, sans-serif">move cold blocks to CPU</text>
+  <text x="416" y="300" fill="#92400E" font-size="16" font-family="Arial, sans-serif">or host-side memory</text>
+  <rect x="672" y="204" width="220" height="110" rx="20" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="730" y="244" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Save VRAM</text>
+  <text x="702" y="278" fill="#166534" font-size="16" font-family="Arial, sans-serif">fit larger batch, context,</text>
+  <text x="702" y="300" fill="#166534" font-size="16" font-family="Arial, sans-serif">or deeper activation set</text>
+  <rect x="944" y="204" width="202" height="110" rx="20" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="996" y="244" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Pay Back</text>
+  <text x="970" y="278" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">transfer latency during</text>
+  <text x="970" y="300" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">backward reuse</text>
+  <path d="M336 258H388" stroke="#374151" stroke-width="3"/>
+  <path d="M620 258H672" stroke="#374151" stroke-width="3"/>
+  <path d="M892 258H944" stroke="#374151" stroke-width="3"/>
+  <path d="M373 250L388 258L373 266" fill="#374151"/>
+  <path d="M657 250L672 258L657 266" fill="#374151"/>
+  <path d="M929 250L944 258L929 266" fill="#374151"/>
+  <rect x="104" y="382" width="1042" height="146" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="134" y="422" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">How it differs from checkpointing</text>
+  <text x="134" y="456" fill="#374151" font-size="18" font-family="Arial, sans-serif">Checkpointing throws activations away and recomputes them later. Offload keeps them, but changes their residency tier. One pays in extra compute, the other pays in transfer bandwidth and synchronization.</text>
+  <text x="134" y="488" fill="#374151" font-size="18" font-family="Arial, sans-serif">So the decision is not simply "does this save memory", but "is transfer time cheaper than recomputation time for this workload".</text>
+  <rect x="104" y="558" width="1042" height="68" rx="18" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+  <text x="134" y="590" fill="#075985" font-size="18" font-family="Arial, sans-serif">Page 42 should leave one trade-off picture: offload changes where activations live, and the real price is data movement rather than arithmetic.</text>
+</svg>

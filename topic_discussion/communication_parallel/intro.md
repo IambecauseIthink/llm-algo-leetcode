@@ -1,99 +1,53 @@
-# 通信与并行专题
+# 通信与并行（Communication and Parallelism）
 
-## 专题概览
-本专题用于沉淀 NCCL、AllReduce、ZeRO、Pipeline Parallelism 和 Tensor Parallelism 等多卡扩展方法，回答“怎么把模型扩到多卡并看懂通信代价”。
+> 专题类型：横切支撑　主服务目标：多卡切分与通信取舍
 
-## 职责边界
+## 专题定位与 Infra 层定位
 
-这个专题只负责多卡训练和推理中的并行策略、通信代价和调度边界，不负责单机推理优化本身，也不负责编译链路。
+本专题串起多卡并行主线：先看通信原语和拓扑，再看 DDP、FSDP、ZeRO、Pipeline、Tensor Parallel 和专家并行分别切了什么，最后把通信热点和 benchmark 收回并行选型结论。它横跨五层：Infra-L1 决定互联拓扑和带宽，Infra-L2 提供 NCCL 等通信原语，Infra-L3 决定切分与运行时，Infra-L4 延伸到分布式 Serving，Infra-L5 才负责集群资源调度、多机实验和服务治理。
 
-- `NCCL / AllReduce` 关注最基础的通信原语和同步代价。
-- `ZeRO` 关注参数、梯度和优化器状态的切分与显存分摊。
-- `Pipeline Parallelism` 关注 micro-batch 的流水线时序和气泡问题。
-- `Tensor Parallelism` 关注张量切分后的通信与计算平衡。
-- `Communication Profiling` 关注通信热点、等待时间和 overlap。
+这里重点关注切分层级与通信代价；并行结论必须同时解释计算、显存、通信和扩展效率的变化。若问题先表现为单机推理速度，应转到推理优化；若问题只剩单个通信 kernel 或算子实现，应转到算子优化；若涉及图变换、IR 或 backend 选择，再转到编译与图优化。
 
-## 对应来源
+![通信与并行：从状态切分到多卡收益](../../docs/public/topic_discussion/communication_parallel/communication_parallel_overview.svg)
 
-| 来源 | 适合纳入的内容 |
-|:---|:---|
-| `Part 1C` | 通信拓扑、显存共享、NCCL / AllReduce、并行策略判断 |
-| `Part 2.8` | ZeRO、Pipeline Parallelism、Tensor Parallelism 的主线实现 |
-| `Part 2.9` | 分布式并行基准项目和工程选型验证 |
-
-## 章节跳转
-
-| 章节 | 你会看到什么 | 跳转 |
-|:---|:---|:---|
-| `1C` | 多卡通信与显存共享的总入口，先看 Group Overview / Asset Overview / Learning Path | [1C 多卡通信与显存共享](../01_Hardware_Math_and_Systems/1C.md) |
-| `05` | 通信拓扑和显存共享关系，适合先看页面里的核心职责与判断链路 | [05 Communication Topologies](../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb) |
-| `06` | 显存开销与 ZeRO 收益估算，适合先看公式与对比结论 | [06 VRAM Calculation and ZeRO](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb) |
-| `20` | NCCL 和 AllReduce 基础原语，适合先看原语定义和通信语义 | [20 NCCL and AllReduce Basics](../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb) |
-| `2.8` | 分布式并行策略主线，适合先看 Group Overview / Asset Overview / Learning Path | [2.8 分布式并行策略](../02_PyTorch_Algorithms/2_8.md) |
-| `27` | ZeRO 的显存分摊与收益，适合看 Step 1-4 的收益与代价 | [27 ZeRO Optimizer Sim](../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.ipynb) |
-| `28` | Pipeline 的 micro-batch 时序，适合看 Step 1-4 的气泡和排布 | [28 Pipeline Parallelism MicroBatch](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.ipynb) |
-| `29` | Tensor Parallelism 的通信开销，适合看 Step 1-4 的切分与代价 | [29 Tensor Parallelism Sim](../02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb) |
-| `42` | NCCL 通信热点与等待时间，适合先看 Step 1-4 的观测流程 | [42 Communication Profiling with NCCL](../02_PyTorch_Algorithms/42_Communication_Profiling_with_NCCL.ipynb) |
-| `34` | 分布式并行基准项目，适合先看 Step 1-4 的实验设置和结果汇总 | [34 Distributed Parallel Benchmark](../02_PyTorch_Algorithms/34_Distributed_Parallel_Benchmark.ipynb) |
+并行路线先说明切分了什么，再检查通信、同步和拓扑代价，最后用多卡实验判断显存和吞吐是否真的改善。
 
 ## 推荐入口
 
-- 先看 `Part 1C`，把“为什么多卡一定会带来通信问题”先立住。
-- 再看 `2.8`，把 ZeRO、Pipeline 和 Tensor Parallelism 的策略边界串起来。
-- 如果想看通信代价如何被量化，再回到 `42` 和 `34`。
+推荐从 [Part 02 导学](../../02_PyTorch_Algorithms/intro.md) 的分布式与并行路线进入，再用 [Part 02 资产表](../../02_PyTorch_Algorithms/2_10.md) 定位 79、80、81 等项目节。专题正文可以作为并行策略的决策索引，不要求学习者一开始就拥有多卡机器。
 
-## 入口摘要
+## 前置阅读
 
-- 第一入口：`Part 1C` + `05 -> 20 -> 06 -> 13`，先把通信原语、显存分摊和观测基础立住。
-- 第二入口：`2.8 -> 27 -> 28 -> 29`，把 ZeRO、Pipeline 和 Tensor Parallelism 的主线补齐。
-- 验证入口：`42 -> 34 -> 31`，把通信热点、分布式基准和最终收益连起来。
+建议先掌握 [Part 01 · 05 Communication Topologies](../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb) 与 [Part 01 · 20 NCCL and AllReduce Basics](../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb) 提供的 GPU、通信与系统基础，再补读并行相关内容。进入真实 benchmark 前，应理解 world size、rank、集体通信、数据/张量/流水线/专家并行，以及显存、通信和计算之间的基本权衡。
 
-## 正文页
+## 主学习线
 
-- [通信与并行正文](./casebook.md)：按“通信原语 / 并行切分 / 调度代价 / 基准验证”展开专题正文，适合做更细的选型和对照。
-- [通信与并行深入阅读](./walkthrough.md)：按完整并行选型过程展开，适合想看连续推演的人。
+`Task1-6` 是学习路线，指向 `Part 01 / Part 02` 的具体小节；最后一列的 `01-06` 是专题正文页，只负责解释和串联。
 
-## 相关专题
+![通信与并行学习路线：从切分目标到多卡决策](../../docs/public/topic_discussion/communication_parallel/communication_parallel_task_route.svg)
 
-- [Profiling 专题](../profiling/intro.md)：当你需要先确认瓶颈在通信、算子还是调度时先看这里。
-- [显存优化与性能调优专题](../memory_performance_tuning/intro.md)：当并行策略和显存分摊、cache 压力一起出现时先看这里。
-- [编译与图优化专题](../compiler_graph_optimization/intro.md)：当通信策略和执行模型、backend 约束一起分析时先看这里。
+上图先说明任务之间的推进关系；下表再展开每个任务对应的小节与正文入口。
 
-## Part 1 / Part 2 入口顺序
+| Task | 学习内容 | 主学习线 | 专题正文 |
+|:---|:---|:---|:---|
+| Task1 | 通信拓扑与 AllReduce 前置 | [Part 01 · 05 通信拓扑](../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb) → [Part 01 · 20 NCCL 与 AllReduce 基础](../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb) | [01 为什么需要并行与通信](./01_why_parallel_and_communication.md) |
+| Task2 | DDP 到 FSDP / ZeRO 的状态分摊 | [Part 01 · 06 显存计算与 ZeRO](../../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb) → [Part 02 · 27 ZeRO 优化器模拟](../../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.ipynb) | [02 数据并行与同步](./02_data_parallel_and_synchronization.md) |
+| Task3 | Pipeline Parallel 的时序与气泡 | [Part 02 · 28 流水线并行与微批次](../../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.ipynb) | [04 流水线并行与张量并行](./04_pipeline_and_tensor_parallel.md) |
+| Task4 | Tensor Parallel 的切分与代价 | [Part 02 · 29 张量并行模拟](../../02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb) | [04 流水线并行与张量并行](./04_pipeline_and_tensor_parallel.md) |
+| Task5 | 通信 profiling、热点定位与策略选型 | [Part 02 · 46 通信性能分析与 NCCL](../../02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL.ipynb) → [Part 02 · 47 MoE 专家并行](../../02_PyTorch_Algorithms/47_MoE_Expert_Parallel.ipynb) → [Part 02 · 48 通信热点与缓解](../../02_PyTorch_Algorithms/48_Communication_Hotspots_and_Mitigation.ipynb) → [Part 02 · 49 并行策略选型](../../02_PyTorch_Algorithms/49_Parallelism_Strategy_Selection.ipynb) → [Part 02 · 79 分布式并行基准测试](../../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb) | [05 专家并行与通信热点](./05_expert_parallel_and_communication_hotspots.md) |
+| Task6 | 并行项目收口 | [Part 02 · 80 MoE 专家并行基准测试](../../02_PyTorch_Algorithms/80_MoE_Expert_Parallel_Benchmark.ipynb) → [Part 02 · 81 分布式推理项目](../../02_PyTorch_Algorithms/81_Distributed_Inference_Project.ipynb) | [06 基准测试与并行决策](./06_benchmark_and_parallel_decision.md) |
 
-### Part 1 入口
+## 正文与跳转
 
-- 先从 `Part 1C` 进入，把通信拓扑、显存共享和多卡边界先立住。
-- 再看 `05 -> 20 -> 06 -> 13`，把通信原语、显存收益和 profiling 观测串起来。
+先按上面的 `Task1-6` 走 notebook 主线；遇到“为什么多卡不一定更快”“不同切分到底换来了什么”时，再回来看对应的专题正文。想看汇总版就进 [通信与并行正文](./casebook.md)，想按连续故事线走一遍就进 [通信与并行深入阅读](./walkthrough.md)。
 
-### Part 2 入口
+如果问题已经跨到别的专题：
+[性能分析](../profiling/intro.md) 负责证据链与等待热点，[显存优化](../memory_performance_tuning/intro.md) 负责显存分摊 trade-off，[监督微调与训练工程](../fine_tuning_training/intro.md) 负责训练工程闭环，[算子优化](../operator_optimization/intro.md) 负责具体 kernel 与算子实现，[编译与图优化](../compiler_graph_optimization/intro.md) 负责执行模型与 backend 约束。
 
-- 先看 `2.8 -> 27 -> 28 -> 29`，把 ZeRO、Pipeline 和 Tensor Parallelism 的主线补齐。
-- 再看 `42 -> 34`，把通信 profiling 和分布式 benchmark 连接起来。
-- 如果需要回看收益证明，再回到 `31` 看最终验证口径。
+## 项目结论
 
-## 典型阅读链
+推荐的实践闭环是 `79 分布式并行 benchmark -> 80 MoE 专家并行 benchmark -> 81 分布式推理项目`。最终结论应明确并行策略、GPU 数量、通信占比、吞吐/延迟、显存和扩展效率；单卡模拟只能帮助理解机制，不能替代真实多卡结论。
 
-- 如果你想先理解多卡通信原理，先读 `05 -> 20`，把通信拓扑和 AllReduce 先讲通。
-- 如果你想先理解显存是怎么被并行策略切开的，先读 `06 -> 27`，把 ZeRO 的收益和代价讲清楚。
-- 如果你想先理解流水线为什么会有气泡，先读 `28 -> 34`，把 micro-batch、排布和基准结果串起来。
-- 如果你想先理解张量切分的通信压力，先读 `29 -> 42`，把切分方式和通信热点串起来。
-- 如果你想先看并行策略值不值，先读 `42 -> 34 -> 31`，把通信 profile、分布式 benchmark 和最终收益连起来。
+## 环境与验证
 
-## 读法建议
-
-- 如果你关心“通信原语怎么工作”，先看 `05 -> 20`。
-- 如果你关心“多卡训练怎么切”，先看 `06 -> 27 -> 28 -> 29`。
-- 如果你关心“怎么证明并行策略值不值”，先看 `42 -> 34`。
-- 如果你想先补前置桥，可以先看 `Part 1C` 的 Group Overview，再回到 `05 / 06 / 20`。
-- 如果你关心“如何把并行策略和性能验证连起来”，先看 `06 -> 27 -> 28 -> 29 -> 42 -> 34`。
-
-## 建设方式
-
-- 先补通信原语和策略边界，再补正文页里的案例、对照和误区。
-- 优先从 Part 1C / Part 2.8 里抽取高频、稳定、可复用的结论。
-- 让正文页专注回答“通信代价来自哪里、并行策略换来了什么”。
-- 后续新增内容时，优先沿着 `通信原语 -> 并行切分 -> profiling -> benchmark` 这条线放到正文页。
-
-## 专题状态
-当前为专题入口页，后续将逐步补充跨 Part 索引、并行策略案例和通信分析。
+并行原理和通信模拟可先用 CPU 或单 GPU；真实 DDP、NCCL、多卡训练和分布式推理需要匹配的多 GPU、驱动、CUDA、通信库和网络拓扑。建议固定 world size、batch、输入长度和 warmup，并分别保存单卡基线、多卡结果、日志与环境信息。

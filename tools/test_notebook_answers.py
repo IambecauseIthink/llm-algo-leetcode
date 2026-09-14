@@ -69,6 +69,8 @@ def extract_answer_code(notebook_path):
 
         # 在答案区且是代码cell
         if in_answer_section and cell.cell_type == 'code':
+            if cell.metadata.get('skip_answer_test', False) or 'skip_answer_test' in cell.metadata.get('tags', []):
+                continue
             # 提取所有代码（包括测试函数）
             answer_code.append(cell.source)
 

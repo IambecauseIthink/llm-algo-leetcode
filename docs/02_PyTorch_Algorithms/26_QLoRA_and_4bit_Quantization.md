@@ -1,6 +1,6 @@
 # 26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化
 
-**难度：** Hard | **环境：** GPU required | **标签：** `微调`, `QLoRA`, `量化` | **目标人群：** 模型微调与工程部署
+**难度：** Hard | **环境：** CPU-first | **标签：** `量化压缩`, `QLoRA`, `4-bit` | **目标人群：** 量化压缩学习者
 
 > 🚀 **云端运行环境**
 >
@@ -18,27 +18,21 @@
 
 这一节不复现工业库里的高性能内核，而是用纯 PyTorch 搭一个教学模拟：低精度基础权重负责存储和前向，高精度 LoRA 旁路负责训练更新。学完后，你应该能看清“底座压缩、旁路训练、计算前还原”这条主线，再理解真实 QLoRA 为什么能把大模型微调的显存门槛大幅压低。
 
+本节的 4-bit 重点是 QLoRA/NF4 训练适配：底座冻结、LoRA 参数更新。训练显存与质量决策可以延伸到 `65`，部署侧的 GPTQ / AWQ artifact、backend 和 kernel 则在 `67` 中继续验证。
+
 **关键词：** `QLoRA`, `NF4`, `LoRA`
 
 ---
 
 ## 前置阅读
 
-**导语：** 这一节同时承接量化和微调两条线：先理解为什么要压缩底座权重，再理解为什么只训练 LoRA 旁路。
+**导语：** 进入本节前，先理解权重压缩如何降低底座成本，再理解 LoRA 旁路如何承担可训练参数。
 - [10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)
 - [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
 - [25. Quantization W8A16 | W8A16 量化](./25_Quantization_W8A16.md)
 - [P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8](../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.md)
 - [P1: 06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.md)
 - [P1: 12. TensorCore and Mixed Precision | Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
-
-## 相关阅读
-
-**导语：** 学完 QLoRA 后，可以继续沿项目线看 LoRA 微调如何交付，也可以沿部署线看量化后如何真正用于推理。
-- [30. LoRA Fine-Tuning Project | LoRA 微调项目](./30_LoRA_Fine_Tuning_Project.md)
-- [35. Quantized Inference and Deployment | 量化推理与部署](./35_Quantized_Inference_and_Deployment.md)
-- [P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
-- [P1: 24. SRAM Optimization Techniques | SRAM 优化技术](../01_Hardware_Math_and_Systems/24_SRAM_Optimization_Techniques.md)
 
 ---
 
@@ -59,6 +53,8 @@
 > 4. 反向传播时，梯度主要更新 LoRA 旁路参数；底座权重保持冻结，只负责提供稳定的量化存储。**一句话总结** QLoRA 的核心就是：底座权重用 NF4 压缩显存，LoRA 旁路保持高精度以保证微调效果。两者分工明确，互不干扰。
 
 理解了 NF4 在 QLoRA 中的角色之后，下一步我们来看 NF4 的码点具体是怎么算出来的。
+
+![QLoRA 流程图](/02_PyTorch_Algorithms/26_qlora_flow.svg)
 
 ### Step 2: 4-bit NormalFloat (NF4) 原理
 NF4 的核心是一个预计算的 16 码点 lookup table。它基于标准正态分布的 CDF / 分位数函数（quantile function）构造，使码点在 0 附近更密集、在尾部更稀疏，因此比均匀 4-bit 更贴合神经网络权重的统计特性。
@@ -317,3 +313,13 @@ class QLoRALinearSim(nn.Module):
 - **梯度流向**：基础权重冻结，梯度只更新 LoRA 参数，避免量化误差累积
 - **训练效率**：虽然反量化增加计算开销，但显存节省允许更大的 batch size
 - **工业实践**：QLoRA 使 33B 模型可在单张 24GB 显卡上微调，65B 模型可在单张 48GB 显卡上微调
+## 相关阅读
+
+完成 QLoRA 的教学模拟后，可以沿着原论文、LoRA 项目和量化部署三条线继续阅读，观察训练适配与真实 backend 之间的衔接。
+
+- [QLoRA 原论文：Efficient Finetuning of Quantized Language Models](https://arxiv.org/abs/2305.14314)
+- [bitsandbytes 官方仓库](https://github.com/bitsandbytes-foundation/bitsandbytes)
+- [60. LoRA Fine-Tuning Project | LoRA 微调项目](./60_LoRA_Fine_Tuning_Project.md)
+- [67. Quantized Inference and Deployment | 量化推理与部署](./67_Quantized_Inference_and_Deployment.md)
+- [P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
+- [P1: 24. SRAM Optimization Techniques | SRAM 优化技术](../01_Hardware_Math_and_Systems/24_SRAM_Optimization_Techniques.md)

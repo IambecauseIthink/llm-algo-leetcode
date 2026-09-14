@@ -1,0 +1,37 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Quantized Inference: What Exactly Are You Compressing?</text>
+  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Weight, activation and KV cache quantization solve different deployment problems and should not be mixed together.</text>
+
+  <rect x="88" y="186" width="330" height="368" rx="24" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="118" y="226" fill="#5B21B6" font-size="24" font-family="Arial, sans-serif" font-weight="700">Weights</text>
+  <text x="118" y="262" fill="#5B21B6" font-size="18" font-family="Arial, sans-serif">Goal: reduce resident model size</text>
+  <rect x="118" y="306" width="270" height="176" rx="18" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+  <text x="144" y="344" fill="#5B21B6" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
+  <text x="144" y="378" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• W8A16</text>
+  <text x="144" y="402" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• GPTQ</text>
+  <text x="144" y="426" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• AWQ</text>
+  <text x="144" y="462" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">Best when the model does not fit</text>
+
+  <rect x="474" y="186" width="330" height="368" rx="24" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="504" y="226" fill="#1E3A8A" font-size="24" font-family="Arial, sans-serif" font-weight="700">Activations</text>
+  <text x="504" y="262" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Goal: cut compute / bandwidth in the live path</text>
+  <rect x="504" y="306" width="270" height="176" rx="18" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+  <text x="530" y="344" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
+  <text x="530" y="378" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• FP8</text>
+  <text x="530" y="402" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• backend-native low precision kernels</text>
+  <text x="530" y="462" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Best when the stack supports it end-to-end</text>
+
+  <rect x="860" y="186" width="320" height="368" rx="24" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="890" y="226" fill="#166534" font-size="24" font-family="Arial, sans-serif" font-weight="700">KV Cache</text>
+  <text x="890" y="262" fill="#166534" font-size="18" font-family="Arial, sans-serif">Goal: extend context / concurrency budget</text>
+  <rect x="890" y="306" width="258" height="176" rx="18" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+  <text x="916" y="344" fill="#166534" font-size="18" font-family="Arial, sans-serif">Typical routes</text>
+  <text x="916" y="378" fill="#166534" font-size="16" font-family="Arial, sans-serif">• FP8 KV cache</text>
+  <text x="916" y="402" fill="#166534" font-size="16" font-family="Arial, sans-serif">• dedicated KV cache quantization</text>
+  <text x="916" y="462" fill="#166534" font-size="16" font-family="Arial, sans-serif">Best when long context and concurrency dominate</text>
+
+  <rect x="88" y="592" width="1092" height="48" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+  <text x="116" y="622" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Decision rule: first identify which object is the hard constraint. Quantization is not one action; it is three different deployment trades.</text>
+</svg>

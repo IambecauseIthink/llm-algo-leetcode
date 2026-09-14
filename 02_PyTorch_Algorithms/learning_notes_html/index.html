@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
   <title>PyTorch Algorithms 闯关地图</title>
   <style>
     :root {
@@ -17,6 +18,15 @@
       --soft-green: #e8f6ef;
       --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -157,8 +167,8 @@
         <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
-          <div class="stat"><strong>43</strong><span>Notebook 关卡</span></div>
-          <div class="stat"><strong>2–4</strong><span>每关学习模块</span></div>
+          <div class="stat"><strong>75</strong><span>正式课程</span></div>
+          <div class="stat"><strong>15</strong><span>官方预留入口</span></div>
         </div>
       </div>
       <div class="map-art" aria-label="学习流程">
@@ -171,6 +181,13 @@
       </div>
     </section>
 
+    <section class="card" style="padding:20px;margin:20px 0">
+      <h2>新版学习路线</h2><p>00–29 基础机制 → 30–52 方法扩展 → 60–86 项目验证。预留编号不计入通关总数。</p>
+      <p>同步官方 4fa6262 · 2026-09-14。旧进度按课程主题迁移；新版作业需要重新核对。</p>
+      <p><a href="../../topic_discussion/inference_optimization/intro.md">推理优化路线</a> · <a href="../../topic_discussion/memory_performance_tuning/intro.md">显存优化路线</a> · <a href="../intro.md">Part 02 官方总览</a></p>
+      <label>搜索课程 <input id="course-search" type="search" placeholder="编号、中文、英文或关键词" style="max-width:100%;padding:10px"></label>
+      <details><summary>查看 15 个预留章节（尚未形成正式课程）</summary><ul><li><a href="../53_Reserved_53.ipynb">Reserved 53 | 通用预留</a></li><li><a href="../54_Reserved_54.ipynb">Reserved 54 | 通用预留</a></li><li><a href="../55_Reserved_55.ipynb">Reserved 55 | 通用预留</a></li><li><a href="../56_Reserved_56.ipynb">Reserved 56 | 通用预留</a></li><li><a href="../57_Reserved_57.ipynb">Reserved 57 | 通用预留</a></li><li><a href="../58_Reserved_58.ipynb">Reserved 58 | 通用预留</a></li><li><a href="../59_Reserved_59.ipynb">Reserved 59 | 通用预留</a></li><li><a href="../72_Reserved_72.ipynb">Reserved 72 | 推理优化预留</a></li><li><a href="../77_Reserved_77.ipynb">Reserved 77 | 显存优化预留</a></li><li><a href="../78_Reserved_78.ipynb">Reserved 78 | 显存优化预留</a></li><li><a href="../82_Reserved_82.ipynb">Reserved 82 | 通信与并行预留</a></li><li><a href="../83_Reserved_83.ipynb">Reserved 83 | 通信与并行预留</a></li><li><a href="../87_Reserved_87.ipynb">Reserved 87 | 通用预留</a></li><li><a href="../88_Reserved_88.ipynb">Reserved 88 | 通用预留</a></li><li><a href="../89_Reserved_89.ipynb">Reserved 89 | 通用预留</a></li></ul></details>
+    </section>
     <section class="toolbar">
       <div class="filters" aria-label="关卡过滤器">
         <button class="active" data-filter="all">全部</button>
@@ -189,9 +206,9 @@
             <span class="badge">L00</span>
             <span class="status" data-status="00">待挑战</span>
           </div>
-          <h2>PyTorch Warmup</h2>
-          <p>把 Tensor 变形、Embedding 查表、Linear+ReLU 手写反传这三块基础打稳。</p>
-          <div class="chips"><span class="chip">Tensor</span><span class="chip">Embedding</span><span class="chip">Autograd</span></div>
+          <h2>PyTorch Warmup | PyTorch 热身</h2>
+          <p>进入 Part 02，你会把大模型中的基础模块写成可运行的 PyTorch 代码。这里先处理三类后续实现都会反复用到的动作：对齐张量维度、把 token id 查成 embedding，以及确认 loss 的梯度能够回到参数。</p>
+          <div class="chips"><span class="chip">基础实现</span><span class="chip">PyTorch</span><span class="chip">入门热身</span></div>
           <a class="start" href="notes/00_pytorch_warmup.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="01">
@@ -199,9 +216,9 @@
             <span class="badge">L01</span>
             <span class="status" data-status="01">待挑战</span>
           </div>
-          <h2>RMSNorm Tutorial</h2>
-          <p>理解 RMSNorm 为什么省掉均值中心化，也能稳定 Transformer hidden states。</p>
-          <div class="chips"><span class="chip">Norm</span><span class="chip">LLM</span><span class="chip">Scale</span></div>
+          <h2>RMSNorm Tutorial | RMSNorm 教程</h2>
+          <p>Transformer 层数一深，中间激活的尺度就会不断变化。如果不做归一化，后面的矩阵乘法和激活函数很容易面对不稳定的输入；但标准 LayerNorm 又要同时计算均值和方差，在大模型里会带来额外开销。</p>
+          <div class="chips"><span class="chip">基础实现</span><span class="chip">归一化</span><span class="chip">RMSNorm</span></div>
           <a class="start" href="notes/01_rmsnorm_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="02">
@@ -209,9 +226,9 @@
             <span class="badge">L02</span>
             <span class="status" data-status="02">待挑战</span>
           </div>
-          <h2>SwiGLU Activation</h2>
-          <p>把 FFN 中的门控激活拆开看：一支给内容，一支决定通过多少。</p>
-          <div class="chips"><span class="chip">FFN</span><span class="chip">Activation</span><span class="chip">Gate</span></div>
+          <h2>SwiGLU Activation | SwiGLU 激活</h2>
+          <p>Transformer 的 MLP 不只是把向量升维、过激活函数、再降维这么简单。大模型需要在每个 token 的特征里学会“哪些信息该放大，哪些信息该压住”，普通 ReLU/GELU 的单路激活很难显式表达这种选择过程。</p>
+          <div class="chips"><span class="chip">基础实现</span><span class="chip">激活函数</span><span class="chip">SwiGLU</span></div>
           <a class="start" href="notes/02_swiglu_activation.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="03">
@@ -219,9 +236,9 @@
             <span class="badge">L03</span>
             <span class="status" data-status="03">待挑战</span>
           </div>
-          <h2>RoPE Tutorial</h2>
-          <p>用二维旋转理解 RoPE 如何把位置信息注入 Q/K，并天然表达相对位置。</p>
-          <div class="chips"><span class="chip">Position</span><span class="chip">Attention</span><span class="chip">Rotation</span></div>
+          <h2>RoPE Tutorial | 旋转位置编码教程</h2>
+          <p>Attention 本身只看 token 之间的相似度，并不知道谁在前、谁在后。没有位置编码，模型看到的更像一袋 token；但如果位置处理得太死，模型又很难泛化到更长的上下文。</p>
+          <div class="chips"><span class="chip">基础实现</span><span class="chip">位置编码</span><span class="chip">RoPE</span></div>
           <a class="start" href="notes/03_rope_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="04">
@@ -229,9 +246,9 @@
             <span class="badge">L04</span>
             <span class="status" data-status="04">待挑战</span>
           </div>
-          <h2>Attention MHA GQA</h2>
-          <p>从 shape 和 KV cache 成本理解 MHA、MQA、GQA 的差异。</p>
-          <div class="chips"><span class="chip">Attention</span><span class="chip">MHA</span><span class="chip">GQA</span></div>
+          <h2>Attention MHA GQA | 多头注意力</h2>
+          <p>生成式模型每次预测新 token，都要回看前面的上下文。序列越长，Attention 要读取和维护的历史信息越多；如果每一步都重复计算过去的 Key / Value，推理会非常浪费，而把它们全部缓存下来又会带来显存和带宽压力。</p>
+          <div class="chips"><span class="chip">基础实现</span><span class="chip">Attention</span><span class="chip">MHA/GQA</span></div>
           <a class="start" href="notes/04_attention_mha_gqa.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="05">
@@ -239,9 +256,9 @@
             <span class="badge">L05</span>
             <span class="status" data-status="05">待挑战</span>
           </div>
-          <h2>LLaMA3 Block Tutorial</h2>
-          <p>把 RMSNorm、Attention、SwiGLU FFN 和残差连接组装成现代 decoder block。</p>
-          <div class="chips"><span class="chip">Decoder Block</span><span class="chip">Residual</span><span class="chip">RMSNorm</span></div>
+          <h2>LLaMA3 Block Tutorial | LLaMA3 Block 教程</h2>
+          <p>前面的 RMSNorm、SwiGLU、RoPE 和 GQA 如果单独看，只是几个分散的组件；真正进入模型结构时，它们必须按固定顺序接成一个 Decoder Layer。这里最容易出错的不是单个公式，而是归一化位置、残差连接、Attention 分支和 MLP 分支之间的组织关系。</p>
+          <div class="chips"><span class="chip">模型结构</span><span class="chip">Transformer</span><span class="chip">LLaMA Block</span></div>
           <a class="start" href="notes/05_llama3_block_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="06">
@@ -249,9 +266,9 @@
             <span class="badge">L06</span>
             <span class="status" data-status="06">待挑战</span>
           </div>
-          <h2>MoE Router</h2>
-          <p>理解专家模型如何为每个 token 选择少数专家，而不是激活整个 FFN。</p>
-          <div class="chips"><span class="chip">MoE</span><span class="chip">Router</span><span class="chip">Top-k</span></div>
+          <h2>MoE Router | MoE 路由器</h2>
+          <p>普通 Transformer Block 里的 MLP 是稠密计算：每个 token 都要经过同一组参数。模型越大，计算量也越大；但很多时候，一个 token 并不需要动用全部专家能力，只需要被送到最合适的少数分支。</p>
+          <div class="chips"><span class="chip">模型结构</span><span class="chip">MoE</span><span class="chip">Router</span></div>
           <a class="start" href="notes/06_moe_router.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="07">
@@ -259,9 +276,9 @@
             <span class="badge">L07</span>
             <span class="status" data-status="07">待挑战</span>
           </div>
-          <h2>MoE Load Balancing Loss</h2>
-          <p>对照路由器“想分给谁”的 P_i 与实际“分给谁”的 f_i，用辅助损失阻止路由崩塌。</p>
-          <div class="chips"><span class="chip">MoE</span><span class="chip">Load Balancing</span><span class="chip">Auxiliary Loss</span></div>
+          <h2>MoE Load Balancing Loss | MoE 负载均衡损失</h2>
+          <p>上一节的 Router 已经能把 token 分给 Top-K 专家，但训练过程中它可能很快学会“偏科”：大量 token 被送到少数几个专家，其他专家长期拿不到样本。这样 MoE 表面上有很多参数，实际却退化成少数专家过载、其余专家闲置。</p>
+          <div class="chips"><span class="chip">模型结构</span><span class="chip">MoE</span><span class="chip">负载均衡</span></div>
           <a class="start" href="notes/07_moe_load_balancing_loss.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="08">
@@ -269,9 +286,9 @@
             <span class="badge">L08</span>
             <span class="status" data-status="08">待挑战</span>
           </div>
-          <h2>Architecture Tricks</h2>
-          <p>梳理现代 LLM 结构中的常用技巧：norm、激活、位置编码、残差与初始化。</p>
-          <div class="chips"><span class="chip">LLM</span><span class="chip">Tricks</span><span class="chip">Stability</span></div>
+          <h2>Architecture Tricks | 架构技巧</h2>
+          <p>搭完 LLaMA 风格的 Decoder Layer 以后，你会发现不同开源模型的主干很像，但并不完全一样。很多差异不是重新设计整套架构，而是在参数共享、归一化缩放或初始化方式上做小改动；这些小改动会影响参数量、梯度流向和训练早期稳定性。</p>
+          <div class="chips"><span class="chip">模型结构</span><span class="chip">架构技巧</span><span class="chip">Transformer</span></div>
           <a class="start" href="notes/08_architecture_tricks.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="09">
@@ -279,9 +296,9 @@
             <span class="badge">L09</span>
             <span class="status" data-status="09">待挑战</span>
           </div>
-          <h2>SFT Training Loop</h2>
-          <p>把数据 batch、forward、loss、backward、optimizer.step 串成监督微调循环。</p>
-          <div class="chips"><span class="chip">SFT</span><span class="chip">Loss</span><span class="chip">Optimizer</span></div>
+          <h2>SFT Training Loop | 监督微调训练循环</h2>
+          <p>把模型结构写出来以后，下一步就是让它按监督数据学习回答。Fine-tuning 是继续训练预训练模型以适应下游任务的总称，SFT（监督微调）是其中使用 prompt-response 标注数据的一种训练方式。SFT 最容易出错的地方并不在 optimizer，而在数据和 loss 的对齐：模型输入通常是 [prompt + response]，真正应该学习的是 response，而不是让模型去复述 prompt。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">SFT</span><span class="chip">训练循环</span></div>
           <a class="start" href="notes/09_sft_training_loop.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="10">
@@ -289,9 +306,9 @@
             <span class="badge">L10</span>
             <span class="status" data-status="10">待挑战</span>
           </div>
-          <h2>LoRA Tutorial</h2>
-          <p>用低秩矩阵增量训练大模型，让微调参数量从全量变成小而可控。</p>
-          <div class="chips"><span class="chip">LoRA</span><span class="chip">PEFT</span><span class="chip">Low-rank</span></div>
+          <h2>LoRA Tutorial | LoRA 教程</h2>
+          <p>大模型微调最直接的做法是更新全部参数，但这会把显存压力迅速放大：除了模型权重，还要保存梯度和优化器状态。很多场景里，我们真正需要的不是重写整个模型，而是在已有能力上做小幅适配。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">LoRA</span><span class="chip">PEFT</span></div>
           <a class="start" href="notes/10_lora_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="11">
@@ -299,9 +316,9 @@
             <span class="badge">L11</span>
             <span class="status" data-status="11">待挑战</span>
           </div>
-          <h2>LR Schedulers WSD Cosine</h2>
-          <p>理解 warmup、stable、decay 与 cosine 曲线如何影响训练节奏。</p>
-          <div class="chips"><span class="chip">Learning Rate</span><span class="chip">Scheduler</span><span class="chip">Warmup</span></div>
+          <h2>LR Schedulers WSD Cosine | WSD 余弦学习率调度器</h2>
+          <p>训练不是只选一个固定学习率然后一路跑到底。刚开始参数和优化器状态都不稳定，学习率太大容易把 loss 冲飞；中期如果过早衰减，模型又会失去继续吸收数据的能力；到了末期，还需要把更新幅度收下来帮助收敛。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">学习率调度</span><span class="chip">WSD/Cosine</span></div>
           <a class="start" href="notes/11_lr_schedulers_wsd_cosine.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="12">
@@ -309,9 +326,9 @@
             <span class="badge">L12</span>
             <span class="status" data-status="12">待挑战</span>
           </div>
-          <h2>Gradient Accumulation</h2>
-          <p>把一个大 batch 拆成多个 micro-batch 累积梯度，用更多计算步骤换更低峰值显存。</p>
-          <div class="chips"><span class="chip">Gradient Accumulation</span><span class="chip">Micro-batch</span><span class="chip">Memory</span></div>
+          <h2>Gradient Accumulation | 梯度累积</h2>
+          <p>训练规模、更新节奏和显存预算往往需要同时考虑：扩大训练规模可能改善统计稳定性，却也会提高单次计算的资源压力。本节帮助你建立这三者之间的判断口径，理解如何在资源受限时保持可比较的训练目标。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">梯度累积</span><span class="chip">显存优化</span></div>
           <a class="start" href="notes/12_gradient_accumulation.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="13">
@@ -319,9 +336,9 @@
             <span class="badge">L13</span>
             <span class="status" data-status="13">待挑战</span>
           </div>
-          <h2>End-to-End Fine-Tuning Experiment</h2>
-          <p>把样本构造、next-token loss、梯度累积和参数更新串成一个最小但完整的微调闭环。</p>
-          <div class="chips"><span class="chip">SFT</span><span class="chip">Training Loop</span><span class="chip">Loss Mask</span></div>
+          <h2>End-to-End Fine-Tuning Experiment | 端到端微调实验</h2>
+          <p>前面的小节已经分别讲过模型封装、优化器、损失函数和梯度累积，但真实微调不是把这些概念单独跑通就结束。只要数据构造、label 对齐、loss 计算或参数更新里有一个环节接错，训练就会表现成 loss 不降、shape 对不上，或者看似运行但模型没有真正学习。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">SFT</span><span class="chip">训练闭环</span></div>
           <a class="start" href="notes/13_end_to_end_fine_tuning_experiment.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="14">
@@ -329,9 +346,9 @@
             <span class="badge">L14</span>
             <span class="status" data-status="14">待挑战</span>
           </div>
-          <h2>RLHF PPO Memory</h2>
-          <p>从新旧策略概率比率出发，实现带 clip 护栏的 PPO actor loss。</p>
-          <div class="chips"><span class="chip">RLHF</span><span class="chip">PPO</span><span class="chip">Clipped Objective</span></div>
+          <h2>RLHF PPO Memory | RLHF 与 PPO 显存占用与流转</h2>
+          <p>完成 SFT 以后，模型已经能模仿数据里的回答，但还没有真正学会“哪个回答更符合人类偏好”。RLHF/PPO 要解决的就是这个问题：让模型根据奖励信号继续调整生成策略；代价是训练链路一下变重，Actor、Reference、Reward Model 和 Critic 会同时进入显存账本。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">RLHF</span><span class="chip">PPO</span></div>
           <a class="start" href="notes/14_rlhf_ppo_memory.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="15">
@@ -339,9 +356,9 @@
             <span class="badge">L15</span>
             <span class="status" data-status="15">待挑战</span>
           </div>
-          <h2>DPO Loss Tutorial</h2>
-          <p>用 chosen/rejected 偏好对和 reference policy，直接构造偏好优化损失。</p>
-          <div class="chips"><span class="chip">DPO</span><span class="chip">Preference</span><span class="chip">Alignment</span></div>
+          <h2>DPO Loss Tutorial | 直接偏好优化损失教程</h2>
+          <p>RLHF 能把模型往人类偏好方向拉，但 PPO 训练链路很重：要维护策略模型、参考模型、奖励模型和价值模型，还要处理采样、打分和策略更新的稳定性问题。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">DPO</span><span class="chip">偏好优化</span></div>
           <a class="start" href="notes/15_dpo_loss_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="16">
@@ -349,9 +366,9 @@
             <span class="badge">L16</span>
             <span class="status" data-status="16">待挑战</span>
           </div>
-          <h2>GRPO Loss Tutorial</h2>
-          <p>在组内标准化奖励得到相对优势，再用 clipped surrogate 更新策略。</p>
-          <div class="chips"><span class="chip">GRPO</span><span class="chip">Group Advantage</span><span class="chip">Alignment</span></div>
+          <h2>GRPO Loss Tutorial | 群体相对策略优化损失教程</h2>
+          <p>在偏好优化里，模型常常会针对同一个 prompt 生成多个候选答案。此时我们不只关心某个答案的绝对奖励，更关心它在同一组候选里相对好还是相对差。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">GRPO</span><span class="chip">奖励优化</span></div>
           <a class="start" href="notes/16_grpo_loss_tutorial.html">进入关卡</a>
         </article>
         <article class="level" data-category="architecture" data-id="17">
@@ -359,9 +376,9 @@
             <span class="badge">L17</span>
             <span class="status" data-status="17">待挑战</span>
           </div>
-          <h2>Autograd Basics</h2>
-          <p>沿 O=softmax(QKᵀ)V 的计算图逆向推导 dV、dP、dS、dQ 与 dK。</p>
-          <div class="chips"><span class="chip">Autograd</span><span class="chip">Attention Backward</span><span class="chip">Chain Rule</span></div>
+          <h2>Attention Backward and Custom Autograd | Attention 反向传播与自定义 Autograd</h2>
+          <p>Attention 的前向计算把 $Q$、$K$、$V$ 组合成输出；反向传播则沿着相反的依赖关系，把输出梯度传回这三个输入。本节从这条梯度链出发，说明中间状态为什么会影响反向计算的显存占用，并把它与后续的分块计算联系起来。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">Autograd</span><span class="chip">反向传播</span></div>
           <a class="start" href="notes/17_autograd_basics.html">进入关卡</a>
         </article>
         <article class="level" data-category="foundation" data-id="18">
@@ -369,9 +386,9 @@
             <span class="badge">L18</span>
             <span class="status" data-status="18">待挑战</span>
           </div>
-          <h2>Activation and Loss Backward</h2>
-          <p>从 ReLU 门控和交叉熵梯度入手，把常用激活与损失的反向传播写成可验证代码。</p>
-          <div class="chips"><span class="chip">ReLU Backward</span><span class="chip">Cross Entropy</span><span class="chip">Gradient Check</span></div>
+          <h2>Activation and Loss Backward | 激活与损失反向</h2>
+          <p>训练中的梯度信号既要由目标产生，也要沿模型结构传递。本节帮助你建立观察反向训练信号的共同框架，理解局部环节如何影响整体更新，并为后续的显存与训练性能分析准备统一的语言。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">激活值</span><span class="chip">反向传播</span></div>
           <a class="start" href="notes/18_activation_and_loss_backward.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="19">
@@ -379,9 +396,9 @@
             <span class="badge">L19</span>
             <span class="status" data-status="19">待挑战</span>
           </div>
-          <h2>Activation Checkpointing and Activation Offload</h2>
-          <p>用反向重计算和激活卸载理解训练中的计算、显存与传输三方权衡。</p>
-          <div class="chips"><span class="chip">Checkpointing</span><span class="chip">Offload</span><span class="chip">Memory</span></div>
+          <h2>Activation Checkpointing | 激活检查点</h2>
+          <p>训练大模型时，参数只是显存账本的一部分；随着训练规模和上下文长度变化，计算过程中产生的中间状态也会形成资源压力。本节围绕这类训练状态建立观察口径，帮助你把显存占用、计算时间和传输代价放在同一个问题中理解。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">激活值</span><span class="chip">Checkpointing</span></div>
           <a class="start" href="notes/19_activation_checkpointing_and_activation_offload.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="20">
@@ -389,9 +406,9 @@
             <span class="badge">L20</span>
             <span class="status" data-status="20">待挑战</span>
           </div>
-          <h2>FlashAttention Sim</h2>
-          <p>用分块 QKV 计算和在线 softmax，理解 FlashAttention 如何降低 HBM 读写。</p>
-          <div class="chips"><span class="chip">FlashAttention</span><span class="chip">Online Softmax</span><span class="chip">Tiling</span></div>
+          <h2>FlashAttention Sim | FlashAttention 模拟</h2>
+          <p>本节关注 Attention 计算中的中间状态、存储访问和资源代价，帮助你建立“结果保持一致时，计算过程可以如何组织”的观察口径。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">Attention</span><span class="chip">FlashAttention</span></div>
           <a class="start" href="notes/20_flashattention_sim.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="21">
@@ -399,9 +416,9 @@
             <span class="badge">L21</span>
             <span class="status" data-status="21">待挑战</span>
           </div>
-          <h2>Decoding Strategies</h2>
-          <p>比较温度缩放、Top-K 和 Top-P 如何改变候选集合与生成多样性。</p>
-          <div class="chips"><span class="chip">Temperature</span><span class="chip">Top-K</span><span class="chip">Top-P</span></div>
+          <h2>Decoding Strategies | 解码策略</h2>
+          <p>模型生成下一个 token 时，会先为整张词表打分，再从候选中选择一个结果。永远选择最高分比较稳定，但可能缺少变化；完全随机又难以控制。解码策略要解决的，就是如何在确定性和多样性之间建立可调节的选择规则。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">解码</span><span class="chip">Sampling</span></div>
           <a class="start" href="notes/21_decoding_strategies.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="22">
@@ -409,9 +426,9 @@
             <span class="badge">L22</span>
             <span class="status" data-status="22">待挑战</span>
           </div>
-          <h2>vLLM PagedAttention</h2>
-          <p>把 KV Cache 切成物理块并用 block table 映射，减少服务场景中的内存碎片。</p>
-          <div class="chips"><span class="chip">PagedAttention</span><span class="chip">KV Cache</span><span class="chip">Block Table</span></div>
+          <h2>vLLM PagedAttention | vLLM 分页注意力</h2>
+          <p>在线推理服务里，请求不会整齐地一起开始、一起结束：有的 prompt 很短，有的上下文很长，有的很快生成完，有的还在继续 decode。如果仍然按最大长度给每个请求预留整块 KV Cache，显存会被大量浪费，GPU 也会因为静态 batch 里的空洞而等待。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">KV Cache</span><span class="chip">PagedAttention</span></div>
           <a class="start" href="notes/22_vllm_pagedattention.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="23">
@@ -419,9 +436,9 @@
             <span class="badge">L23</span>
             <span class="status" data-status="23">待挑战</span>
           </div>
-          <h2>Speculative Decoding</h2>
-          <p>让小模型提出多个候选，再由目标模型并行验证，在保持目标分布的前提下加速生成。</p>
-          <div class="chips"><span class="chip">Draft Model</span><span class="chip">Verification</span><span class="chip">Acceptance</span></div>
+          <h2>Speculative Decoding | 投机解码</h2>
+          <p>自回归生成的时间压力，常常来自目标模型必须一个 token 一个 token 地推进。前面先用 KV Cache 建立了单步生成的状态视角，本节进一步观察另一种思路：让草稿模型先提出多个候选，再由目标模型集中验证。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">解码</span><span class="chip">Speculative Decoding</span></div>
           <a class="start" href="notes/23_speculative_decoding.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="24">
@@ -429,9 +446,9 @@
             <span class="badge">L24</span>
             <span class="status" data-status="24">待挑战</span>
           </div>
-          <h2>SGLang RadixAttention</h2>
-          <p>用基数树匹配共享 prompt 前缀，复用已经计算过的 KV Cache。</p>
-          <div class="chips"><span class="chip">RadixAttention</span><span class="chip">Prefix Cache</span><span class="chip">KV Reuse</span></div>
+          <h2>SGLang RadixAttention | SGLang 基数注意力</h2>
+          <p>真实推理服务里，请求往往不是彼此独立的：多轮对话会反复带上历史上下文，Agent 和工具调用也会共享很长的 system prompt。问题在于，如果每个请求都重新计算这些公共前缀，KV Cache 会被重复占用，首 token 延迟也会被拖高。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">KV Cache</span><span class="chip">RadixAttention</span></div>
           <a class="start" href="notes/24_sglang_radixattention.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="25">
@@ -439,9 +456,9 @@
             <span class="badge">L25</span>
             <span class="status" data-status="25">待挑战</span>
           </div>
-          <h2>Quantization W8A16</h2>
-          <p>把浮点权重量化到 INT8，再反量化参与 W8A16 线性计算。</p>
-          <div class="chips"><span class="chip">Quantization</span><span class="chip">W8A16</span><span class="chip">Absmax</span></div>
+          <h2>Quantization W8A16 | W8A16 量化</h2>
+          <p>模型变大以后，推理时最先遇到的问题往往不是“代码能不能跑”，而是权重太大、显存占用高、每一步都要从显存里读很多数据。前面的推理内容已经把这条压力线铺开了，本节开始进入量化：先不改完整推理框架，只尝试把最稳定的一部分——权重——压小。</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">W8A16</span><span class="chip">Linear</span></div>
           <a class="start" href="notes/25_quantization_w8a16.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="26">
@@ -449,9 +466,9 @@
             <span class="badge">L26</span>
             <span class="status" data-status="26">待挑战</span>
           </div>
-          <h2>QLoRA and 4bit Quantization</h2>
-          <p>冻结低精度基座权重，只训练高精度 LoRA 旁路，模拟 QLoRA 的低显存微调。</p>
-          <div class="chips"><span class="chip">QLoRA</span><span class="chip">NF4</span><span class="chip">PEFT</span></div>
+          <h2>QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化</h2>
+          <p>第 25 节已经说明：只压权重，就能明显降低显存和读取压力。但微调大模型时，问题会更尖锐：底座模型很大，训练又需要额外保存梯度和优化器状态，单靠 8-bit 还不够省。QLoRA 继续往前走一步：把底座尽量压到 4-bit，同时把学习能力留给一条很小的可训练旁路。</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">QLoRA</span><span class="chip">4-bit</span></div>
           <a class="start" href="notes/26_qlora_and_4bit_quantization.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="27">
@@ -459,9 +476,9 @@
             <span class="badge">L27</span>
             <span class="status" data-status="27">待挑战</span>
           </div>
-          <h2>ZeRO Optimizer Sim</h2>
-          <p>模拟把优化器状态分片到不同设备，理解 ZeRO-1 到 ZeRO-3 的逐级切分。</p>
-          <div class="chips"><span class="chip">ZeRO</span><span class="chip">Optimizer State</span><span class="chip">Sharding</span></div>
+          <h2>ZeRO Optimizer Sim | ZeRO 优化器模拟</h2>
+          <p>数据并行能把 batch 分到多张卡上计算，但它有一个明显浪费：每张卡都保存完整参数、完整梯度和完整优化器状态。模型一大，真正压垮显存的往往不是前向本身，而是这些训练状态在每张卡上的重复存储。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">ZeRO</span><span class="chip">参数切分</span></div>
           <a class="start" href="notes/27_zero_optimizer_sim.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="28">
@@ -469,9 +486,9 @@
             <span class="badge">L28</span>
             <span class="status" data-status="28">待挑战</span>
           </div>
-          <h2>Pipeline Parallelism MicroBatch</h2>
-          <p>构造流水线时间轴并计算空泡比例，理解 micro-batch 如何提升 stage 利用率。</p>
-          <div class="chips"><span class="chip">Pipeline Parallelism</span><span class="chip">Micro-batch</span><span class="chip">Bubble</span></div>
+          <h2>Pipeline Parallelism MicroBatch | Pipeline 并行微批次</h2>
+          <p>当单张 GPU 放不下完整模型时，一个直接想法是按层把模型切到多张卡上。但层切分之后，如果还是让一个完整 batch 从第一段一路跑到最后一段，很多 GPU 会在等待上游或下游，形成流水线空泡。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">Pipeline Parallelism</span><span class="chip">MicroBatch</span></div>
           <a class="start" href="notes/28_pipeline_parallelism_microbatch.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="29">
@@ -479,9 +496,9 @@
             <span class="badge">L29</span>
             <span class="status" data-status="29">待挑战</span>
           </div>
-          <h2>Tensor Parallelism Sim</h2>
-          <p>分别模拟 Column/Row Parallel Linear，理解切分维度与通信方式的配对。</p>
-          <div class="chips"><span class="chip">Tensor Parallelism</span><span class="chip">All-Gather</span><span class="chip">All-Reduce</span></div>
+          <h2>Tensor Parallelism Sim | Tensor 并行模拟</h2>
+          <p>ZeRO 主要切训练状态，Pipeline 主要切模型层；但很多大模型里的单个 Linear 本身就很大，即使按层切完，某一层的矩阵乘法仍可能成为显存和计算瓶颈。这时需要把一个权重矩阵沿维度拆到多张卡上共同计算。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">Tensor Parallelism</span><span class="chip">通信</span></div>
           <a class="start" href="notes/29_tensor_parallelism_sim.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="30">
@@ -489,140 +506,480 @@
             <span class="badge">L30</span>
             <span class="status" data-status="30">待挑战</span>
           </div>
-          <h2>LoRA Fine-Tuning Project</h2>
-          <p>把 LoRA 放进可交付微调流程，用训练效果、参数量、显存和速度共同验证收益。</p>
-          <div class="chips"><span class="chip">LoRA</span><span class="chip">Fine-tuning</span><span class="chip">Experiment</span></div>
-          <a class="start" href="notes/30_lora_fine_tuning_project.html">进入关卡</a>
+          <h2>Long Context Fine-Tuning | 长上下文微调</h2>
+          <p>长上下文微调最容易犯的错，不是“上下文不够长”，而是还没把数据长度、显存预算和评测口径说清楚，就直接把 seq_len 拉大。结果通常是训练更慢、显存更高、收益却不稳定。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">Long Context</span><span class="chip">数据组织</span></div>
+          <a class="start" href="notes/30_long_context_fine_tuning.html">进入关卡</a>
         </article>
-        <article class="level" data-category="inference" data-id="31">
+        <article class="level" data-category="training" data-id="31">
           <div class="level-head">
             <span class="badge">L31</span>
             <span class="status" data-status="31">待挑战</span>
           </div>
-          <h2>Inference Performance Comparison</h2>
-          <p>建立可重复的推理基准，对比不同实现的延迟、吞吐与数值一致性。</p>
-          <div class="chips"><span class="chip">Benchmark</span><span class="chip">Latency</span><span class="chip">Throughput</span></div>
-          <a class="start" href="notes/31_inference_performance_comparison.html">进入关卡</a>
+          <h2>LoRA Variants Theory | LoRA 变体原理</h2>
+          <p>LoRA 变体看起来很多，但真正要比较的东西并不复杂：它们到底在改什么，代价是什么，换来了什么收益。10 先回答 LoRA 本体怎么工作，26 再说明量化底座和 LoRA 旁路怎样结合，而 31 进一步回答另一个更贴近训练设计的问题：当你已经决定走 adapter 路线后，不同 LoRA 变体该怎么放到同一套比较口径里。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">LoRA</span><span class="chip">低秩适配</span></div>
+          <a class="start" href="notes/31_lora_variants_theory.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="32">
           <div class="level-head">
             <span class="badge">L32</span>
             <span class="status" data-status="32">待挑战</span>
           </div>
-          <h2>Training Performance Analysis</h2>
-          <p>把训练 step 拆成数据、前向、反向和优化器阶段，定位真正的性能与显存瓶颈。</p>
-          <div class="chips"><span class="chip">Profiling</span><span class="chip">Training</span><span class="chip">Memory</span></div>
-          <a class="start" href="notes/32_training_performance_analysis.html">进入关卡</a>
+          <h2>Data Engineering for SFT | SFT 数据工程</h2>
+          <p>SFT 训练经常不是输在优化器或学习率，而是输在数据没有被稳定组织成训练样本。字段缺失、空回答、模板不统一、超长样本混进来，这些问题都会直接污染 loss 和评测。09 先回答最小训练循环怎么跑，30 再把上下文长度拉长，而 32 往更上游退一步，先回答“在开始训练之前，数据本身是否已经整理到足够可靠”。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">SFT</span><span class="chip">数据清洗</span></div>
+          <a class="start" href="notes/32_data_engineering_for_sft.html">进入关卡</a>
         </article>
         <article class="level" data-category="training" data-id="33">
           <div class="level-head">
             <span class="badge">L33</span>
             <span class="status" data-status="33">待挑战</span>
           </div>
-          <h2>Profiling-Driven End-to-End Optimization</h2>
-          <p>把性能优化做成可复现闭环：固定 baseline、定位瓶颈、只改一个变量、复测并形成报告。</p>
-          <div class="chips"><span class="chip">Profiling</span><span class="chip">Optimization</span><span class="chip">Benchmark</span></div>
-          <a class="start" href="notes/33_profiling_driven_end_to_end_optimization.html">进入关卡</a>
+          <h2>Fine-Tuning Readiness | 微调 Readiness</h2>
+          <p>33 关注微调实验开始前最容易被忽略的 readiness 判断：训练计划是否写清楚了，数据规模和预算是否匹配，评测目标是否真的对应当前训练范围。32 先回答数据是不是已经整理到可训练状态，而 33 再进一步回答：即使数据可用，这次微调是否真的已经具备启动条件，还是还停留在“想法上可做、工程上还没准备好”的阶段。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">微调准备</span><span class="chip">可行性检查</span></div>
+          <a class="start" href="notes/33_fine_tuning_readiness.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="34">
+        <article class="level" data-category="inference" data-id="34">
           <div class="level-head">
             <span class="badge">L34</span>
             <span class="status" data-status="34">待挑战</span>
           </div>
-          <h2>Distributed Parallel Benchmark</h2>
-          <p>用统一 workload 比较分布式并行策略的显存、吞吐、延迟和通信代价，再输出选型结论。</p>
-          <div class="chips"><span class="chip">Distributed</span><span class="chip">Parallelism</span><span class="chip">Benchmark</span></div>
-          <a class="start" href="notes/34_distributed_parallel_benchmark.html">进入关卡</a>
+          <h2>Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充</h2>
+          <p>长 prompt 的推理压力不只来自 token 数量，还来自重复：很多请求会共享相同 system prompt、工具说明或多轮历史。如果每个请求都重新 prefill 一遍，共享前缀会被反复计算，KV cache 也难以形成稳定复用。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">KV Cache</span><span class="chip">Prefix Cache</span></div>
+          <a class="start" href="notes/34_prefix_caching_and_chunked_prefill.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="35">
           <div class="level-head">
             <span class="badge">L35</span>
             <span class="status" data-status="35">待挑战</span>
           </div>
-          <h2>Quantized Inference and Deployment</h2>
-          <p>从速度、吞吐、显存、误差和部署复杂度共同判断量化方案是否值得上线。</p>
-          <div class="chips"><span class="chip">Quantization</span><span class="chip">Deployment</span><span class="chip">Benchmark</span></div>
-          <a class="start" href="notes/35_quantized_inference_and_deployment.html">进入关卡</a>
+          <h2>Multi-Token Decoding | 多 Token 解码</h2>
+          <p>自回归生成最朴素的路径是“一次生成一个 token”：每轮推进一次状态，再进入下一轮解码。输出越长，解码轮数越多，单轮推进量就越值得关注。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">解码</span><span class="chip">Multi-Token Decoding</span></div>
+          <a class="start" href="notes/35_multi_token_decoding.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="36">
           <div class="level-head">
             <span class="badge">L36</span>
             <span class="status" data-status="36">待挑战</span>
           </div>
-          <h2>Prefix Caching and Chunked Prefill</h2>
-          <p>实现最小前缀缓存管理器：登记共享前缀、寻找最长命中并把未命中 prompt 切成 prefill 块。</p>
-          <div class="chips"><span class="chip">Prefix Cache</span><span class="chip">Chunked Prefill</span><span class="chip">KV Cache</span></div>
-          <a class="start" href="notes/36_prefix_caching_and_chunked_prefill.html">进入关卡</a>
+          <h2>Decode Scheduling | 解码调度</h2>
+          <p>前面几节已经看过投机解码和多 Token 生成。现在把视角从单个请求扩展到一组同时生成的请求：有的刚完成输入处理，有的正在逐 Token 生成，有的即将结束。调度器需要根据这些状态决定下一步推进谁。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">解码</span><span class="chip">Scheduling</span></div>
+          <a class="start" href="notes/36_decode_scheduling.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="37">
           <div class="level-head">
             <span class="badge">L37</span>
             <span class="status" data-status="37">待挑战</span>
           </div>
-          <h2>Multi-Token Decoding</h2>
-          <p>模拟一次提出多个 token、逐个验证、首次拒绝即停止并回退后缀的多 Token 解码闭环。</p>
-          <div class="chips"><span class="chip">Multi-Token Decoding</span><span class="chip">Verification</span><span class="chip">Rollback</span></div>
-          <a class="start" href="notes/37_multi_token_decoding.html">进入关卡</a>
+          <h2>KV Cache Scheduling | KV Cache 调度</h2>
+          <p>当多个请求共享前缀并持续生成时，KV Cache 会同时面临复用和容量压力。调度器需要记录每个缓存的大小、命中次数和最近访问时间，再根据这些状态决定缓存的保留顺序和驱逐顺序。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">KV Cache</span><span class="chip">调度</span></div>
+          <a class="start" href="notes/37_kv_cache_scheduling.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="38">
           <div class="level-head">
             <span class="badge">L38</span>
             <span class="status" data-status="38">待挑战</span>
           </div>
-          <h2>Decode Scheduling</h2>
-          <p>模拟请求入队、按优先级与 cache 命中排序、从 prefill 切到 decode 并持续运行到完成。</p>
-          <div class="chips"><span class="chip">Decode</span><span class="chip">Scheduling</span><span class="chip">Prefill</span></div>
-          <a class="start" href="notes/38_decode_scheduling.html">进入关卡</a>
+          <h2>Prefill-Decode Disaggregation | PD 分离</h2>
+          <p>PD 分离不是为了把系统切得更复杂，而是为了把 prefill 和 decode 两种完全不同的压力拆开。前者更偏算力和带宽，后者更偏 KV cache 驻留和调度。如果把两者混在一个资源池里，系统常常会既吃不满算力，又挤爆缓存预算。34、36、37 分别把 prefix、decode 和 KV cache 的局部优化讲清了，而 38 进一步回答：当这些局部压力已经明显分化时，是否应该把系统级资源池也拆开。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">推理服务</span><span class="chip">PD Disaggregation</span></div>
+          <a class="start" href="notes/38_prefill_decode_disaggregation.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="39">
           <div class="level-head">
             <span class="badge">L39</span>
             <span class="status" data-status="39">待挑战</span>
           </div>
-          <h2>GPTQ and AWQ Weight Quantization</h2>
-          <p>模拟校准、分组量化、AWQ 敏感通道保护、反量化和重构误差检查。</p>
-          <div class="chips"><span class="chip">GPTQ</span><span class="chip">AWQ</span><span class="chip">Weight Quantization</span></div>
-          <a class="start" href="notes/39_gptq_and_awq_weight_quantization.html">进入关卡</a>
+          <h2>Inference Fallback and Tiers | 推理分层与回退策略</h2>
+          <p>39 聚焦 serving 决策里最容易被经验化处理的问题：请求应该怎么分层，资源紧张时先退化什么，以及什么情况下这套规则已经复杂到值得单独展开。38 先回答系统要不要把 prefill 和 decode 拆池，而 39 则进一步回答：即使系统结构已经确定，面对不同请求层次和资源压力时，具体应该先牺牲什么、保留什么。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">推理服务</span><span class="chip">回退策略</span></div>
+          <a class="start" href="notes/39_inference_fallback_and_tiers.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="40">
           <div class="level-head">
             <span class="badge">L40</span>
             <span class="status" data-status="40">待挑战</span>
           </div>
-          <h2>FP8 and KV Cache Quantization</h2>
-          <p>用对称低精度量化模拟 FP8 张量，并按最后一维分组压缩与恢复 KV Cache。</p>
-          <div class="chips"><span class="chip">FP8</span><span class="chip">KV Cache</span><span class="chip">Quantization</span></div>
-          <a class="start" href="notes/40_fp8_and_kv_cache_quantization.html">进入关卡</a>
+          <h2>GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</h2>
+          <p>第 25 节和第 26 节已经把量化的两条主线铺开：W8A16 说明了 weight-only 量化如何减少权重读取压力，QLoRA 说明了 4-bit 权重如何服务于低成本微调。但部署阶段还会遇到一个更细的问题：同样是把权重压到低比特，哪些权重更敏感，哪些误差可以接受，校准数据又应该如何参与量化决策？</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">权重量化</span><span class="chip">GPTQ/AWQ</span></div>
+          <a class="start" href="notes/40_gptq_and_awq_weight_quantization.html">进入关卡</a>
         </article>
         <article class="level" data-category="inference" data-id="41">
           <div class="level-head">
             <span class="badge">L41</span>
             <span class="status" data-status="41">待挑战</span>
           </div>
-          <h2>KV Cache Scheduling</h2>
-          <p>根据复用次数、最近访问时间和缓存大小计算优先级，在容量约束下刷新队列并驱逐缓存。</p>
-          <div class="chips"><span class="chip">KV Cache</span><span class="chip">Scheduling</span><span class="chip">Eviction</span></div>
-          <a class="start" href="notes/41_kv_cache_scheduling.html">进入关卡</a>
+          <h2>FP8 and KV Cache Quantization | FP8 与 KV Cache 量化</h2>
+          <p>第 40 节关注的是权重量化：把模型参数压得更小，降低加载和访存成本。但推理阶段的压力不只来自权重。长上下文生成时，KV Cache 会随着序列长度和并发请求持续增长；同时，部分激活或中间张量也会带来带宽压力。只压权重，不能完全解决长上下文推理的显存和带宽瓶颈。</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">FP8</span><span class="chip">KV Cache</span></div>
+          <a class="start" href="notes/41_fp8_and_kv_cache_quantization.html">进入关卡</a>
         </article>
-        <article class="level" data-category="training" data-id="42">
+        <article class="level" data-category="architecture" data-id="42">
           <div class="level-head">
             <span class="badge">L42</span>
             <span class="status" data-status="42">待挑战</span>
           </div>
-          <h2>Communication Profiling with NCCL</h2>
-          <p>记录计算与通信时间线，判断 overlap，并按 NCCL 算子汇总次数、耗时和数据量。</p>
-          <div class="chips"><span class="chip">NCCL</span><span class="chip">Communication</span><span class="chip">Profiling</span></div>
-          <a class="start" href="notes/42_communication_profiling_with_nccl.html">进入关卡</a>
+          <h2>Activation Offload | 激活卸载</h2>
+          <p>当 activation 占用超过 GPU 预算时，除了 checkpointing，还可以把部分激活搬到 CPU 或 host memory，并在反向传播需要时取回。本节用预算模型计算保留量、搬运量和理论传输时间，先把搬运路线的成本结构拆开。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">激活值</span><span class="chip">Offload</span></div>
+          <a class="start" href="notes/42_activation_offload.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="43">
+          <div class="level-head">
+            <span class="badge">L43</span>
+            <span class="status" data-status="43">待挑战</span>
+          </div>
+          <h2>Unified Memory Management | 统一内存管理</h2>
+          <p>统一内存管理要解决的不是“内存很多层”这个事实，而是如何把参数、激活、KV cache 和临时工作集放进同一张预算表。如果每一块内存都各自为政，系统很快就会出现容量够但峰值不稳、带宽够但迁移太多的问题。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">统一内存</span><span class="chip">内存管理</span></div>
+          <a class="start" href="notes/43_unified_memory_management.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="44">
+          <div class="level-head">
+            <span class="badge">L44</span>
+            <span class="status" data-status="44">待挑战</span>
+          </div>
+          <h2>Auto Tuning Framework | 自动调优框架</h2>
+          <p>自动调优框架的核心不是“把参数全都扫一遍”，而是先明确目标、约束和搜索空间，再用统一评价函数筛掉不值得继续跑的配置。前面的 profiling 和显存分析页更多是在回答“瓶颈在哪里”，而 44 进一步回答“既然已经知道瓶颈了，接下来该怎样把配置搜索变成一个可复用的决策流程”。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">自动调优</span><span class="chip">基准测试</span></div>
+          <a class="start" href="notes/44_auto_tuning_framework.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="45">
+          <div class="level-head">
+            <span class="badge">L45</span>
+            <span class="status" data-status="45">待挑战</span>
+          </div>
+          <h2>Memory Cut Planning | 显存裁剪规划</h2>
+          <p>显存优化里最容易被忽略的一步，不是再找一个新技巧，而是先决定预算不够时到底该先裁什么。很多训练任务不是因为完全没有优化手段而跑不通，而是因为峰值来源没分清、预算余量没留够、裁剪顺序写得不够明确，最后在 checkpoint、offload、batch size 和模型规模之间来回试错。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">预算规划</span><span class="chip">裁剪策略</span></div>
+          <a class="start" href="notes/45_memory_cut_planning.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="46">
+          <div class="level-head">
+            <span class="badge">L46</span>
+            <span class="status" data-status="46">待挑战</span>
+          </div>
+          <h2>Communication Profiling with NCCL | NCCL 通信剖析</h2>
+          <p>前面的并行章节已经介绍过 ZeRO、Pipeline Parallelism 和 Tensor Parallelism：它们都能把大模型训练或推理拆到多张卡上。但一旦跨卡，性能瓶颈就不再只来自矩阵乘法，通信、同步等待和计算通信重叠都会影响整体吞吐。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">NCCL</span><span class="chip">性能剖析</span></div>
+          <a class="start" href="notes/46_communication_profiling_with_nccl.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="47">
+          <div class="level-head">
+            <span class="badge">L47</span>
+            <span class="status" data-status="47">待挑战</span>
+          </div>
+          <h2>MoE Expert Parallel | MoE 专家并行</h2>
+          <p>MoE 不是简单地“把参数变多”，它真正难的地方在于：token 被路由到不同专家后，专家往往分布在不同设备上，训练和推理都会引入额外通信、负载不均和 capacity 溢出。也就是说，MoE 一旦走到多设备阶段，它面对的就不再只是模型结构问题，而是一个典型的并行与通信问题。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">MoE</span><span class="chip">Expert Parallel</span><span class="chip">All-to-All</span></div>
+          <a class="start" href="notes/47_moe_expert_parallel.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="48">
+          <div class="level-head">
+            <span class="badge">L48</span>
+            <span class="status" data-status="48">待挑战</span>
+          </div>
+          <h2>Communication Hotspots and Mitigation | 通信热点与缓解策略</h2>
+          <p>48 聚焦多卡训练和推理里最容易停留在“感觉通信很慢”这一层的问题：到底是哪类 collective 最慢、等待时间主要卡在哪里、应该优先改哪种缓解动作。它把通信 profiling 进一步收敛成可执行的热点判断和缓解策略。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">热点分析</span><span class="chip">缓解策略</span></div>
+          <a class="start" href="notes/48_communication_hotspots_and_mitigation.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="49">
+          <div class="level-head">
+            <span class="badge">L49</span>
+            <span class="status" data-status="49">待挑战</span>
+          </div>
+          <h2>Parallelism Strategy Selection | 并行策略选型</h2>
+          <p>49 聚焦并行路线里最容易停留在“方案很多，但不知道先试哪个”的问题：当前主要瓶颈到底是什么、哪些并行组合值得优先验证、什么时候这条问题链已经值得拆成独立选型页。它把并行原理进一步收敛成可执行的选型顺序。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">并行策略</span><span class="chip">策略选择</span></div>
+          <a class="start" href="notes/49_parallelism_strategy_selection.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="50">
+          <div class="level-head">
+            <span class="badge">L50</span>
+            <span class="status" data-status="50">待挑战</span>
+          </div>
+          <h2>Preference Data and Evaluation | 偏好数据与对齐评测</h2>
+          <p>很多人一提到对齐，就立刻想到 DPO、GRPO 或 reward model，但真正决定后续实验是否可信的，往往不是优化公式本身，而是前面那层更朴素的基础设施：偏好数据到底干不干净、评测口径到底稳不稳定、不同实验之间是不是在用同一套判断标准。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">偏好数据</span><span class="chip">评测</span></div>
+          <a class="start" href="notes/50_preference_data_and_evaluation.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="51">
+          <div class="level-head">
+            <span class="badge">L51</span>
+            <span class="status" data-status="51">待挑战</span>
+          </div>
+          <h2>Online DPO | 在线 DPO</h2>
+          <p>在线 DPO 的关键，不是把 DPO 简单换成流式输入，而是把反馈流、更新频率、评测回路和稳定性边界一起管住。50 先回答“偏好数据和评测口径是否可信”，15 回答“离线 pairwise preference 如何优化”，而 51 再往前推进一步：当新反馈持续进来时，要不要立刻更新、怎么更新、更新后会不会把模型带偏。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">DPO</span><span class="chip">在线优化</span></div>
+          <a class="start" href="notes/51_online_dpo.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="52">
+          <div class="level-head">
+            <span class="badge">L52</span>
+            <span class="status" data-status="52">待挑战</span>
+          </div>
+          <h2>Alignment Conflicts and Thresholds | 对齐冲突与阈值</h2>
+          <p>对齐里最危险的误判之一，是看到单一指标上涨就默认模型“变好了”。偏好胜率、格式稳定性、安全性和任务完成度并不总是同向变化；如果这些指标开始互相冲突，而团队又没有事先定义最低阈值和优先级，在线更新或偏好优化就很容易把模型推向一个看似更强、实际上更不稳的方向。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">评测</span><span class="chip">阈值决策</span></div>
+          <a class="start" href="notes/52_alignment_conflicts_and_thresholds.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="60">
+          <div class="level-head">
+            <span class="badge">L60</span>
+            <span class="status" data-status="60">待挑战</span>
+          </div>
+          <h2>LoRA Fine-Tuning Project | LoRA 微调项目</h2>
+          <p>本节以指令跟随任务为例，比较全参数微调与 LoRA，观察 LoRA 是否能够减少训练成本并保持可接受的验证效果。实验同时检查可训练参数、训练速度、峰值显存和 adapter 产物。CPU 部分用于检查数据、loss mask、参数账本、指标汇总和决策逻辑；GPU 部分使用真实模型和数据，验证训练损失、验证损失、显存和速度。具体模型、数据集和运行条件见 Step 1。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">LoRA</span><span class="chip">项目评估</span></div>
+          <a class="start" href="notes/60_lora_fine_tuning_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="61">
+          <div class="level-head">
+            <span class="badge">L61</span>
+            <span class="status" data-status="61">待挑战</span>
+          </div>
+          <h2>Model Architecture Exploration | 架构验证</h2>
+          <p>本节承接第 05 节的 Decoder Layer 组合小项目，把“一个结构能否正确实现”推进为“候选结构是否值得继续投入”。先固定 baseline、训练预算和部署边界，再比较候选结构的参数量、吞吐、loss、显存和实现复杂度。最终输出一份结构差异表，并说明候选方案应接受、调整还是淘汰。</p>
+          <div class="chips"><span class="chip">模型结构</span><span class="chip">架构验证</span><span class="chip">项目评估</span></div>
+          <a class="start" href="notes/61_model_architecture_exploration.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="62">
+          <div class="level-head">
+            <span class="badge">L62</span>
+            <span class="status" data-status="62">待挑战</span>
+          </div>
+          <h2>Instruction Fine-Tuning Project | 指令微调项目</h2>
+          <p>本节承接第 13 节的端到端 SFT 小项目，把“训练结果是否可信”推进为“指令微调是否可以交付”。第 64 节先回答数据是否具备训练条件，本节进一步固定 instruction、input、response 的任务格式、评测集与资源预算，再结合 train / val 指标和生成样例检查结果是否满足要求。它与第 60 节的分工是：本节判断指令微调任务能否交付，第 60 节在任务口径稳定后比较全参数与 LoRA 的更新成本。本节的 Hard 主要来自数据、格式、任务质量、资源和产物等多类证据的整合与决策。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">指令微调</span><span class="chip">数据工程</span></div>
+          <a class="start" href="notes/62_instruction_fine_tuning_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="63">
+          <div class="level-head">
+            <span class="badge">L63</span>
+            <span class="status" data-status="63">待挑战</span>
+          </div>
+          <h2>LoRA Variants Benchmark | LoRA 变体对比项目</h2>
+          <p>本节要求你在统一训练预算下比较多种 LoRA 配置。固定数据、步数和评测口径后，分别记录 rank、alpha、dropout、target modules 对效果、显存、训练步时和可训练参数量的影响。最终输出一张 benchmark 排名与推荐表，并说明推荐结果依赖哪些约束。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">LoRA</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/63_lora_variants_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="64">
+          <div class="level-head">
+            <span class="badge">L64</span>
+            <span class="status" data-status="64">待挑战</span>
+          </div>
+          <h2>SFT Data Quality Project | SFT 数据质量项目</h2>
+          <p>本节先不训练模型，而是判断一批 SFT 数据是否具备进入正式训练的条件。它是第 62 节指令微调和第 60 节 LoRA 项目的数据准入环节：先检查空回答、字段缺失、模板一致性、重复样本和评测覆盖，再把发现的问题按风险和修复成本整理出来。最终给出数据可直接训练、需要回修，还是应当暂缓使用的结论。</p>
+          <div class="chips"><span class="chip">训练微调</span><span class="chip">数据质量</span><span class="chip">评测</span></div>
+          <a class="start" href="notes/64_sft_data_quality_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="65">
+          <div class="level-head">
+            <span class="badge">L65</span>
+            <span class="status" data-status="65">待挑战</span>
+          </div>
+          <h2>QLoRA Selection Project | QLoRA 选型项目</h2>
+          <p>本节要求你在显存预算和质量下限明确的情况下，比较全参数、LoRA 与 QLoRA 三种方案。统一记录显存、吞吐、训练稳定性和验证质量，确认量化收益是否足以覆盖额外误差与实现成本。最终输出当前预算下的方案选择及其适用边界。</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">QLoRA</span><span class="chip">选型</span></div>
+          <a class="start" href="notes/65_qlora_selection_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="66">
+          <div class="level-head">
+            <span class="badge">L66</span>
+            <span class="status" data-status="66">待挑战</span>
+          </div>
+          <h2>Inference Performance Comparison | 推理性能对比实验</h2>
+          <p>本节要求你比较一个推理 baseline 与候选优化方案在固定 workload 下的表现。先统一 batch、输入长度、生成长度和 warm-up 方式，再分别测量 TTFT、端到端延迟、吞吐和峰值显存。最终输出一张对比表，并说明该方案适合低延迟、高吞吐还是显存受限场景。
+本节的浮点 baseline 用于给其他推理项目提供共同参照，不实现 GPTQ/AWQ/GGUF 的格式转换、校准或加载。量化 artifact 与专用 backend 由 67 验证，再将已确认的结果带回本节做统一 workload 对照。
+层级定位： 本项目主落在 L4，关注单个模型实例如何执行请求；会调用 L2 的算子/后端能力和 L3 的运行时，但不负责 L5 的多模型发布、集群扩缩容或流量治理。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">基准对比</span><span class="chip">性能对比</span></div>
+          <a class="start" href="notes/66_inference_performance_comparison.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="67">
+          <div class="level-head">
+            <span class="badge">L67</span>
+            <span class="status" data-status="67">待挑战</span>
+          </div>
+          <h2>Quantized Inference and Deployment | 量化推理与部署</h2>
+          <p>本节要求你验证一个量化推理方案是否满足部署条件。先固定 workload、运行后端和误差阈值，再比较 baseline 与量化方案的延迟、吞吐、显存和输出误差，同时记录 kernel 支持与反量化开销。最终输出一份部署建议，并明确方案适用的模型和服务条件。
+层级定位： 本项目主落在 L4，关注量化模型如何被加载、执行和服务；低比特 kernel 属于 L2，模型版本、灰度发布和集群资源治理属于 L5，不在本项目内混为同一个结论。
+主责与复用边界： 本项目主责是量化 artifact 的加载、执行和部署判断；显存优化路线只复用权重 / KV Cache 的容量证据，推理性能路线复用 TTFT、TPOT 和吞吐口径，训练侧 QLoRA 不在本项目重复验证。</p>
+          <div class="chips"><span class="chip">量化压缩</span><span class="chip">量化推理</span><span class="chip">部署</span></div>
+          <a class="start" href="notes/67_quantized_inference_and_deployment.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="68">
+          <div class="level-head">
+            <span class="badge">L68</span>
+            <span class="status" data-status="68">待挑战</span>
+          </div>
+          <h2>Speculative Decoding Benchmark | 推测解码基准</h2>
+          <p>本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
+主责与复用边界： 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">Speculative Decoding</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/68_speculative_decoding_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="69">
+          <div class="level-head">
+            <span class="badge">L69</span>
+            <span class="status" data-status="69">待挑战</span>
+          </div>
+          <h2>Prefix Caching Benchmark | 前缀缓存基准</h2>
+          <p>本节要求你根据真实请求的复用模式，判断前缀缓存是否值得部署。先固定请求分布、chunk 策略和 baseline，再比较 hit rate、TTFT、prefill 节省量与缓存维护开销。默认用一个稳定 backend 完成 G0 / G1；SGLang 的 RadixAttention 作为可选扩展，不与基础对照混成同一个变量。
+主责与复用边界： 本项目主责是前缀复用、命中率和重复 prefill 收益；显存优化只复用 cache 容量与峰值显存观察，70 负责队列调度，71 负责 MLA 的 cache 表示，不能把命中率直接解释成通用显存优化。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">Prefix Cache</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/69_prefix_caching_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="70">
+          <div class="level-head">
+            <span class="badge">L70</span>
+            <span class="status" data-status="70">待挑战</span>
+          </div>
+          <h2>Serving Scheduler Benchmark | 推理服务调度基准</h2>
+          <p>本节要求你在固定请求流量和队列约束下比较两种 serving 调度策略。统一 workload 后，分别测量 TTFT、TPOT、吞吐、公平性和 worker 利用率，并观察不同请求之间的等待代价。最终输出调度方案的适用场景，而不是只按单一吞吐指标排序。
+层级定位： 本项目主落在 L4，研究服务实例内部的 batching、队列和请求调度；副本扩缩容、跨模型路由、灰度发布和 SLA 治理属于 L5，只有在扩展实验中才继续接入。
+主责与复用边界： 本项目主责是单实例内的请求调度和排队代价；66 复用其 TTFT、TPOT、吞吐口径，显存优化只观察调度造成的 batch / cache 容量变化，不在本项目内验证集群扩缩容或多模型治理。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">推理服务</span><span class="chip">调度</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/70_serving_scheduler_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="71">
+          <div class="level-head">
+            <span class="badge">L71</span>
+            <span class="status" data-status="71">待挑战</span>
+          </div>
+          <h2>MLA / KV Cache Architecture Benchmark | MLA 与 KV Cache 结构基准</h2>
+          <p>本节作为 Task 3 的架构扩展，研究 DeepSeek 风格的 Multi-head Latent Attention（MLA）如何改变 KV Cache 的表示方式。先用 CPU 根据模型配置计算 MHA、GQA 与 MLA 的缓存账本，再把同一 workload 交给支持 MLA 的 backend 做可选验证。</p>
+          <div class="chips"><span class="chip">推理优化</span><span class="chip">MLA</span><span class="chip">KV Cache</span></div>
+          <a class="start" href="notes/71_mla_kv_cache_architecture_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="73">
+          <div class="level-head">
+            <span class="badge">L73</span>
+            <span class="status" data-status="73">待挑战</span>
+          </div>
+          <h2>Training Performance Analysis | 训练性能分析</h2>
+          <p>前面的训练与显存小节已经说明了 activation、梯度和 optimizer state 为什么会影响训练成本。这一节把这些机制落到一次完整 training step 的测量上：先固定 workload 建立 baseline，再用统一字段记录时间、吞吐、显存和训练状态。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">训练剖析</span><span class="chip">性能分析</span></div>
+          <a class="start" href="notes/73_training_performance_analysis.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="74">
+          <div class="level-head">
+            <span class="badge">L74</span>
+            <span class="status" data-status="74">待挑战</span>
+          </div>
+          <h2>Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</h2>
+          <p>本节把 73 / 76 / 75 的结果与 profiler 证据接起来：先确认已有结论，再用 trace 解释时间和显存代价。主线只分析一个代表性 baseline 与 candidate；其他 workload 用于扩展，不替代主线证据。推理方向可选用 71 的 MLA workload 做同样的 trace 分析，但 74 不重新讲 MLA 机制。
+层级定位： 本项目是跨层 profiling 项目，覆盖 L1-L4 的执行证据；若采集资源调度、版本发布或服务可用性指标，才延伸到 L5。它负责定位和验证，不替代具体的算子优化、推理服务或平台治理项目。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">性能剖析</span><span class="chip">端到端优化</span></div>
+          <a class="start" href="notes/74_profiling_driven_end_to_end_optimization.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="75">
+          <div class="level-head">
+            <span class="badge">L75</span>
+            <span class="status" data-status="75">待挑战</span>
+          </div>
+          <h2>Memory Budget Compression Project | 显存预算压缩项目</h2>
+          <p>本节读取 73 / 76 的报告，把显存上限、吞吐下限和质量门槛转成可执行的预算决策。这里不加载模型、不训练、不调用 CUDA；CPU 只做候选筛选和阈值敏感性分析，因此不会产生新的性能或显存实测。
+实验分层： 73 / 76 负责采集数据，75 负责解释数据。若改变模型、workload 或硬件，应先重新获得上游报告，再运行本节。
+主责与复用边界： 本项目主责是预算阈值、候选筛选和敏感性分析；它不重新训练、不采集 GPU 性能，也不替代 76 的策略 benchmark 或 74 的 profiling 归因。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">预算规划</span><span class="chip">压缩策略</span></div>
+          <a class="start" href="notes/75_memory_budget_compression_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="76">
+          <div class="level-head">
+            <span class="badge">L76</span>
+            <span class="status" data-status="76">待挑战</span>
+          </div>
+          <h2>Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</h2>
+          <p>本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
+主责与复用边界： 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。</p>
+          <div class="chips"><span class="chip">显存优化</span><span class="chip">Checkpoint/Offload</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/76_activation_checkpoint_offload_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="79">
+          <div class="level-head">
+            <span class="badge">L79</span>
+            <span class="status" data-status="79">待挑战</span>
+          </div>
+          <h2>Distributed Parallel Benchmark | 分布式并行基准</h2>
+          <p>本节要求你在统一 workload 下比较 ZeRO、Pipeline Parallelism 和 Tensor Parallelism。先明确模型规模、显存上限与吞吐目标，再记录各方案的显存、吞吐、延迟、通信量和 pipeline bubble。最终输出并行策略选择，并说明结论受哪些模型和硬件条件限制。
+层级定位： 本项目主落在 L3 分布式运行时，依赖 L2 的 NCCL 等通信库和 L1 的互联拓扑；集群资源申请、作业排队和跨团队资源治理属于 L5，不由本 benchmark 单独证明。
+主责与复用边界： 本项目主责是参数、梯度和 optimizer state 的切分、通信与扩展效率；显存优化路线复用各 rank 的显存分摊，性能分析专题复用通信等待和 trace 口径，推理服务的副本路由不在本项目内验证。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">分布式</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/79_distributed_parallel_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="architecture" data-id="80">
+          <div class="level-head">
+            <span class="badge">L80</span>
+            <span class="status" data-status="80">待挑战</span>
+          </div>
+          <h2>MoE Expert Parallel Benchmark | MoE 专家并行基准</h2>
+          <p>本节要求你验证专家并行带来的吞吐收益是否足以覆盖通信和负载不均衡成本。固定 expert 数量、路由规则和 workload 后，比较 baseline 与 expert parallel 的吞吐、all-to-all 通信量、expert 负载分布和训练稳定性。最终给出是否采用该并行方案的 benchmark 结论。
+主责与复用边界： 本项目主责是 MoE token dispatch、expert 负载和 all-to-all 通信；显存优化只关注 expert 参数分摊与 activation / 通信缓冲的容量影响，推理优化只复用路由和吞吐观察，不在本项目内替代 71 的 MLA 或 70 的 serving 调度验证。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">MoE</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/80_moe_expert_parallel_benchmark.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="inference" data-id="81">
+          <div class="level-head">
+            <span class="badge">L81</span>
+            <span class="status" data-status="81">待挑战</span>
+          </div>
+          <h2>Distributed Inference Logic Validation | 分布式推理逻辑验证</h2>
+          <p>本节先用单卡逻辑模拟验证分布式 serving 是否值得迁移。你需要固定请求 workload、虚拟集群和路由规则，比较 baseline 与候选方案的 makespan、负载均衡、通信成本和总吞吐。最终输出迁移建议，并明确还需要哪些真实多卡数据才能进入部署验证。
+层级定位： 本项目连接 L4 与 L5：L4 关注分布式推理实例、切分和路由执行，L5 关注副本、资源编排和服务迁移治理；当前 Notebook 只完成逻辑验证，不能替代真实多卡通信和生产平台验证。</p>
+          <div class="chips"><span class="chip">并行通信</span><span class="chip">分布式推理</span><span class="chip">推理服务</span></div>
+          <a class="start" href="notes/81_distributed_inference_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="84">
+          <div class="level-head">
+            <span class="badge">L84</span>
+            <span class="status" data-status="84">待挑战</span>
+          </div>
+          <h2>DPO Preference Project | DPO 偏好优化项目</h2>
+          <p>本节围绕一个离线 DPO 方案是否值得继续训练展开。你需要先检查偏好数据和 chosen / rejected 样本的合法性，再比较 baseline 与 candidate 的 loss、margin 和有效样本比例。最后判断当前收益是否足以覆盖数据风险，并给出继续训练、调整数据或停止实验的建议。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">DPO</span><span class="chip">项目评估</span></div>
+          <a class="start" href="notes/84_dpo_preference_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="85">
+          <div class="level-head">
+            <span class="badge">L85</span>
+            <span class="status" data-status="85">待挑战</span>
+          </div>
+          <h2>GRPO Groupwise Alignment Project | GRPO 组内对齐项目</h2>
+          <p>本节要求你评估 GRPO 在分组奖励口径下是否值得继续训练。先固定分组方式、奖励计算和评测窗口，再比较 baseline 与 candidate 的平均奖励、组内波动、覆盖率和最差组表现。最终判断平均收益是否可靠，并给出保留、调参或停止训练的建议。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">GRPO</span><span class="chip">项目评估</span></div>
+          <a class="start" href="notes/85_grpo_groupwise_alignment_project.html">进入关卡</a>
+        </article>
+        <article class="level" data-category="training" data-id="86">
+          <div class="level-head">
+            <span class="badge">L86</span>
+            <span class="status" data-status="86">待挑战</span>
+          </div>
+          <h2>DPO Online Benchmark | DPO 在线基准</h2>
+          <p>本节要求你在固定反馈流、更新窗口和安全阈值后，评估在线 DPO 是否具备上线条件。比较 baseline 与 online candidate 的胜率变化、更新时延、训练稳定性和安全指标，并检查收益是否能在允许的更新成本内持续复现。最终输出上线、继续灰度或暂停更新的建议。</p>
+          <div class="chips"><span class="chip">后训练对齐</span><span class="chip">在线对齐</span><span class="chip">基准对比</span></div>
+          <a class="start" href="notes/86_dpo_online_benchmark.html">进入关卡</a>
         </article>
     </section>
   </main>
 
   <script>
-    const completeKey = "pytorch-levels-complete-v2";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
     if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
     }
+
     const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
     const cards = [...document.querySelectorAll(".level")];
     const doneCount = document.querySelector("#done-count");
@@ -638,14 +995,19 @@
       progressText.textContent = "本地记录：" + completed.size + " / " + cards.length + " 关已通关";
     }
 
-    document.querySelectorAll("[data-filter]").forEach((button) => {
+    let activeFilter = "all";
+    function filterCards() {
+      const query = document.querySelector("#course-search").value.trim().toLowerCase();
+      cards.forEach(card => {
+        card.style.display = (activeFilter === "all" || card.dataset.category === activeFilter)
+          && card.textContent.toLowerCase().includes(query) ? "" : "none";
+      });
+    }
+    document.querySelector("#course-search").addEventListener("input", filterCards);
+    document.querySelectorAll("[data-filter]").forEach(button => {
       button.addEventListener("click", () => {
-        document.querySelectorAll("[data-filter]").forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-        const filter = button.dataset.filter;
-        cards.forEach((card) => {
-          card.style.display = filter === "all" || card.dataset.category === filter ? "" : "none";
-        });
+        document.querySelectorAll("[data-filter]").forEach(item => item.classList.remove("active"));
+        button.classList.add("active"); activeFilter = button.dataset.filter; filterCards();
       });
     });
 

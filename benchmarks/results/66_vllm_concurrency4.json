@@ -1,0 +1,36 @@
+{
+  "label": "vllm-cu128-eager-concurrency4",
+  "base_url": "http://127.0.0.1:8000",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "workload": {
+    "source": "benchmarks/workloads/fixed.jsonl",
+    "requests": 5,
+    "max_tokens": 64,
+    "concurrency": 4,
+    "warmup": 1
+  },
+  "metrics": {
+    "successful_requests": 5,
+    "failed_requests": 0,
+    "request_throughput_per_s": 4.2972,
+    "output_token_throughput_per_s": 250.9544,
+    "ttft_ms": {
+      "mean": 157.662,
+      "p50": 234.566,
+      "p99": 235.62308
+    },
+    "tpot_ms": {
+      "mean": 11.808,
+      "p50": 11.528,
+      "p99": 16.615
+    },
+    "e2e_ms": {
+      "mean": 808.033,
+      "p50": 956.383,
+      "p99": 961.31788
+    },
+    "output_tokens": 292,
+    "duration_s": 1.1636
+  },
+  "results": null
+}

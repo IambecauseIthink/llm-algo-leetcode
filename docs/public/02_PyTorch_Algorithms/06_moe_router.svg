@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">MoE Router 路由主路径</title>
+  <desc id="desc">Token 经过路由器打分、Top-K 选择、专家计算和加权合并，形成稀疏激活路径。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#fff1f2"/></linearGradient>
+    <style>
+      .title { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 30px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .label { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .small { font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #334155; }
+      .box { stroke-width: 3; rx: 18; ry: 18; }
+      .flow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .route { stroke: #db2777; stroke-width: 3.5; fill: none; marker-end: url(#arrowPink); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker>
+    <marker id="arrowPink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#db2777"/></marker>
+  </defs>
+  <rect width="1600" height="720" fill="url(#bg)"/>
+  <text x="60" y="60" class="title">MoE Router：一个 token 如何选择少数专家</text>
+  <text x="60" y="90" class="sub">路由器控制计算路径；Top-K 让总参数容量变大，但每个 token 只激活少数专家</text>
+
+  <rect x="70" y="270" width="190" height="90" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="165" y="305" text-anchor="middle" class="label">Token 表示</text><text x="165" y="330" text-anchor="middle" class="small">hidden state</text>
+  <rect x="330" y="270" width="220" height="90" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="440" y="305" text-anchor="middle" class="label">Router 打分</text><text x="440" y="330" text-anchor="middle" class="small">得到每个专家的概率</text>
+  <rect x="620" y="270" width="210" height="90" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="725" y="305" text-anchor="middle" class="label">Top-K 选择</text><text x="725" y="330" text-anchor="middle" class="small">保留少数专家</text>
+
+  <rect x="920" y="160" width="230" height="90" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1035" y="195" text-anchor="middle" class="label">专家 A</text><text x="1035" y="220" text-anchor="middle" class="small">独立 MLP</text>
+  <rect x="920" y="390" width="230" height="90" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="1035" y="425" text-anchor="middle" class="label">专家 B</text><text x="1035" y="450" text-anchor="middle" class="small">独立 MLP</text>
+  <rect x="1240" y="270" width="230" height="90" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="1355" y="305" text-anchor="middle" class="label">加权合并</text><text x="1355" y="330" text-anchor="middle" class="small">恢复 token 表示</text>
+
+  <path d="M260 315 L330 315" class="flow"/><path d="M550 315 L620 315" class="flow"/>
+  <path d="M830 315 C870 315 875 205 920 205" class="route"/><path d="M830 315 C870 315 875 435 920 435" class="route"/>
+  <path d="M1150 205 C1190 205 1200 315 1240 315" class="flow"/><path d="M1150 435 C1190 435 1200 315 1240 315" class="flow"/>
+  <rect x="200" y="555" width="1200" height="82" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="800" y="588" text-anchor="middle" class="label">系统含义</text><text x="800" y="615" text-anchor="middle" class="small">稀疏激活降低单 token 计算量，但 dispatch、容量限制和专家间通信成为新的工程问题</text>
+</svg>

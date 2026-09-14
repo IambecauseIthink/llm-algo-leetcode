@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 29px sans-serif;fill:#17324d}.sub{font:16px sans-serif;fill:#486581}
+      .head{font:700 19px sans-serif;fill:#17324d}.txt{font:15px sans-serif;fill:#334e68}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="430" fill="#f7fafc"/>
+  <text x="600" y="44" text-anchor="middle" class="title">KV Cache 的四个角色</text>
+  <text x="600" y="72" text-anchor="middle" class="sub">从请求状态到容量治理，四层共同决定可用上下文和并发</text>
+
+  <rect x="45" y="145" width="245" height="170" fill="#e6f6f5" class="box"/>
+  <text x="167" y="190" text-anchor="middle" class="head">请求状态</text>
+  <text x="85" y="230" class="txt">K / V 随 token 增长</text>
+  <text x="85" y="260" class="txt">按层、按请求驻留</text>
+  <text x="85" y="290" class="txt">观察：容量增长</text>
+
+  <rect x="335" y="145" width="245" height="170" fill="#e0e7ff" class="box"/>
+  <text x="457" y="190" text-anchor="middle" class="head">物理分配</text>
+  <text x="375" y="230" class="txt">block / paging</text>
+  <text x="375" y="260" class="txt">分配、回收和碎片</text>
+  <text x="375" y="290" class="txt">观察：可用容量</text>
+
+  <rect x="625" y="145" width="245" height="170" fill="#fff4e6" class="box"/>
+  <text x="747" y="190" text-anchor="middle" class="head">前缀复用</text>
+  <text x="665" y="230" class="txt">共享重复前缀</text>
+  <text x="665" y="260" class="txt">命中与失效</text>
+  <text x="665" y="290" class="txt">观察：复用容量</text>
+
+  <rect x="915" y="145" width="240" height="170" fill="#fef3c7" class="box"/>
+  <text x="1035" y="190" text-anchor="middle" class="head">容量治理</text>
+  <text x="955" y="230" class="txt">eviction / 量化</text>
+  <text x="955" y="260" class="txt">预算与并发上限</text>
+  <text x="955" y="290" class="txt">观察：服务结果</text>
+
+  <path d="M290 230 H335" class="line"/>
+  <path d="M580 230 H625" class="line"/>
+  <path d="M870 230 H915" class="line"/>
+</svg>

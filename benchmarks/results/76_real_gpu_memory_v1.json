@@ -1,0 +1,164 @@
+{
+  "schema_version": "training-memory-benchmark/v1",
+  "project": "76",
+  "stage": "activation_checkpoint_offload_benchmark",
+  "config": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "dtype": null,
+    "batch_size": 1,
+    "seq_len": 768,
+    "warmup": 2,
+    "iters": 5,
+    "workload": "pressure"
+  },
+  "budget": {
+    "memory_cap_mb": 11200.0,
+    "min_samples_per_s": 1.0
+  },
+  "quality_floor": {
+    "max_val_loss": 12.603633
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 476.764,
+        "samples_per_s": 2.097,
+        "peak_memory_mb": 9782.74,
+        "peak_reserved_mb": 10750.0,
+        "memory_saving_mb": 0.0,
+        "throughput_ratio": 1.0,
+        "oom": null
+      },
+      "quality": {
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "baseline",
+        "status": "ok",
+        "step_time_ms": 476.764,
+        "samples_per_s": 2.097,
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "peak_memory_mb": 9782.74,
+        "peak_reserved_mb": 10750.0
+      }
+    },
+    {
+      "name": "checkpoint",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 592.849,
+        "samples_per_s": 1.687,
+        "peak_memory_mb": 9450.76,
+        "peak_reserved_mb": 10896.0,
+        "memory_saving_mb": 331.98,
+        "throughput_ratio": 0.804483,
+        "oom": null
+      },
+      "quality": {
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "checkpoint",
+        "status": "ok",
+        "step_time_ms": 592.849,
+        "samples_per_s": 1.687,
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "peak_memory_mb": 9450.76,
+        "peak_reserved_mb": 10896.0
+      }
+    },
+    {
+      "name": "offload",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 1894.917,
+        "samples_per_s": 0.528,
+        "peak_memory_mb": 9448.33,
+        "peak_reserved_mb": 10404.0,
+        "memory_saving_mb": 334.41,
+        "throughput_ratio": 0.251788,
+        "oom": null
+      },
+      "quality": {
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "offload",
+        "status": "ok",
+        "step_time_ms": 1894.917,
+        "samples_per_s": 0.528,
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "peak_memory_mb": 9448.33,
+        "peak_reserved_mb": 10404.0
+      }
+    },
+    {
+      "name": "hybrid",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 766.367,
+        "samples_per_s": 1.305,
+        "peak_memory_mb": 9454.64,
+        "peak_reserved_mb": 10444.0,
+        "memory_saving_mb": 328.1,
+        "throughput_ratio": 0.622318,
+        "oom": null
+      },
+      "quality": {
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "hybrid",
+        "status": "ok",
+        "step_time_ms": 766.367,
+        "samples_per_s": 1.305,
+        "loss": 11.477463,
+        "eval_loss": 12.356503,
+        "peak_memory_mb": 9454.64,
+        "peak_reserved_mb": 10444.0
+      }
+    }
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "feasible_count": 3,
+    "best_candidate": "checkpoint",
+    "quality_failed_count": 0,
+    "feasible_names": [
+      "checkpoint",
+      "hybrid",
+      "baseline"
+    ],
+    "baseline_peak_memory_mb": 9782.74,
+    "best_peak_memory_mb": 9450.76,
+    "memory_saving_mb": 331.97999999999956,
+    "throughput_ratio": 0.8044825941821651
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "memory_saving_below_meaningful_threshold",
+    "next_action": "test_pressure_or_offload_scope"
+  },
+  "legacy_source": "benchmarks/results/76_real_gpu_memory.json",
+  "source_baseline": "73_real_gpu_training.json"
+}

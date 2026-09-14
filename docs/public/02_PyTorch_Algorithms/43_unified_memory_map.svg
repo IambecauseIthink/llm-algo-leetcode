@@ -1,0 +1,34 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Unified Memory Management</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Manage GPU, host, and movable state under one ledger instead of treating each memory trick in isolation.</text>
+  <rect x="110" y="208" width="248" height="112" rx="20" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="176" y="248" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">GPU Tier</text>
+  <text x="136" y="282" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">hot tensors, active cache,</text>
+  <text x="136" y="304" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">immediate compute path</text>
+  <rect x="430" y="208" width="248" height="112" rx="20" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="496" y="248" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Host Tier</text>
+  <text x="456" y="282" fill="#92400E" font-size="16" font-family="Arial, sans-serif">cold but recoverable data</text>
+  <text x="456" y="304" fill="#92400E" font-size="16" font-family="Arial, sans-serif">offload and staging zone</text>
+  <rect x="750" y="208" width="248" height="112" rx="20" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="812" y="248" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Policy</text>
+  <text x="776" y="282" fill="#166534" font-size="16" font-family="Arial, sans-serif">what stays hot, what moves,</text>
+  <text x="776" y="304" fill="#166534" font-size="16" font-family="Arial, sans-serif">when migration is triggered</text>
+  <rect x="1070" y="208" width="96" height="112" rx="20" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="1088" y="248" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Fit</text>
+  <text x="1084" y="282" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">more</text>
+  <text x="1080" y="304" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">workload</text>
+  <path d="M358 264H430" stroke="#374151" stroke-width="3"/>
+  <path d="M678 264H750" stroke="#374151" stroke-width="3"/>
+  <path d="M998 264H1070" stroke="#374151" stroke-width="3"/>
+  <path d="M415 256L430 264L415 272" fill="#374151"/>
+  <path d="M735 256L750 264L735 272" fill="#374151"/>
+  <path d="M1055 256L1070 264L1055 272" fill="#374151"/>
+  <rect x="110" y="394" width="1056" height="148" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="140" y="434" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">What this page should teach</text>
+  <text x="140" y="468" fill="#374151" font-size="18" font-family="Arial, sans-serif">The core question is not whether one tensor can be offloaded; it is which objects stay hot, which can move, and what migration cost still fits the budget.</text>
+  <text x="140" y="500" fill="#374151" font-size="18" font-family="Arial, sans-serif">That makes the page boundary system-level: tiers, residency rules, and policy must be read together rather than as isolated tricks.</text>
+  <rect x="110" y="566" width="1056" height="60" rx="18" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+  <text x="140" y="598" fill="#075985" font-size="18" font-family="Arial, sans-serif">A good memory plan answers one budget question: what stays on device, what moves, and what overhead remains acceptable.</text>
+</svg>

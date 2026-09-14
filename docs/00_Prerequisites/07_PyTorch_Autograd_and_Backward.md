@@ -1,6 +1,6 @@
 # 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播
 
-**难度：** Easy | **环境：** CPU-first | **标签：** `PyTorch`, `自动求导`, `反向传播` | **目标人群：** Part 2-4 前置补课者
+**难度：** Easy | **环境：** CPU-first | **标签：** `PyTorch`, `自动求导`, `反向传播` | **目标人群：** 刚开始学习训练循环、反向传播或显存管理的学习者
 
 > 🚀 **云端运行环境**
 >
@@ -10,24 +10,26 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-本页聚焦：会判断 Tensor 什么时候需要梯度；会用 `backward()` 观察梯度流动；会区分 `no_grad`、`detach` 和梯度累积。你可以把这一页看成‘张量已经会排版了，现在开始看它怎么被计算图串起来’。后面 Part 2 里只要开始写训练循环、看梯度边界或做自定义算子，这一页的判断方式就会直接用上。
+## 本节导读
 
-如果你还没有建立计算图直觉，可以先把它看成前向时临时搭起的一张依赖图：张量和算子是节点，数据依赖是边，`backward()` 负责沿着这张图把梯度往回传。
+本节从一个最小计算图开始，建立 Tensor、算子和梯度之间的关系。你会依次观察 `backward()` 如何回传梯度、Tensor 属性如何反映计算图状态、叶子节点与中间结果的梯度差异，以及自定义 Function 如何连接 forward 和 backward。
+
+完成后，你应能根据 `requires_grad`、`grad_fn`、`is_leaf` 和 `grad` 判断梯度是否正在流动，并理解计算图中保存的中间结果为什么会影响后续训练和显存管理。
 
 **关键词：** `requires_grad`, `backward`, `detach`
 
+![本节概念关系](../public/00_Prerequisites/07_autograd_backward_map.svg)
+
+---
 ## 前置阅读
-**导语：** 先看 0B 组页，把张量布局和梯度边界对齐，再进入这一页会更顺。
+**导语：** 先回顾张量的形状、布局和索引，再进入自动求导；这样可以把“数据如何排列”和“梯度如何沿计算图传播”区分开。
 - [06. PyTorch Tensor Layout and Indexing | PyTorch 张量布局与索引](./06_PyTorch_Tensor_Layout_and_Indexing.md)
 - [0B 组页](./0B.md)
+---
 
-## 相关阅读
-**导语：** 本页先把 Autograd 和 backward 的最小判断讲清楚；如果想继续看梯度清理和无梯度模式，再顺着看下面这一页。
-- [08. PyTorch Grad Hygiene and No-Grad | PyTorch 梯度习惯与无梯度模式](./08_PyTorch_Grad_Hygiene_and_No_Grad.md)
+## Q1：Autograd 如何建立计算图并回传梯度？
 
-## Q1：Autograd 机制和计算图分别解决什么问题？
-
-PyTorch 的 autograd 负责自动记录前向计算，并在 `backward()` 时把梯度一路回传到需要梯度的叶子节点。前向计算可以先理解成临时搭出一张计算图：每次运算都会记下输入和输出的依赖关系，`backward()` 再沿着这张图把梯度回传。先把这个机制看成“自动记账”，后面就不会把梯度问题误解成普通数值问题。这里重点熟悉 `requires_grad=True`、`backward()` 和 `.grad` 这三个最常见的接口。
+PyTorch 的 autograd 会在前向计算中记录 Tensor 与算子的依赖关系，并在 `backward()` 时沿着这张图应用链式法则，把梯度回传到需要梯度的叶子节点。这里先观察前向如何生成计算图，再跟踪反向如何把结果写入 `.grad`。
 
 ```python
 import torch
@@ -53,13 +55,21 @@ x = torch.tensor(2.0, requires_grad=True)
 y = x * x + 3 * x
 y.backward()
 assert x.grad.item() == 7.0
-print('✅ backward 通过，x.grad =', x.grad.item())
+
+# 梯度默认会累积；新的图可以验证第二次 backward 的结果。
+x2 = torch.tensor(2.0, requires_grad=True)
+for _ in range(2):
+    (x2 * x2 + 3 * x2).backward()
+assert x2.grad.item() == 14.0
+x2.grad.zero_()
+assert x2.grad.item() == 0.0
+print('✅ backward、梯度累积和清零通过，x.grad =', x.grad.item())
 
 ```
 
-## Q2：什么时候必须关心 `requires_grad` 和 `grad_fn`？
+## Q2：如何通过 Tensor 属性判断梯度是否正在流动？
 
-只要你在调试训练图，先看两个地方：这个 Tensor 会不会被追踪，以及它是不是由某个操作生成的中间结果。前者看 `requires_grad`，后者看 `grad_fn`。这两个属性一个描述“会不会记账”，一个描述“这笔账是怎么生成的”。
+调试计算图时，可以用 Tensor 的属性观察梯度状态：`requires_grad` 表示是否参与梯度追踪，`grad_fn` 表示它是否由带历史记录的运算产生，`is_leaf` 则帮助区分输入节点和中间结果。把这三个观察点放在一起，才能判断梯度记录从哪里开始、经过了哪些运算。
 
 
 ```python
@@ -77,9 +87,9 @@ print('leaf.is_leaf =', leaf.is_leaf)
 
 ```
 
-## Q2验证：叶子节点和历史记录是否清楚？
+## Q2验证：Tensor 属性是否反映了计算图状态？
 
-这里直接确认：默认张量不追踪梯度，显式打开后会追踪，运算结果会带上 `grad_fn`。你要记住的是，叶子节点通常自己没有 `grad_fn`，但会在 `.grad` 里接到回传结果。
+这里确认三种状态：默认张量不追踪梯度，显式打开后会追踪，运算结果会带上 `grad_fn`；叶子节点通常没有 `grad_fn`，但会在 `.grad` 中接收回传结果。
 
 
 ```python
@@ -90,13 +100,18 @@ assert a.requires_grad is False
 assert b.requires_grad is True
 assert c.grad_fn is not None
 assert a.grad_fn is None
-print('✅ requires_grad 和 grad_fn 通过')
+
+with torch.no_grad():
+    no_grad_result = b * 2
+assert no_grad_result.requires_grad is False
+assert b.detach().requires_grad is False
+print('✅ requires_grad、grad_fn、no_grad 和 detach 通过')
 
 ```
 
-## Q3：什么时候必须关心 leaf、`retain_grad()` 和 `is_leaf`？
+## Q3：为什么中间结果默认没有 `.grad`，如何显式保留？
 
-如果你想看中间张量的梯度，就要先分清叶子节点和非叶子节点。默认情况下，真正会接到 `.grad` 的通常是叶子节点；中间结果如果也要保留梯度，就得显式调用 `retain_grad()`。这里先把 `is_leaf`、`retain_grad()` 和 `.grad` 这几个接口连起来看，边界管理留到 08 再讲。
+如果你想观察中间张量的梯度，先要区分叶子节点和非叶子节点。默认情况下，叶子节点会接收 `.grad`；中间结果如果也要保留梯度，就需要显式调用 `retain_grad()`。这说明计算图记录和梯度保存是两个相关但不同的动作。
 
 
 ```python
@@ -132,9 +147,9 @@ print('✅ leaf 和 retain_grad 通过')
 
 ```
 
-## Q4：什么时候需要自定义梯度计算？
+## Q4：自定义 `Function` 如何连接 forward 和 backward？
 
-如果默认 autograd 不能表达你的前向和反向，或者你想把一个操作写成可控的小模块，就会用到 `autograd.Function`。这里先把最小接口看懂，不展开复杂实现。重点是 `forward(ctx, ...)` 负责把需要的中间量存进 `ctx`，`backward(ctx, grad_output)` 再把梯度按链式法则算回来。
+当默认 autograd 不能直接表达一个操作时，可以用 `autograd.Function` 明确写出 forward 和 backward。`forward(ctx, ...)` 负责计算输出并保存反向所需的中间信息，`backward(ctx, grad_output)` 读取这些信息，再按链式法则返回输入梯度。保存哪些信息会影响反向计算，也会影响中间状态的生命周期。
 
 
 ```python
@@ -183,3 +198,16 @@ print('✅ 自定义 autograd 通过')
 - `backward()` 依赖计算图把梯度往回传。
 - `requires_grad / grad_fn / is_leaf / retain_grad()` 是最重要的观察点。
 - 自定义 `autograd.Function` 时，关键是让 `forward` 和 `backward` 用同一套中间信息闭环。
+
+---
+## 相关阅读
+如果想继续深入，可以按“官方接口 → 自动微分原理 → 训练与显存应用”的顺序阅读：
+- [PyTorch Autograd 官方文档](https://pytorch.org/docs/stable/autograd.html)：查阅计算图、`backward()`、`grad` 和自定义 `Function` 的正式接口。
+- [PyTorch Autograd mechanics](https://pytorch.org/docs/stable/notes/autograd.html)：理解动态图、梯度模式、叶子张量和保存张量等实现细节。
+- [`torch.autograd.Function` 官方文档](https://pytorch.org/docs/stable/notes/extending.html)：查看自定义 forward、backward 和保存中间状态的接口约定。
+- [PyTorch Autograd 源码](https://github.com/pytorch/pytorch/tree/main/torch/csrc/autograd)：从开源实现中了解计算图节点和反向执行的组织方式。
+- [Automatic Differentiation in Machine Learning: a Survey](https://arxiv.org/abs/1502.05767)：对比自动微分的前向模式、反向模式和计算图。
+- [08. PyTorch Grad Hygiene and No-Grad | PyTorch 梯度习惯与无梯度模式](./08_PyTorch_Grad_Hygiene_and_No_Grad.md)：继续学习梯度清理、`detach` 和无梯度推理。
+- [18. Memory Profiling and Optimization | 显存分析与优化](./18_Memory_Profiling_and_Optimization.md)：把激活、反向传播和显存对象联系起来。
+- [20. Profiling and Memory Ledger | 性能剖析与显存账本](./20_Profiling_and_Memory_Ledger.md)：进一步学习如何用账本和 profiling 验证资源压力。
+---

@@ -1,0 +1,60 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Memory Optimization Decision Flow</text>
+  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">A lower peak-memory number is not enough. The final question is whether the saved budget creates a worthwhile system outcome.</text>
+
+  <rect x="106" y="204" width="196" height="92" rx="18" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="136" y="242" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">1. Fix workload</text>
+  <text x="128" y="272" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">model, batch, seq,</text>
+  <text x="128" y="294" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">backend, dtype</text>
+
+  <rect x="350" y="204" width="206" height="92" rx="18" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="382" y="242" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">2. Measure peak</text>
+  <text x="382" y="272" fill="#92400E" font-size="16" font-family="Arial, sans-serif">peak / reserved memory</text>
+  <text x="382" y="294" fill="#92400E" font-size="16" font-family="Arial, sans-serif">and timing cost</text>
+
+  <rect x="604" y="204" width="212" height="92" rx="18" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="632" y="242" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">3. Identify object</text>
+  <text x="644" y="272" fill="#166534" font-size="16" font-family="Arial, sans-serif">activation / cache /</text>
+  <text x="644" y="294" fill="#166534" font-size="16" font-family="Arial, sans-serif">resident states</text>
+
+  <rect x="864" y="204" width="228" height="92" rx="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="894" y="242" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">4. Compare outcome</text>
+  <text x="892" y="272" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">Did the saved memory buy</text>
+  <text x="892" y="294" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">batch, context or deploy range?</text>
+
+  <path d="M302 250H350" stroke="#374151" stroke-width="3"/>
+  <path d="M556 250H604" stroke="#374151" stroke-width="3"/>
+  <path d="M816 250H864" stroke="#374151" stroke-width="3"/>
+  <path d="M335 242L350 250L335 258" fill="#374151"/>
+  <path d="M589 242L604 250L589 258" fill="#374151"/>
+  <path d="M849 242L864 250L849 258" fill="#374151"/>
+
+  <rect x="160" y="390" width="248" height="154" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="192" y="428" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">KEEP</text>
+  <text x="192" y="464" fill="#374151" font-size="16" font-family="Arial, sans-serif">Peak memory falls only a little,</text>
+  <text x="192" y="488" fill="#374151" font-size="16" font-family="Arial, sans-serif">or the time / quality cost is too high.</text>
+  <text x="192" y="524" fill="#374151" font-size="16" font-family="Arial, sans-serif">No meaningful new budget was created.</text>
+
+  <rect x="516" y="390" width="248" height="154" rx="22" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+  <text x="548" y="428" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">TUNE</text>
+  <text x="548" y="464" fill="#92400E" font-size="16" font-family="Arial, sans-serif">The right object is targeted,</text>
+  <text x="548" y="488" fill="#92400E" font-size="16" font-family="Arial, sans-serif">but batching, transport or</text>
+  <text x="548" y="510" fill="#92400E" font-size="16" font-family="Arial, sans-serif">precision settings still need work.</text>
+
+  <rect x="872" y="390" width="248" height="154" rx="22" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+  <text x="904" y="428" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">SWITCH</text>
+  <text x="904" y="464" fill="#166534" font-size="16" font-family="Arial, sans-serif">Peak memory drops enough</text>
+  <text x="904" y="488" fill="#166534" font-size="16" font-family="Arial, sans-serif">to expand batch, context or deployment</text>
+  <text x="904" y="512" fill="#166534" font-size="16" font-family="Arial, sans-serif">without unacceptable regressions.</text>
+
+  <path d="M978 296V360" stroke="#374151" stroke-width="3"/>
+  <path d="M284 360H996" stroke="#374151" stroke-width="3"/>
+  <path d="M284 360V390" stroke="#374151" stroke-width="3"/>
+  <path d="M640 360V390" stroke="#374151" stroke-width="3"/>
+  <path d="M996 360V390" stroke="#374151" stroke-width="3"/>
+
+  <rect x="104" y="602" width="1008" height="30" rx="10" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="128" y="621" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">A memory optimization is real only when the saved budget leads to a better usable system envelope, not just a smaller number on one chart.</text>
+</svg>

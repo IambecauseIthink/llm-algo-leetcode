@@ -1,0 +1,64 @@
+{
+  "task": "task3_training_memory_optimization",
+  "stage": "memory_budget_decision",
+  "source": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/76_real_gpu_memory.json",
+  "budget": {
+    "memory_cap_mb": 9600.0,
+    "min_samples_per_s": 1.0
+  },
+  "quality_floor": {
+    "max_val_loss": 12.603633
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "peak_memory_mb": 9782.74,
+      "samples_per_s": 2.009,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503
+    },
+    {
+      "name": "checkpoint",
+      "peak_memory_mb": 9450.76,
+      "samples_per_s": 1.761,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503
+    },
+    {
+      "name": "offload",
+      "peak_memory_mb": 9448.33,
+      "samples_per_s": 0.533,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503
+    },
+    {
+      "name": "hybrid",
+      "peak_memory_mb": 9454.64,
+      "samples_per_s": 1.276,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503
+    }
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "measured_count": 4,
+    "oom_count": 0,
+    "invalid_count": 0,
+    "feasible_count": 2,
+    "best_candidate": "checkpoint",
+    "quality_failed_count": 0,
+    "feasible_names": [
+      "checkpoint",
+      "hybrid"
+    ],
+    "baseline_peak_memory_mb": 9782.74,
+    "throughput_ratio": 0.8765555002488801,
+    "best_peak_memory_mb": 9450.76,
+    "memory_saving_mb": 331.97999999999956
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "memory_saving_below_meaningful_threshold",
+    "next_action": "test_larger_pressure_or_optimizer_compression"
+  }
+}

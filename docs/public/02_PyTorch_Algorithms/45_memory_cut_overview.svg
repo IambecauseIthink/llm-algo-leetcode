@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">显存裁剪规划总览</title><desc id="d">从峰值来源识别到预算留边，再输出可执行的裁剪顺序。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">显存裁剪：从峰值来源到执行顺序</text><text x="50" y="83" class="s">先知道哪类对象造成峰值，再决定裁剪、迁移或重算的顺序。</text>
+<rect x="55" y="190" width="220" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="165" y="232" text-anchor="middle" class="l">峰值来源</text><text x="165" y="263" text-anchor="middle" class="b">参数 · 激活 · KV · 临时量</text>
+<rect x="345" y="190" width="220" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="455" y="232" text-anchor="middle" class="l">预算留边</text><text x="455" y="263" text-anchor="middle" class="b">容量上限与运行时余量</text>
+<rect x="635" y="190" width="220" height="110" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="745" y="232" text-anchor="middle" class="l">裁剪候选</text><text x="745" y="263" text-anchor="middle" class="b">重算 · 卸载 · 降低并发</text>
+<rect x="930" y="190" width="210" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1035" y="232" text-anchor="middle" class="l">执行计划</text><text x="1035" y="263" text-anchor="middle" class="b">顺序 · 代价 · 证据</text>
+<path d="M275 245H345M565 245H635M855 245H930" class="f"/>
+</svg>

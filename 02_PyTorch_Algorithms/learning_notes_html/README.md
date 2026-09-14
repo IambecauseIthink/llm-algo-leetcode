@@ -11,7 +11,14 @@
 - `curriculum_v2.js`: upstream 新版 12–42 课程的元数据与 Notebook 映射。
 - `lesson_overrides.js` / `lesson_overrides_extra.js`: 各关的零基础导学、图例、语法热身、闯关题和 notebook 作业数据。
 
-当前地图对应 upstream 新版 00–42，共 43 关。00–11 保留本地精讲内容；其中 00、01 通过 `foundation_enhancements.js` 叠加 05 同款的预测解锁、错法排查与行业视角。旧课程中仍适用的精讲会通过 `lesson_overrides_v2.js` 迁移到新编号，全新课程则以新版元数据和 Notebook 原文生成导学页。`notes/25_quantization_model_factory.html` 是第 25 课额外的游戏化练习，不属于标准课程页批量生成范围。
+当前地图对应官方 `4fa62623ae7f2f207871b43c3f254a765765bf2e`（2026-09-11 的 main，2026-09-14 同步）：00–89 共 90 个 Notebook，其中 **75 个正式课程 + 15 个预留入口**。预留编号不生成闯关题、不计入完成率。
+
+- `curriculum_current.js` 每次构建读取当前 Notebook 的标题、导读、标签、题目和 TODO；`course_manifest.json` 记录课程映射和源文件 SHA-256。
+- 原有 43 课精讲按主题迁移到新编号，新增 32 课采用官方原理、图解和任务配合概念检查题。参考答案不在 HTML 中提前展开。
+- 原始 Notebook、Markdown、docs、工具和专题按官方更新；原有量化工厂仍是第 25 课的附加练习。
+- 旧 HTML 地址保留跳转。比如旧 30 LoRA 项目 → 新 60，旧 31 推理对比 → 新 66，旧 42 NCCL → 新 46；新的 30 是长上下文微调。
+- 同一浏览器存储范围内，旧通关/答题记录按主题迁移到 v3，原有 v1/v2 数据不删除。旧 Notebook 作业 checklist 不自动复用，新作业键包含源文件哈希，防止题目变化后仍显示已完成。
+- 公式、图片和代码支持静态离线渲染；分享时保留仓库相对目录（图片位于 `docs/public`），不需要携带 `node_modules`。
 
 每个关卡页面包含：
 
@@ -37,5 +44,9 @@ HTML 不提供在线写代码环境；最后的写代码是 notebook 作业，�
 可以直接在浏览器中打开 `index.html` 预览。修改课程内容后，运行下面命令重新生成静态页面：
 
 ```bash
-node 02_PyTorch_Algorithms/learning_notes_html/generate_levels.js
+npm ci --prefix 02_PyTorch_Algorithms/learning_notes_html
+npm run generate --prefix 02_PyTorch_Algorithms/learning_notes_html
+npm test --prefix 02_PyTorch_Algorithms/learning_notes_html
 ```
+
+同步详情和验收记录见 [SYNC_REPORT.md](SYNC_REPORT.md)。

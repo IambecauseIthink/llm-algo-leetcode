@@ -1,6 +1,6 @@
 # 32. TVM MLIR Deep Practice | TVM / MLIR 深度实践
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `AI 编译器`, `TVM` | **目标人群：** 编译器后端学习者
+**难度：** Hard | **环境：** CPU-first | **标签：** `编译系统`, `TVM/MLIR`, `Lowering` | **目标人群：** 编译与系统入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页讲的是为什么“从图到可执行 kernel”不是简单翻译，而是一整条优化和 lowering 的链路。
+---
+
+## 本节导读
+
+从高层图到可执行 kernel，中间并不是简单翻译，而是一整条 IR 变换、算子组织、调度和 codegen 的链路。很多编译系统问题之所以难，不在于“写不写得出代码”，而在于同一个计算图怎样被改写成更贴合目标硬件的执行形式。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的编译后端实践页，优先服务后续 `编译与图优化专题`，也给 `Part 03 / Part 04` 的 kernel 与 backend 主线建立 lowering 前置。学完这里，后面再看 `Part 03` 的 Triton 实战和 `Part 04` 的系统优化页时，你会更容易把“可表达”与“可高效执行”区分开来；如果这里没学明白，后面很容易把 TVM、MLIR、lowering 和 schedule 都当成编译器黑盒，而说不清哪些优化发生在图层、哪些发生在调度层、哪些已经进入目标 backend。按专题归类，这一页主要属于 `编译与图优化专题`，并直接支撑后续 kernel 与 backend 视角。
 
 **关键词：** `TVM`, `MLIR`, `Relay`
+
+---
 ## 前置阅读
 
 **导语：** 这一页先把图优化、算子融合和 lowering 的直觉接上，再看 TVM / MLIR 为什么会在后端链路里占核心位置。
@@ -28,7 +36,7 @@
 - [29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度](./29_CUDA_Stream_Advanced_Scheduling.md)
 - [30. Dynamic Shape Handling | 动态 Shape 处理](./30_Dynamic_Shape_Handling.md)
 - [04. Triton 矩阵乘法 (GEMM) 与自动调优 (Autotune)](../03_Triton_Kernels/04_Triton_GEMM_Tutorial.md)
-
+---
 ## Q1：TVM / MLIR 这类编译器后端在做什么？
 
 <details><summary>点击展开查看解析</summary>

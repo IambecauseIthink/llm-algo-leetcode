@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 820" role="img" aria-labelledby="title desc">
+  <title id="title">QLoRA 4-bit training flow</title>
+  <desc id="desc">Shows 4-bit NF4 base weights, dequantization for forward, and a trainable LoRA branch for updates.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#fff7ed"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
+      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
+      .small { font: 500 14px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
+      .box { fill: #ffffff; stroke-width: 3; rx: 16; ry: 16; }
+      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #db2777; stroke-width: 4; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1660" height="820" fill="url(#bg)"/>
+  <text x="64" y="66" class="title">QLoRA: 4-bit base weights + trainable LoRA branch</text>
+  <text x="64" y="96" class="sub">The base model is compressed to NF4, while the low-rank adapter keeps learning in higher precision.</text>
+
+  <rect x="80" y="170" width="260" height="120" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="210" y="206" text-anchor="middle" class="label">Frozen base model</text>
+  <text x="210" y="236" text-anchor="middle" class="small">weights stored as NF4</text>
+  <text x="210" y="262" text-anchor="middle" class="small">scale / codebook metadata</text>
+
+  <rect x="410" y="170" width="250" height="120" class="box" fill="#ecfccb" stroke="#65a30d"/>
+  <text x="535" y="206" text-anchor="middle" class="label">Dequantize</text>
+  <text x="535" y="236" text-anchor="middle" class="small">NF4 -> fp16 / bf16</text>
+  <text x="535" y="262" text-anchor="middle" class="small">just in time for compute</text>
+
+  <rect x="720" y="170" width="240" height="120" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="840" y="206" text-anchor="middle" class="label">Forward matmul</text>
+  <text x="840" y="236" text-anchor="middle" class="small">normal activation path</text>
+  <text x="840" y="262" text-anchor="middle" class="small">same layer behavior</text>
+
+  <rect x="1010" y="170" width="250" height="120" class="box" fill="#ecfeff" stroke="#0891b2"/>
+  <text x="1135" y="206" text-anchor="middle" class="label">LoRA branch</text>
+  <text x="1135" y="236" text-anchor="middle" class="small">rank-r adapter</text>
+  <text x="1135" y="262" text-anchor="middle" class="small">trainable update path</text>
+
+  <rect x="1320" y="170" width="260" height="120" class="box" fill="#fff1f2" stroke="#db2777"/>
+  <text x="1450" y="206" text-anchor="middle" class="label">Output merge</text>
+  <text x="1450" y="236" text-anchor="middle" class="small">base + adapter delta</text>
+  <text x="1450" y="262" text-anchor="middle" class="small">backprop only into LoRA</text>
+
+  <path d="M 340 230 L 410 230" class="arrow"/>
+  <path d="M 660 230 L 720 230" class="arrow"/>
+  <path d="M 960 230 L 1010 230" class="arrow"/>
+  <path d="M 1260 230 L 1320 230" class="arrow"/>
+
+  <path d="M 1135 290 C 1135 390 535 390 535 290" class="dash"/>
+  <path d="M 1450 290 C 1450 400 1135 400 1135 290" class="dash"/>
+
+  <rect x="90" y="350" width="1470" height="180" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="120" y="388" class="label">Why this is more than plain 4-bit quantization</text>
+  <text x="120" y="422" class="small">1. NF4 compresses the base model, but the model still needs a trainable path for adaptation.</text>
+  <text x="120" y="452" class="small">2. the LoRA branch keeps higher precision and receives almost all gradient updates.</text>
+  <text x="120" y="482" class="small">3. double quantization reduces metadata overhead on top of the 4-bit weights.</text>
+  <text x="820" y="422" class="small">4. the diagram should make the split between storage path and learning path explicit.</text>
+  <text x="820" y="452" class="small">5. this is the bridge from 25 to the project pages that actually fine-tune a model.</text>
+
+  <rect x="90" y="570" width="1470" height="140" class="box" fill="#fffef2" stroke="#cbd5e1"/>
+  <text x="120" y="608" class="label">Reading rule</text>
+  <text x="120" y="642" class="small">The base is compressed for memory, the adapter is kept trainable for learning, and the merge step explains why inference can stay simple.</text>
+</svg>

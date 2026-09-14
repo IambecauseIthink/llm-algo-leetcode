@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="620" viewBox="0 0 1360 620">
+  <defs>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #17324d; }
+      .node-title { font: 700 20px sans-serif; fill: #17324d; }
+      .node-text { font: 16px sans-serif; fill: #35526b; }
+      .small { font: 15px sans-serif; fill: #526b7d; }
+      .solid { stroke: #3978a8; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke: #8b6bb1; stroke-width: 2.5; stroke-dasharray: 9 7; fill: none; marker-end: url(#arrow-purple); }
+      .blue { fill: #e8f3fb; stroke: #3978a8; stroke-width: 2; }
+      .purple { fill: #f1eafa; stroke: #8b6bb1; stroke-width: 2; }
+      .green { fill: #eaf7ef; stroke: #4c9870; stroke-width: 2; }
+      .orange { fill: #fff1df; stroke: #c78335; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#3978a8"/></marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#8b6bb1"/></marker>
+  </defs>
+
+  <rect width="1360" height="620" rx="24" fill="#f8fbfd"/>
+  <text x="680" y="48" text-anchor="middle" class="title">PD 分离：从流量差异到拆分决策</text>
+
+  <rect x="70" y="100" width="230" height="112" rx="18" class="blue"/>
+  <text x="185" y="137" text-anchor="middle" class="node-title">共享请求池</text>
+  <text x="185" y="169" text-anchor="middle" class="node-text">输入长度、生成长度</text>
+  <text x="185" y="194" text-anchor="middle" class="node-text">缓存命中、队列状态</text>
+
+  <rect x="365" y="100" width="230" height="112" rx="18" class="purple"/>
+  <text x="480" y="137" text-anchor="middle" class="node-title">流量分类</text>
+  <text x="480" y="169" text-anchor="middle" class="node-text">prefill-heavy</text>
+  <text x="480" y="194" text-anchor="middle" class="node-text">decode-heavy / mixed</text>
+
+  <rect x="660" y="80" width="240" height="90" rx="18" class="green"/>
+  <text x="780" y="116" text-anchor="middle" class="node-title">Prefill 池</text>
+  <text x="780" y="146" text-anchor="middle" class="node-text">输入处理与首 token</text>
+
+  <rect x="660" y="190" width="240" height="90" rx="18" class="green"/>
+  <text x="780" y="226" text-anchor="middle" class="node-title">Decode 池</text>
+  <text x="780" y="256" text-anchor="middle" class="node-text">逐 token 生成与 KV 驻留</text>
+
+  <rect x="660" y="300" width="240" height="90" rx="18" class="green"/>
+  <text x="780" y="336" text-anchor="middle" class="node-title">共享池</text>
+  <text x="780" y="366" text-anchor="middle" class="node-text">混合请求或不拆分请求</text>
+
+  <rect x="965" y="135" width="230" height="112" rx="18" class="orange"/>
+  <text x="1080" y="172" text-anchor="middle" class="node-title">资源交接</text>
+  <text x="1080" y="204" text-anchor="middle" class="node-text">KV Cache / 请求状态</text>
+  <text x="1080" y="229" text-anchor="middle" class="node-text">通信与等待时间</text>
+
+  <rect x="965" y="315" width="230" height="112" rx="18" class="blue"/>
+  <text x="1080" y="352" text-anchor="middle" class="node-title">指标比较</text>
+  <text x="1080" y="384" text-anchor="middle" class="node-text">吞吐、TTFT、TPOT、P95</text>
+  <text x="1080" y="409" text-anchor="middle" class="node-text">显存、交接和空闲容量</text>
+
+  <rect x="465" y="465" width="300" height="82" rx="18" class="orange"/>
+  <text x="615" y="501" text-anchor="middle" class="node-title">accept / tune / reject</text>
+  <text x="615" y="528" text-anchor="middle" class="node-text">收益是否覆盖拆分代价</text>
+
+  <path d="M300 156 L365 156" class="solid"/>
+  <path d="M595 140 C625 125 635 125 660 125" class="solid"/>
+  <path d="M595 156 C625 235 635 235 660 235" class="solid"/>
+  <path d="M595 177 C625 345 635 345 660 345" class="solid"/>
+  <path d="M900 125 C930 145 940 165 965 178" class="dashed"/>
+  <path d="M900 235 C930 220 940 210 965 205" class="dashed"/>
+  <path d="M900 345 C930 350 940 365 965 380" class="solid"/>
+  <path d="M1080 247 L1080 315" class="solid"/>
+  <path d="M965 427 C850 490 810 500 765 505" class="solid"/>
+  <path d="M465 505 C350 470 300 390 300 212" class="dashed"/>
+
+  <text x="930" y="130" class="small">交接成本</text>
+  <text x="1105" y="286" class="small">汇总指标</text>
+  <text x="335" y="470" class="small">反馈：调整阈值或回到共享池</text>
+
+  <line x1="70" y1="585" x2="105" y2="585" class="solid"/>
+  <text x="115" y="590" class="small">实线：请求与决策流程</text>
+  <line x1="350" y1="585" x2="385" y2="585" class="dashed"/>
+  <text x="395" y="590" class="small">虚线：需要额外测量的交接或反馈关系</text>
+</svg>

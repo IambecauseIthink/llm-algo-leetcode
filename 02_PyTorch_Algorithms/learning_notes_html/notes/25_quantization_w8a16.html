@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 25 | Quantization W8A16</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 25 | Quantization W8A16 | W8A16 量化</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1038,11 +1048,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 25 | 零基础导学关卡</p>
-        <h1>Quantization W8A16</h1>
+        <h1>Quantization W8A16 | W8A16 量化</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">25_Quantization_W8A16.ipynb</span>
-          <span class="pill">Quantization</span><span class="pill">W8A16</span><span class="pill">Absmax</span>
+          <span class="pill">量化压缩</span><span class="pill">W8A16</span><span class="pill">Linear</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1065,16 +1075,343 @@
       <a class="factory-launch" href="25_quantization_model_factory.html">启动模型工厂 →</a>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="862aea35537d593019f2bb877c854eb25fa8df939a1610487f493a6860e2e275">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../25_Quantization_W8A16.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/25_Quantization_W8A16.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>25. Quantization W8A16 | W8A16 量化</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>W8A16</code>, <code>Linear</code> | <strong>目标人群：</strong> 量化压缩学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>模型变大以后，推理时最先遇到的问题往往不是“代码能不能跑”，而是权重太大、显存占用高、每一步都要从显存里读很多数据。前面的推理内容已经把这条压力线铺开了，本节开始进入量化：先不改完整推理框架，只尝试把最稳定的一部分——权重——压小。</p>
+<p>这一节会把这个思路落到一个最小 <code>Linear</code> 层里：先把一块浮点权重压成 8-bit 存储，再在前向时把它接回普通矩阵乘法。学完后，你应该能看懂 Weight-only 量化为什么能省显存、它和真正低精度计算有什么区别，以及后面的 4-bit / QLoRA 为什么是在这个基础上继续往前走。</p>
+<p>本节先建立通用的 W8A16 表示与前向路径，再把量化对象、校准算法和部署封装分别连接到后续的 GPTQ / AWQ 机制与真实 backend 验证。</p>
+<p><strong>关键词：</strong> <code>W8A16</code>, <code>INT8</code>, <code>quantization</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 计算张量的绝对最大值 absmax</li><li>TODO 2: 计算缩放因子 scale (对称量化，基于 127 计算)</li><li>TODO 3: 量化过程</li><li>TODO 4: 反量化与前向传播</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先熟悉 dtype、线性层和量化的基本对象，再观察权重存储精度变化如何影响前向计算。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.ipynb">P1: 01. Data Types and Precision | 大模型的数据格式与混合精度</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.ipynb">P1: 12. TensorCore and Mixed Precision | Tensor Core 与混合精度</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.ipynb">P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心思想与概念</h3>
+<p>量化首先改变的是模型状态的表示方式：本节把对象固定为权重，把激活保持在 FP16/FP32，并沿着“浮点权重 → INT8 与 scale → 反量化前向”的链路观察存储和误差。图中把通用权重量化、校准与敏感性分析、运行时与状态量化放在同一张关系图中，帮助你建立完整的量化视野。</p>
+<table>
+<thead>
+<tr>
+<th>本节对象</th>
+<th>输入</th>
+<th>机制</th>
+<th>输出与观察指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>浮点权重</td>
+<td>FP32 / FP16 权重张量</td>
+<td>absmax 对称量化</td>
+<td><code>torch.int8</code> 权重、scale、存储字节数</td>
+</tr>
+<tr>
+<td>W8A16 线性层</td>
+<td>INT8 权重 + FP16/FP32 激活</td>
+<td>前向前反量化</td>
+<td>输出形状、MSE / 余弦相似度</td>
+</tr>
+<tr>
+<td>机制扩展与部署</td>
+<td>校准权重、运行时状态和目标 backend</td>
+<td>GPTQ/AWQ、FP8、KV Cache 量化各自改变不同成本</td>
+<td>后续再验证完整模型显存、延迟、吞吐和质量</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/25_quantization_pipeline_cn.svg" alt="W8A16 量化流程图"></p>
+<h3>Step 2: 量化流程与数据流</h3>
+<p>本步先把量化看成一条数据流：高精度权重根据动态范围映射到整数表示，同时保存缩放信息；前向计算时，再让低比特权重和高精度激活共同产生输出。这里先理解每一步保存什么、改变什么，具体函数实现放到 Step 4。</p>
+<table>
+<thead>
+<tr>
+<th>流程阶段</th>
+<th>主要变化</th>
+<th>保留的信息</th>
+<th>观察重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入</td>
+<td>高精度权重进入量化流程</td>
+<td>FP16 / FP32 权重</td>
+<td>作为误差参照</td>
+</tr>
+<tr>
+<td>映射</td>
+<td>根据动态范围确定缩放关系，并映射到有限整数范围</td>
+<td>缩放信息、整数权重</td>
+<td>是否覆盖原始数值范围</td>
+</tr>
+<tr>
+<td>存储</td>
+<td>权重以低比特形式保存，激活仍保持较高精度</td>
+<td>INT8 权重、scale、FP16 / FP32 激活</td>
+<td>权重存储与计算精度分开</td>
+</tr>
+<tr>
+<td>前向</td>
+<td>反量化参与矩阵计算并产生近似输出</td>
+<td>输出张量</td>
+<td>形状、误差与计算代价</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: Absmax、scale 与反量化</h3>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/25_w8a16_math_flow_cn.svg" alt="W8A16 对称量化机制图"></p>
+<p>按照图片中的顺序，W8A16 只需要先确定一组 scale，再完成整数映射和恢复：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>公式 / 操作</th>
+<th>需要观察的结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>动态范围</td>
+<td><code>absmax = max(abs(x))</code></td>
+<td>找到当前权重范围</td>
+</tr>
+<tr>
+<td>缩放</td>
+<td><code>scale = 127 / absmax</code></td>
+<td>全零输入需要防止除零</td>
+</tr>
+<tr>
+<td>量化</td>
+<td><code>round(x * scale)</code> 后截断到 INT8 范围</td>
+<td>存储为 <code>torch.int8</code></td>
+</tr>
+<tr>
+<td>反量化</td>
+<td><code>x_dequant = x_int8 / scale</code></td>
+<td>得到近似浮点权重</td>
+</tr>
+</tbody>
+</table>
+<p>这里采用以 127 为正向上限的对称教学实现，代码中的 <code>clamp(-128, 127)</code> 与 INT8 存储范围保持一致。量化误差来自舍入和截断；它不等于完整模型质量损失。</p>
+<h3>Step 4: 实现、测试与结果解读</h3>
+<p>题目区围绕两个实现对象展开：<code>absmax_quantize</code> 负责浮点权重到 INT8 的映射，<code>W8A16Linear</code> 负责在前向前恢复近似浮点权重。测试区检查全零输入、整数 dtype、输出形状和数值误差；完成后再用权重字节数解释“权重节省”与“完整模型显存”的区别。</p>
+<table>
+<thead>
+<tr>
+<th>实现对象</th>
+<th>题目区关注点</th>
+<th>测试观察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>absmax_quantize</code></td>
+<td>absmax、scale、round、clamp</td>
+<td>dtype、有限值、边界输入</td>
+</tr>
+<tr>
+<td><code>W8A16Linear</code></td>
+<td>反量化后参与普通矩阵乘法</td>
+<td>输出形状与误差</td>
+</tr>
+<tr>
+<td>存储账本</td>
+<td>INT8 权重的字节数</td>
+<td>不外推完整模型收益</td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def absmax_quantize(x: torch.Tensor) -&gt; tuple[torch.Tensor, torch.Tensor]:
+    &quot;&quot;&quot;
+    将浮点张量 X 量化为 INT8，并返回缩放因子。
+
+    Args:
+        x: 浮点类型的张量
+    Returns:
+        x_quant: dtype 为 torch.int8 的量化张量
+        scale: 标量张量形式的缩放因子
+    &quot;&quot;&quot;
+    # ==========================================
+    # TODO 1: 计算张量的绝对最大值 absmax
+    # ==========================================
+    # absmax = ???
+
+    # 防除零保护：全零张量时 absmax 为 0，设为一个非零值避免除以 0
+    if absmax == 0:
+        absmax = torch.tensor(1.0, device=x.device)  # 保持设备一致性
+
+    # ==========================================
+    # TODO 2: 计算缩放因子 scale (对称量化，基于 127 计算)
+    # ==========================================
+    # scale = ???
+
+    # ==========================================
+    # TODO 3: 量化过程
+    # 1. 乘以 scale
+    # 2. round 到最近整数
+    # 3. clamp 到 INT8 可表示范围 [-128, 127]
+    # ==========================================
+    # x_scaled = ???
+    # x_quant = ???
+    return x_quant, scale
+
+class W8A16Linear(nn.Module):
+    &quot;&quot;&quot;
+    Weight-only INT8 量化线性层。
+    在内存中，我们存储的是非常微小的 INT8 权重。
+    在计算时，我们将权重反量化回与输入一致的浮点类型（如 FP16/FP32），再进行矩阵乘法。
+    这种教学实现保留浮点前向，主要验证权重存储和反量化关系；它不等于纯 INT8 计算，也不保证真实带宽或延迟收益。
+    &quot;&quot;&quot;
+    def __init__(self, in_features: int, out_features: int):
+        super().__init__()
+        self.register_buffer(&quot;weight_int8&quot;, torch.zeros((out_features, in_features), dtype=torch.int8))
+        self.register_buffer(&quot;scale&quot;, torch.tensor(1.0))
+        self.bias = nn.Parameter(torch.zeros(out_features))
+
+    def from_float(self, linear_layer: nn.Linear):
+        &quot;&quot;&quot;
+        从高精度的 Linear 层中吸收权重并进行 PTQ 量化
+        &quot;&quot;&quot;
+        with torch.no_grad():
+            w_quant, scale = absmax_quantize(linear_layer.weight)
+            self.weight_int8.copy_(w_quant)
+            self.scale.copy_(scale)
+            if linear_layer.bias is not None:
+                self.bias.copy_(linear_layer.bias)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        # ==========================================
+        # TODO 4: 反量化与前向传播
+        # 1. 将 weight_int8 转换回与输入 x 相同的类型 (如 float32/float16)
+        # 2. 除以 self.scale 恢复其数值范围
+        # 3. 将 bias 也对齐到输入 dtype，再使用 F.linear
+        # ==========================================
+
+        # w_fp = ???
+        # w_dequant = ???
+
+        # out = ???
+        return out
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
+def test_quantization():
+    try:
+        torch.manual_seed(42)
+
+        # 1. 测试 absmax_quantize 的基础边界
+        zero_q, zero_scale = absmax_quantize(torch.zeros(5))
+        assert zero_q.dtype == torch.int8, &quot;量化后的权重存储必须是 torch.int8！&quot;
+        assert torch.count_nonzero(zero_q) == 0, &quot;全 0 张量量化后仍应保持全 0！&quot;
+        assert torch.isfinite(torch.as_tensor(zero_scale)).item(), &quot;全零输入的 scale 不能是 NaN/Inf！&quot;
+
+        # 继续沿用带符号样本验证 scale 和 round 行为
+        x_fp = torch.tensor([-0.8, 1.5, -3.0, 2.5, 0.0])
+        # 绝对最大值是 3.0。Scale = 127 / 3.0 = 42.333
+        # 2.5 * 42.333 = 105.8 -&gt; 106
+        x_q, scale = absmax_quantize(x_fp)
+        assert x_q.dtype == torch.int8, &quot;量化后的权重存储必须是 torch.int8！&quot;
+        assert torch.allclose(scale, torch.tensor(127.0 / 3.0)), &quot;Scale 计算不正确！&quot;
+        assert x_q[3].item() == 106, &quot;量化后的四舍五入数值计算不正确！&quot;
+        print(&quot;✅ absmax_quantize 核心算法测试通过！&quot;)
+
+        # 2. 测试 W8A16 线性层
+        in_dim, out_dim = 128, 64
+        batch, seq = 2, 10
+
+        fp_linear = nn.Linear(in_dim, out_dim)
+        q_linear = W8A16Linear(in_dim, out_dim)
+        q_linear.from_float(fp_linear)
+
+        fp_bytes = fp_linear.weight.element_size() * fp_linear.weight.numel()
+        q_bytes = q_linear.weight_int8.element_size() * q_linear.weight_int8.numel()
+        #assert q_bytes == fp_bytes // 4, &quot;INT8 权重的内存占用必须是 FP32 的四分之一！&quot;
+        expected_ratio = fp_linear.weight.element_size() // q_linear.weight_int8.element_size()
+        assert q_bytes * expected_ratio == fp_bytes, \
+            f&quot;INT8 权重内存占用应为原大小的 1/{expected_ratio}，实际比例为 {fp_bytes / q_bytes:.1f}&quot;
+
+        x_input = torch.randn(batch, seq, in_dim)
+        out_fp = fp_linear(x_input)
+        out_q = q_linear(x_input)
+        cos_sim = F.cosine_similarity(out_fp.flatten(), out_q.flatten(), dim=0)
+        # 余弦相似度 &gt; 0.99 只说明这个小样本的输出方向接近，不代表任务质量不变
+        assert out_q.shape == out_fp.shape, &quot;量化前后输出形状必须一致！&quot;
+        assert torch.isfinite(out_q).all(), &quot;反量化输出不能包含 NaN/Inf！&quot;
+        assert torch.isfinite(out_fp - out_q).all(), &quot;量化误差必须可以计算且为有限值！&quot;
+        assert cos_sim &gt; 0.99, f&quot;反量化计算出的张量差异过大，相似度仅为: {cos_sim.item():.4f}&quot;
+
+        # 3. 用一个确定性小矩阵，直接验证“量化权重 -&gt; 反量化 -&gt; 线性层”的公式链路
+        fp_linear_small = nn.Linear(4, 3)
+        with torch.no_grad():
+            fp_linear_small.weight.copy_(torch.tensor([
+                [1.0, -2.0, 3.0, -4.0],
+                [0.5, 0.25, -0.75, 1.5],
+                [-1.0, 0.0, 1.0, -2.0],
+            ]))
+            fp_linear_small.bias.copy_(torch.tensor([0.1, -0.2, 0.3]))
+
+        q_linear_small = W8A16Linear(4, 3)
+        q_linear_small.from_float(fp_linear_small)
+        x_small = torch.tensor([[1.0, -1.0, 0.5, 2.0], [0.0, 1.0, -1.0, 3.0]])
+        out_small = q_linear_small(x_small)
+        w_dequant = q_linear_small.weight_int8.to(x_small.dtype) / q_linear_small.scale
+        out_ref = F.linear(x_small, w_dequant, q_linear_small.bias)
+        assert torch.allclose(out_small, out_ref, atol=1e-6), &quot;小矩阵下的反量化前向公式不正确！&quot;
+
+        # 3. FP16 输入边界：检查权重和 bias 都能与输入 dtype 对齐
+        x_half = x_input.to(torch.float16)
+        fp_half = fp_linear.to(torch.float16)(x_half)
+        q_half = q_linear(x_half)
+        assert q_half.dtype == torch.float16, &quot;FP16 输入时输出 dtype 应保持一致！&quot;
+        assert q_half.shape == fp_half.shape, &quot;FP16 前向输出形状不一致！&quot;
+
+        print(f&quot;✅ W8A16Linear 测试通过！输出相似度: {cos_sim.item():.4f}，INT8 权重存储检查通过。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成导致变量属性错误。&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义。&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了操作错误。&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误。&quot;)
+        elif isinstance(e, AssertionError):
+            print(f&quot;❌ 测试失败: {e}&quot;)
+        elif isinstance(e, RuntimeError):
+            print(&quot;代码可能未完成，导致了运行时错误。&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了断言失败。&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 发生未知异常: {e}&quot;)
+        raise
 
 
-
+test_quantization()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="w8a16-range-and-scale">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2：absmax、零值保护与 scale</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先定标尺：用 absmax 把浮点范围对齐到 INT8</h2>
 
@@ -1195,22 +1532,14 @@ print(largest.shape)   # torch.Size([])，标量张量</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="w8a16-range-and-scale-0">
-                <span>完成 Notebook TODO 1 和 TODO 2：让 absmax 与 scale 都是标量，并保留与 x 兼容的 dtype/device 语义。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-range-and-scale-1">
-                <span>先单独运行全 0 输入；检查量化结果未来仍能保持原 shape、最终 dtype 为 torch.int8，并确认 scale 不是 NaN/Inf。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-range-and-scale-2">
-                <span>若有限性测试失败，优先打印 absmax 和 scale；常见错误是先做除法、后做零值保护，顺序反了。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="w8a16-round-clamp-cast">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：x_scaled 与 x_quant</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再离散化：乘、舍入、截断、转 int8 一个都不能乱</h2>
 
@@ -1319,22 +1648,14 @@ assert codes.dtype == torch.int8</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="w8a16-round-clamp-cast-0">
-                <span>完成 TODO 3，并逐行检查 x_scaled 与 x_quant 的 shape 都等于 x.shape、device 不变，最终 x_quant.dtype 必须是 torch.int8。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-round-clamp-cast-1">
-                <span>运行带符号样本测试，确认 scale 等于 127/3，索引 3 的量化值等于 106；全 0 输入量化后非零元素数应为 0。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-round-clamp-cast-2">
-                <span>若 106 断言失败，按“是否乘 scale、是否先 round、clamp 边界、是否过早 cast”四步排查。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="w8a16-dequant-linear">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 4：weight_int8 反量化与 F.linear</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>最后做前向：INT8 负责存，输入 dtype 负责算</h2>
 
@@ -1449,15 +1770,7 @@ assert scores.shape == (5, 2)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="w8a16-dequant-linear-0">
-                <span>完成 TODO 4：w_fp、w_dequant 和 out 的 shape 依次保持 [out_features, in_features]、[out_features, in_features]、[..., out_features]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-dequant-linear-1">
-                <span>检查 dtype/device：w_fp 跟随 x.dtype，weight_int8 与 scale 作为 buffer 应和模块同 device，x 与层也必须位于同一 device。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="w8a16-dequant-linear-2">
-                <span>运行全部测试；若小矩阵失败先核对除法与 bias，若余弦低再核对量化顺序，若内存断言失败则确认 weight_int8 真的是 torch.int8。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1481,16 +1794,29 @@ assert scores.shape == (5, 2)</code></pre></div>
     const predictData = {"w8a16-range-and-scale":{"answer":0,"revealNote":"除以 0 不会得到可用标尺。Notebook 首个边界测试明确要求 zero_scale 是有限值。"},"w8a16-round-clamp-cast":{"answer":0,"revealNote":"round 改的是数值，不等于改存储类型。Notebook 会直接断言 x_q.dtype == torch.int8。"},"w8a16-dequant-linear":{"answer":0,"revealNote":"F.linear 只替换输入的最后一维：in_features=128 被 out_features=64 替换，前面的 batch 与 seq 保留。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "25";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-862aea35537d";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

@@ -1,6 +1,6 @@
 # 27. ZeRO Optimizer Sim | ZeRO 优化器模拟
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `分布式训练`, `ZeRO`, `显存优化` | **目标人群：** 分布式训练工程师
+**难度：** Hard | **环境：** CPU-first | **标签：** `并行通信`, `ZeRO`, `参数切分` | **目标人群：** 并行通信学习者
 
 > 🚀 **云端运行环境**
 >
@@ -24,27 +24,19 @@ ZeRO 的思路是把这些重复状态拆开，让不同 GPU 只维护自己负�
 
 ## 前置阅读
 
-**导语：** 先把优化器、训练闭环和显存账本看过，再进入 ZeRO 会更容易理解显存切分的意义。
+**导语：** 进入本节前，先能区分参数、梯度和优化器状态，并能从显存账本中看出它们为什么会在每张 GPU 上重复保存。
 
 - [P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失函数](../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.md)
 - [P0: 13. Simple Neural Network Training | 简单神经网络训练循环](../00_Prerequisites/13_Simple_Neural_Network_Training.md)
 - [P0: 20. Profiling and Memory Ledger | 性能剖析与显存账本](../00_Prerequisites/20_Profiling_and_Memory_Ledger.md)
 
 
-## 相关阅读
-
-**导语：** ZeRO 解决的是训练状态冗余；接下来可以继续看模型层切分和张量切分如何分摊计算与显存。
-
-- [P1: 05. Communication Topologies | 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
-- [P1: 17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](../01_Hardware_Math_and_Systems/17_CUDA_Stream_and_Asynchrony.md)
-- [P1: 26. Parallel Strategy Decision Framework | 并行策略决策框架](../01_Hardware_Math_and_Systems/26_Parallel_Strategy_Decision_Framework.md)
-- [28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.md)
-- [29. Tensor Parallelism Sim | Tensor 并行模拟](../02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.md)
-
 ---
 ### Step 1: ZeRO-1 核心思想
 
 > **传统的 Data Parallel (DP，数据并行)：**
+
+![ZeRO：把训练状态从每卡复制改成分片](../public/02_PyTorch_Algorithms/27_zero_sharding.svg)
 > 每张卡都有一份完整的模型权重、完整的梯度、完整的优化器状态。
 > 各个卡算完自己这批数据的梯度后，进行 `All-Reduce` 求平均。然后每张卡用自己的优化器更新自己完整的权重。
 > **痛点：严重浪费！每张卡都在重复保存一样的优化器状态和重复做一样的参数更新。**
@@ -54,6 +46,7 @@ ZeRO 的思路是把这些重复状态拆开，让不同 GPU 只维护自己负�
 > 2. **切分：** 优化器状态被切分成 $N$ 份（假设有 $N$ 张卡），每张卡只负责维护 $\frac{1}{N}$ 的优化器状态，并只负责更新这 $\frac{1}{N}$ 的模型权重。
 > 3. **通信：** 反向传播结束后，不需要对所有梯度做 `All-Reduce`，而是做 `Reduce-Scatter`，让每张卡只拿到属于自己那 $\frac{1}{N}$ 权重的平均梯度。
 > 4. 每张卡更新自己负责的 $\frac{1}{N}$ 权重后，再通过 `All-Gather` 将更新后的片段广播给所有卡，拼合出完整的新权重。
+
 ### Step 2: 代码实现框架
 我们需要模拟一个分布式环境（可以简单用 Python 列表或字典代替不同的 GPU 节点）。在优化器初始化时，收集所有的模型参数，并将它们的 FP32 梯度和 Optimizer State（例如 Adam 的 Momentum 和 Variance）切分成 N 块，分别存放在对应的 GPU 上。在更新时，每张卡只负责计算自己那一小块的参数更新。
 
@@ -195,7 +188,9 @@ def test_zero1_sim():
 test_zero1_sim()
 ```
 
-### Step 4: ZeRO 家族的终极进化 (ZeRO-1 vs ZeRO-2 vs ZeRO-3)
+### Step 4: ZeRO 家族的分片层次与通信代价
+
+![ZeRO 分阶段：省下的状态对应新增的通信](../public/02_PyTorch_Algorithms/27_zero_stages.svg)
 
 在上面的代码中，上述代码模拟了 ZeRO-1。但微软 DeepSpeed 团队在此基础上进行了进一步的演进。为了训练千亿甚至万亿参数的模型，他们提出了完整的 ZeRO 三部曲。
 
@@ -326,3 +321,14 @@ class ZeRO1_Optimizer_Sim:
 - **权衡**：ZeRO-3 显存最优但通信开销最大，需要高速互联（如 NVLink、InfiniBand）
 - **混合策略**：可以在节点内用 ZeRO-3，节点间用 ZeRO-2，平衡显存和通信
 - **工业实践**：DeepSpeed 支持 ZeRO-1/2/3 自动切换，训练 GPT-3（175B）使用 ZeRO-3
+
+## 相关阅读
+
+ZeRO 的核心是训练状态分片；读完本节后，可以再用论文、DeepSpeed 实现和并行策略页面核对通信与显存取舍。
+
+- [ZeRO 原论文：Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054)
+- [DeepSpeed ZeRO 官方文档](https://www.deepspeed.ai/tutorials/zero/)
+- [P1: 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
+- [28. Pipeline 并行微批次](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.md)
+- [29. Tensor 并行模拟](../02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.md)
+- [P1: 并行策略决策框架](../01_Hardware_Math_and_Systems/26_Parallel_Strategy_Decision_Framework.md)

@@ -1,0 +1,36 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Preference Data and Evaluation Matrix</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Alignment conclusions fail most often when data shape, method shape and evaluation shape do not point in the same direction.</text>
+
+  <rect x="96" y="188" width="1088" height="84" rx="16" fill="#E5E7EB"/>
+  <text x="140" y="238" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Data Shape</text>
+  <text x="432" y="238" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Fits Best With</text>
+  <text x="742" y="238" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Evaluation Emphasis</text>
+  <text x="1026" y="238" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Risk</text>
+
+  <rect x="96" y="284" width="1088" height="96" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="124" y="324" fill="#1E3A8A" font-size="21" font-family="Arial, sans-serif" font-weight="700">chosen / rejected pair</text>
+  <text x="432" y="324" fill="#1E3A8A" font-size="21" font-family="Arial, sans-serif" font-weight="700">DPO / pairwise preference</text>
+  <text x="742" y="324" fill="#1E3A8A" font-size="17" font-family="Arial, sans-serif">pairwise accuracy, win-rate, consistency</text>
+  <text x="1026" y="324" fill="#1E3A8A" font-size="17" font-family="Arial, sans-serif">noisy preference labels</text>
+  <text x="124" y="354" fill="#1E3A8A" font-size="15" font-family="Arial, sans-serif">best when one answer is clearly preferred over another</text>
+
+  <rect x="96" y="396" width="1088" height="96" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="124" y="436" fill="#166534" font-size="21" font-family="Arial, sans-serif" font-weight="700">group candidates</text>
+  <text x="432" y="436" fill="#166534" font-size="21" font-family="Arial, sans-serif" font-weight="700">GRPO / groupwise comparison</text>
+  <text x="742" y="436" fill="#166534" font-size="17" font-family="Arial, sans-serif">ranking stability, group win-rate</text>
+  <text x="1026" y="436" fill="#166534" font-size="17" font-family="Arial, sans-serif">unstable candidate pool</text>
+  <text x="124" y="466" fill="#166534" font-size="15" font-family="Arial, sans-serif">best when multiple candidates reflect relative quality, not one binary label</text>
+
+  <rect x="96" y="508" width="1088" height="96" rx="16" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="124" y="548" fill="#9D174D" font-size="21" font-family="Arial, sans-serif" font-weight="700">rollout + reward signal</text>
+  <text x="432" y="548" fill="#9D174D" font-size="21" font-family="Arial, sans-serif" font-weight="700">RLHF / PPO</text>
+  <text x="742" y="548" fill="#9D174D" font-size="17" font-family="Arial, sans-serif">reward behavior, downstream preference outcome</text>
+  <text x="1026" y="548" fill="#9D174D" font-size="17" font-family="Arial, sans-serif">system cost dominates</text>
+  <text x="124" y="578" fill="#9D174D" font-size="15" font-family="Arial, sans-serif">best when complete optimization behavior matters more than pipeline simplicity</text>
+
+  <rect x="96" y="626" width="1088" height="24" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="118" y="643" fill="#92400E" font-size="15" font-family="Arial, sans-serif">Rule of thumb: if data shape and evaluation shape do not match the method shape, the final project decision will usually be weak.</text>
+</svg>

@@ -1,7 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const lessonOverrides = require("./lesson_overrides");
-const curriculumV2 = require("./curriculum_v2");
+const currentCurriculum = require("./curriculum_current");
+const currentQuizzes = require("./current_quizzes");
+const MarkdownIt = require("markdown-it");
+const texmath = require("markdown-it-texmath");
+const katex = require("katex");
 const enhanceFoundationLessons = require("./foundation_enhancements");
 
 const root = __dirname;
@@ -888,9 +892,32 @@ y = SquareFunction.apply(x)</code></pre>
   }
 ];
 
-// Upstream restructured everything after 11. Preserve the customized 00-11
-// metadata and replace the legacy tail with the canonical 12-32 curriculum.
-levels.splice(12, levels.length - 12, ...curriculumV2);
+const {levels: currentLevels, reserved, moves} = currentCurriculum.build(levels.slice(0, 12));
+levels.splice(0, levels.length, ...currentLevels);
+const upstream = {commit: "4fa62623ae7f2f207871b43c3f254a765765bf2e", date: "2026-09-14"};
+const moveByOldId = Object.fromEntries(moves.map(m => [m.oldId, m.id]));
+const legacyLinks = new Map(moves.map(m => [m.oldFile.replace(/\.ipynb$/, "").toLowerCase() + ".html", m.file.replace(/\.ipynb$/, "").toLowerCase() + ".html"]));
+function updateLessonLinks(value) {
+  if (typeof value === "string") {
+    for (const m of moves) value = value.replaceAll(m.oldFile, m.file);
+    return value.replace(/\b\d{2}_[a-z0-9_]+\.html/g, target => legacyLinks.get(target) || target);
+  }
+  if (Array.isArray(value)) return value.map(updateLessonLinks);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, updateLessonLinks(v)]));
+  return value;
+}
+function migrateProgressScript() {
+  return `
+    const courseMoves = ${JSON.stringify(moveByOldId)};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+  `;
+}
+
 
 const categoryLabel = {
   foundation: "基础",
@@ -981,32 +1008,49 @@ function markdownToHtml(markdown) {
   return html.join("\n");
 }
 
+function resolveNotebookUrl(url, level) {
+  if (/^(?:https?:|mailto:|#)/.test(url)) return url;
+  const [file, fragment] = url.split("#");
+  const suffix = fragment ? "#" + fragment : "";
+  const absolute = file.startsWith("/")
+    ? path.resolve(root, "../../docs/public", file.slice(1))
+    : path.resolve(root, "..", file);
+  const linkedLevel = levels.find(l => path.resolve(root, "..", l.file) === absolute);
+  if (linkedLevel) return slug(linkedLevel) + suffix;
+  return path.relative(notesDir, absolute) + suffix;
+}
+function renderNotebookMarkdown(text, level) {
+  const md = new MarkdownIt({html: false, linkify: true}).use(texmath, {engine: katex, delimiters: "dollars", katexOptions: {throwOnError: false, trust: false, strict: false}});
+  md.core.ruler.after("inline", "notebook-links", state => {
+    function visit(tokens) {
+      for (const token of tokens) {
+        for (const attr of ["href", "src"]) {
+          const url = token.attrGet(attr);
+          if (url) token.attrSet(attr, resolveNotebookUrl(url, level));
+        }
+        if (token.children) visit(token.children);
+      }
+    }
+    visit(state.tokens);
+  });
+  return md.render(text.replace(/\u200b/g, ""));
+}
 function notebookGuideHtml(level) {
-  const notebookPath = path.join(root, "..", level.file);
-  if (!fs.existsSync(notebookPath)) return "";
-
-  const notebook = JSON.parse(fs.readFileSync(notebookPath, "utf8"));
-  const markdown = notebook.cells
-    .filter((cell) => cell.cell_type === "markdown")
-    .map((cell) => Array.isArray(cell.source) ? cell.source.join("") : String(cell.source || ""))
-    .filter((text) => {
-      const compact = text.replace(/\s/g, "");
-      return compact && !compact.includes("STOPHERE");
-    })
-    .join("\n\n");
-
-  if (!markdown.trim()) return "";
-
-  return `
-    <section class="card notebook-guide section">
-      <div class="quest-title">
-        <h2>Notebook 原文导学</h2>
-        <span class="reward">来自 ${esc(level.file)}</span>
-      </div>
-      <div class="notebook-content">
-        ${markdownToHtml(markdown)}
-      </div>
-    </section>`;
+  const cells = level.cells;
+  const intro = currentCurriculum.source(cells.find(c => c.cell_type === "markdown"));
+  const markdown = cells.filter(c => c.cell_type === "markdown").slice(1).map(currentCurriculum.source).join("\n\n");
+  const code = cells.map((c, i) => c.cell_type === "code" && /TODO/.test(currentCurriculum.source(c))
+    ? `<details><summary>题目与测试代码 · Cell ${i + 1}</summary><pre><code>${esc(currentCurriculum.source(c))}</code></pre></details>` : "").join("");
+  return `<section class="card notebook-guide section" data-source-hash="${level.sourceHash}">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../${esc(level.file)}">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/${upstream.commit}/02_PyTorch_Algorithms/${esc(level.file)}">官方版本</a></p>
+    <div class="notebook-content">${renderNotebookMarkdown(intro, level)}</div>
+    <h3>当前题目检查清单</h3>
+    <ul>${level.handsOn.map(t => `<li>${esc(t)}</li>`).join("") || "<li>按下方题目代码中的函数说明和测试完成实现。</li>"}</ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content">${renderNotebookMarkdown(markdown, level)}</div></details>
+    ${code}
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>`;
 }
 
 function slug(level) {
@@ -1302,6 +1346,7 @@ function lessonLevelPage(level, prev, next) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/vendor/katex/katex.min.css">
   <title>Level ${level.id} | ${esc(level.title)}</title>
   <style>
     :root {
@@ -1320,6 +1365,15 @@ function lessonLevelPage(level, prev, next) {
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -2066,8 +2120,6 @@ ${lessonStyles}
 
 ${level.notebookGuide || ""}
 
-${level.notebookGuide || ""}
-
     <section class="lessons">
       ${lessons}
     </section>
@@ -2091,15 +2143,20 @@ ${level.notebookGuide || ""}
     const predictTotal = ${predictTotal};
     const checkpointTotal = ${level.lessons.length};
     const homeworkTotal = ${homeworkCount};
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = ${JSON.stringify(level.oldId || null)};
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-${level.sourceHash.slice(0, 12)}";
+    const predictKey = statePrefix + levelId + "-predicts";
+    ${migrateProgressScript()}
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
@@ -2231,9 +2288,25 @@ ${level.notebookGuide || ""}
 }
 
 function levelPage(level, prev, next) {
-  const customLessons = level.lessons || lessonOverrides[level.id];
-  const lessons = enhanceFoundationLessons(level.id, customLessons || genericLessons(level));
-  const notebookGuide = customLessons ? "" : notebookGuideHtml(level);
+  const oldLessons = level.lessons || (level.oldId ? lessonOverrides[level.oldId] : null);
+  let lessons;
+  if (oldLessons) {
+    lessons = updateLessonLinks(enhanceFoundationLessons(level.oldId, oldLessons)).map(lesson => ({...lesson,
+      todo: "概念练习 · 作业见新版任务区",
+      homework: ["完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。"]
+    }));
+  } else {
+    const checkpoint = currentQuizzes[Number(level.id)];
+    if (!checkpoint) throw new Error(`Missing current quiz: ${level.file}`);
+    lessons = [{id: "current-core", title: "从原理走到本课实现", todo: "新版课程导学",
+      prerequisite: ["先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。"],
+      intuition: level.summary,
+      exampleHtml: `<div class="notebook-content">${renderNotebookMarkdown(level.steps.join("\n\n"), level)}</div>`,
+      syntaxHtml: '<p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>',
+      checkpoint, homework: level.handsOn.length ? level.handsOn : ["按题目函数说明完成实现，并运行 Notebook 测试。"]
+    }];
+  }
+  const notebookGuide = notebookGuideHtml(level);
   return lessonLevelPage({ ...level, lessons, notebookGuide }, prev, next);
 }
 
@@ -2255,6 +2328,7 @@ function indexPage() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/vendor/katex/katex.min.css">
   <title>PyTorch Algorithms 闯关地图</title>
   <style>
     :root {
@@ -2269,6 +2343,15 @@ function indexPage() {
       --soft-green: #e8f6ef;
       --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -2409,8 +2492,8 @@ function indexPage() {
         <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
-          <div class="stat"><strong>${levels.length}</strong><span>Notebook 关卡</span></div>
-          <div class="stat"><strong>2–4</strong><span>每关学习模块</span></div>
+          <div class="stat"><strong>${levels.length}</strong><span>正式课程</span></div>
+          <div class="stat"><strong>${reserved.length}</strong><span>官方预留入口</span></div>
         </div>
       </div>
       <div class="map-art" aria-label="学习流程">
@@ -2423,6 +2506,13 @@ function indexPage() {
       </div>
     </section>
 
+    <section class="card" style="padding:20px;margin:20px 0">
+      <h2>新版学习路线</h2><p>00–29 基础机制 → 30–52 方法扩展 → 60–86 项目验证。预留编号不计入通关总数。</p>
+      <p>同步官方 ${upstream.commit.slice(0, 7)} · ${upstream.date}。旧进度按课程主题迁移；新版作业需要重新核对。</p>
+      <p><a href="../../topic_discussion/inference_optimization/intro.md">推理优化路线</a> · <a href="../../topic_discussion/memory_performance_tuning/intro.md">显存优化路线</a> · <a href="../intro.md">Part 02 官方总览</a></p>
+      <label>搜索课程 <input id="course-search" type="search" placeholder="编号、中文、英文或关键词" style="max-width:100%;padding:10px"></label>
+      <details><summary>查看 ${reserved.length} 个预留章节（尚未形成正式课程）</summary><ul>${reserved.map(l => `<li><a href="../${l.file}">${esc(l.title)}</a></li>`).join("")}</ul></details>
+    </section>
     <section class="toolbar">
       <div class="filters" aria-label="关卡过滤器">
         <button class="active" data-filter="all">全部</button>
@@ -2440,11 +2530,7 @@ ${cards}
   </main>
 
   <script>
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
-    }
+    ${migrateProgressScript()}
     const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
     const cards = [...document.querySelectorAll(".level")];
     const doneCount = document.querySelector("#done-count");
@@ -2460,14 +2546,19 @@ ${cards}
       progressText.textContent = "本地记录：" + completed.size + " / " + cards.length + " 关已通关";
     }
 
-    document.querySelectorAll("[data-filter]").forEach((button) => {
+    let activeFilter = "all";
+    function filterCards() {
+      const query = document.querySelector("#course-search").value.trim().toLowerCase();
+      cards.forEach(card => {
+        card.style.display = (activeFilter === "all" || card.dataset.category === activeFilter)
+          && card.textContent.toLowerCase().includes(query) ? "" : "none";
+      });
+    }
+    document.querySelector("#course-search").addEventListener("input", filterCards);
+    document.querySelectorAll("[data-filter]").forEach(button => {
       button.addEventListener("click", () => {
-        document.querySelectorAll("[data-filter]").forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-        const filter = button.dataset.filter;
-        cards.forEach((card) => {
-          card.style.display = filter === "all" || card.dataset.category === filter ? "" : "none";
-        });
+        document.querySelectorAll("[data-filter]").forEach(item => item.classList.remove("active"));
+        button.classList.add("active"); activeFilter = button.dataset.filter; filterCards();
       });
     });
 
@@ -2483,11 +2574,14 @@ const cleanGeneratedHtml = (html) => html.replace(/[ \t]+$/gm, "");
 levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
   const page = levelPage(level, levels[index - 1], levels[index + 1]);
-  const preserveLegacyWhitespace = Number(level.id) <= 5;
-  fs.writeFileSync(filePath, preserveLegacyWhitespace ? page : cleanGeneratedHtml(page));
+  fs.writeFileSync(filePath, cleanGeneratedHtml(page));
 });
 
-const expectedPages = new Set([...levels.map(slug), "25_quantization_model_factory.html"]);
+for (const [oldPage, newPage] of legacyLinks) {
+  if (oldPage === newPage) continue;
+  fs.writeFileSync(path.join(notesDir, oldPage), `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${newPage}"><title>课程已迁移</title></head><body><p>课程编号已更新。<a href="${newPage}">继续学习同一主题的新课程</a></p></body></html>\n`);
+}
+const expectedPages = new Set([...levels.map(slug), ...legacyLinks.keys(), "25_quantization_model_factory.html"]);
 for (const file of fs.readdirSync(notesDir)) {
   if (file.endsWith(".html") && !expectedPages.has(file)) {
     fs.unlinkSync(path.join(notesDir, file));
@@ -2497,3 +2591,10 @@ for (const file of fs.readdirSync(notesDir)) {
 fs.writeFileSync(path.join(root, "index.html"), cleanGeneratedHtml(indexPage()));
 
 console.log(`Generated ${levels.length} level pages and index.html`);
+
+const vendor = path.join(root, "assets/vendor/katex");
+fs.mkdirSync(vendor, {recursive: true});
+fs.copyFileSync(require.resolve("katex/dist/katex.min.css"), path.join(vendor, "katex.min.css"));
+fs.cpSync(path.join(path.dirname(require.resolve("katex/dist/katex.min.css")), "fonts"), path.join(vendor, "fonts"), {recursive: true});
+fs.copyFileSync(path.join(path.dirname(require.resolve("katex/package.json")), "LICENSE"), path.join(vendor, "LICENSE"));
+fs.writeFileSync(path.join(root, "course_manifest.json"), JSON.stringify({upstream, levels: levels.map(({id, oldId, title, file, sourceHash}) => ({id, oldId, title, file, sourceHash, page: slug({id, file})})), reserved, moves}, null, 2) + "\n");

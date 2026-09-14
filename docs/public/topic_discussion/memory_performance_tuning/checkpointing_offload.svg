@@ -1,0 +1,31 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Checkpointing vs Offload</text>
+  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Both save activation memory. One pays mostly with recompute, the other pays mostly with transfer.</text>
+
+  <rect x="100" y="190" width="500" height="370" rx="24" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="130" y="228" fill="#92400E" font-size="24" font-family="Arial, sans-serif" font-weight="700">Checkpointing</text>
+  <text x="130" y="266" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Store fewer activations now</text>
+  <text x="130" y="294" fill="#92400E" font-size="18" font-family="Arial, sans-serif">→ recompute forward fragments later</text>
+  <rect x="130" y="336" width="410" height="146" rx="18" fill="#FFF7D6" stroke="#D97706" stroke-width="1.5"/>
+  <text x="156" y="374" fill="#92400E" font-size="18" font-family="Arial, sans-serif">Best when:</text>
+  <text x="156" y="404" fill="#92400E" font-size="16" font-family="Arial, sans-serif">• extra compute is acceptable</text>
+  <text x="156" y="428" fill="#92400E" font-size="16" font-family="Arial, sans-serif">• activation memory dominates the peak</text>
+  <text x="156" y="452" fill="#92400E" font-size="16" font-family="Arial, sans-serif">• you want a pure GPU-side solution</text>
+  <text x="130" y="526" fill="#92400E" font-size="16" font-family="Arial, sans-serif">Primary trade: memory ↓, recompute time ↑</text>
+
+  <rect x="680" y="190" width="500" height="370" rx="24" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="710" y="228" fill="#1E3A8A" font-size="24" font-family="Arial, sans-serif" font-weight="700">Offload</text>
+  <text x="710" y="266" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Keep the states, but move them</text>
+  <text x="710" y="294" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">to another memory tier</text>
+  <rect x="710" y="336" width="410" height="146" rx="18" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+  <text x="736" y="374" fill="#1E3A8A" font-size="18" font-family="Arial, sans-serif">Best when:</text>
+  <text x="736" y="404" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• external bandwidth is acceptable</text>
+  <text x="736" y="428" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• GPU memory is too tight for checkpoint alone</text>
+  <text x="736" y="452" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">• system can tolerate transfer waits</text>
+  <text x="710" y="526" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Primary trade: memory ↓, transfer / wait time ↑</text>
+
+  <rect x="100" y="598" width="1080" height="34" rx="12" fill="#ECFCCB" stroke="#65A30D" stroke-width="1.5"/>
+  <text x="126" y="620" fill="#365314" font-size="16" font-family="Arial, sans-serif">Rule of thumb: if activation is the problem, first ask whether the system is more able to pay with compute or with transport.</text>
+</svg>

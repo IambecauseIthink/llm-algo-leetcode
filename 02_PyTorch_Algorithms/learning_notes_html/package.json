@@ -1,0 +1,19 @@
+{
+  "name": "learning_notes_html",
+  "version": "1.0.0",
+  "description": "这个目录用于存放“Notebook 课前导学 + 闯关检查”HTML。",
+  "scripts": {
+    "generate": "node generate_levels.js",
+    "test": "node test_curriculum_sync.js && node test_level25_model_factory.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "CC-BY-NC-SA-4.0",
+  "type": "commonjs",
+  "dependencies": {
+    "katex": "0.16.22",
+    "markdown-it": "14.1.0",
+    "markdown-it-texmath": "1.0.0"
+  },
+  "private": true
+}

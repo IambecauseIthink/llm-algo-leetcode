@@ -1,6 +1,6 @@
 # 01. RMSNorm Tutorial | RMSNorm 教程
 
-**难度：** Easy | **环境：** CPU-first | **标签：** `基础架构`, `PyTorch`, `归一化` | **目标人群：** 模型微调与工程部署
+**难度：** Easy | **环境：** CPU-first | **标签：** `基础实现`, `归一化`, `RMSNorm` | **目标人群：** 基础实现学习者
 
 > 🚀 **云端运行环境**
 >
@@ -23,20 +23,11 @@ RMSNorm 选择更直接的做法：不再减均值，只用均方根控制特征
 ---
 ## 前置阅读
 
-**导语：** 先把张量维度、训练循环和归一化直觉理顺，再看 RMSNorm 的实现会更顺。
+**导语：** 先确认输入张量的归一化维度和训练接口，再比较 LayerNorm 与 RMSNorm 如何处理特征尺度。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 13. Simple Neural Network Training | 简单神经网络训练循环](../00_Prerequisites/13_Simple_Neural_Network_Training.md)
 - [P0: 15. Normalization Techniques | 归一化技术](../00_Prerequisites/15_Normalization_Techniques.md)
-
-## 相关阅读
-
-**导语：** 理解 RMSNorm 后，可以继续看它在模型组件里的位置，以及同一类算子如何通过融合优化提升吞吐。
-
-- [02. SwiGLU Activation | SwiGLU 激活](../02_PyTorch_Algorithms/02_SwiGLU_Activation.md)
-- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
 
 ---
 ### Step 1: 核心思想与痛点
@@ -61,6 +52,31 @@ RMSNorm 的核心洞察很朴素：既然大模型的中间层均值通常已接
 2. **归一化并缩放 (Scale)：**
    $$ y = \frac{x}{\text{RMS}(x)} \odot \gamma $$
    其中 $\gamma \in \mathbb{R}^d$ 是可学习的权重参数（Weight）。**RMSNorm 没有偏置项 (Bias)**。
+
+#### 图解：RMSNorm 在 Block 里归一化什么
+
+RMSNorm 作用在每个 token 的 hidden dimension 上，输入输出形状不变。
+
+```text
+x [B, T, D]
+│
+├─ token 0: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
+├─ token 1: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
+└─ token T: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
+
+output [B, T, D]
+```
+
+![RMSNorm 在 Block 里的位置](/02_PyTorch_Algorithms/01_rmsnorm_diagram.svg)
+
+放回 LLaMA block 里看，RMSNorm 是 attention / MLP 前的稳定器：
+
+```text
+x ─► RMSNorm ─► Attention ─► residual add
+h ─► RMSNorm ─► MLP       ─► residual add
+```
+
+它不改变 token 数，也不混合 token 之间的信息；它只让每个 token 自己的 hidden 向量尺度更稳定。
 
 ### Step 3: 代码实现与混合精度 (AMP) 陷阱
 
@@ -236,3 +252,12 @@ class RMSNorm(nn.Module):
 - **这一题要解决什么：** 把归一化结果乘回可学习参数，并恢复到输入时的 dtype。
 - **为什么最后再转回原精度：** 前面的归一化已经用 FP32 算完了，最后只需要让输出和输入保持一致即可。
 - **带走的直觉：** 先保数值稳定，再做 dtype 对齐，是很多训练算子的通用写法。
+## 相关阅读
+
+想把本节的公式与真实模型实现对照时，可以先读原论文，再查看开源 Decoder 实现中的归一化位置。
+
+- [RMSNorm 原论文：Root Mean Square Layer Normalization](https://arxiv.org/abs/1910.07467)
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [02. SwiGLU 激活](../02_PyTorch_Algorithms/02_SwiGLU_Activation.md)
+- [04. 多头注意力与 GQA](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

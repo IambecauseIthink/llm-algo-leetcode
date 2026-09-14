@@ -1,6 +1,6 @@
 # 14. RLHF PPO Memory | RLHF 与 PPO 显存占用与流转
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `RLHF`, `PPO`, `对齐` | **目标人群：** 模型微调与对齐算法工程师
+**难度：** Hard | **环境：** CPU-first | **标签：** `后训练对齐`, `RLHF`, `PPO` | **目标人群：** 训练机制学习者
 
 > 🚀 **云端运行环境**
 >
@@ -40,20 +40,55 @@
 
 ---
 ### Step 1: PPO 算法与 Actor Loss 公式
-    
+
 PPO 的核心思想是：**让 Actor 往 Reward 高的方向更新，但步子不能迈得太大。**
 为此，PPO 引入了优势函数 (Advantage, $A_t$) 和重要性采样比率 (Ratio, $r_t$)。
 
-1. **重要性采样比率 $r_t$**：
-   $r_t = \frac{\pi_\theta(a_t|s_t)}{\pi_{old}(a_t|s_t)}$
+1. **重要性采样比率 r_t**：
+   r_t = pi_theta(a_t|s_t) / pi_old(a_t|s_t)
    也就是当前模型生成某个 Token 的概率，除以旧模型生成该 Token 的概率。
    
 2. **Clip 截断目标函数 (Actor Loss)**：
-   $L^{CLIP}(\theta) = - \min(r_t A_t, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t)$
-   如果优势 $A_t > 0$（这个 Token 很好），我们要提高它的概率，但如果 $r_t$ 已经超过 $1+\epsilon$（涨得太多了），就停止给予梯度奖励，防止模型“发疯”。
+   L^CLIP(theta) = - min(r_t * A_t, clip(r_t, 1-epsilon, 1+epsilon) * A_t)
+   如果优势 A_t > 0（这个 Token 很好），我们要提高它的概率，但如果 r_t 已经超过 1+epsilon（涨得太多了），就停止给予梯度奖励，防止模型“发疯”。
 
-### Step 2: 动手实战
-    
+### Step 2: RLHF 训练流转与显存账本
+
+RLHF / PPO 的难点不只在公式，而在训练链路里同时存在多个状态对象：
+
+```text
+prompt -> rollout / sampling -> reward model -> advantage -> PPO update
+         \-> reference model (frozen)
+         \-> critic / value baseline
+```
+
+这意味着一次更新里，除了要算 Actor 的新旧策略比率，还要保存参考模型、奖励模型和价值模型相关的中间结果。相比 SFT，PPO 的显存压力不是来自“单个 loss 更复杂”，而是来自“训练对象更多、流转步骤更长、每一步都要保留更多状态”。
+
+#### 四模型显存账本
+
+| 模型 / 状态 | 主要作用 | 资源含义 |
+|:---|:---|:---|
+| Actor | 生成当前策略并接受梯度更新 | 需要反向传播，保存激活与梯度 |
+| Reference | 提供稳定参照 | 冻结，但仍会占 forward 显存 |
+| Reward Model | 给生成结果打分 | 额外前向开销，常与 rollout 配合 |
+| Critic / Value Model | 估计 advantage 的基线 | 额外 forward / backward 路径 |
+
+#### 为什么 PPO 比 SFT 重
+
+- **对象更多**：SFT 主要是一个模型 + 一个 loss；PPO 往往是策略、参考、奖励和价值模型一起出现。
+- **状态更多**：PPO 需要保存 rollout、log prob、reward 和 advantage 的中间量。
+- **更新更谨慎**：clip、ratio 和 advantage 让每一步都要额外检查更新幅度。
+
+#### 和 DPO / GRPO 的关系
+
+- `DPO` 试图把偏好对齐收敛成更轻的 logprob 差值，不再维护完整 PPO 流程。
+- `GRPO` 继续保留组内比较，但进一步弱化对显式 Critic 的依赖。
+- 所以这节的角色不是“再造一个 RLHF 系统”，而是先把 PPO 为什么重讲清楚，后面的轻量方法才有对照意义。
+
+![RLHF PPO 显存流转图](/02_PyTorch_Algorithms/14_rlhf_memory_flow.svg)
+
+### Step 3: 动手实战
+
 **要求**：完成下方的 `compute_actor_loss`。你将接收到新旧模型的 log probability，以及用于控制更新方向的优势 `advantage`。
 
 实现主线分三步：计算新旧策略概率比 `ratio`，构造 clipped surrogate，再汇总得到 PPO actor loss。
@@ -62,6 +97,38 @@ PPO 的核心思想是：**让 Actor 往 Reward 高的方向更新，但步子�
 ```python
 import torch
 import torch.nn.functional as F
+
+
+def compute_actor_loss(log_probs_new, log_probs_old, advantages, clip_range=0.2):
+    """
+    计算 PPO 的 Actor Clip Loss。
+
+    Args:
+        log_probs_new: 当前 Actor 模型在采样的 Token 上的对数概率, shape [batch_size, seq_len]
+        log_probs_old: 采样时(旧) Actor 模型在对应 Token 上的对数概率, shape [batch_size, seq_len]
+        advantages: 优势函数 (Reward - Critic Value), shape [batch_size, seq_len]
+        clip_range: 截断范围 epsilon，默认 0.2
+
+    Returns:
+        actor_loss: 标量
+    """
+    if log_probs_new.shape != log_probs_old.shape or log_probs_new.shape != advantages.shape:
+        raise ValueError("log_probs_new / log_probs_old / advantages 的形状必须一致")
+
+    # ratio = π_θ(a_t|s_t) / π_old(a_t|s_t)
+    ratio = torch.exp(log_probs_new - log_probs_old)
+
+    # 无截断的 surrogate 目标：鼓励朝 advantage 指向的方向更新
+    surr1 = ratio * advantages
+
+    # 截断后的 surrogate 目标：限制单步更新幅度，避免策略漂移过快
+    clipped_ratio = torch.clamp(ratio, 1.0 - clip_range, 1.0 + clip_range)
+    surr2 = clipped_ratio * advantages
+
+    # PPO clip loss：取更保守的一侧，再做负号变成最小化目标
+    loss = -torch.min(surr1, surr2).mean()
+
+    return loss
 ```
 
 

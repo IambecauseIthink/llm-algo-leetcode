@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 76 | Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+
+        <span class="pill" id="status">闯关题：0 / 1</span>
+        <span class="pill" id="xp">XP 0 / 100</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 76 | 零基础导学关卡</p>
+        <h1>Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</h1>
+        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <div class="meta">
+          <span class="pill">76_Activation_Checkpoint_Offload_Benchmark.ipynb</span>
+          <span class="pill">显存优化</span><span class="pill">Checkpoint/Offload</span><span class="pill">基准对比</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
+        </div>
+        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="7a499d08e9362b1530d78a37c58c8851701491e49ca335893031b84414003d21">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../76_Activation_Checkpoint_Offload_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU 可完成正确性验证；GPU 用于策略 benchmark | <strong>标签：</strong> <code>显存优化</code>, <code>Checkpoint/Offload</code>, <code>基准对比</code> | <strong>目标人群：</strong> 准备比较训练显存策略的学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
+<strong>主责与复用边界：</strong> 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。</p>
+<blockquote>
+<p>运行提示：先查看<a href="../../../docs/guide.md#%E9%A1%B9%E7%9B%AE%E7%8E%AF%E5%A2%83%E9%A2%84%E6%A3%80%E4%B8%8E%E5%AE%89%E8%A3%85">使用指南中的项目环境预检与安装说明</a>，再打开真实 GPU 开关。CPU 路径只检查正确性；真实 GPU 路径必须先通过预检。</p>
+</blockquote>
+<p><strong>关键词：</strong> <code>activation</code>, <code>checkpoint</code>, <code>offload</code>, <code>memory</code>, <code>benchmark</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1：定义 required_budget_keys、required_quality_keys。</li><li>TODO 2：遍历 candidates，分别计算每个候选的可行性。</li><li>TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先完成 checkpoint、offload 等训练侧显存机制学习，并阅读 73 了解统一测量口径，再进入这个项目；本节默认你已经知道这些技巧各自怎么省显存，重点转向在同一训练任务下测量哪种方案更值。</p>
+<ul>
+<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing | 激活检查点</a></li>
+<li><a href="42_activation_offload.html">42. Activation Offload | 激活卸载</a></li>
+<li><a href="43_unified_memory_management.html">43. Unified Memory Management | 统一内存管理</a></li>
+<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成 checkpoint / offload 对照并保存报告后，先把结果交给 75 完成训练侧预算决策，再由 74 使用 profiling 对显存优化方案做端到端最终验证。</p>
+<ul>
+<li><a href="75_memory_budget_compression_project.html">75. Memory Budget Compression Project | 显存预算压缩项目</a></li>
+<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling Driven End-to-End Optimization | Profiling 驱动的端到端优化</a></li>
+</ul>
+<hr>
+<h3>Step 1：显存策略与机制假设</h3>
+<p>训练前向过程中会产生中间激活值，反向传播需要再次读取其中一部分。四种策略的区别，就是决定这些激活值留在哪里、是否重新计算，以及是否在 CPU 和 GPU 之间搬运。Step 1 先明确实验目标和对照条件，再用图片理解策略差异。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目内容</th>
+<th style="text-align:left">CPU：机制验证</th>
+<th style="text-align:left">GPU：真实对照</th>
+<th style="text-align:left">实验约定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">实验目的</td>
+<td style="text-align:left">用小型张量检查四种策略的 loss、gradient 和 backward 语义</td>
+<td style="text-align:left">在同一训练 workload 下比较策略的显存收益与性能代价</td>
+<td style="text-align:left">关注激活显存是否下降，以及速度和质量是否可接受</td>
+</tr>
+<tr>
+<td style="text-align:left">实验输入</td>
+<td style="text-align:left">使用固定张量和统一 loss，观察 saved tensors 或梯度结果</td>
+<td style="text-align:left">使用同一模型、随机输入、batch、seq_len、optimizer 和 seed</td>
+<td style="text-align:left">策略之间只改变 activation 的保存方式</td>
+</tr>
+<tr>
+<td style="text-align:left">实验对象</td>
+<td style="text-align:left">不加载真实模型；检查 baseline、checkpoint、offload、hybrid 的机制函数</td>
+<td style="text-align:left">默认使用 73 的模型和 workload，执行相同的训练 step</td>
+<td style="text-align:left">不把 CPU 正确性结果当作真实显存收益</td>
+</tr>
+<tr>
+<td style="text-align:left">baseline</td>
+<td style="text-align:left">激活值留在 GPU 的参照语义</td>
+<td style="text-align:left">记录 step time、吞吐、peak allocated、peak reserved、loss 和 OOM</td>
+<td style="text-align:left">作为其他策略的显存和速度基线</td>
+</tr>
+<tr>
+<td style="text-align:left">checkpoint</td>
+<td style="text-align:left">检查选定边界保存、其余部分重算的梯度语义</td>
+<td style="text-align:left">测量重算后的显存峰值和训练速度</td>
+<td style="text-align:left">用额外计算换取激活驻留空间</td>
+</tr>
+<tr>
+<td style="text-align:left">offload</td>
+<td style="text-align:left">检查部分 backward 所需张量保存到 CPU 后仍能完成反向</td>
+<td style="text-align:left">测量 CPU-GPU 搬运、同步、显存和速度代价</td>
+<td style="text-align:left">用带宽、同步和 CPU 内存换取 GPU 空间</td>
+</tr>
+<tr>
+<td style="text-align:left">hybrid</td>
+<td style="text-align:left">检查重算与部分搬运同时存在时的结果正确性</td>
+<td style="text-align:left">测量两类代价叠加后的显存和吞吐</td>
+<td style="text-align:left">只有在单一策略不足时再作为折中方案比较</td>
+</tr>
+<tr>
+<td style="text-align:left">实验输出</td>
+<td style="text-align:left">输出机制检查、loss 和 gradient 结果</td>
+<td style="text-align:left">输出每种策略的状态、显存、速度、loss、OOM 和 JSON 报告</td>
+<td style="text-align:left">后续由 75 根据预算条件进行筛选</td>
+</tr>
+</tbody>
+</table>
+<p>表中的 CPU 路径回答“策略实现是否保持训练语义”，GPU 路径回答“在当前 workload 下是否值得使用”；表内策略描述是待验证的机制预期，不是实测结论。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/76_strategy_lifecycle.svg" alt="76 训练激活值的保存方式与代价">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;后续实验比较 GPU 显存、训练速度、可运行性和 loss。&lt;/strong&gt;&lt;/div&gt;</p>
+<h3>Step 2：比较口径与实验协议</h3>
+<p>固定比较条件，只改变显存策略；不同 workload 或 dtype 必须另存报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">固定内容</th>
+<th style="text-align:left">目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">模型与输入</td>
+<td style="text-align:left">同一模型、随机输入、标签和初始化 seed</td>
+<td style="text-align:left">保证策略间训练任务一致</td>
+</tr>
+<tr>
+<td style="text-align:left">训练配置</td>
+<td style="text-align:left">optimizer、学习率、训练步数</td>
+<td style="text-align:left">排除训练过程差异</td>
+</tr>
+<tr>
+<td style="text-align:left">workload</td>
+<td style="text-align:left">batch、seq_len、warmup、iters、seed</td>
+<td style="text-align:left">保证压力和统计口径一致</td>
+</tr>
+<tr>
+<td style="text-align:left">候选策略</td>
+<td style="text-align:left">baseline、checkpoint、offload、hybrid</td>
+<td style="text-align:left">形成可比较集合</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 正确性检查和 GPU benchmark 是两条独立路径：前者检查 loss、gradient 和 step 语义，后者采集真实显存、吞吐和 OOM。它们共享策略定义与比较口径，但 GPU 运行不要求先执行 CPU 题目区。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。</p>
+<h3>Step 3：指标与项目判定</h3>
+<p>显存最低的方案不一定最值得采用；必须同时检查容量、速度和训练状态。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">指标</th>
+<th style="text-align:left">含义</th>
+<th style="text-align:left">用于判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">peak allocated</td>
+<td style="text-align:left">张量实际达到的显存峰值</td>
+<td style="text-align:left">观察显存收益</td>
+</tr>
+<tr>
+<td style="text-align:left">peak reserved</td>
+<td style="text-align:left">allocator 保留的显存峰值</td>
+<td style="text-align:left">观察缓存和碎片影响</td>
+</tr>
+<tr>
+<td style="text-align:left">step time / samples/s</td>
+<td style="text-align:left">重算、搬运和同步的时间代价</td>
+<td style="text-align:left">观察吞吐损失</td>
+</tr>
+<tr>
+<td style="text-align:left">val loss / OOM</td>
+<td style="text-align:left">训练质量和可运行性</td>
+<td style="text-align:left">过滤不可接受方案</td>
+</tr>
+</tbody>
+</table>
+<p>报告中可用 <code>memory_saving = baseline_peak - candidate_peak</code> 和 <code>throughput_ratio = candidate_throughput / baseline_throughput</code> 表达取舍。<code>accept</code> 还要求候选未 OOM、显存和吞吐满足预算、质量不越过阈值，并达到有效显存收益；否则根据问题进入 <code>tune</code> 或 <code>reject</code>。最终预算裁决交给 75。</p>
+<h3>Step 4：动手实战（CPU-first）</h3>
+<p><strong>要求：</strong> 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 <code>accept / tune / reject</code>。CPU 题目区验证决策逻辑；Step 5 独立使用相同口径采集 GPU 报告。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code># 3 个核心 TODO：预算检查、候选汇总、项目结论
+# 目标：把 baseline / checkpoint / offload / hybrid 的方案比较收束成一份项目报告。
+# CPU 题目区只验证预算与决策逻辑；真实策略、saved tensors、重算和搬运代价属于 GPU 实验。
+
+def validate_strategy_budget(budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;检查显存上限、吞吐下限和质量上限是否完整且合法。
+
+    返回 is_valid、missing_keys 和 invalid_keys；不负责判断某个策略是否最优。
+    &quot;&quot;&quot;
+    # TODO 1：定义 required_budget_keys、required_quality_keys。
+    # 提示：至少检查 memory_cap_mb、min_samples_per_s、max_val_loss。
+    #       变量示例：budget_missing = ???、quality_missing = ???、invalid_keys = ???。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def summarize_memory_strategy_candidates(candidates: List[Dict[str, float]], budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;按预算和质量门槛筛选四类显存策略候选。
+
+    返回候选数量、可行数量、可行名称、最佳候选和显存节省；OOM 或缺失指标
+    不能被当作普通的零值。
+    &quot;&quot;&quot;
+    # TODO 2：遍历 candidates，分别计算每个候选的可行性。
+    # 提示：变量示例：memory_ok = ???、throughput_ok = ???、quality_ok = ???、
+    #       is_feasible = ???；baseline_peak = ???；memory_saving = ???。
+    #       checkpoint 节省 activation 驻留，offload 还要承担 CPU-GPU 搬运代价。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def decide_memory_strategy_project(summary: Dict[str, object]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;根据可行候选和显存收益输出 accept、tune 或 reject。
+
+    accept 仅表示当前 workload 和预算下值得继续保留，不表示普遍有效。
+    &quot;&quot;&quot;
+    # TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。
+    # 提示：变量示例：has_feasible = ???、meaningful_saving = ???、
+    #       decision = ???、reason = ???、next_action = ???。
+    #       没有可行候选时 reject；可行但节省不显著时 tune。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
+def test_memory_strategy_project():
+    try:
+        budget = {'memory_cap_mb': 12000.0, 'min_samples_per_s': 6.0}
+        quality_floor = {'max_val_loss': 1.15}
+        check = validate_strategy_budget(budget, quality_floor)
+        assert check['is_valid'] is True, '预算检查应通过'
+        assert check['missing_keys'] == [], '完整预算不应缺字段'
+        missing = validate_strategy_budget({'memory_cap_mb': 12000.0}, quality_floor)
+        assert missing['is_valid'] is False, '缺少吞吐门槛时应拒绝预算配置'
+        assert 'min_samples_per_s' in missing['missing_keys'], '应指出缺少的预算字段'
+
+        candidates = [
+            {'name': 'baseline', 'peak_memory_mb': 18000.0, 'samples_per_s': 8.0, 'val_loss': 1.06},
+            {'name': 'checkpoint', 'peak_memory_mb': 11800.0, 'samples_per_s': 6.6, 'val_loss': 1.08},
+            {'name': 'offload', 'peak_memory_mb': 10500.0, 'samples_per_s': 5.2, 'val_loss': 1.09},
+            {'name': 'hybrid', 'peak_memory_mb': 9800.0, 'samples_per_s': 6.1, 'val_loss': 1.11},
+        ]
+        summary = summarize_memory_strategy_candidates(candidates, budget, quality_floor)
+        assert summary['feasible_count'] == 2, '应有两个方案满足预算与质量'
+        assert summary['best_candidate'] == 'hybrid', 'hybrid 应成为最省显存的可行方案'
+
+        decision = decide_memory_strategy_project(summary)
+        assert decision['decision'] == 'accept', '可行且最优的方案应被接受'
+
+        hard_summary = summarize_memory_strategy_candidates(
+            [
+                {'name': 'checkpoint', 'peak_memory_mb': 13000.0, 'samples_per_s': 6.4, 'val_loss': 1.10},
+                {'name': 'offload', 'peak_memory_mb': 11000.0, 'samples_per_s': 4.8, 'val_loss': 1.12},
+            ],
+            budget,
+            quality_floor,
+        )
+        hard_decision = decide_memory_strategy_project(hard_summary)
+        assert hard_decision['decision'] == 'reject', '没有满足预算与质量时应 reject'
+
+        edge_summary = summarize_memory_strategy_candidates(
+            [
+                {'name': 'oom_candidate', 'status': 'oom'},
+                {'name': 'incomplete', 'peak_memory_mb': 10000.0},
+            ],
+            budget,
+            quality_floor,
+        )
+        assert edge_summary['oom_count'] == 1, 'OOM 候选应单独计数'
+        assert edge_summary['invalid_count'] == 1, '缺少指标的候选应标记为 invalid'
+        assert decide_memory_strategy_project(edge_summary)['decision'] == 'reject', '没有可行策略时应 reject'
+        print('所有测试通过！')
+    except NotImplementedError:
+        print('请先完成 TODO 代码！')
+        raise
+    except AssertionError as e:
+        print(f'测试失败: {e}')
+        raise NotImplementedError('请先完成 TODO 代码！') from e
+    except Exception as e:
+        print(f'发生错误: {e}')
+        raise NotImplementedError('请先完成 TODO 代码！') from e
+
+
+test_memory_strategy_project()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card" data-lesson="current-core">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">新版课程导学</span>
+          </div>
+          <h2>从原理走到本课实现</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
+主责与复用边界： 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。</p>
+            <div class="notebook-content"><h3>Step 1：显存策略与机制假设</h3>
+<p>训练前向过程中会产生中间激活值，反向传播需要再次读取其中一部分。四种策略的区别，就是决定这些激活值留在哪里、是否重新计算，以及是否在 CPU 和 GPU 之间搬运。Step 1 先明确实验目标和对照条件，再用图片理解策略差异。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目内容</th>
+<th style="text-align:left">CPU：机制验证</th>
+<th style="text-align:left">GPU：真实对照</th>
+<th style="text-align:left">实验约定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">实验目的</td>
+<td style="text-align:left">用小型张量检查四种策略的 loss、gradient 和 backward 语义</td>
+<td style="text-align:left">在同一训练 workload 下比较策略的显存收益与性能代价</td>
+<td style="text-align:left">关注激活显存是否下降，以及速度和质量是否可接受</td>
+</tr>
+<tr>
+<td style="text-align:left">实验输入</td>
+<td style="text-align:left">使用固定张量和统一 loss，观察 saved tensors 或梯度结果</td>
+<td style="text-align:left">使用同一模型、随机输入、batch、seq_len、optimizer 和 seed</td>
+<td style="text-align:left">策略之间只改变 activation 的保存方式</td>
+</tr>
+<tr>
+<td style="text-align:left">实验对象</td>
+<td style="text-align:left">不加载真实模型；检查 baseline、checkpoint、offload、hybrid 的机制函数</td>
+<td style="text-align:left">默认使用 73 的模型和 workload，执行相同的训练 step</td>
+<td style="text-align:left">不把 CPU 正确性结果当作真实显存收益</td>
+</tr>
+<tr>
+<td style="text-align:left">baseline</td>
+<td style="text-align:left">激活值留在 GPU 的参照语义</td>
+<td style="text-align:left">记录 step time、吞吐、peak allocated、peak reserved、loss 和 OOM</td>
+<td style="text-align:left">作为其他策略的显存和速度基线</td>
+</tr>
+<tr>
+<td style="text-align:left">checkpoint</td>
+<td style="text-align:left">检查选定边界保存、其余部分重算的梯度语义</td>
+<td style="text-align:left">测量重算后的显存峰值和训练速度</td>
+<td style="text-align:left">用额外计算换取激活驻留空间</td>
+</tr>
+<tr>
+<td style="text-align:left">offload</td>
+<td style="text-align:left">检查部分 backward 所需张量保存到 CPU 后仍能完成反向</td>
+<td style="text-align:left">测量 CPU-GPU 搬运、同步、显存和速度代价</td>
+<td style="text-align:left">用带宽、同步和 CPU 内存换取 GPU 空间</td>
+</tr>
+<tr>
+<td style="text-align:left">hybrid</td>
+<td style="text-align:left">检查重算与部分搬运同时存在时的结果正确性</td>
+<td style="text-align:left">测量两类代价叠加后的显存和吞吐</td>
+<td style="text-align:left">只有在单一策略不足时再作为折中方案比较</td>
+</tr>
+<tr>
+<td style="text-align:left">实验输出</td>
+<td style="text-align:left">输出机制检查、loss 和 gradient 结果</td>
+<td style="text-align:left">输出每种策略的状态、显存、速度、loss、OOM 和 JSON 报告</td>
+<td style="text-align:left">后续由 75 根据预算条件进行筛选</td>
+</tr>
+</tbody>
+</table>
+<p>表中的 CPU 路径回答“策略实现是否保持训练语义”，GPU 路径回答“在当前 workload 下是否值得使用”；表内策略描述是待验证的机制预期，不是实测结论。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/76_strategy_lifecycle.svg" alt="76 训练激活值的保存方式与代价">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;后续实验比较 GPU 显存、训练速度、可运行性和 loss。&lt;/strong&gt;&lt;/div&gt;</p>
+<h3>Step 2：比较口径与实验协议</h3>
+<p>固定比较条件，只改变显存策略；不同 workload 或 dtype 必须另存报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">固定内容</th>
+<th style="text-align:left">目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">模型与输入</td>
+<td style="text-align:left">同一模型、随机输入、标签和初始化 seed</td>
+<td style="text-align:left">保证策略间训练任务一致</td>
+</tr>
+<tr>
+<td style="text-align:left">训练配置</td>
+<td style="text-align:left">optimizer、学习率、训练步数</td>
+<td style="text-align:left">排除训练过程差异</td>
+</tr>
+<tr>
+<td style="text-align:left">workload</td>
+<td style="text-align:left">batch、seq_len、warmup、iters、seed</td>
+<td style="text-align:left">保证压力和统计口径一致</td>
+</tr>
+<tr>
+<td style="text-align:left">候选策略</td>
+<td style="text-align:left">baseline、checkpoint、offload、hybrid</td>
+<td style="text-align:left">形成可比较集合</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 正确性检查和 GPU benchmark 是两条独立路径：前者检查 loss、gradient 和 step 语义，后者采集真实显存、吞吐和 OOM。它们共享策略定义与比较口径，但 GPU 运行不要求先执行 CPU 题目区。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。</p>
+<h3>Step 3：指标与项目判定</h3>
+<p>显存最低的方案不一定最值得采用；必须同时检查容量、速度和训练状态。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">指标</th>
+<th style="text-align:left">含义</th>
+<th style="text-align:left">用于判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">peak allocated</td>
+<td style="text-align:left">张量实际达到的显存峰值</td>
+<td style="text-align:left">观察显存收益</td>
+</tr>
+<tr>
+<td style="text-align:left">peak reserved</td>
+<td style="text-align:left">allocator 保留的显存峰值</td>
+<td style="text-align:left">观察缓存和碎片影响</td>
+</tr>
+<tr>
+<td style="text-align:left">step time / samples/s</td>
+<td style="text-align:left">重算、搬运和同步的时间代价</td>
+<td style="text-align:left">观察吞吐损失</td>
+</tr>
+<tr>
+<td style="text-align:left">val loss / OOM</td>
+<td style="text-align:left">训练质量和可运行性</td>
+<td style="text-align:left">过滤不可接受方案</td>
+</tr>
+</tbody>
+</table>
+<p>报告中可用 <code>memory_saving = baseline_peak - candidate_peak</code> 和 <code>throughput_ratio = candidate_throughput / baseline_throughput</code> 表达取舍。<code>accept</code> 还要求候选未 OOM、显存和吞吐满足预算、质量不越过阈值，并达到有效显存收益；否则根据问题进入 <code>tune</code> 或 <code>reject</code>。最终预算裁决交给 75。</p>
+<h3>Step 4：动手实战（CPU-first）</h3>
+<p><strong>要求：</strong> 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 <code>accept / tune / reject</code>。CPU 题目区验证决策逻辑；Step 5 独立使用相同口径采集 GPU 报告。</p>
+</div>
+            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>比较 checkpoint 与 offload 时应固定什么？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="0">
+                <span>只固定方案名字</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="1">
+                <span>同一 workload 及预算、质量和吞吐保留门槛</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="2">
+                <span>每个候选使用不同质量下限</span>
+              </label></div>
+            <div class="feedback" data-feedback="current-core"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-0">
+                <span>TODO 1：定义 required_budget_keys、required_quality_keys。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-1">
+                <span>TODO 2：遍历 candidates，分别计算每个候选的可行性。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-2">
+                <span>TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="75_memory_budget_compression_project.html">上一关：L75</a>
+        <a class="primary" href="79_distributed_parallel_benchmark.html">下一关：L79</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "76";
+    const checkpointData = {"current-core":{"answer":1,"explain":"同一 workload 及预算、质量和吞吐保留门槛。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 1;
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = null;
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-7a499d08e936";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

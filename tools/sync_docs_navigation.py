@@ -35,6 +35,10 @@ NAV_FILES = {
     "04_CUDA_and_System_Optimization": ["intro.md", "4_1.md", "4_2.md", "4_3.md", "4_4.md"],
     "topic_discussion": [
         "intro.md",
+        "backpropagation_training_mechanism/intro.md",
+        "backpropagation_training_mechanism/casebook.md",
+        "backpropagation_training_mechanism/walkthrough.md",
+        "backpropagation_training_mechanism/training_tooling_bridge.md",
         "profiling/intro.md",
         "profiling/casebook.md",
         "profiling/walkthrough.md",
@@ -44,12 +48,33 @@ NAV_FILES = {
         "inference_optimization/intro.md",
         "inference_optimization/casebook.md",
         "inference_optimization/walkthrough.md",
+        "fine_tuning_training/intro.md",
+        "fine_tuning_training/casebook.md",
+        "fine_tuning_training/walkthrough.md",
+        "fine_tuning_training/training_engineering_appendix.md",
+        "fine_tuning_training/project_delivery_appendix.md",
         "communication_parallel/intro.md",
         "communication_parallel/casebook.md",
         "communication_parallel/walkthrough.md",
         "memory_performance_tuning/intro.md",
         "memory_performance_tuning/casebook.md",
         "memory_performance_tuning/walkthrough.md",
+        "model_architecture/intro.md",
+        "model_architecture/casebook.md",
+        "model_architecture/walkthrough.md",
+        "post_training_alignment/intro.md",
+        "post_training_alignment/casebook.md",
+        "post_training_alignment/walkthrough.md",
+        "quantization/intro.md",
+        "quantization/casebook.md",
+        "quantization/walkthrough.md",
+        "operator_optimization/intro.md",
+        "operator_optimization/01_why_operator_optimization_matters.md",
+        "operator_optimization/02_kernel_semantics_and_memory.md",
+        "operator_optimization/03_fusion_and_kernel_composition.md",
+        "operator_optimization/04_cuda_execution_and_hardware_constraints.md",
+        "operator_optimization/05_cost_model_and_profiling.md",
+        "operator_optimization/06_benchmark_and_project_validation.md",
     ],
     "team_study": [
         "intro.md",
@@ -68,13 +93,34 @@ def sync_navigation() -> None:
         src_dir = ROOT / part
         dst_dir = DOCS / part
         dst_dir.mkdir(parents=True, exist_ok=True)
+        if part == "topic_discussion":
+            files = sorted(
+                path.relative_to(src_dir).as_posix()
+                for path in src_dir.rglob("*.md")
+            )
+            source_files = {src_dir / name for name in files}
+            for stale in dst_dir.rglob("*.md"):
+                if stale not in source_files:
+                    stale.unlink()
         for name in files:
             src = src_dir / name
             if not src.exists():
                 continue
             dst = dst_dir / name
             text = src.read_text(encoding="utf-8")
-            dst.write_text(text.replace(".ipynb)", ".md)"), encoding="utf-8")
+            mirrored = text.replace(".ipynb)", ".md)")
+            # Source topic pages may link to docs/guide.md. Once mirrored
+            # inside docs/topic_discussion, guide.md is already at the docs
+            # root, so remove the extra docs/ segment in the mirror only.
+            mirrored = mirrored.replace("../../docs/guide.md", "../../guide.md")
+            mirrored = mirrored.replace("../docs/guide.md", "../guide.md")
+            mirrored = mirrored.replace("../docs/", "../")
+            mirrored = mirrored.replace(
+                "../../tools/",
+                "https://github.com/datawhalechina/llm-algo-leetcode/blob/main/tools/",
+            )
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(mirrored, encoding="utf-8")
             copied += 1
     print(f"Synced {copied} navigation files into docs/")
 

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">60 LoRA GPU 实验入口</title>
+  <desc id="desc">Step 6 依次完成环境预检、最小 LoRA smoke test 和产物检查，完成后进入 Step 7 对照实验。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#52606d"/>
+    </marker>
+    <style>
+      .title { font: 700 24px sans-serif; fill: #172b4d; }
+      .label { font: 700 18px sans-serif; fill: #172b4d; }
+      .body { font: 15px sans-serif; fill: #334e68; }
+      .small { font: 14px sans-serif; fill: #486581; }
+      .box { stroke-width: 2; rx: 14; }
+      .arrow { stroke: #52606d; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="430" fill="#f8fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">60 LoRA 项目：Step 6 实验入口</text>
+
+  <rect x="55" y="95" width="280" height="145" class="box" fill="#e8f1fb" stroke="#4c86c6"/>
+  <text x="195" y="130" text-anchor="middle" class="label">1. 环境预检</text>
+  <text x="195" y="165" text-anchor="middle" class="body">CUDA · 依赖 · 模型来源</text>
+  <text x="195" y="198" text-anchor="middle" class="small">先确认当前内核可以运行</text>
+
+  <path d="M335 168 H460" class="arrow"/>
+
+  <rect x="460" y="95" width="280" height="145" class="box" fill="#fff4db" stroke="#d99a2b"/>
+  <text x="600" y="130" text-anchor="middle" class="label">2. 最小 LoRA 运行</text>
+  <text x="600" y="165" text-anchor="middle" class="body">加载真实模型和最小样例</text>
+  <text x="600" y="198" text-anchor="middle" class="small">完成一次更新，不做 baseline 对照</text>
+
+  <path d="M740 168 H865" class="arrow"/>
+
+  <rect x="865" y="95" width="280" height="145" class="box" fill="#e8f5ee" stroke="#4f9d69"/>
+  <text x="1005" y="130" text-anchor="middle" class="label">3. 产物检查</text>
+  <text x="1005" y="165" text-anchor="middle" class="body">loss · adapter · tokenizer</text>
+  <text x="1005" y="198" text-anchor="middle" class="small">通过后进入 Step 7 对照实验</text>
+
+  <text x="600" y="320" text-anchor="middle" class="small">Step 6 只确认链路可运行；模型、数据和对照条件在 Step 7 固定。</text>
+</svg>

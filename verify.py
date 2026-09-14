@@ -119,13 +119,23 @@ def check_chapter4_intro_links() -> None:
 
 
 def verify_chapter0_1(*, build_docs: bool) -> None:
-    # Legacy compatibility path for the Part 0 / Part 1 notebook-first closeout.
+    # Canonical Part 0 / Part 1 verification entrypoint:
+    # - convert source notebooks to docs mirrors
+    # - check source/docs chapter links
+    # - run sequential code-cell execution validation
     run_python("tools/convert_chapter0_1.py")
     run_python("tools/check_chapter_links.py", "--scope", "source")
     run_python("tools/check_chapter_links.py", "--scope", "docs")
     run_python("tools/test_chapter0_1_notebooks.py")
     if build_docs:
         run_docs_build()
+
+
+def audit_chapter0_1() -> None:
+    # Supplemental audit entrypoint for closeout work:
+    # - codecell_run: per-notebook code execution audit
+    # - structure_only: section/link/cell-id audit
+    run_python("tools/audit_chapter0_1_notebooks.py", "--profile", "all")
 
 
 def verify_chapter2(*, build_docs: bool) -> None:
@@ -178,7 +188,8 @@ def main() -> int:
 
     sub = parser.add_subparsers(dest="target")
     sub.required = False
-    sub.add_parser("part0_1", help="Verify Part 0 / Part 1.")
+    sub.add_parser("part0_1", help="Canonical verify entry for Part 0 / Part 1.")
+    sub.add_parser("part0_1_audit", help="Supplemental audit for Part 0 / Part 1: codecell_run + structure_only.")
     sub.add_parser("part2", help="Verify Part 2.")
     sub.add_parser("part3", help="Verify Part 3.")
     sub.add_parser("part4", help="Verify Part 4.")
@@ -196,6 +207,8 @@ def main() -> int:
 
     if target in {"part0_1", "chapter0_1"}:
         verify_chapter0_1(build_docs=build_docs)
+    elif target == "part0_1_audit":
+        audit_chapter0_1()
     elif target in {"part2", "chapter2"}:
         verify_chapter2(build_docs=build_docs)
     elif target in {"part3", "chapter3"}:

@@ -1,6 +1,6 @@
 # 28. Fault Tolerance and Checkpointing | 容错与检查点
 
-**难度：** Medium-Hard | **环境：** CPU-first | **标签：** `容错`, `Checkpoint`, `训练恢复` | **目标人群：** 长训练学习者
+**难度：** Medium-Hard | **环境：** CPU-first | **标签：** `系统工程`, `容错恢复`, `Checkpoint` | **目标人群：** 系统性能入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,26 +10,24 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页关注的是“训练不能总假设一切顺利”。当任务很长、集群很大、资源很贵时，容错和 checkpoint 就不是可选项，而是训练系统的基础能力。
+---
+
+## 本节导读
+
+本节建立可恢复训练状态的概念，理解 checkpoint 保存内容、保存成本和故障恢复之间的关系。
+
+你将从“训练能否从中断处继续”这个问题出发，依次核对需要保存的状态、保存频率与成本、恢复后的校验，以及多卡环境中的交付方式。
 
 **关键词：** `checkpoint`, `recovery`, `fault tolerance`
 
+![本节概念关系](../public/01_Hardware_Math_and_Systems/28_checkpoint_recovery_map.svg)
 ## 前置阅读
 
-**导语：** 先把显存压力、并行决策和通信调度这三件事弄清楚，再看这一页的容错和恢复，会更容易理解为什么 checkpoint 不是一个孤立动作。
+**导语：** 先把显存压力、并行决策和通信调度对应到训练状态，再检查哪些状态必须保存、恢复后如何验证，以及保存策略如何影响训练吞吐和恢复时间。
 
 - [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](./06_VRAM_Calculation_and_ZeRO.md)
 - [26. Parallel Strategy Decision Framework | 并行策略决策框架](./26_Parallel_Strategy_Decision_Framework.md)
 - [27. Communication Scheduling Optimization | 通信调度优化](./27_Communication_Scheduling_Optimization.md)
-
-## 相关阅读
-
-**导语：** 如果还想把容错和工程实现连起来，可以接着看通信原语、异步调度和异构执行，把保存、恢复和调度放在一起理解。
-
-- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
-- [17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](./17_CUDA_Stream_and_Asynchrony.md)
-- [29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度](./29_CUDA_Stream_Advanced_Scheduling.md)
-
 ## Q1：Checkpoint 保存的到底是什么？
 
 <details>
@@ -80,7 +78,7 @@ print('checkpoint needs the full training state, not only model weights')
 
 ```
 
-## Q2：为什么容错不是“出了问题再补救”？
+## Q2：失败概率和恢复时间如何影响有效训练时间？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -158,7 +156,7 @@ print('checkpointing is a balance between save overhead and failure recovery cos
 
 ```
 
-## Q4：这页最容易犯的错是什么？
+## Q4：如何判断一个 checkpoint 方案真的可恢复？
 
 <details>
 <summary>点击展开查看解析</summary>
@@ -194,3 +192,14 @@ for kind in ['weights_only', 'too_frequent', 'too_sparse', 'no_budget_model']:
 print('the most common mistakes come from incomplete state, wrong cadence, and missing risk budget')
 
 ```
+
+## 相关阅读
+
+**导语：** 如果还想把容错和工程实现连起来，可以接着看训练恢复、项目交付和训练工程附录，把保存、恢复和 artifact 放在一起理解，也把“保存了什么”与“能不能从同一训练点恢复”分清楚。
+
+- [29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度](./29_CUDA_Stream_Advanced_Scheduling.md)
+- [project_delivery_appendix.md | 项目交付附录](../topic_discussion/fine_tuning_training/project_delivery_appendix.md)
+- [62. Instruction Fine Tuning Project | 指令微调项目](../02_PyTorch_Algorithms/62_Instruction_Fine_Tuning_Project.md)
+- [PyTorch Distributed Checkpoint | PyTorch 分布式检查点文档](https://pytorch.org/docs/stable/distributed.checkpoint.html)
+- [DeepSpeed Model Checkpointing | DeepSpeed 模型检查点文档](https://www.deepspeed.ai/tutorials/model-checkpointing/)
+---

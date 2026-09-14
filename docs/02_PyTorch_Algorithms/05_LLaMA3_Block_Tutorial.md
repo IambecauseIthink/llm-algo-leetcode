@@ -1,6 +1,6 @@
 # 05. LLaMA3 Block Tutorial | LLaMA3 Block 教程
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `模型架构`, `Transformer`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Medium | **环境：** CPU-first | **标签：** `模型结构`, `Transformer`, `LLaMA Block` | **目标人群：** 模型结构学习者
 
 > 🚀 **云端运行环境**
 >
@@ -16,14 +16,14 @@
 
 前面的 RMSNorm、SwiGLU、RoPE 和 GQA 如果单独看，只是几个分散的组件；真正进入模型结构时，它们必须按固定顺序接成一个 Decoder Layer。这里最容易出错的不是单个公式，而是归一化位置、残差连接、Attention 分支和 MLP 分支之间的组织关系。
 
-本节进入组装阶段：把 RMSNorm、RoPE、GQA 和 SwiGLU MLP 拼成一个最小 LLaMA-3 Decoder Layer。完成后，你应该能把 Decoder Layer 理解成一条清晰流水线：先归一化，再分别经过 Attention / MLP 变换，最后用残差连接把原始输入和新特征合回去。这会成为后续 MoE、架构 trick、微调和推理优化的结构基线。
+本节进入组装阶段：把 RMSNorm、RoPE、GQA 和 SwiGLU MLP 拼成一个最小 LLaMA-3 Decoder Layer。完成后，你应该能把 Decoder Layer 理解成一条清晰流水线：先归一化，再分别经过 Attention / MLP 变换，最后用残差连接把原始输入和新特征合回去。它是本部分第一个结构组合小项目：前面练习单个机制，这里验证这些机制能否组成一个完整模型模块；后续第 61 节再把这种结构实现推进到候选架构比较。
 
 **关键词：** `LLaMA3`, `Transformer Block`, `Decoder Layer`
 
 ---
 ## 前置阅读
 
-**导语：** 如果还没把组成 Block 的关键组件理顺，先看下面几页再进入 LLaMA-3 Block 会更顺。
+**导语：** 进入本节前，先能指出 RMSNorm、RoPE、GQA 和 SwiGLU 在 Decoder Layer 中分别承担什么作用，再把它们按执行顺序组合起来。
 
 - [01. RMSNorm Tutorial | RMSNorm 教程](../02_PyTorch_Algorithms/01_RMSNorm_Tutorial.md)
 - [02. SwiGLU Activation | SwiGLU 激活](../02_PyTorch_Algorithms/02_SwiGLU_Activation.md)
@@ -31,21 +31,12 @@
 - [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
 
 
-## 相关阅读
-
-**导语：** 理解 Decoder Layer 的组装方式后，可以继续看 MoE 如何替换部分 MLP，以及硬件、精度和融合优化如何影响这个 Block 的执行效率。
-
-- [06. MoE Router | MoE 路由器](../02_PyTorch_Algorithms/06_MoE_Router.md)
-- [08. Architecture Tricks | 架构技巧](../02_PyTorch_Algorithms/08_Architecture_Tricks.md)
-- [P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [P1: 12. TensorCore and Mixed Precision | Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
-
 ---
 ### Step 1: 核心思想与痛点
 
 LLaMA 系列模型在 Transformer 基础上做了多项关键改进。这些改进共同构成了 LLaMA 的架构基础，也是后续实现 Decoder 层的核心依据。
+
+![LLaMA Decoder Block：组件如何组装成一层](../public/02_PyTorch_Algorithms/05_llama_block.svg)
 
 **LLaMA 架构 vs 传统 Transformer (如 GPT-2)**
 
@@ -64,6 +55,39 @@ LLaMA-3 的单个 Decoder 层遵循 Pre-Norm 架构，沿着一条固定的前�
 4. 经过 MLP 层的 **RMSNorm**。
 5. 执行 SwiGLU 前馈网络并再次加上残差。`x = x + mlp_out`
 
+
+#### 可视化：一个 LLaMA Block 如何把 01-04 串起来
+
+`01-04` 是零件，`05` 是组装。一个 decoder block 可以先按下面这条数据流理解：
+
+```text
+x [B, T, D]
+│
+├─► RMSNorm ─► Attention(MHA/GQA + RoPE) ─► + residual
+│                                                │
+└────────────────────────────────────────────────┘
+                                                 ▼
+                                           h [B, T, D]
+                                                 │
+                                                 ├─► RMSNorm ─► SwiGLU MLP ─► + residual
+                                                 │                              │
+                                                 └──────────────────────────────┘
+                                                                                ▼
+                                                                        output [B, T, D]
+```
+
+
+组件和前面章节的对应关系：
+
+| Block 位置 | 对应章节 | 负责什么 |
+|:---|:---|:---|
+| RMSNorm | `01` | 稳定每个 token 的 hidden state 尺度 |
+| SwiGLU MLP | `02` | 用 gate/up/down 三个投影做非线性变换 |
+| RoPE | `03` | 给 Q/K 注入位置信息 |
+| Attention / GQA | `04` | 让每个 token 读取上下文 |
+| Residual | `05` | 保留原表示，让深层堆叠更稳定 |
+
+初学时不要先背所有公式，先确认每一步输入输出都仍是 `[B, T, D]`，再逐个拆开 attention 和 MLP 内部。
 
 ### Step 3: 核心公式与架构
 
@@ -496,3 +520,14 @@ if __name__ == "__main__":
     # 运行验证
     run_minimal_validation()
 ```
+
+## 相关阅读
+
+把 Decoder Layer 组装清楚后，可以沿着“真实模型实现 → 稀疏架构 → 执行效率”继续阅读。
+
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [LLaMA 原论文：LLaMA](https://arxiv.org/abs/2302.13971)
+- [06. MoE 路由器](../02_PyTorch_Algorithms/06_MoE_Router.md)
+- [08. 架构技巧](../02_PyTorch_Algorithms/08_Architecture_Tricks.md)
+- [P1: Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

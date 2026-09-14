@@ -1,0 +1,377 @@
+{
+  "task": "task3_training_memory_optimization",
+  "stage": "memory_budget_decision",
+  "source": "benchmarks/results/76_real_gpu_memory.json",
+  "budget": {
+    "memory_cap_mb": 11200.0,
+    "min_samples_per_s": 1.0,
+    "min_memory_saving_mb": 512.0,
+    "min_throughput_ratio": 0.7
+  },
+  "quality_floor": {
+    "max_val_loss": 12.603633
+  },
+  "evidence_mode": "measured",
+  "planning_context": {
+    "model": {
+      "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+      "task": "causal_lm_training",
+      "dataset_name": "固定小型教学数据集",
+      "dataset_samples": 4
+    },
+    "hardware_target": {
+      "name": "12GB Laptop GPU",
+      "total_memory_mb": 12227,
+      "usable_memory_mb": 11200
+    },
+    "note": "硬件目标用于预算规划；只有 76 报告中的硬件和 workload 属于 measured evidence。",
+    "measured_hardware": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "hardware_comparison": "same_hardware_required_for_performance_claim"
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "step_time_ms": 497.839,
+      "samples_per_s": 2.009,
+      "peak_memory_mb": 9782.74,
+      "peak_reserved_mb": 10750.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503,
+      "error": null
+    },
+    {
+      "name": "checkpoint",
+      "status": "ok",
+      "step_time_ms": 567.74,
+      "samples_per_s": 1.761,
+      "peak_memory_mb": 9450.76,
+      "peak_reserved_mb": 10896.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503,
+      "error": null
+    },
+    {
+      "name": "offload",
+      "status": "ok",
+      "step_time_ms": 1877.559,
+      "samples_per_s": 0.533,
+      "peak_memory_mb": 9448.33,
+      "peak_reserved_mb": 10404.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503,
+      "error": null
+    },
+    {
+      "name": "hybrid",
+      "status": "ok",
+      "step_time_ms": 783.478,
+      "samples_per_s": 1.276,
+      "peak_memory_mb": 9454.64,
+      "peak_reserved_mb": 10444.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "val_loss": 12.356503,
+      "error": null
+    }
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "measured_count": 4,
+    "oom_count": 0,
+    "invalid_count": 0,
+    "feasible_count": 3,
+    "best_candidate": "checkpoint",
+    "quality_failed_count": 0,
+    "feasible_names": [
+      "checkpoint",
+      "hybrid",
+      "baseline"
+    ],
+    "baseline_peak_memory_mb": 9782.74,
+    "throughput_ratio": 0.8765555002488801,
+    "best_peak_memory_mb": 9450.76,
+    "memory_saving_mb": 331.97999999999956,
+    "min_memory_saving_mb": 512.0,
+    "min_throughput_ratio": 0.7,
+    "evaluations": [
+      {
+        "name": "baseline",
+        "status": "feasible",
+        "reasons": []
+      },
+      {
+        "name": "checkpoint",
+        "status": "feasible",
+        "reasons": []
+      },
+      {
+        "name": "offload",
+        "status": "rejected",
+        "reasons": [
+          "throughput_below_floor"
+        ]
+      },
+      {
+        "name": "hybrid",
+        "status": "feasible",
+        "reasons": []
+      }
+    ]
+  },
+  "decision": "tune",
+  "sensitivity": [
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.45,
+      "feasible_names": [
+        "checkpoint",
+        "hybrid"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.8,
+      "feasible_names": [
+        "checkpoint",
+        "hybrid"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.45,
+      "feasible_names": [
+        "checkpoint"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.8,
+      "feasible_names": [
+        "checkpoint"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.45,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 9600.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.8,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.45,
+      "feasible_names": [
+        "checkpoint",
+        "hybrid",
+        "baseline"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.0,
+      "max_val_loss": 12.8,
+      "feasible_names": [
+        "checkpoint",
+        "hybrid",
+        "baseline"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.45,
+      "feasible_names": [
+        "checkpoint",
+        "baseline"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 1.5,
+      "max_val_loss": 12.8,
+      "feasible_names": [
+        "checkpoint",
+        "baseline"
+      ],
+      "best_candidate": "checkpoint",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.2,
+      "feasible_names": [],
+      "best_candidate": null,
+      "decision": "reject"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.45,
+      "feasible_names": [
+        "baseline"
+      ],
+      "best_candidate": "baseline",
+      "decision": "tune"
+    },
+    {
+      "memory_cap_mb": 11200.0,
+      "min_samples_per_s": 2.0,
+      "max_val_loss": 12.8,
+      "feasible_names": [
+        "baseline"
+      ],
+      "best_candidate": "baseline",
+      "decision": "tune"
+    }
+  ],
+  "sensitivity_summary": {
+    "scenario_count": 18,
+    "decision_counts": {
+      "reject": 8,
+      "tune": 10
+    },
+    "best_candidate_counts": {
+      "<none>": 8,
+      "checkpoint": 8,
+      "baseline": 2
+    },
+    "feasible_set_counts": {
+      "<none>": 8,
+      "checkpoint,hybrid": 2,
+      "checkpoint": 2,
+      "checkpoint,hybrid,baseline": 2,
+      "checkpoint,baseline": 2,
+      "baseline": 2
+    },
+    "best_candidate_stable": false,
+    "feasible_set_stable": false,
+    "decision_stable": false,
+    "interpretation": "sensitive_to_thresholds"
+  },
+  "experiment": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "backend": "torch",
+    "dtype": "float32",
+    "optimizer": "AdamW",
+    "batch_size": 1,
+    "seq_len": 768,
+    "warmup": 2,
+    "iters": 5,
+    "seed": 42,
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "workload": "pressure"
+  },
+  "standard_metrics": {
+    "baseline": {
+      "step_time_ms": 497.839,
+      "throughput_samples_per_s": 2.009,
+      "peak_memory_mb": 9782.74,
+      "peak_reserved_mb": 10750.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "checkpoint": {
+      "step_time_ms": 567.74,
+      "throughput_samples_per_s": 1.761,
+      "peak_memory_mb": 9450.76,
+      "peak_reserved_mb": 10896.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "offload": {
+      "step_time_ms": 1877.559,
+      "throughput_samples_per_s": 0.533,
+      "peak_memory_mb": 9448.33,
+      "peak_reserved_mb": 10404.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    },
+    "hybrid": {
+      "step_time_ms": 783.478,
+      "throughput_samples_per_s": 1.276,
+      "peak_memory_mb": 9454.64,
+      "peak_reserved_mb": 10444.0,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "status": "ok"
+    }
+  }
+}

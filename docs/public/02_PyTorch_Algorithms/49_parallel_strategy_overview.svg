@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">并行策略选择总览</title><desc id="d">根据参数、激活、通信和流水线瓶颈选择数据、张量、流水线或专家并行组合。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">并行策略：先识别瓶颈，再组合切分</text><text x="50" y="83" class="s">并行不是越多越好，方案必须绑定显存、通信和流水线代价。</text>
+<rect x="55" y="190" width="220" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="165" y="232" text-anchor="middle" class="l">瓶颈画像</text><text x="165" y="263" text-anchor="middle" class="b">参数 · 激活 · 通信 · 气泡</text>
+<rect x="345" y="190" width="220" height="110" class="box" fill="#fef3c7" stroke="#d97706"/><text x="455" y="232" text-anchor="middle" class="l">候选切分</text><text x="455" y="263" text-anchor="middle" class="b">DP · TP · PP · EP</text>
+<rect x="635" y="115" width="220" height="100" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="745" y="155" text-anchor="middle" class="l">资源收益</text><text x="745" y="185" text-anchor="middle" class="b">容量 · 计算并行度</text>
+<rect x="635" y="260" width="220" height="100" class="box" fill="#fff1f2" stroke="#e11d48"/><text x="745" y="300" text-anchor="middle" class="l">系统代价</text><text x="745" y="330" text-anchor="middle" class="b">通信 · 同步 · 气泡</text>
+<rect x="930" y="190" width="210" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1035" y="232" text-anchor="middle" class="l">组合决策</text><text x="1035" y="263" text-anchor="middle" class="b">候选排序与验证</text>
+<path d="M275 245H345M565 235L635 165M565 265L635 310M855 165L930 225M855 310L930 265" class="f"/>
+</svg>

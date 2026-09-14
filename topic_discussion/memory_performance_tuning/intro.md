@@ -1,100 +1,62 @@
-# 显存优化与性能调优专题
+# 显存优化（Memory Optimization）
 
-## 专题概览
-本专题用于沉淀 VRAM、activation、checkpointing、offload、KV cache 和 benchmark 相关内容，回答“怎么处理显存压力并做端到端性能调优”。
-`Part 0E` 也是这个专题的前置桥，因为它已经把显存观察、调试和性能判断串在了一起。
+> 专题类型：主学习路线　主服务目标：显存预算与资源取舍
 
-## 职责边界
+## 页面导语
 
-这个专题负责显存压力、缓存增长和端到端性能调优，不负责并行策略本身，也不负责编译链路本体。
+本专题研究训练和推理中的显存对象、生命周期与预算取舍，回答显存被什么占用、压力出现在哪个阶段、优化代价转移到哪里，以及当前方案是否值得采用。
 
-- `VRAM / Memory Ledger` 关注内存账本、峰值占用和资源分配。
-- `Activation / Checkpointing / Offload` 关注训练侧显存压力和时间换空间。
-- `KV Cache` 关注推理侧缓存增长、布局和复用。
-- `Benchmark / Profiling` 关注把性能问题量化成可比较指标。
-- `Deployment Tuning` 关注量化、推理和部署场景中的显存/性能权衡。
+训练侧关注参数、梯度、optimizer state、activation 和临时张量；推理侧关注权重、KV Cache、请求并发和临时 attention 空间。两者共享 dtype、内存层级和带宽基础，但训练与推理的项目证据分别记录。
 
-## 对应来源
+本专题适合希望理解显存占用，并能在有限硬件上做资源取舍的学习者。学习从显存对象和账本开始，再根据问题进入训练、推理或分布式分支。
 
-| 来源 | 适合纳入的内容 |
-|:---|:---|
-| `Part 0E` | 调试、显存和性能判断的前置桥 |
-| `Part 1` | VRAM 估算、memory ledger、profiling 基础 |
-| `Part 2.5` | 反向传播、activation checkpointing、offload |
-| `Part 2.6` | FlashAttention、KV cache、推理侧显存观察 |
-| `Part 2.9` | 训练/推理性能分析、量化部署与 benchmark 闭环 |
+## 如何开始
 
-## 章节跳转
+- **主学习路线：** 从 Part 02 的 [2.5 反向传播与显存优化](../../02_PyTorch_Algorithms/2_5.md) 进入，再按下方 Task0–6 表格学习；需要补通用训练计算图时先看 [Part 00 · 07 自动求导与反向传播](../../00_Prerequisites/07_PyTorch_Autograd_and_Backward.ipynb)。
+- **快速上手：** 训练显存不足时，先完成 Task0–2 的机制练习，再进入 73、76；推理 Cache、量化或多卡问题直接从路线表对应分支进入。
+- **按需回补：** 需要 GPU 内存层级、LoRA / QLoRA 或模型架构基础时，从路线表的共享入口补充，不要求先完成所有扩展内容。
 
-| 章节 | 你会看到什么 | 跳转 |
-|:---|:---|:---|
-| `Part 1B` | 单卡硬件、访存和显存估算的基础入口 | [1B 单卡硬件与访存优化](../01_Hardware_Math_and_Systems/1B.md) |
-| `0E` | 调试与性能前置桥，先把显存与性能判断习惯立住 | [0E 调试与性能](../../00_Prerequisites/0E.md) |
-| `0E-17` | profiling 的基础入口和瓶颈定位 | [17 PyTorch Profiling Basics](../../00_Prerequisites/17_PyTorch_Profiling_Basics.ipynb) |
-| `0E-18` | 显存账本与优化手段 | [18 Memory Profiling and Optimization](../../00_Prerequisites/18_Memory_Profiling_and_Optimization.ipynb) |
-| `0E-19` | 最小排错和异常定位 | [19 Debugging and Anomaly Localization](../../00_Prerequisites/19_Debugging_and_Anomaly_Localization.ipynb) |
-| `0E-20` | 性能判断和优化决策 | [20 Profiling and Memory Ledger](../../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb) |
-| `06` | VRAM 计算与 ZeRO 的显存收益 | [06 VRAM Calculation and ZeRO](../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb) |
-| `13` | profiling 与瓶颈定位的方法入口 | [13 Profiling and Bottleneck Analysis](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb) |
-| `2.5` | 反向传播与显存优化主线 | [2.5 反向传播与显存优化](../02_PyTorch_Algorithms/2_5.md) |
-| `19` | checkpointing / offload 的显存 trade-off | [19 Activation Checkpointing and Activation Offload](../02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload.ipynb) |
-| `2.6` | 推理侧缓存和显存路径 | [2.6 核心推理优化](../02_PyTorch_Algorithms/2_6.md) |
-| `22` | PagedAttention 的 KV cache 管理 | [22 vLLM PagedAttention](../02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb) |
-| `32` | 训练性能分析与显存对比项目 | [32 训练性能分析](../02_PyTorch_Algorithms/32_Training_Performance_Analysis.ipynb) |
-| `33` | profiling 驱动的端到端优化项目 | [33 Profiling Driven End-to-End Optimization](../02_PyTorch_Algorithms/33_Profiling_Driven_End_to_End_Optimization.ipynb) |
-| `35` | 量化推理与部署中的显存权衡 | [35 Quantized Inference and Deployment](../02_PyTorch_Algorithms/35_Quantized_Inference_and_Deployment.ipynb) |
+## 主学习路线与验证出口
 
-## 推荐入口
+主线先完成 Task0–2，建立显存对象、账本和单机策略；之后按问题进入训练侧 Task3，或进入推理侧 Task4–5。Task6 提供多卡与系统级扩展。每个 Task 都按“机制 → 策略 → 验证出口”组织，扩展内容不要求全部作为共同前置。
 
-- 先看 `Part 1B / 06 / 13`，把显存和 profiling 的基础账本立住。
-- 再看 `2.5 -> 19`，理解训练侧激活和 checkpointing 的显存 trade-off。
-- 再看 `2.6 -> 22`，把推理侧 KV cache 的增长和复用路径看清楚。
-- 最后看 `32 -> 33 -> 35`，把性能分析、优化闭环和量化部署串起来。
+路线图用于查看 Task0–6 的学习顺序，以及训练、推理和分布式验证分支。
+![显存优化路线图：从显存账本到资源决策](../../docs/public/topic_discussion/memory_performance_tuning/memory_optimization_roadmap.svg)
 
-## 入口摘要
+知识地图补充显存对象、训练/推理策略和证据升级之间的关系；具体 Notebook 和项目入口以路线表为准。
 
-- 第一入口：`Part 1B` + `06 -> 13`，先把显存账本、VRAM 计算和瓶颈定位立住。
-- 第二入口：`2.5 -> 19 -> 32` / `2.6 -> 22 -> 35`，把训练侧和推理侧的显存压力看清楚。
-- 验证入口：`33 -> 35`，把 profiling 驱动的优化和量化部署的收益验证收进闭环。
+![显存优化知识地图：对象、策略与证据](../../docs/public/topic_discussion/memory_performance_tuning/memory_optimization_knowledge_map.svg)
 
-## 正文页
+Task1 的共同前置只保留 `dtype → 参数规模 → 硬件条件 → 显存账本` 这条核心链；Attention、混合精度、FlashAttention 和模型架构作为共享支撑或按需扩展，不要求在进入 Task2 前全部完成。
 
-- [显存优化与性能调优正文](./casebook.md)：按“训练侧 / 推理侧 / 验证侧”展开正文，适合做更细的显存案例和调优记录。
-- [显存优化与性能调优深入阅读](./walkthrough.md)：按完整调优故事展开，适合想看连续推演的人。
+| Task | 学习内容 | 核心问题 | 主学习线 / 项目入口 | 学习顺序 | 专题正文 |
+|:---|:---|:---|:---|:---|:---|
+| Task0 | 显存对象与生命周期 | 哪些状态会产生、驻留并在 backward 后释放？ | [Part 00 · 07 自动求导与反向传播](../../00_Prerequisites/07_PyTorch_Autograd_and_Backward.ipynb) → [Part 02 · 18 激活与损失反向](../../02_PyTorch_Algorithms/18_Activation_and_Loss_Backward.ipynb) → [Part 02 · 17 注意力反向传播与自定义自动求导](../../02_PyTorch_Algorithms/17_Autograd_Basics.ipynb)；CPU 检查局部梯度、saved tensors、梯度和 activation 生命周期 | 计算图 → 局部 backward → Attention backward → 状态驻留与释放 | [02 训练侧显存压力](./02_training_memory_pressure.md) |
+| Task1 | dtype、模型规模、硬件与显存账本 | 当前显存压力来自哪个对象，理论容量和实际峰值应如何估算？ | **核心：** [Part 01 · 01 数据格式与混合精度](../../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.ipynb) → [Part 01 · 02 参数量与算力推导](../../01_Hardware_Math_and_Systems/02_LLM_Params_and_FLOPs.ipynb) → [Part 01 · 03 GPU 物理架构与内存层级](../../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.ipynb) → [Part 01 · 06 显存计算与 ZeRO 优化](../../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb)；**共享支撑：** [Part 02 · 04 多头注意力](../../02_PyTorch_Algorithms/04_Attention_MHA_GQA.ipynb)、[Part 01 · 12 Tensor Core 与混合精度](../../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.ipynb)、[Part 01 · 14 FlashAttention 显存模型](../../01_Hardware_Math_and_Systems/14_FlashAttention_Memory_Model.ipynb)；**架构扩展：** [Part 02 · 05 LLaMA3 Block 教程](../../02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.ipynb)、[Part 02 · 06 MoE 路由器](../../02_PyTorch_Algorithms/06_MoE_Router.ipynb)、[Part 02 · 07 MoE 负载均衡损失](../../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.ipynb)、[Part 02 · 08 架构技巧](../../02_PyTorch_Algorithms/08_Architecture_Tricks.ipynb)、[Part 02 · 61 架构验证](../../02_PyTorch_Algorithms/61_Model_Architecture_Exploration.ipynb) | **核心：** dtype → 参数规模 → 硬件条件 → 显存账本；**共享支撑按需回补；架构扩展不作为共同前置** | [01 显存账本与指标](./01_vram_ledger_and_metrics.md) |
+| Task2 | 单机训练显存策略 | 显存不够时，应该用更小的 micro-batch、更多重算，还是 CPU-GPU 搬运来换取空间？ | [Part 02 · 12 梯度累积](../../02_PyTorch_Algorithms/12_Gradient_Accumulation.ipynb) → [Part 02 · 19 激活检查点](../../02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload.ipynb) → [Part 02 · 42 激活卸载](../../02_PyTorch_Algorithms/42_Activation_Offload.ipynb)；CPU 检查逻辑、梯度对齐和状态变化 | micro-step → 重算 → CPU-GPU 搬运 | [03 检查点与卸载](./03_checkpointing_and_offload.md) |
+| Task3 | 训练侧测量与预算决策 | 哪个训练策略在固定 workload、质量门槛和显存上限下值得采用？ | 机制入口：[Part 00 · 20 性能剖析与显存账本](../../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb) → [Part 01 · 13 性能分析与瓶颈定位](../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb)；项目链：[Part 02 · 73 训练性能分析](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) → [Part 02 · 76 激活检查点与卸载对比](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb) → [Part 02 · 75 显存预算压缩](../../02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb) → [Part 02 · 74 Profiling 驱动的显存优化](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) | 测量对象与指标 → 固定 workload → baseline → 策略比较 → 预算敏感性 → trace 解释 | [06 基准测试与权衡决策](./06_benchmark_and_tradeoff_decision.md) |
+| Task4 | 推理侧 KV Cache 与容量 | 上下文和并发增加时，KV Cache 为什么成为容量边界，如何组织、复用和验证？ | [Part 01 · 11 KV Cache 与显存增长](../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb) → [Part 02 · 22 vLLM 分页注意力](../../02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb) → [Part 02 · 34 前缀缓存与分块预填充](../../02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb)；项目 [Part 02 · 66 推理性能对比实验](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb)、[Part 02 · 69 前缀缓存基准](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb)；架构扩展 [Part 02 · 71 MLA 与 KV Cache 结构基准](../../02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb)、[Part 02 · 24 SGLang 基数注意力](../../02_PyTorch_Algorithms/24_SGLang_RadixAttention.ipynb) | 增长 → 分页 → 复用 → 容量验证；扩展：RadixAttention / MLA | [04 推理 Cache 与显存预算](./04_inference_cache_and_memory_budget.md) |
+| Task5 | 量化与显存容量扩展 | 压缩哪类对象、在什么时候压缩，才能真正换来更大的模型、上下文或并发？ | [Part 01 · 21 量化理论与 INT4/INT8](../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.ipynb) → [Part 02 · 25 W8A16 量化](../../02_PyTorch_Algorithms/25_Quantization_W8A16.ipynb) → [Part 02 · 40 GPTQ 与 AWQ 权重量化](../../02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.ipynb) → [Part 02 · 41 FP8 与 KV Cache 量化](../../02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb) → 项目 [Part 02 · 67 量化推理与部署](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb) | 对象与时机 → 权重格式 → 量化算法 → backend → 显存 / 质量验证 | [05 量化作为显存工具](./05_quantization_as_a_memory_tool.md) |
+| Task6 | 分布式显存与系统级扩展 | 单卡放不下时如何分摊状态，并解释通信、重算和搬运代价？ | 分布式：[Part 02 · 27 ZeRO 优化器模拟](../../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.ipynb) → [Part 02 · 28 Pipeline 并行微批次](../../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.ipynb) → [Part 02 · 29 Tensor 并行模拟](../../02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb) → [Part 02 · 79 分布式并行基准](../../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb) / [Part 02 · 80 MoE 专家并行基准](../../02_PyTorch_Algorithms/80_MoE_Expert_Parallel_Benchmark.ipynb) / [Part 02 · 81 分布式推理逻辑验证](../../02_PyTorch_Algorithms/81_Distributed_Inference_Project.ipynb)；Profiling 作为共享扩展，复用 [Part 01 · 13 性能分析与瓶颈定位](../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb) 与 [Part 02 · 74 Profiling 驱动的显存优化](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) | 分布式切分 → 单卡显存分摊 → 通信代价 → 多卡证据；Profiling 不作为本 Task 的共同前置 | [06 基准测试与权衡决策](./06_benchmark_and_tradeoff_decision.md) |
 
-## 相关专题
+Task1 建立显存账本，Task2 比较单机训练策略；Task3 通过 `Part 02 · 73 训练性能分析 → Part 02 · 76 激活检查点与卸载对比 → Part 02 · 75 显存预算压缩 → Part 02 · 74 Profiling 驱动的显存优化` 完成训练侧项目闭环；Task4–5 分别处理推理缓存和量化分支；Task6 提供分布式扩展，Profiling 作为跨分支的证据方法。Part 02 · 61 架构验证是架构扩展项目，Part 02 · 71 MLA 与 KV Cache 结构基准属于推理显存分支；Part 02 · 08 架构技巧、Part 02 · 06 MoE 路由器、Part 02 · 07 MoE 负载均衡损失和 LoRA / QLoRA 也不属于共同前置。
 
-- [Profiling 专题](../profiling/intro.md)：当你需要先把瓶颈、热点和收益先量化出来时先看这里。
-- [推理优化专题](../inference_optimization/intro.md)：当显存压力主要来自推理链路里的 cache、prefill 或 decode 时先看这里。
-- [通信与并行专题](../communication_parallel/intro.md)：当显存压力和多卡切分、参数分摊一起出现时先看这里。
+## 证据边界与项目出口
 
-## Part 1 / Part 2 入口顺序
+路线表负责选择入口，正文负责解释机制；需要按现象分流时进入[显存优化判断手册](./casebook.md)，需要沿“发现问题 → 建账本 → 做实验 → 下结论”连续阅读时进入[显存优化深入阅读](./walkthrough.md)。
 
-### Part 1 入口
+| 内容层级 | CPU 可以确认 | GPU、backend 或多卡才能确认 | 主要验证出口 |
+|:---|:---|:---|:---|
+| Task0–1 机制与账本 | 生命周期、shape、dtype、参数、梯度、optimizer state 和 activation 的理论关系 | 实际峰值、allocator reserved、带宽和 OOM 边界 | 01 显存账本 |
+| Task2 单机策略 | accumulation、checkpoint、offload 的逻辑和梯度对齐 | 显存节省、重算 / 搬运代价、吞吐和 OOM | 03 检查点与卸载 |
+| Task3 训练项目 | workload、指标、报告和预算决策逻辑 | 73 baseline、76 策略比较、75 预算敏感性、74 trace 解释 | 73 → 76 → 75 → 74 |
+| Task4–5 推理与量化 | KV Cache shape、容量估算、量化误差和决策逻辑 | backend 命中、TTFT / TPOT、格式、kernel、真实显存和质量 | 04、05 与 66–71 |
+| Task6 分布式扩展 | ZeRO、pipeline、tensor、expert parallel 的切分模拟 | 多卡显存分摊、通信时间、拓扑影响和 profiler 归因 | 79–81 |
 
-- 先看 `Part 1B`，把单卡硬件、访存和显存估算的基础账本立住。
-- 再看 `06 -> 13`，把 VRAM 计算、ZeRO 收益和瓶颈定位先串起来。
-- 如果想补前置桥，再从 `0E -> 17 -> 18 -> 19 -> 20` 过一遍。
+CPU 运行可以使用 GPU 机器，但 `device='cpu'` 的结果仍属于 CPU 证据。73、76、75 使用匹配的模型、dtype、batch、seq_len 和 workload；74 是跨项目的 profiling 收口，不把不同条件下的数字直接横向比较。FP32 长序列 OOM 是容量边界，应与 BF16、LoRA / QLoRA 或 activation-only workload 分开记录。
 
-### Part 2 入口
+同一 Notebook 在不同路线中只切换观察目标：显存路线关注对象账本、峰值和容量，推理路线关注 KV Cache、TTFT / TPOT 和并发，算子与编译路线关注 kernel、访存和融合，训练微调路线关注 loss、梯度和稳定性。Notebook 保留一份权威实现；不同模型、设备、dtype 和 workload 的结果不能直接合并。不要把“代码运行成功”写成“显存优化成功”：稳定决策至少需要固定 workload、baseline / candidate、质量门槛和报告文件。
 
-- 先看 `2.5 -> 19 -> 32`，把训练侧 activation、checkpointing 和性能分析串起来。
-- 再看 `2.6 -> 22 -> 35`，把推理侧 KV cache 和量化部署的显存权衡串起来。
-- 最后看 `33`，把 profiling 驱动的端到端优化补成闭环。
+## 环境与验证
 
-## 读法建议
-
-- 如果你还没看 `0E`，建议先补它，再进这个专题。
-- 如果你想先补前置桥，可以按 `0E -> 17 -> 18 -> 19 -> 20` 这条线过一遍，先把显存账本、排错习惯和性能判断立住。
-- 如果你关心“训练显存为什么爆”，先看 `2.5 -> 19 -> 32`。
-- 如果你关心“推理显存为什么涨”，先看 `2.6 -> 22 -> 35`。
-- 如果你关心“怎么证明优化有效”，先看 `13 -> 33`。
-
-## 建设方式
-
-- 先把入口和路径讲清楚，再把正文页里的资源对象、案例和检查清单补深。
-- 新增内容优先回收到 `2.5 / 2.6 / 33 / 35` 这几条线。
-- 导读页只负责告诉读者“从哪进”，不再重复正文里的判断框架。
-
-## 专题状态
-当前为专题入口页，后续将逐步补充跨 Part 索引、显存优化案例和性能调优记录。
+基础机制可以 CPU-first；真实训练、显存峰值和策略对比需要 NVIDIA GPU。运行前确认 PyTorch CUDA 可用，并按 Notebook 输出保存 JSON。73–76 的运行顺序、GPU 检查、结果文件和 74 profiling 要求见[项目验证清单](../../docs/verification/memory_projects.md)。如果问题首先表现为请求链路速度、低比特压缩、profiler 证据或多卡通信，分别转到[推理优化](../inference_optimization/intro.md)、[量化与压缩](../quantization/intro.md)、[性能分析](../profiling/intro.md)或[通信与并行](../communication_parallel/intro.md)。

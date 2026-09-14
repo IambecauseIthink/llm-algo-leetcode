@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+  <rect width="1200" height="420" fill="#f7f4ea"/>
+  <text x="60" y="52" font-family="Georgia, serif" font-size="30" fill="#1f2a1f">Qwen Version Split</text>
+  <text x="60" y="82" font-family="Georgia, serif" font-size="16" fill="#4d5a4d">Base-model evolution, tokenizer coverage, context tiers, and dense/MoE branching</text>
+
+  <line x1="120" y1="210" x2="1080" y2="210" stroke="#2e4638" stroke-width="4"/>
+
+  <circle cx="220" cy="210" r="18" fill="#9bbf9b"/>
+  <text x="175" y="175" font-family="Arial, sans-serif" font-size="24" fill="#223322">Qwen2.5</text>
+  <text x="135" y="245" font-family="Arial, sans-serif" font-size="15" fill="#334433">Multilingual coverage</text>
+  <text x="145" y="266" font-family="Arial, sans-serif" font-size="15" fill="#334433">Engineering-stable tokenizer</text>
+  <text x="165" y="287" font-family="Arial, sans-serif" font-size="15" fill="#334433">Long-context baseline</text>
+
+  <circle cx="520" cy="210" r="18" fill="#6ca56c"/>
+  <text x="470" y="175" font-family="Arial, sans-serif" font-size="24" fill="#223322">Qwen3</text>
+  <text x="450" y="245" font-family="Arial, sans-serif" font-size="15" fill="#334433">Dense + MoE published together</text>
+  <text x="445" y="266" font-family="Arial, sans-serif" font-size="15" fill="#334433">Tie-embedding and head tiers</text>
+  <text x="447" y="287" font-family="Arial, sans-serif" font-size="15" fill="#334433">Context split: 32K / 128K</text>
+
+  <line x1="538" y1="210" x2="690" y2="130" stroke="#2e4638" stroke-width="3"/>
+  <line x1="538" y1="210" x2="690" y2="290" stroke="#2e4638" stroke-width="3"/>
+
+  <rect x="700" y="85" width="260" height="92" rx="18" fill="#dcefdc" stroke="#2e4638" stroke-width="2"/>
+  <text x="735" y="118" font-family="Arial, sans-serif" font-size="24" fill="#223322">Qwen3 Dense</text>
+  <text x="724" y="143" font-family="Arial, sans-serif" font-size="15" fill="#334433">Smaller models often remain 32K</text>
+  <text x="724" y="163" font-family="Arial, sans-serif" font-size="15" fill="#334433">Block stability and deployment balance</text>
+
+  <rect x="700" y="243" width="260" height="92" rx="18" fill="#c8e0c8" stroke="#2e4638" stroke-width="2"/>
+  <text x="740" y="276" font-family="Arial, sans-serif" font-size="24" fill="#223322">Qwen3 MoE</text>
+  <text x="725" y="301" font-family="Arial, sans-serif" font-size="15" fill="#334433">30B-A3B / 235B-A22B samples</text>
+  <text x="725" y="321" font-family="Arial, sans-serif" font-size="15" fill="#334433">Sparse capacity with system trade-offs</text>
+
+  <text x="980" y="145" font-family="Arial, sans-serif" font-size="14" fill="#465646">Tokenizer / multilingual axis</text>
+  <text x="980" y="167" font-family="Arial, sans-serif" font-size="14" fill="#465646">RoPE / context-tier axis</text>
+  <text x="980" y="189" font-family="Arial, sans-serif" font-size="14" fill="#465646">Dense vs MoE structure axis</text>
+</svg>

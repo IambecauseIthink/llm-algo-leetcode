@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="560" viewBox="0 0 1360 560">
+  <defs>
+    <style>
+      .title{font:700 28px sans-serif;fill:#17324d}.h{font:700 19px sans-serif;fill:#17324d}.t{font:16px sans-serif;fill:#35526b}.s{font:15px sans-serif;fill:#526b7d}.line{stroke:#3978a8;stroke-width:3;fill:none;marker-end:url(#a)}.dash{stroke:#8b6bb1;stroke-width:2.5;stroke-dasharray:9 7;fill:none;marker-end:url(#p)}.b{fill:#e8f3fb;stroke:#3978a8;stroke-width:2}.g{fill:#eaf7ef;stroke:#4c9870;stroke-width:2}.o{fill:#fff1df;stroke:#c78335;stroke-width:2}.p{fill:#f1eafa;stroke:#8b6bb1;stroke-width:2}
+    </style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#3978a8"/></marker>
+    <marker id="p" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#8b6bb1"/></marker>
+  </defs>
+  <rect width="1360" height="560" rx="24" fill="#f8fbfd"/>
+  <text x="680" y="48" text-anchor="middle" class="title">Serving 实例级调度：从请求到服务决策</text>
+  <rect x="55" y="125" width="220" height="105" rx="18" class="b"/>
+  <text x="165" y="163" text-anchor="middle" class="h">请求到达</text><text x="165" y="194" text-anchor="middle" class="t">到达时间、输入长度</text><text x="165" y="218" text-anchor="middle" class="t">生成长度、请求优先级</text>
+  <rect x="350" y="125" width="220" height="105" rx="18" class="p"/>
+  <text x="460" y="163" text-anchor="middle" class="h">执行队列</text><text x="460" y="194" text-anchor="middle" class="t">等待、排序、状态</text><text x="460" y="218" text-anchor="middle" class="t">公平性与排队代价</text>
+  <rect x="645" y="125" width="220" height="105" rx="18" class="g"/>
+  <text x="755" y="163" text-anchor="middle" class="h">Batch 组织</text><text x="755" y="194" text-anchor="middle" class="t">batch size、并行请求</text><text x="755" y="218" text-anchor="middle" class="t">worker busy time</text>
+  <rect x="940" y="125" width="220" height="105" rx="18" class="o"/>
+  <text x="1050" y="163" text-anchor="middle" class="h">服务执行</text><text x="1050" y="194" text-anchor="middle" class="t">prefill / decode</text><text x="1050" y="218" text-anchor="middle" class="t">吞吐与延迟</text>
+  <rect x="450" y="345" width="460" height="105" rx="18" class="b"/>
+  <text x="680" y="383" text-anchor="middle" class="h">调度策略比较</text><text x="680" y="414" text-anchor="middle" class="t">TTFT、TPOT、吞吐、公平性、P99、利用率</text><text x="680" y="438" text-anchor="middle" class="t">accept / tune / reject</text>
+  <path d="M275 177H350M570 177H645M865 177H940M1050 230V345" class="line"/>
+  <path d="M680 345V230" class="dash"/>
+  <text x="690" y="300" class="s">调整策略或 workload</text>
+  <text x="680" y="510" text-anchor="middle" class="s">实线：请求执行流程　　虚线：指标反馈与下一轮调参</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .title { font: 700 24px sans-serif; fill: #0f172a; }
+      .label { font: 700 18px sans-serif; fill: #0f172a; }
+      .text { font: 15px sans-serif; fill: #334155; }
+      .box { stroke: #94a3b8; stroke-width: 2; rx: 14; }
+    </style>
+  </defs>
+  <rect width="1200" height="330" fill="#f8fafc"/>
+  <text x="600" y="42" text-anchor="middle" class="title">73：GPU 训练 baseline 实验流程</text>
+  <rect x="35" y="105" width="190" height="125" class="box" fill="#e0f2fe"/>
+  <text x="130" y="140" text-anchor="middle" class="label">环境检查</text>
+  <text x="130" y="170" text-anchor="middle" class="text">CUDA / GPU</text>
+  <text x="130" y="194" text-anchor="middle" class="text">PyTorch / Transformers</text>
+  <rect x="270" y="105" width="190" height="125" class="box" fill="#fef3c7"/>
+  <text x="365" y="140" text-anchor="middle" class="label">固定配置</text>
+  <text x="365" y="170" text-anchor="middle" class="text">模型与 workload</text>
+  <text x="365" y="194" text-anchor="middle" class="text">seed / warmup / repeats</text>
+  <rect x="505" y="82" width="280" height="171" class="box" fill="#dcfce7"/>
+  <text x="645" y="120" text-anchor="middle" class="label">两组训练对照</text>
+  <text x="645" y="155" text-anchor="middle" class="text">FP32 baseline</text>
+  <text x="645" y="181" text-anchor="middle" class="text">AMP candidate</text>
+  <text x="645" y="220" text-anchor="middle" class="text">zero_grad → forward → backward</text>
+  <text x="645" y="241" text-anchor="middle" class="text">→ optimizer.step</text>
+  <rect x="830" y="105" width="155" height="125" class="box" fill="#fce7f3"/>
+  <text x="907" y="140" text-anchor="middle" class="label">记录指标</text>
+  <text x="907" y="170" text-anchor="middle" class="text">时间 / 吞吐</text>
+  <text x="907" y="194" text-anchor="middle" class="text">显存 / loss</text>
+  <rect x="1030" y="105" width="135" height="125" class="box" fill="#ede9fe"/>
+  <text x="1097" y="140" text-anchor="middle" class="label">保存 JSON</text>
+  <text x="1097" y="170" text-anchor="middle" class="text">73 baseline</text>
+  <text x="1097" y="194" text-anchor="middle" class="text">供 76 对照</text>
+  <line x1="225" y1="168" x2="265" y2="168" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="460" y1="168" x2="500" y2="168" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="785" y1="168" x2="825" y2="168" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="985" y1="168" x2="1025" y2="168" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+</svg>

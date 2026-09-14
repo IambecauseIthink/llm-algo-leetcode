@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">FP8 与 KV Cache 量化路径</title>
+  <desc id="desc">运行时张量或 KV Cache 经过 scale、低精度存储和恢复，分别影响计算带宽或缓存容量。</desc>
+  <defs><marker id="a41" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker><style>.t{font:700 30px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 17px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.h{font:700 21px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 16px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:2.5;rx:18}.l{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#a41)}</style></defs>
+  <rect width="1200" height="600" fill="#f8fafc"/><text x="60" y="58" class="t">FP8 / KV Cache：运行时量化改变的对象不同</text><text x="60" y="90" class="s">FP8 主要观察计算与带宽，KV Cache 主要观察长上下文和并发容量。</text>
+  <rect x="60" y="190" width="220" height="160" class="box" fill="#dbeafe" stroke="#2563eb"/><text x="118" y="240" class="h">运行时张量</text><text x="95" y="278" class="b">hidden state / 激活</text><text x="95" y="307" class="s">FP8 近似计算路径</text>
+  <rect x="360" y="190" width="220" height="160" class="box" fill="#fef3c7" stroke="#d97706"/><text x="438" y="240" class="h">scale</text><text x="396" y="278" class="b">确定动态范围</text><text x="396" y="307" class="s">全局或分组记录</text>
+  <rect x="660" y="125" width="220" height="160" class="box" fill="#dcfce7" stroke="#16a34a"/><text x="720" y="175" class="h">FP8 路径</text><text x="696" y="213" class="b">降低计算 / 带宽</text><text x="696" y="242" class="s">需要硬件 kernel</text>
+  <rect x="660" y="355" width="220" height="160" class="box" fill="#dcfce7" stroke="#16a34a"/><text x="710" y="405" class="h">KV Cache 路径</text><text x="696" y="443" class="b">降低缓存容量</text><text x="696" y="472" class="s">影响上下文 / 并发</text>
+  <rect x="960" y="235" width="180" height="160" class="box" fill="#fce7f3" stroke="#db2777"/><text x="1005" y="285" class="h">恢复使用</text><text x="986" y="323" class="b">反量化 + attention</text><text x="986" y="352" class="s">检查误差与质量</text>
+  <path d="M280 270H360" class="l"/><path d="M580 250L660 205" class="l"/><path d="M580 310L660 435" class="l"/><path d="M880 205L960 285" class="l"/><path d="M880 435L960 345" class="l"/><text x="60" y="565" class="s">CPU 可解释 scale、分组和误差；真实 FP8 kernel、缓存峰值与端到端收益需要 GPU/backend。</text>
+</svg>

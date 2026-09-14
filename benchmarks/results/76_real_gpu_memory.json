@@ -1,0 +1,111 @@
+{
+  "task": "task3_training_memory_optimization",
+  "stage": "activation_checkpoint_offload_benchmark",
+  "source_baseline": "benchmarks/results/73_real_gpu_training.json",
+  "baseline_validation": {
+    "status": "matched",
+    "config": {
+      "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+      "batch_size": 1,
+      "seq_len": 768,
+      "dtype": "float32",
+      "optimizer": "AdamW",
+      "workload": "pressure",
+      "warmup": 2,
+      "iters": 5
+    }
+  },
+  "evidence_level": "fixed_workload_strategy_smoke",
+  "config": {
+    "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+    "workload": "pressure",
+    "batch_size": 1,
+    "seq_len": 768,
+    "dtype": "float32",
+    "optimizer": "AdamW",
+    "warmup": 2,
+    "iters": 5,
+    "strategies": [
+      "baseline",
+      "checkpoint",
+      "offload",
+      "hybrid"
+    ],
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "seed": 42
+  },
+  "budget": {
+    "memory_cap_mb": 11200.0,
+    "min_samples_per_s": 1.0
+  },
+  "quality_floor": {
+    "max_val_loss": 12.603633
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "step_time_ms": 497.839,
+      "samples_per_s": 2.009,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "peak_memory_mb": 9782.74,
+      "peak_reserved_mb": 10750.0
+    },
+    {
+      "name": "checkpoint",
+      "status": "ok",
+      "step_time_ms": 567.74,
+      "samples_per_s": 1.761,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "peak_memory_mb": 9450.76,
+      "peak_reserved_mb": 10896.0
+    },
+    {
+      "name": "offload",
+      "status": "ok",
+      "step_time_ms": 1877.559,
+      "samples_per_s": 0.533,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "peak_memory_mb": 9448.33,
+      "peak_reserved_mb": 10404.0
+    },
+    {
+      "name": "hybrid",
+      "status": "ok",
+      "step_time_ms": 783.478,
+      "samples_per_s": 1.276,
+      "loss": 11.477463,
+      "eval_loss": 12.356503,
+      "peak_memory_mb": 9454.64,
+      "peak_reserved_mb": 10444.0
+    }
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "measured_count": 4,
+    "oom_count": 0,
+    "invalid_count": 0,
+    "feasible_count": 3,
+    "best_candidate": "checkpoint",
+    "quality_failed_count": 0,
+    "feasible_names": [
+      "checkpoint",
+      "hybrid",
+      "baseline"
+    ],
+    "baseline_peak_memory_mb": 9782.74,
+    "best_peak_memory_mb": 9450.76,
+    "memory_saving_mb": 331.97999999999956,
+    "throughput_ratio": 0.8765555002488801
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "memory_saving_below_meaningful_threshold",
+    "next_action": "test_pressure_or_offload_scope"
+  }
+}

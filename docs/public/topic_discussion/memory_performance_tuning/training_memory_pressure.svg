@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480">
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 Z" fill="#486581"/></marker>
+    <style>.title{font:700 30px sans-serif;fill:#17324d}.subtitle{font:16px sans-serif;fill:#486581}.label{font:700 21px sans-serif;fill:#17324d}.text{font:16px sans-serif;fill:#334e68}.box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1200" height="480" fill="#f7fafc"/>
+  <text x="600" y="48" text-anchor="middle" class="title">训练显存压力：从输入到策略代价</text>
+  <text x="600" y="78" text-anchor="middle" class="subtitle">输入条件改变驻留对象，策略再把代价转移到计算、带宽或通信</text>
+  <rect x="55" y="145" width="300" height="210" fill="#e6f6f5" class="box"/>
+  <text x="205" y="192" text-anchor="middle" class="label">输入条件</text>
+  <text x="100" y="245" class="text">micro-batch / sequence length</text>
+  <text x="100" y="285" class="text">accumulation / dtype</text>
+  <text x="100" y="325" class="text">模型规模 / 可训练参数</text>
+  <path d="M355 250 H450" class="line"/>
+  <rect x="450" y="145" width="300" height="210" fill="#fff4e6" class="box"/>
+  <text x="600" y="192" text-anchor="middle" class="label">压力对象</text>
+  <text x="495" y="245" class="text">activation：forward / backward</text>
+  <text x="495" y="285" class="text">gradient / optimizer state</text>
+  <text x="495" y="325" class="text">effective batch 与峰值阶段</text>
+  <path d="M750 250 H845" class="line"/>
+  <rect x="845" y="145" width="300" height="210" fill="#e0e7ff" class="box"/>
+  <text x="995" y="192" text-anchor="middle" class="label">策略代价</text>
+  <text x="890" y="245" class="text">累积：增加微步</text>
+  <text x="890" y="285" class="text">checkpoint：增加重算</text>
+  <text x="890" y="325" class="text">offload / sharding：搬运或通信</text>
+</svg>

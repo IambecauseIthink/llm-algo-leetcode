@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="590" viewBox="0 0 1200 590">
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" fill="#64748b"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#475569}
+    .group{font-size:17px;font-weight:700}.head{font-size:17px;font-weight:700}
+    .body{font-size:14px}.small{font-size:13px;fill:#475569}
+    .panel{stroke-width:2;rx:18}.item{stroke-width:1.5;rx:11}
+    .line{stroke:#64748b;stroke-width:2.4;fill:none;marker-end:url(#arrow)}
+    .branch{stroke:#94a3b8;stroke-width:2.4;fill:none;marker-end:url(#arrow)}
+    .spine{stroke:#94a3b8;stroke-width:2.4;fill:none}
+    .label{font-size:13px;fill:#475569;paint-order:stroke;stroke:#f8fafc;stroke-width:6px;stroke-linejoin:round}
+  </style>
+</defs>
+<rect width="1200" height="590" fill="#f8fafc"/>
+<text x="600" y="44" text-anchor="middle" class="title">KV Cache：增长、结构与管理</text>
+<text x="600" y="72" text-anchor="middle" class="sub">先计算历史状态成本，再按表示规模、内存组织和前缀复用选择策略</text>
+
+<!-- Q1 -->
+<rect x="36" y="112" width="260" height="350" fill="#e0f2fe" stroke="#93c5fd" class="panel"/>
+<text x="58" y="146" class="group">增长公式</text>
+<rect x="60" y="178" width="212" height="116" fill="#fff" stroke="#60a5fa" class="item"/>
+<text x="166" y="210" text-anchor="middle" class="head">KV Cache 容量</text>
+<text x="166" y="238" text-anchor="middle" class="body">2 × 层数 × batch</text>
+<text x="166" y="262" text-anchor="middle" class="body">× KV 头数 × head_dim</text>
+<text x="166" y="284" text-anchor="middle" class="small">× 历史 token × dtype 字节数</text>
+<rect x="60" y="330" width="212" height="74" fill="#fff" stroke="#60a5fa" class="item"/>
+<text x="166" y="360" text-anchor="middle" class="head">增长压力</text>
+<text x="166" y="386" text-anchor="middle" class="small">长上下文 · 大 batch · 并发</text>
+
+<!-- Q3 strategy split -->
+<rect x="326" y="112" width="300" height="350" fill="#f0fdf4" stroke="#86efac" class="panel"/>
+<text x="348" y="146" class="group">压力判断与策略分流</text>
+<rect x="350" y="165" width="252" height="58" fill="#fff" stroke="#4ade80" class="item"/>
+<text x="476" y="200" text-anchor="middle" class="head">先判断主要压力来源</text>
+<rect x="350" y="245" width="252" height="54" fill="#fff" stroke="#4ade80" class="item"/>
+<text x="476" y="278" text-anchor="middle" class="head">表示规模：MHA / GQA / MQA / MLA</text>
+<rect x="350" y="326" width="252" height="54" fill="#fff" stroke="#4ade80" class="item"/>
+<text x="476" y="359" text-anchor="middle" class="head">内存组织：PagedAttention</text>
+<rect x="350" y="407" width="252" height="54" fill="#fff" stroke="#4ade80" class="item"/>
+<text x="476" y="440" text-anchor="middle" class="head">缓存复用：Prefix Cache</text>
+
+<!-- corresponding observables -->
+<rect x="656" y="112" width="260" height="350" fill="#fef3c7" stroke="#fcd34d" class="panel"/>
+<text x="678" y="146" class="group">对应观察量</text>
+<rect x="680" y="245" width="212" height="54" fill="#fff" stroke="#f59e0b" class="item"/>
+<text x="786" y="268" text-anchor="middle" class="head">表示容量</text>
+<text x="786" y="288" text-anchor="middle" class="small">每 token、每层缓存字节数</text>
+<rect x="680" y="326" width="212" height="54" fill="#fff" stroke="#f59e0b" class="item"/>
+<text x="786" y="349" text-anchor="middle" class="head">组织效率</text>
+<text x="786" y="369" text-anchor="middle" class="small">页数 · 尾页浪费 · 碎片</text>
+<rect x="680" y="407" width="212" height="54" fill="#fff" stroke="#f59e0b" class="item"/>
+<text x="786" y="430" text-anchor="middle" class="head">复用收益</text>
+<text x="786" y="450" text-anchor="middle" class="small">命中率 · 复用 token 数</text>
+
+<!-- validation -->
+<rect x="946" y="112" width="218" height="350" fill="#fce7f3" stroke="#d8b4fe" class="panel"/>
+<text x="968" y="146" class="group">验证出口</text>
+<rect x="970" y="185" width="170" height="115" fill="#fff" stroke="#a855f7" class="item"/>
+<text x="1055" y="215" text-anchor="middle" class="head">固定 workload</text>
+<text x="1055" y="241" text-anchor="middle" class="small">model · dtype · seq_len</text>
+<text x="1055" y="263" text-anchor="middle" class="small">batch · concurrency</text>
+<text x="1055" y="285" text-anchor="middle" class="small">cache policy</text>
+<rect x="970" y="340" width="170" height="80" fill="#fff" stroke="#a855f7" class="item"/>
+<text x="1055" y="370" text-anchor="middle" class="head">实测结果</text>
+<text x="1055" y="396" text-anchor="middle" class="small">显存 · 延迟 · 吞吐 · 质量</text>
+
+<!-- main flow and clean strategy spine -->
+<!-- 跨组入口保持水平，进入第二组后再向上连接判断节点。 -->
+<path d="M272 367H296V287H326" class="line"/><text x="311" y="276" text-anchor="middle" class="label">判断压力</text>
+<path d="M334 287V194H350" class="line"/>
+<!-- 组内 spine 只承担策略分流，不与跨组主线重叠。 -->
+<path d="M334 287V434" class="spine"/>
+<path d="M334 272H350" class="branch"/>
+<path d="M334 353H350" class="branch"/>
+<path d="M334 434H350" class="branch"/>
+<text x="319" y="250" text-anchor="middle" class="label">分流</text>
+
+<!-- aligned strategy-to-metric connections -->
+<path d="M602 272H680" class="line"/><text x="641" y="256" text-anchor="middle" class="label">表示</text>
+<path d="M602 353H680" class="branch"/><text x="641" y="337" text-anchor="middle" class="label">组织</text>
+<path d="M602 434H680" class="branch"/><text x="641" y="418" text-anchor="middle" class="label">复用</text>
+
+<!-- metrics converge to validation -->
+<path d="M925 246V434" class="spine"/>
+<path d="M892 272H925" class="line"/>
+<path d="M892 353H925" class="branch"/>
+<path d="M892 434H925" class="branch"/>
+<path d="M925 246H970" class="line"/><text x="947" y="230" text-anchor="middle" class="label">进入 workload</text>
+<path d="M1055 300V340" class="branch"/><text x="1072" y="325" class="label">比较收益</text>
+</svg>

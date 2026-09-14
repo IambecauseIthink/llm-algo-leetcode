@@ -1,0 +1,1905 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 74 | Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 74 | 零基础导学关卡</p>
+        <h1>Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</h1>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <div class="meta">
+          <span class="pill">74_Profiling_Driven_End_to_End_Optimization.ipynb</span>
+          <span class="pill">显存优化</span><span class="pill">性能剖析</span><span class="pill">端到端优化</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
+        </div>
+        <div class="formula">baseline -&gt; profile -&gt; one change -&gt; remeasure -&gt; report</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="121236230a9e17005fb727a3e995b9dcb29397a5c2bb049677574d8454d996be">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../74_Profiling_Driven_End_to_End_Optimization.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>74. Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU 可完成报告收口；GPU 用于可选 trace | <strong>标签：</strong> <code>显存优化</code>, <code>性能剖析</code>, <code>端到端优化</code> | <strong>目标人群：</strong> 项目决策练习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节把 73 / 76 / 75 的结果与 profiler 证据接起来：先确认已有结论，再用 trace 解释时间和显存代价。主线只分析一个代表性 baseline 与 candidate；其他 workload 用于扩展，不替代主线证据。推理方向可选用 71 的 MLA workload 做同样的 trace 分析，但 74 不重新讲 MLA 机制。
+<strong>层级定位：</strong> 本项目是跨层 profiling 项目，覆盖 L1-L4 的执行证据；若采集资源调度、版本发布或服务可用性指标，才延伸到 L5。它负责定位和验证，不替代具体的算子优化、推理服务或平台治理项目。</p>
+<p><strong>输入与输出：</strong> 输入是 73 的 baseline、76 的策略 benchmark 和 75 的预算决策；输出是带 trace 证据的收口报告。CPU 路径只合并报告和检查证据，GPU 路径才采集代表性 baseline / candidate 的 CPU/CUDA trace；没有 trace 时只能报告证据缺口。
+<strong>实验分层：</strong> CPU 验证报告链路，GPU 验证阶段耗时、kernel / 内存活动和同步证据；二者都不能代替另一方。
+<strong>主责与复用边界：</strong> 本项目主责是用 trace 检查显存优化解释是否成立；性能分析专题复用采集和归因方法，算子优化复用 kernel 证据，推理项目只作为扩展 workload，不在本项目重新选择量化、调度或并行策略。</p>
+<blockquote>
+<p>运行提示：先查看<a href="../../../docs/guide.md#%E9%A1%B9%E7%9B%AE%E7%8E%AF%E5%A2%83%E9%A2%84%E6%A3%80%E4%B8%8E%E5%AE%89%E8%A3%85">使用指南中的项目环境预检与安装说明</a>，再打开真实 profiling 开关。CPU 路径只合并报告；CUDA trace 必须先通过 GPU 预检。</p>
+</blockquote>
+<p><strong>关键词：</strong> <code>profiling</code>, <code>optimization</code>, <code>end-to-end</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 先做 warmup，再测量平均耗时</li><li>TODO 2: 汇总 baseline / tuned 的核心指标差异</li><li>TODO 3: 生成一段最小优化报告</li><li>TODO 4: 给出轻量优化决策</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先完成 73、76、75 的训练侧测量、策略比较和预算决策，再用 profiling 把显存优化方案带入端到端 workload，判断改动是否值得最终保留。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb">P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位</a></li>
+<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
+<li><a href="76_activation_checkpoint_offload_benchmark.html">76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</a></li>
+<li><a href="75_memory_budget_compression_project.html">75. Memory Budget Compression Project | 显存预算压缩项目</a></li>
+<li><a href="66_inference_performance_comparison.html">66. Inference Performance Comparison | 推理性能对比实验</a>（推理扩展）</li>
+<li><a href="71_mla_kv_cache_architecture_benchmark.html">71. MLA / KV Cache Architecture Benchmark | MLA / KV Cache 结构基准</a>（推理 profiling 扩展）</li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成优化闭环后，可以继续把瓶颈定位推进到更底层的实现手段，或回到并行/系统项目页验证是否值得迁移。</p>
+<ul>
+<li><a href="79_distributed_parallel_benchmark.html">79. Distributed Parallel Benchmark | 分布式并行基准项目</a></li>
+<li><a href="67_quantized_inference_and_deployment.html">67. Quantized Inference and Deployment | 量化推理与部署</a></li>
+</ul>
+<hr>
+<h3>Step 1: 定义端到端优化目标</h3>
+<p>先回答一个问题：这次优化到底要解决什么瓶颈，成功标准是什么？</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">环节</th>
+<th style="text-align:left">本节内容</th>
+<th style="text-align:left">形成的证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">输入</td>
+<td style="text-align:left">73 的训练 baseline、76 的候选比较、75 的预算决策，以及 baseline / candidate 的 profiler trace</td>
+<td style="text-align:left">说明当前结论来自哪组模型、workload 和硬件</td>
+</tr>
+<tr>
+<td style="text-align:left">操作</td>
+<td style="text-align:left">在相同 workload 下对照时间线，定位 forward、backward、重算、搬运或同步活动；一次只改一个变量</td>
+<td style="text-align:left">把“显存下降”或“变慢”连接到可观察的执行活动</td>
+</tr>
+<tr>
+<td style="text-align:left">输出</td>
+<td style="text-align:left">baseline / candidate 指标表、trace 路径、瓶颈类别、证据、下一步改动和决策</td>
+<td style="text-align:left">形成可复核的 <code>accept / tune / reject</code> 或证据缺口</td>
+</tr>
+<tr>
+<td style="text-align:left">边界</td>
+<td style="text-align:left">CPU 只检查报告合并和字段逻辑；只有 GPU trace 才能支持 CUDA 时间线、kernel 活动和搬运判断</td>
+<td style="text-align:left">CPU 结果不能替代 profiling 证据，局部指标也不能直接升级为端到端结论</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>主线固定模型、输入数据、batch size、seq len、硬件环境和运行后端，保证 trace 可比较；扩展 workload 必须另列为独立证据。</li>
+<li>明确优化目标，例如降低 step time、提升 throughput、降低 peak memory 或减少通信等待，并先回到 Task 1 的账本判断问题属于容量、带宽、计算还是同步。</li>
+<li>同时写清约束条件：训练任务要保留 loss / accuracy 约束，推理任务要保留精度、输出一致性或服务 SLA 约束。</li>
+<li>Baseline 需要能稳定复现，不能只跑一次；建议至少 warm-up 若干轮，再测多轮平均值。</li>
+<li>这一步的目标是让后面的优化有判断标准，而不是只得到一组孤立数字。</li>
+</ul>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/74_end_to_end_profile_loop.svg" alt="74 profiling 端到端闭环">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;指标变化先由 trace 提出假设，再用同一 workload 复测。&lt;/strong&gt;&lt;/div&gt;</p>
+<h3>Step 2: 先确认 baseline 和 profiling 口径合法</h3>
+<p>profiling 优化必须先确认 baseline 可复现，再把“慢”拆成可解释的瓶颈类型，不能直接对着单次热点截图开刀。</p>
+<ul>
+<li>推荐先记录总耗时、吞吐、峰值显存，再用 profiler 看热点算子和同步点；73 / 76 的表格告诉你“发生了什么”，trace 用来解释“为什么”。</li>
+<li>训练场景优先拆成：数据加载、forward、backward、optimizer step、显存峰值和多卡通信，并特别观察 19 的 checkpoint 重算、42 的 CPU-GPU 搬运是否出现在时间线上。</li>
+<li>推理场景优先拆成：prefill、decode、KV cache、采样逻辑、数据搬运和 kernel 开销；如果使用 71 的 DeepSeek-V2-Lite / MLA workload，还要单独观察 latent KV 读写、位置相关分量和对应 kernel。</li>
+<li>不要只找“最慢的一行代码”，而要判断瓶颈属于哪一类资源：计算、显存容量、内存带宽、通信还是调度；一个算子占比高不等于它就是可优化的根因。</li>
+<li>这一步的产物应该是一句话瓶颈结论，例如：<code>当前瓶颈主要来自 decode 阶段 KV cache 读取</code>。</li>
+</ul>
+<h3>Step 3: 用统一口径比较收益与代价</h3>
+<p>profiling 项目必须同时看 step time、throughput、peak memory 和任务约束，不能只挑单项热点收益下结论。</p>
+<ul>
+<li>一次只改一个方向，例如调整 batch size、开启混合精度、替换 kernel、减少同步点或改变 cache 策略；改动必须能回应 trace 中的具体证据。</li>
+<li>改完后重新测同样的指标，比较 baseline / tuned 的差异。</li>
+<li>如果改动影响训练 loss、推理输出、显存峰值或系统稳定性，要把代价写清楚。</li>
+<li>如果某个改动只是在一项指标上变好，却让另一项变差，要把取舍写清楚。</li>
+<li>这一轮修改的目标是建立因果关系，而不是一次性把所有优化开关都打开。</li>
+</ul>
+<h4>Roofline：把 profiler 指标解释成瓶颈假设</h4>
+<p>Roofline 用算术强度把计算能力和内存带宽放到同一张图上：<code>arithmetic_intensity = FLOPs / memory_bytes</code>，可达到的性能上限近似为 <code>min(peak_FLOPs, bandwidth × arithmetic_intensity)</code>。算术强度较低时，带宽上限更可能先到达；算术强度较高时，计算上限更可能成为约束。它用于提出和检查瓶颈假设，不会替代端到端时间线。</p>
+<table>
+<thead>
+<tr>
+<th>输入</th>
+<th>CPU 可验证的结果</th>
+<th>只有 GPU profiler 才能确认的内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FLOPs、访存字节数、峰值算力、显存带宽</td>
+<td>算术强度、计算/带宽上限和理论 bound</td>
+<td>kernel 的实际 FLOPs/s、实际带宽和硬件受限原因</td>
+</tr>
+<tr>
+<td>缺少 FLOPs 或字节计数</td>
+<td>输出 <code>insufficient_evidence</code>，不做 bound 判断</td>
+<td>需要 Nsight Compute 或可靠的硬件计数器导出</td>
+</tr>
+</tbody>
+</table>
+<p>因此，CPU 实验只检查公式和分类逻辑；GPU trace 如果没有 FLOP/DRAM counter，也只能记录 <code>roofline_status=not_collected</code>，不能把某个 kernel 直接写成 compute-bound 或 memory-bound。</p>
+<h3>Step 4: 输出端到端优化结论</h3>
+<p>端到端优化最终不是输出“某个热点是不是降了”，而是输出这次改动在当前任务约束下是否值得继续保留、微调或回退。</p>
+<ul>
+<li>输出 baseline / tuned 对比表，至少包含 step time、throughput、peak memory 和备注。</li>
+<li>附上 profiling 截图或关键统计，说明瓶颈来自哪一类资源。</li>
+<li>写清楚本次改动、收益、代价和是否满足约束。</li>
+<li>如果优化没有达到目标，记录失败原因和下一轮优先级。</li>
+<li>将端到端结果与 75 的预算决策对照；如果 profiling 推翻了局部结论，要记录是 workload、同步、数据搬运还是系统开销造成的。</li>
+<li>最终产物应回答：原始瓶颈是什么，做了什么改动，收益有多大，这个改动是否值得保留。</li>
+</ul>
+<h3>Step 5: 最小代码模板</h3>
+<p>上面的 Step 1-4 是完整 profiling 驱动优化流程。下面的代码实现其中最小、可复用的四块：测平均耗时、汇总 baseline / tuned 指标差异、生成优化报告，以及把结果收成 <code>accept / tune / reject</code> 的轻量决策。真实项目中的 profiling 截图、瓶颈证据和优化策略，需要基于这四步继续补充。</p>
+<h3>Step 6: 按统一协议保存项目结果</h3>
+<p>74 与 73、76、75 共用实验外层字段：模型、设备、dtype、workload、baseline / tuned、step time、throughput、peak memory、质量约束和 <code>accept / tune / reject</code>。74 额外保存 profiling 证据，因此不能只复制显存策略表。</p>
+<p>建议额外记录：<code>profile.tool</code>、<code>profile.top_operators</code>、<code>profile.compute_ratio</code>、<code>profile.memory_ratio</code>、<code>profile.communication_ratio</code>，以及 <code>bottleneck.category</code>、<code>bottleneck.evidence</code>、<code>bottleneck.optimization</code>。<code>trace.status=collected</code> 只表示文件已生成，不等于瓶颈已经确认；只有把时间线观察、指标变化和一次针对性复验连起来，才能升级为端到端优化结论。如果当前环境没有真实 profiler，允许这些字段为空，但不能把未测量内容写成结论。</p>
+<p>项目结果协议由 <code>tools/profiling_result_schema.py</code> 提供。它不会覆盖原始实验数据；真实 GPU 或 Colab 环境完成 profiling 后，可将结果保存为 <code>benchmarks/results/74_profiling_optimization.json</code>。</p>
+<h3>提示</h3>
+<ul>
+<li>先固定 baseline，再做 profiling，再改一个变量。</li>
+<li>不要只看 step time，至少同时记录 throughput 和 peak memory。</li>
+<li>如果瓶颈不是单一算子，而是同步 / 调度 / cache，报告里要直接写出来。</li>
+<li>真实 GPU 场景可调用答案区的 <code>collect_torch_profile</code> 保存短 trace；不要把未采集的 top operators 填成推测。</li>
+</ul>
+<h3>参数口径说明</h3>
+<p>profiling 实验必须固定 model、workload、batch、seq_len、warmup、iters、backend 和硬件；<code>warmup</code> 不计入正式测量，<code>iters</code> 决定均值稳定性。优化目标可以是 step time、throughput、peak memory 或通信等待，但一次只改一个方向，并同时保留质量/稳定性约束。</p>
+<h3>测试</h3>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>import time
+from pathlib import Path
+
+try:
+    import torch
+except ImportError:
+    torch = None
+
+def synchronize_if_cuda():
+    &quot;&quot;&quot;Synchronize CUDA when available; keep CPU-first execution unchanged.&quot;&quot;&quot;
+    if torch is not None and torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+
+def estimate_roofline(flops, memory_bytes, peak_flops, bandwidth):
+    &quot;&quot;&quot;用给定的理论参数估算 Roofline 上限；不读取 GPU 硬件计数器。&quot;&quot;&quot;
+    values = {
+        'flops': flops, 'memory_bytes': memory_bytes,
+        'peak_flops': peak_flops, 'bandwidth': bandwidth,
+    }
+    if any(value &lt;= 0 for value in values.values()):
+        raise ValueError('flops/memory_bytes/peak_flops/bandwidth 必须为正数')
+    arithmetic_intensity = flops / memory_bytes
+    compute_roof = peak_flops
+    bandwidth_roof = bandwidth * arithmetic_intensity
+    attainable_roof = min(compute_roof, bandwidth_roof)
+    bound = 'compute' if compute_roof &lt;= bandwidth_roof else 'memory'
+    return {
+        'arithmetic_intensity': arithmetic_intensity,
+        'compute_roof': compute_roof,
+        'bandwidth_roof': bandwidth_roof,
+        'attainable_roof': attainable_roof,
+        'bound': bound,
+        'evidence_level': 'theoretical_formula_only',
+    }
+
+def benchmark_fn(fn, warmup=3, iters=10):
+    &quot;&quot;&quot;测量 CPU/GPU 函数的平均耗时；GPU 需由同步函数包住测量区间。&quot;&quot;&quot;
+    if warmup &lt; 0 or iters &lt;= 0:
+        raise ValueError('warmup must be &gt;= 0 and iters must be &gt; 0')
+    # ==========================================
+    # TODO 1: 先做 warmup，再测量平均耗时
+    # 提示: 用 time.perf_counter() 记录起止时间
+    # 返回单位统一为 ms，方便和项目报告对齐
+    # ==========================================
+    for _ in range(warmup):
+        fn()
+
+    # start = ???
+    for _ in range(iters):
+        fn()
+    # total = ???
+    # avg_time_ms = ???
+    return avg_time_ms
+
+def summarize_optimization_result(base_metrics, tuned_metrics):
+    &quot;&quot;&quot;统一计算 baseline - tuned 的时间、显存和吞吐差异。&quot;&quot;&quot;
+    # ==========================================
+    # TODO 2: 汇总 baseline / tuned 的核心指标差异
+    # 提示: 正数表示 tuned 相比 baseline 有改善
+    # step time / memory 越低越好，throughput 越高越好
+    # ==========================================
+    # time_delta = ???
+    # memory_delta = ???
+    # throughput_delta = ???
+
+    summary = {
+        'step_time_delta_ms': round(time_delta, 2),
+        'peak_mem_delta_mb': round(memory_delta, 2),
+        'throughput_delta': round(throughput_delta, 2),
+        'time_improved': time_delta &gt; 0,
+        'memory_improved': memory_delta &gt; 0,
+        'throughput_improved': throughput_delta &gt; 0,
+    }
+    return summary
+
+
+def format_optimization_report(summary, bottleneck, next_action):
+    &quot;&quot;&quot;输出指标变化、瓶颈证据边界和下一步动作。&quot;&quot;&quot;
+    # ==========================================
+    # TODO 3: 生成一段最小优化报告
+    # 提示: 把指标变化、瓶颈结论和下一步动作放在一起
+    # ==========================================
+    header = &quot;| 指标 | 变化 | 判断 |&quot;
+    sep = &quot;| --- | --- | --- |&quot;
+    # rows = ???
+    # conclusion = ???
+    return &quot;\n&quot;.join([header, sep] + rows + [conclusion])
+
+
+def recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0):
+    &quot;&quot;&quot;使用显式阈值输出 accept / tune / reject，不把 CPU 结果写成 GPU 结论。&quot;&quot;&quot;
+    # ==========================================
+    # TODO 4: 给出轻量优化决策
+    # 规则：
+    # - 时间和吞吐都改善：accept
+    # - 时间改善，且显存或吞吐至少有一项为正收益：tune
+    # - 否则：reject
+    # ==========================================
+    # strong_time_gain = ???
+    # strong_memory_gain = ???
+    # strong_throughput_gain = ???
+    # if ???:
+    #     decision = ???
+    #     reason = ???
+    # positive_memory_gain = summary['peak_mem_delta_mb'] &gt; 0
+    # positive_throughput_gain = summary['throughput_delta'] &gt; 0
+    # elif ???:
+    #     decision = ???
+    #     reason = ???
+    # else:
+    #     decision = ???
+    #     reason = ???
+    # return {'decision': decision, 'reason': reason}
+    raise NotImplementedError
+</code></pre></details><details><summary>题目与测试代码 · Cell 11</summary><pre><code>def test_optimization_project_template():
+    try:
+        counter = {'n': 0}
+
+        def fn():
+            counter['n'] += 1
+
+        result = benchmark_fn(fn, warmup=0, iters=2)
+        assert counter['n'] == 2, &quot;benchmark 应该运行 iters 次&quot;
+        assert result &gt;= 0.0, &quot;平均耗时应该非负&quot;
+        roofline = estimate_roofline(flops=2_000.0, memory_bytes=1_000.0, peak_flops=10.0, bandwidth=1.0)
+        assert roofline['arithmetic_intensity'] == 2.0
+        assert roofline['bound'] == 'memory'
+        assert roofline['evidence_level'] == 'theoretical_formula_only'
+        for invalid in ({'warmup': -1, 'iters': 2}, {'warmup': 0, 'iters': 0}):
+            try:
+                benchmark_fn(fn, **invalid)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError('非法 warmup / iters 应明确拒绝')
+
+        baseline = {'step_time_ms': 120.0, 'peak_mem_mb': 8192.0, 'throughput': 80.0}
+        tuned = {'step_time_ms': 96.0, 'peak_mem_mb': 7168.0, 'throughput': 100.0}
+        summary = summarize_optimization_result(baseline, tuned)
+
+        assert summary['step_time_delta_ms'] == 24.0
+        assert summary['peak_mem_delta_mb'] == 1024.0
+        assert summary['throughput_delta'] == 20.0
+        assert summary['time_improved'] is True
+        assert summary['memory_improved'] is True
+        assert summary['throughput_improved'] is True
+
+        report = format_optimization_report(summary, 'backward kernel 占比过高', '保留混合精度并继续检查 optimizer')
+        assert '| 指标 | 变化 | 判断 |' in report
+        assert 'backward kernel 占比过高' in report
+        assert '保留混合精度并继续检查 optimizer' in report
+
+        decision = recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
+        assert decision['decision'] == 'accept'
+
+        mixed_summary = {'step_time_delta_ms': 12.0, 'peak_mem_delta_mb': 128.0, 'throughput_delta': 2.0, 'time_improved': True, 'memory_improved': True, 'throughput_improved': True}
+        mixed_decision = recommend_optimization_decision(mixed_summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
+        assert mixed_decision['decision'] == 'tune'
+
+        weak_summary = {'step_time_delta_ms': -3.0, 'peak_mem_delta_mb': 64.0, 'throughput_delta': 1.0, 'time_improved': False, 'memory_improved': True, 'throughput_improved': True}
+        weak_decision = recommend_optimization_decision(weak_summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
+        assert weak_decision['decision'] == 'reject'
+
+        print(&quot;✅ profiling 驱动的端到端优化项目模板代码通过基础校验。&quot;)
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print(&quot;代码可能未完成，导致变量未定义&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+
+
+test_optimization_project_template()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card inquiry" data-lesson="profiling-benchmark-baseline">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>先固定测量尺：warmup 不计时，正式轮次才求平均</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">warmup=3、iters=10，正式 10 次总共耗时 0.05 秒。</p>
+            <p class="predict-q">benchmark_fn 应返回多少毫秒？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="0">
+                <span>5 ms</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="1">
+                <span>50 ms</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-benchmark-baseline" value="2">
+                <span>500 ms</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="profiling-benchmark-baseline">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="profiling-benchmark-baseline">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>函数也是一个值：参数 fn 保存的是“稍后要调用的函数”，写 fn() 才会真正执行它。</li><li>range(n) 会产生 0 到 n-1 共 n 个整数，所以 for _ in range(iters) 会调用 fn 恰好 iters 次。</li><li>time.perf_counter() 返回高精度时间点；结束时间减开始时间才是经过的秒数。</li><li>warmup 只负责预热，不应落在 start 和 total 之间；正式计时结果要除以 iters，再乘 1000 转成毫秒。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>性能优化先要有一把稳定的尺。预热像运动前热身，它让初始化和缓存抖动先发生；真正比赛开始时才按下秒表。若把 warmup 也计入，或只跑一轮，baseline 和 tuned 的比较就可能是在比较偶然噪声。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>预热</b>调用 warmup 次，不纳入统计</span>
+          <span><b>记开始点</b>start = perf_counter()</span>
+          <span><b>正式执行</b>调用 iters 次</span>
+          <span><b>算平均毫秒</b>(end - start) / iters * 1000</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>变量契约</h4>
+            <div class="adv-contract">
+              <span><code>fn</code></span><strong>一个无参数、可重复调用的函数</strong>
+              <span><code>warmup</code></span><strong>计时前的预热次数</strong>
+              <span><code>iters</code></span><strong>正式测量次数</strong>
+              <span>返回值</span><strong>单次平均耗时，单位 ms，且应非负</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>计时边界</h4>
+            <div class="adv-flow">
+              <span>warmup loop<br>不计时</span>
+              <span>start</span>
+              <span>iters loop<br>正式计时</span>
+              <strong>total / iters<br>再转 ms</strong>
+            </div>
+            <p>Notebook 测试把 warmup 设为 0、iters 设为 2，因此 counter 必须正好增加 2。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">TODO 1 是 CPU-first 模板。真实 GPU kernel 常常异步执行，工程中还要在计时边界同步 CUDA；不要把这项额外要求擅自加进当前 Notebook。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用文件解析任务练习“预热后计时”</h4><pre><code>import time
+
+def measure(parser, warmup=1, repeats=4):
+    for _ in range(warmup):
+        parser()
+
+    begin = time.perf_counter()
+    for _ in range(repeats):
+        parser()
+    elapsed_seconds = time.perf_counter() - begin
+    return elapsed_seconds / repeats * 1000</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>parser</code> 对应 <code>fn</code>，都要用括号调用。</li>
+            <li><code>begin</code> 对应 TODO 的 <code>start</code>；<code>elapsed_seconds</code> 对应 <code>total</code>。</li>
+            <li><code>repeats</code> 对应 <code>iters</code>；先除次数，再乘 1000，得到 <code>avg_time_ms</code>。</li>
+            <li>把三行迁回 TODO 时保留 Notebook 已有的两个循环，不要再额外调用一次 <code>fn()</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>start 最合理的位置在哪里？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="0">
+                <span>正式 iters 循环之后</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="1">
+                <span>warmup 循环之前</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="2">
+                <span>warmup 循环之后、正式 iters 循环之前</span>
+              </label></div>
+              <div class="feedback" data-feedback="profiling-benchmark-baseline"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-benchmark-baseline-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="profiling-metric-direction">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>再统一正负号：低指标用 baseline - tuned，高指标反过来</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">baseline throughput=100，tuned throughput=92。</p>
+            <p class="predict-q">按 Notebook 的统一约定，throughput_delta 和 improved 应是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-metric-direction" value="0">
+                <span>-8，False</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-metric-direction" value="1">
+                <span>8，True</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-metric-direction" value="2">
+                <span>-8，True</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="profiling-metric-direction">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="profiling-metric-direction">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Python 字典用方括号按键取值，例如 metrics['step_time_ms']。</li><li>step time 和 peak memory 越低越好，所以 baseline 减 tuned 为正时表示改善。</li><li>throughput 越高越好，所以必须用 tuned 减 baseline，正数才仍表示改善。</li><li>round(value, 2) 只负责把结果保留两位小数；判断改善应基于原始差值变量。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>报告最容易埋下的错误不是算错数字，而是同一个正号表达了相反含义。解决办法是先统一约定：summary 里所有性能差值都让“正数 = tuned 更好”。然后根据指标是越低越好还是越高越好，决定减法方向。</p>
+              <div class="adv-course">
+        <div class="adv-grid three">
+          <section class="adv-panel blue">
+            <h4>step time</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越低越好</strong>
+              <span>公式</span><strong>base - tuned</strong>
+              <span>Notebook</span><strong>120 - 96 = 24 ms</strong>
+            </div>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>peak memory</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越低越好</strong>
+              <span>公式</span><strong>base - tuned</strong>
+              <span>Notebook</span><strong>8192 - 7168 = 1024 MB</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>throughput</h4>
+            <div class="adv-contract">
+              <span>偏好</span><strong>越高越好</strong>
+              <span>公式</span><strong>tuned - base</strong>
+              <span>Notebook</span><strong>100 - 80 = 20</strong>
+            </div>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>输出键</th><th>数值来源</th><th>布尔判断</th><th>测试期望</th></tr></thead>
+          <tbody>
+            <tr><td><code>step_time_delta_ms</code></td><td><code>time_delta</code></td><td><code>time_delta &gt; 0</code></td><td>24.0 / true</td></tr>
+            <tr><td><code>peak_mem_delta_mb</code></td><td><code>memory_delta</code></td><td><code>memory_delta &gt; 0</code></td><td>1024.0 / true</td></tr>
+            <tr><td><code>throughput_delta</code></td><td><code>throughput_delta</code></td><td><code>throughput_delta &gt; 0</code></td><td>20.0 / true</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">先在纸上给每个指标写“越低/越高”，再写减法。不要从三个测试答案倒推硬编码数字；函数必须适用于任意 baseline 和 tuned 字典。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用配送方案练习统一“正数代表改善”</h4><pre><code>old = {'minutes': 42.0, 'orders_per_hour': 18.0}
+new = {'minutes': 35.0, 'orders_per_hour': 24.0}
+
+time_gain = old['minutes'] - new['minutes']
+capacity_gain = new['orders_per_hour'] - old['orders_per_hour']
+
+result = {
+    'time_gain': round(time_gain, 2),
+    'capacity_gain': round(capacity_gain, 2),
+    'time_improved': time_gain &gt; 0,
+    'capacity_improved': capacity_gain &gt; 0,
+}</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>old/new</code> 对应 <code>base_metrics/tuned_metrics</code>。</li>
+            <li><code>minutes</code> 对应 step time 或 memory，沿用 <code>base - tuned</code>。</li>
+            <li><code>orders_per_hour</code> 对应 throughput，沿用 <code>tuned - base</code>。</li>
+            <li>最后把三个差值写入 Notebook 已给出的 summary 键，不要更名，否则测试按键读取会失败。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 memory_delta 使用 baseline - tuned？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="0">
+                <span>显存越低越好，这样 tuned 更省显存时差值为正</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="1">
+                <span>因为 round 只接受正数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-metric-direction" value="2">
+                <span>因为所有指标都必须固定用 baseline - tuned</span>
+              </label></div>
+              <div class="feedback" data-feedback="profiling-metric-direction"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-metric-direction-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="profiling-report-loop">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>最后让数字变成行动：列表生成表格，结论回扣瓶颈</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">time_improved=False，但 step_time_delta_ms=-3.5。</p>
+            <p class="predict-q">step time 表格行的判断文字应该是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-report-loop" value="0">
+                <span>未改善</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-report-loop" value="1">
+                <span>改善</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-profiling-report-loop" value="2">
+                <span>无法生成</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="profiling-report-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="profiling-report-loop">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>f-string 用大括号把变量值嵌进字符串，例如 f'耗时：{value}'。</li><li>条件表达式写成 A if condition else B，可在表格中选择“改善”或“未改善”。</li><li>rows 是字符串列表；[header, sep] + rows + [conclusion] 会拼成一个更长的列表。</li><li>'\n'.join(lines) 会在每两行之间插入换行符，适合生成 Markdown 表格。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>profiling 的闭环不是停在“快了 24 ms”。一份可执行报告必须同时保留证据、瓶颈判断和下一步动作。表格回答发生了什么，结论回答为什么以及下一轮做什么。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>header + sep</b>建立 Markdown 表头</span>
+          <span><b>rows</b>把三项差值逐行格式化</span>
+          <span><b>conclusion</b>串联瓶颈与下一步</span>
+          <span><b>join</b>输出一个多行字符串</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>报告必须出现的内容</h4>
+            <div class="adv-checks">
+              <span>step time<br>变化与判断</span>
+              <span>peak memory<br>变化与判断</span>
+              <span>throughput<br>变化与判断</span>
+              <span>bottleneck<br>next_action</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>闭环不等于全都改善</h4>
+            <p>某项布尔值为 False 时，表格应如实显示“未改善”。优化可以带来取舍，报告不能为了好看隐藏代价。</p>
+            <div class="adv-contract">
+              <span>瓶颈</span><strong>backward kernel 占比过高</strong>
+              <span>下一步</span><strong>保留混合精度并检查 optimizer</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-callout">测试只检查关键子串，但你的实现仍应完整生成三行指标。不要把 bottleneck 或 next_action 写死为测试样例，它们是函数参数。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用学习复盘练习生成 Markdown 报告</h4><pre><code>score = 8
+passed = score &gt;= 6
+rows = [
+    f"| 得分 | {score} | {'通过' if passed else '未通过'} |",
+]
+next_step = '复习错题并再测一次'
+conclusion = f"下一步：{next_step}。"
+
+report = "\n".join([
+    '| 项目 | 数值 | 判断 |',
+    '| --- | --- | --- |',
+] + rows + [conclusion])</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>score/passed</code> 对应 summary 中的一组差值和 improved 布尔值。</li>
+            <li>单行 <code>rows</code> 扩成 step time、peak memory、throughput 三行。</li>
+            <li><code>next_step</code> 对应 <code>next_action</code>；结论中还要加入 <code>bottleneck</code>。</li>
+            <li>保留 Notebook 已给出的 <code>header</code> 与 <code>sep</code>，最终仍用换行符 join。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么报告末尾还要写 bottleneck 和 next_action？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-report-loop" value="0">
+                <span>因为 Markdown 表格不能单独显示数字</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-report-loop" value="1">
+                <span>让指标变化能连接到原因判断和下一轮可执行动作</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-profiling-report-loop" value="2">
+                <span>为了让字符串更长</span>
+              </label></div>
+              <div class="feedback" data-feedback="profiling-report-loop"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="profiling-report-loop-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="73_training_performance_analysis.html">上一关：L73</a>
+        <a class="primary" href="75_memory_budget_compression_project.html">下一关：L75</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "74";
+    const checkpointData = {"profiling-benchmark-baseline":{"answer":2,"explain":"这样 total 只覆盖需要比较的正式轮次，预热开销不会污染平均耗时。"},"profiling-metric-direction":{"answer":0,"explain":"减法方向由指标偏好决定；throughput 恰好需要相反方向。"},"profiling-report-loop":{"answer":1,"explain":"优化报告的价值在于支持决策，而不只是保存一组测量数字。"}};
+    const predictData = {"profiling-benchmark-baseline":{"answer":0,"revealNote":"0.05 / 10 = 0.005 秒；乘 1000 后是 5 ms。warmup 不进入这段总耗时。"},"profiling-metric-direction":{"answer":0,"revealNote":"高指标用 tuned - baseline：92 - 100 = -8；负数表示吞吐退步。"},"profiling-report-loop":{"answer":0,"revealNote":"显示文字由布尔键决定；负差值也应该原样保留，帮助读者看到退步幅度。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "33";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-121236230a9e";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

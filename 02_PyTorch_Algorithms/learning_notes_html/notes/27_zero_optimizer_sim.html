@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 27 | ZeRO Optimizer Sim</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 27 | ZeRO Optimizer Sim | ZeRO 优化器模拟</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 27 | 零基础导学关卡</p>
-        <h1>ZeRO Optimizer Sim</h1>
+        <h1>ZeRO Optimizer Sim | ZeRO 优化器模拟</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">27_ZeRO_Optimizer_Sim.ipynb</span>
-          <span class="pill">ZeRO</span><span class="pill">Optimizer State</span><span class="pill">Sharding</span>
+          <span class="pill">并行通信</span><span class="pill">ZeRO</span><span class="pill">参数切分</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,211 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="8de971fd727c7ad19fb87e393fbf382c61fcd12a9cd3079d33de96f8ba919ec3">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../27_ZeRO_Optimizer_Sim.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>27. ZeRO Optimizer Sim | ZeRO 优化器模拟</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>ZeRO</code>, <code>参数切分</code> | <strong>目标人群：</strong> 并行通信学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>数据并行能把 batch 分到多张卡上计算，但它有一个明显浪费：每张卡都保存完整参数、完整梯度和完整优化器状态。模型一大，真正压垮显存的往往不是前向本身，而是这些训练状态在每张卡上的重复存储。</p>
+<p>ZeRO 的思路是把这些重复状态拆开，让不同 GPU 只维护自己负责的一部分。本节用一个简化模拟先看 ZeRO-1：优化器状态如何切分，Reduce-Scatter 和 All-Gather 分别解决什么问题。完成后，你应该能理解 ZeRO 为什么能降低单卡显存占用，也能把它和后面的 Pipeline / Tensor Parallelism 区分开。</p>
+<p><strong>关键词：</strong> <code>ZeRO</code>, <code>Reduce-Scatter</code>, <code>All-Gather</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 将参数切分给不同的 GPU 负责</li><li>TODO 2: 为每个 GPU 初始化局部状态</li><li>TODO 3: 模拟每张卡只更新自己负责的那部分权重</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 进入本节前，先能区分参数、梯度和优化器状态，并能从显存账本中看出它们为什么会在每张 GPU 上重复保存。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失函数</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+<li><a href="../../../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb">P0: 20. Profiling and Memory Ledger | 性能剖析与显存账本</a></li>
+</ul>
+<hr>
+<h3>Step 1: ZeRO-1 核心思想</h3>
+<blockquote>
+<p><strong>传统的 Data Parallel (DP，数据并行)：</strong></p>
+</blockquote>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/27_zero_sharding.svg" alt="ZeRO：把训练状态从每卡复制改成分片"></p>
+<blockquote>
+<p>每张卡都有一份完整的模型权重、完整的梯度、完整的优化器状态。
+各个卡算完自己这批数据的梯度后，进行 <code>All-Reduce</code> 求平均。然后每张卡用自己的优化器更新自己完整的权重。
+<strong>痛点：严重浪费！每张卡都在重复保存一样的优化器状态和重复做一样的参数更新。</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>ZeRO-1 的机制：</strong></p>
+<ol>
+<li>每张卡依然有完整的模型权重和完整的梯度（前向和反向传播与 DP 完全一样）。</li>
+<li><strong>切分：</strong> 优化器状态被切分成 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq> 份（假设有 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq> 张卡），每张卡只负责维护 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{1}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq> 的优化器状态，并只负责更新这 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{1}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq> 的模型权重。</li>
+<li><strong>通信：</strong> 反向传播结束后，不需要对所有梯度做 <code>All-Reduce</code>，而是做 <code>Reduce-Scatter</code>，让每张卡只拿到属于自己那 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{1}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq> 权重的平均梯度。</li>
+<li>每张卡更新自己负责的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{1}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq> 权重后，再通过 <code>All-Gather</code> 将更新后的片段广播给所有卡，拼合出完整的新权重。</li>
+</ol>
+</blockquote>
+<h3>Step 2: 代码实现框架</h3>
+<p>我们需要模拟一个分布式环境（可以简单用 Python 列表或字典代替不同的 GPU 节点）。在优化器初始化时，收集所有的模型参数，并将它们的 FP32 梯度和 Optimizer State（例如 Adam 的 Momentum 和 Variance）切分成 N 块，分别存放在对应的 GPU 上。在更新时，每张卡只负责计算自己那一小块的参数更新。</p>
+<h3>Step 3: 动手实战</h3>
+<p><strong>要求</strong>：请补全下方 <code>ZeRO1_Optimizer_Sim</code>。我们将模拟在单机上用逻辑 Tensor 划分来代替真实的跨卡通信 (All-Gather / Reduce-Scatter)。</p>
+<h3>Step 4: ZeRO 家族的分片层次与通信代价</h3>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/27_zero_stages.svg" alt="ZeRO 分阶段：省下的状态对应新增的通信"></p>
+<p>在上面的代码中，上述代码模拟了 ZeRO-1。但微软 DeepSpeed 团队在此基础上进行了进一步的演进。为了训练千亿甚至万亿参数的模型，他们提出了完整的 ZeRO 三部曲。</p>
+<p>这是分布式训练领域的核心知识点：</p>
+<blockquote>
+<p><strong>模型训练的显存大头（以 FP16 混合精度 + Adam 为例）：</strong>
+假设模型参数量为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Φ</span></span></span></span></eq>。</p>
+<ol>
+<li><strong>模型参数 (FP16)</strong>：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">2\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">2Φ</span></span></span></span></eq> bytes</li>
+<li><strong>梯度 (FP16)</strong>：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">2\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">2Φ</span></span></span></span></eq> bytes</li>
+<li><strong>优化器状态 (FP32)</strong>：包含 FP32的参数备份 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">4\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">4Φ</span></span></span></span></eq>) + FP32的一阶动量 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">4\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">4Φ</span></span></span></span></eq>) + FP32的二阶动量 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">4\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">4Φ</span></span></span></span></eq>) = <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>12</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">12\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">12Φ</span></span></span></span></eq> bytes
+<strong>总计：至少 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>16</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">16\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">16Φ</span></span></span></span></eq> 的显存（还不算 Activation）。</strong></li>
+</ol>
+</blockquote>
+<h4>ZeRO-1：切分优化器状态 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mrow><mi>o</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">P_{os}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">os</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>)</h4>
+<ul>
+<li><strong>原理</strong>：正如我们刚刚手写的，只把 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>12</mn><mi mathvariant="normal">Φ</mi></mrow><annotation encoding="application/x-tex">12\Phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">12Φ</span></span></span></span></eq> 的优化器状态切分到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq> 张卡上。</li>
+<li><strong>显存占用</strong>：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi mathvariant="normal">Φ</mi><mo>+</mo><mn>2</mn><mi mathvariant="normal">Φ</mi><mo>+</mo><mfrac><mrow><mn>12</mn><mi mathvariant="normal">Φ</mi></mrow><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">2\Phi + 2\Phi + \frac{12\Phi}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord">2Φ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord">2Φ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">12Φ</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq>。通信量与数据并行 (DP) 完全相同。</li>
+</ul>
+<h4>ZeRO-2：切分梯度 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mrow><mi>o</mi><mi>s</mi><mo>+</mo><mi>g</mi></mrow></msub></mrow><annotation encoding="application/x-tex">P_{os+g}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2583em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">os</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></eq>)</h4>
+<ul>
+<li><strong>原理</strong>：在 ZeRO-1 的基础上，进一步切分梯度。既然第 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></eq> 张卡只负责更新第 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></eq> 块参数，那么在反向传播算完梯度后，它<strong>只需要保留第 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></eq> 块的梯度</strong>，把其他的梯度直接扔掉释放显存！</li>
+<li><strong>通信变化</strong>：传统的 DP 在反向传播后做 <code>All-Reduce</code>（求和并广播）。ZeRO-2 改为 <code>Reduce-Scatter</code>（求和但只把各自负责的那块梯度发给对应的卡）。</li>
+<li><strong>显存占用</strong>：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi mathvariant="normal">Φ</mi><mo>+</mo><mfrac><mrow><mn>2</mn><mi mathvariant="normal">Φ</mi></mrow><mi>N</mi></mfrac><mo>+</mo><mfrac><mrow><mn>12</mn><mi mathvariant="normal">Φ</mi></mrow><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">2\Phi + \frac{2\Phi}{N} + \frac{12\Phi}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord">2Φ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2Φ</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">12Φ</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq>。</li>
+</ul>
+<h4>ZeRO-3：切分参数 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mrow><mi>o</mi><mi>s</mi><mo>+</mo><mi>g</mi><mo>+</mo><mi>p</mi></mrow></msub></mrow><annotation encoding="application/x-tex">P_{os+g+p}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2583em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">os</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight">p</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></eq>)</h4>
+<ul>
+<li><strong>原理</strong>：最为完全的切分方案。每张卡不再保留完整的模型参数：平时只存自己负责的那一小块参数。当前向/反向传播走到某一层时，通过 <code>All-Gather</code> 从其他卡把那一层的参数<strong>临时广播过来</strong>，计算完成后即刻释放：</li>
+<li><strong>通信变化</strong>：牺牲了高达 50% 的额外通信量（因为要在前反向频繁 All-Gather），换取了显著提升的模型容量上限。</li>
+<li><strong>显存占用</strong>：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mn>16</mn><mi mathvariant="normal">Φ</mi></mrow><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{16\Phi}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">16Φ</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq>。通过增加计算节点，可以支持更大规模的模型训练。</li>
+</ul>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 7</summary><pre><code>class SimpleModel(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        # 为了演示切分，我们用一个包含偶数个参数的线性层
+        self.fc1 = nn.Linear(dim, dim, bias=False)
+        self.fc2 = nn.Linear(dim, dim, bias=False)
+
+    def forward(self, x):
+        return self.fc2(torch.relu(self.fc1(x)))
+
+class ZeRO1_Optimizer_Sim:
+    &quot;&quot;&quot;
+    模拟 2 张 GPU 上的 ZeRO-1 优化器行为。
+    为了简化，我们假设模型的所有参数都被展平 (Flatten) 为一个一维张量，然后均分为 2 份。
+    &quot;&quot;&quot;
+    def __init__(self, model_params, lr=0.1, num_gpus=2):
+        self.lr = lr
+        self.num_gpus = num_gpus
+
+        # 将所有参数的引用收集起来
+        self.params = list(model_params)
+
+        # ==========================================
+        # TODO 1: 将参数切分给不同的 GPU 负责
+        # 提示: GPU 0 负责前半部分参数，GPU 1 负责后半部分参数
+        # half_idx = ???
+        # self.gpu_partitions = ???
+        # ==========================================
+        pass
+
+        # ==========================================
+        # TODO 2: 为每个 GPU 初始化局部状态
+        # 提示: 只为各自负责的参数保存动量，初始值全为 0
+        # self.optimizer_states = ???
+        # ==========================================
+        pass
 
 
+    def step(self, gradients_from_all_gpus: dict):
+        &quot;&quot;&quot;
+        gradients_from_all_gpus 模拟了 Reduce-Scatter 的结果。
+        结构：{gpu_id: [它负责的参数的平均梯度]}
+        &quot;&quot;&quot;
+        # ==========================================
+        # TODO 3: 模拟每张卡只更新自己负责的那部分权重
+        # 对于每个 gpu_id:
+        #   params = ???
+        #   grads = ???
+        #   states = ???
+        # 对于每个参数：
+        #   momentum = ???
+        #   states[id(p)] = ???
+        #   p.data = ???
+        # ==========================================
+        for gpu_id in range(self.num_gpus):
+            pass
 
+    def zero_grad(self):
+        for p in self.params:
+            if p.grad is not None:
+                p.grad.zero_()
+</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code># 测试你的实现
+def test_zero1_sim():
+    try:
+        torch.manual_seed(42)
+        model = SimpleModel(dim=4)
+        optimizer = ZeRO1_Optimizer_Sim(model.parameters(), lr=0.1, num_gpus=2)
+
+        # 保存初始权重用于对比
+        initial_w1 = model.fc1.weight.data.clone()
+        initial_w2 = model.fc2.weight.data.clone()
+
+        # 模拟反向传播产生的平均梯度 (Reduce-Scatter 的结果)
+        # 假设 fc1 是 GPU 0 负责，fc2 是 GPU 1 负责
+        simulated_reduce_scatter_grads = {
+            0: [torch.ones_like(model.fc1.weight)],  # GPU 0 收到 fc1 的梯度
+            1: [torch.full_like(model.fc2.weight, 2.0)] # GPU 1 收到 fc2 的梯度
+        }
+
+        # 验证优化器状态切分 (ZeRO-1 的核心显存节约)
+        assert len(optimizer.optimizer_states[0]) == 1, &quot;GPU 0 应该只维护 fc1 的状态&quot;
+        assert len(optimizer.optimizer_states[1]) == 1, &quot;GPU 1 应该只维护 fc2 的状态&quot;
+
+        # 执行更新
+        optimizer.step(simulated_reduce_scatter_grads)
+
+        # 验证更新结果是否正确应用到了原模型上 (隐式的 All-Gather)
+        diff_w1 = initial_w1 - model.fc1.weight.data
+        diff_w2 = initial_w2 - model.fc2.weight.data
+
+        # 预期：momentum 从 0 变成 1，w1 减去 lr * 1 = 0.1
+        # 预期：momentum 从 0 变成 2，w2 减去 lr * 2 = 0.2
+        assert torch.allclose(diff_w1, torch.full_like(diff_w1, 0.1)), &quot;GPU 0 负责的权重更新错误！&quot;
+        assert torch.allclose(diff_w2, torch.full_like(diff_w2, 0.2)), &quot;GPU 1 负责的权重更新错误！&quot;
+
+        print(&quot;✅ ZeRO-1 优化器状态切分与更新逻辑测试通过！&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        elif isinstance(e, AssertionError):
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了运行时错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+
+test_zero1_sim()</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="zero1-parameter-partitions">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：收集参数、计算 half_idx、建立 gpu_partitions</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先分清对象：两张逻辑 GPU 各负责一半 Parameter</h2>
 
@@ -1149,22 +1354,14 @@ assert owners[1] == ['mlp', 'head']</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="zero1-parameter-partitions-0">
-                <span>完成 TODO 1，确认 self.params 长度为 2，gpu_partitions 的键为 0/1，两个值各含一个 shape=[4,4] 的 Parameter 引用。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-parameter-partitions-1">
-                <span>不要在这里改 dtype/device 或 clone 参数；分区只描述所有权，参数仍保持模型原有 dtype 与 device。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-parameter-partitions-2">
-                <span>先打印每个分区的参数数量和 id；若后续状态数量断言不是 1，排查是否错误地按 Tensor 元素切分，或忘记模型没有 bias。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="zero1-local-states">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：optimizer_states 的两层字典与 zeros_like</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再建局部账本：每张卡只给自己的参数保存动量</h2>
 
@@ -1289,22 +1486,14 @@ assert history[0][id(counter_a)].shape == counter_a.shape</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="zero1-local-states-0">
-                <span>完成 TODO 2：为每个分区参数建立独立零状态；内层键使用 id(p)，值与 p.data 的 shape/dtype/device 一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-local-states-1">
-                <span>运行测试前检查两个外层分区的状态长度都等于 1，并确认状态全 0、参数本身未被改动。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-local-states-2">
-                <span>若 KeyError，打印建立状态和读取状态时的 id(p)；常见错误是 clone 参数后对象身份改变，或把 p 与 id(p) 混作不同键类型。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="zero1-local-update">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：局部动量累加与参数更新</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>最后更新原权重：对齐 params、grads、states 三条列表</h2>
 
@@ -1426,15 +1615,7 @@ for worker in (0, 1):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="zero1-local-update-0">
-                <span>完成 TODO 3：每个 gpu_id 分别取 params、grads、states；每对 p/g 的 shape、dtype、device 应兼容，然后先更新状态、再更新 p.data。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-local-update-1">
-                <span>运行可见测试，确认 diff_w1 全为 0.1、diff_w2 全为 0.2；这也证明分区里保存的是原模型参数引用。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="zero1-local-update-2">
-                <span>常见错误排查：若差值符号相反，检查更新公式的减号；若只有一层变化，检查 gpu 循环和梯度字典键；若第二次手工 step 不累积，检查是否写回 states[id(p)]。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1458,16 +1639,29 @@ for worker in (0, 1):
     const predictData = {"zero1-parameter-partitions":{"answer":0,"revealNote":"每个 [4,4] weight 是一个 Parameter 对象。Notebook 当前按对象切分，不按 16 个内部元素切分。"},"zero1-local-states":{"answer":0,"revealNote":"zeros_like 的价值正是继承参照 Tensor 的 shape、dtype 与 device，只把内容置零。"},"zero1-local-update":{"answer":0,"revealNote":"先得 momentum=2，再从权重减去 0.1×2，所以 initial - new = 0.2。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "27";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-8de971fd727c";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

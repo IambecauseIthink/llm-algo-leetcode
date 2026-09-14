@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 04 | Attention MHA GQA</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 04 | Attention MHA GQA | 多头注意力</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -738,11 +748,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 04 | 零基础导学关卡</p>
-        <h1>Attention MHA GQA</h1>
+        <h1>Attention MHA GQA | 多头注意力</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">04_Attention_MHA_GQA.ipynb</span>
-          <span class="pill">Attention</span><span class="pill">MHA</span><span class="pill">GQA</span>
+          <span class="pill">基础实现</span><span class="pill">Attention</span><span class="pill">MHA/GQA</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -756,16 +766,381 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="15cd302f3eaef02f1d31dfa68c3c3482e8e267057ff86526e4a4df5f543a9cf3">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../04_Attention_MHA_GQA.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/04_Attention_MHA_GQA.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>04. Attention MHA GQA | 多头注意力</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>基础实现</code>, <code>Attention</code>, <code>MHA/GQA</code> | <strong>目标人群：</strong> 基础实现学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>生成式模型每次预测新 token，都要回看前面的上下文。序列越长，Attention 要读取和维护的历史信息越多；如果每一步都重复计算过去的 Key / Value，推理会非常浪费，而把它们全部缓存下来又会带来显存和带宽压力。</p>
+<p>本节把 Attention 的工程主线串起来：先实现多头注意力，再加入 KV Cache 避免重复计算，最后用 GQA 在表达能力和 KV Cache 开销之间折中。完成后，你应该能看懂现代 LLM 为什么会从 MHA 演进到 GQA，也能为后面的解码策略、PagedAttention 和推理优化章节建立基础。</p>
+<p><strong>关键词：</strong> <code>Attention</code>, <code>GQA</code>, <code>KV Cache</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: Reshape xq, xk, xv 以适配多头注意力计算</li><li>TODO 2: 处理 KV Cache</li><li>TODO 3: 计算注意力分数 (Scaled Dot-Product)</li><li>TODO 4: 恢复形状并输出</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先能写出基础注意力并理解 RoPE 如何作用于 Query / Key，再比较 MHA、KV Cache 和 GQA 对历史状态与读取成本的影响。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.ipynb">P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作</a></li>
+<li><a href="../../../00_Prerequisites/16_Attention_Mechanism_Intro.ipynb">P0: 16. Attention Mechanism Intro | 注意力机制导论</a></li>
+<li><a href="03_rope_tutorial.html">03. RoPE Tutorial | 旋转位置编码教程</a></li>
+</ul>
+<hr>
+<h3>Step 1: Attention 与 KV Cache 的问题来源</h3>
+<p>生成新 token 时，模型需要用当前查询读取历史上下文：Q 表示当前要查询的内容，K 用于匹配历史位置，V 提供被聚合的信息；位置关系由前置的 <a href="03_rope_tutorial.html">RoPE</a> 加入。历史 token 的 K/V 可以保存为 KV Cache，后续 Decode 直接复用，但缓存长度和请求数量增加后，显存占用与读取带宽也会随之增长。下面先看 MHA 的计算路径，再观察 GQA、MQA 如何改变 K/V 的组织和缓存规模，最后连接到 Cache 拼接与 Decode。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/04_attention_heads.svg" alt="Attention 计算路径与 KV 状态复用"></p>
+<h3>Step 2: 核心公式与张量维度</h3>
+<p>本节追踪 Q/K/V 张量的形状变化，为后面的实现建立统一的维度口径。可以先把 <code>H</code> 理解为 Query head 的数量，把 <code>H_kv</code> 理解为保存 K/V 的 head 数，把 <code>D</code> 理解为每个 head 的特征宽度；GQA 的关键变化就是让多个 Query head 共享较少的 KV head。</p>
+<p><strong>经过线性投影后，注意力计算公式：</strong>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>Attention</mtext><mo stretchy="false">(</mo><mi>Q</mi><mo separator="true">,</mo><mi>K</mi><mo separator="true">,</mo><mi>V</mi><mo stretchy="false">)</mo><mo>=</mo><mtext>Softmax</mtext><mrow><mo fence="true">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mfrac><mo fence="true">)</mo></mrow><mi>V</mi></mrow><annotation encoding="application/x-tex"> \text{Attention}(Q, K, V) = \text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Attention</span></span><span class="mopen">(</span><span class="mord mathnormal">Q</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4684em;vertical-align:-0.95em;"></span><span class="mord text"><span class="mord">Softmax</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5183em;"><span style="top:-2.2528em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></span></eqn></section></p>
+<p>假设 <code>Batch=B</code>, <code>Seq_len=S</code>, <code>Num_Heads=H</code>, <code>KV_Heads=H_kv</code>, <code>Head_Dim=D</code>，先看一个小例子：当 <code>H=4</code>、<code>H_kv=2</code> 时，每组 K/V 被两个 Query head 共享；计算前需要对齐 KV head，但缓存仍只保存两组 KV。下面把头数关系和形状变化放在同一张表中：</p>
+<table>
+<thead>
+<tr>
+<th>观察阶段</th>
+<th>关键关系</th>
+<th>张量形状或配置</th>
+<th>对计算与 Cache 的影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MHA / GQA / MQA</td>
+<td><code>H</code> 与 <code>H_kv</code> 的关系</td>
+<td>MHA：<code>H=H_kv</code>；GQA：<code>H&gt;H_kv</code>；MQA：<code>H_kv=1</code></td>
+<td>决定 K/V 是否共享，以及缓存中保存多少 KV head</td>
+</tr>
+<tr>
+<td>线性投影</td>
+<td>分别生成 Q、K、V</td>
+<td><code>[B,S,H×D]</code> 或 <code>[B,S,H_kv×D]</code></td>
+<td>序列维度仍为 <code>S</code></td>
+</tr>
+<tr>
+<td>多头切分</td>
+<td>拆分并转置</td>
+<td><code>[B,H,S,D]</code> 或 <code>[B,H_kv,S,D]</code></td>
+<td>进入逐 head 计算；GQA 需要在计算前对齐 KV head</td>
+</tr>
+<tr>
+<td>注意力分数</td>
+<td><code>QKᵀ / √D</code></td>
+<td><code>[B,H,S,S]</code></td>
+<td>每个 Query 位置与历史 Key 位置比较</td>
+</tr>
+<tr>
+<td>加权 Value</td>
+<td>Softmax 权重聚合 V</td>
+<td><code>[B,H,S,D]</code></td>
+<td>得到上下文表示</td>
+</tr>
+<tr>
+<td>Cache 保存</td>
+<td>历史 K/V 沿 <code>S</code> 维增长</td>
+<td>Cache：<code>[B,H_kv,S,D]</code></td>
+<td>上下文变长时显存和读取量增加</td>
+</tr>
+<tr>
+<td>多头合并</td>
+<td>将各 head 的输出重新拼接</td>
+<td><code>[B,H,S,D]</code> → <code>[B,S,H×D]</code></td>
+<td>恢复到输出投影需要的形状</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/04_attention_tensor_shapes.svg" alt="Q、K、V 张量形状流转"></p>
+<h3>Step 3: Attention 机制如何改变推理资源</h3>
+<p>前两步已经说明了 Attention 的计算和张量形状。下面把不同机制放回推理过程，比较它们分别改变了缓存对象、显存容量、带宽和多请求的存储组织，并为后续阅读真实 backend 做准备。</p>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>改变的对象</th>
+<th>显存或带宽影响</th>
+<th>下一步观察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MHA</td>
+<td>每个 Query head 独立保存 K/V</td>
+<td>Cache 较大，读取量较高</td>
+<td>基础 Attention 实现</td>
+</tr>
+<tr>
+<td>GQA / MQA</td>
+<td>多个 Query head 共享 K/V</td>
+<td>Cache 减少，但计算前需要对齐 head</td>
+<td>当前 GQA 实现</td>
+</tr>
+<tr>
+<td>KV Cache</td>
+<td>保存历史 K/V，避免重复计算</td>
+<td>随上下文和并发增长</td>
+<td>Cache 生命周期与调度</td>
+</tr>
+<tr>
+<td>MLA</td>
+<td>用潜在表示组织缓存</td>
+<td>表示、读取路径和模型配置变化</td>
+<td>模型架构扩展</td>
+</tr>
+<tr>
+<td>PagedAttention</td>
+<td>按 block 管理多请求 Cache</td>
+<td>减少碎片并支持复用</td>
+<td>vLLM / 推理服务实现</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 4: 实现 MHA/GQA 与 KV Cache</h3>
+<p>现在进入代码实现。请补全下方 <code>GroupedQueryAttention</code> 的 <code>forward</code> 函数中的 <code>TODO</code>，把前面学到的形状关系、KV Cache 和 GQA 机制写成一条最小可运行的前向路径。完成后，测试会分别检查 MHA、GQA 和带 Cache 的 Decode。</p>
+<p>实现时先保留较少的 <code>num_kv_heads</code>，在注意力计算前通过 <code>repeat_kv</code> 对齐到 Query head 数；这样代码中的 Cache 形状可以直接对应 Step2 的表格。</p>
+<table>
+<thead>
+<tr>
+<th>TODO</th>
+<th>需要完成的机制</th>
+<th>关键输入与形状</th>
+<th>检查重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TODO 1</td>
+<td>切分 Q/K/V 并转置多头维度</td>
+<td><code>[B,S,H×D]</code> → <code>[B,H,S,D]</code>；K/V 使用 <code>H_kv</code></td>
+<td>Query head 与 KV head 数量正确</td>
+</tr>
+<tr>
+<td>TODO 2</td>
+<td>在序列维拼接历史 Cache</td>
+<td><code>kv_cache</code> 与当前 K/V 在 <code>dim=2</code> 拼接</td>
+<td>Cache 长度增加，且仍保存 <code>H_kv</code> 个 KV head</td>
+</tr>
+<tr>
+<td>TODO 3</td>
+<td>计算缩放点积 Attention</td>
+<td><code>Q @ Kᵀ / √D</code> → Softmax → <code>P @ V</code></td>
+<td>分数形状、mask 广播和输出数值有限</td>
+</tr>
+<tr>
+<td>TODO 4</td>
+<td>合并多头并完成输出投影</td>
+<td><code>[B,H,S,D]</code> → <code>[B,S,H×D]</code> → <code>o_proj</code></td>
+<td>输出形状回到 <code>[B,S,D_model]</code></td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -&gt; torch.Tensor:
+    &quot;&quot;&quot;
+    将形状 [B, H_kv, S, D] 的 KV 头复制 n_rep 次，
+    输出为 [B, H_kv * n_rep, S, D]，以匹配 Query 头的数量。
+    当 n_rep == 1 时（即 MHA），直接返回原张量。
+    &quot;&quot;&quot;
+    batch, num_kv_heads, slen, head_dim = hidden_states.shape
+    if n_rep == 1:
+        return hidden_states
+    #hidden_states = hidden_states[:, :, None, :, :].expand(batch, num_kv_heads, n_rep, slen, head_dim)
+    hidden_states = hidden_states.unsqueeze(2).expand(-1, -1, n_rep, -1, -1)
+    return hidden_states.reshape(batch, num_kv_heads * n_rep, slen, head_dim)
+
+class GroupedQueryAttention(nn.Module):
+    def __init__(self, hidden_dim: int, num_heads: int, num_kv_heads: int = None):
+        super().__init__()
+        if hidden_dim &lt;= 0 or num_heads &lt;= 0:
+            raise ValueError(&quot;hidden_dim 和 num_heads 必须为正整数&quot;)
+        if hidden_dim % num_heads != 0:
+            raise ValueError(&quot;hidden_dim 必须能被 num_heads 整除&quot;)
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        self.num_kv_heads = num_kv_heads if num_kv_heads is not None else num_heads
+
+        # GQA/MQA 要求 Query head 可以平均分配给 KV head。
+        if self.num_kv_heads &lt;= 0 or num_heads % self.num_kv_heads != 0:
+            raise ValueError(
+                f&quot;num_heads ({num_heads}) 必须能被 num_kv_heads ({self.num_kv_heads}) 整除&quot;
+            )
+
+        self.num_queries_per_kv = self.num_heads // self.num_kv_heads
+        self.head_dim = hidden_dim // num_heads
+
+        # 定义投影矩阵
+        self.q_proj = nn.Linear(hidden_dim, num_heads * self.head_dim, bias=False)
+        self.k_proj = nn.Linear(hidden_dim, self.num_kv_heads * self.head_dim, bias=False)
+        self.v_proj = nn.Linear(hidden_dim, self.num_kv_heads * self.head_dim, bias=False)
+        self.o_proj = nn.Linear(num_heads * self.head_dim, hidden_dim, bias=False)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        attention_mask: torch.Tensor = None,
+        kv_cache: tuple[torch.Tensor, torch.Tensor] = None
+    ):
+        &quot;&quot;&quot;
+        前向传播。
+
+        Args:
+            x: 输入张量，形状 [batch, seq_len, hidden_dim]
+            attention_mask: 注意力掩码，形状应为 [batch, 1, 1, seq_len]（因果掩码）
+                        或 [batch, 1, seq_len, seq_len]；可见位置通常为 0，
+                        屏蔽位置为 -inf，并广播到 scores。
+            kv_cache: 缓存的 (K, V) 张量，形状为
+                      ([batch, num_kv_heads, cached_seq_len, head_dim], ...)。
+
+        Returns:
+            输出张量 [batch, seq_len, hidden_dim]，更新后的 KV Cache
+        &quot;&quot;&quot;
+        batch_size, seq_len, _ = x.shape
+
+        # 1. 线性投影
+        xq, xk, xv = self.q_proj(x), self.k_proj(x), self.v_proj(x)
+
+        # ==========================================
+        # TODO 1: Reshape xq, xk, xv 以适配多头注意力计算
+        # 提示: 先把最后一维拆成 [num_heads, head_dim] / [num_kv_heads, head_dim]（使用 reshape 或 view），
+        # 再将seq_len和num_heads换位，得到 [B, num_heads, S, head_dim] / [B, num_kv_heads, S, head_dim]
+        # ==========================================
+        # xq = ???
+        # xk = ???
+        # xv = ???
+
+        # ==========================================
+        # TODO 2: 处理 KV Cache
+        # 提示: 如果有 cache，将历史 KV 拼接在当前 KV 的 seq_len 维度前
+        # 注意: 拼接维度是 dim=2 (seq_len)
+        # ==========================================
+        if kv_cache is not None:
+            k_cache, v_cache = kv_cache
+            # 只拼接未扩展的 KV，避免把 GQA 的缓存放大到 MHA 大小。
+            # xk = ???
+            # xv = ???
+
+        new_kv_cache = (xk, xv)
+
+        # 通过 repeat_kv 把 GQA 的 KV 头数扩充到和 Query 数量一致
+        xk = repeat_kv(xk, self.num_queries_per_kv)
+        xv = repeat_kv(xv, self.num_queries_per_kv)
+
+        # ==========================================
+        # TODO 3: 计算注意力分数 (Scaled Dot-Product)
+        # 公式: scores = Q @ K^T / sqrt(head_dim)
+        # 提示: 使用 torch.matmul，并对 K 转置最后两维
+        # 注意: attention_mask 形状为 [batch, 1, 1, seq_len]（因果掩码），
+        #       会广播到 scores 的 [batch, num_heads, seq_len, seq_len]
+        # ==========================================
+        # scores = ???
+
+        if attention_mask is not None:
+            scores = scores + attention_mask
+
+        # probs = ???
+        # output = ???
 
 
+        # ==========================================
+        # TODO 4: 恢复形状并输出
+        # [B, H, S, D] -&gt; [B, S, H*D]
+        # 提示: transpose + contiguous + view
+        # ==========================================
+        # output = ???
 
+        return self.o_proj(output), new_kv_cache
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
+def causal_mask(seq_len: int) -&gt; torch.Tensor:
+    &quot;&quot;&quot;构造允许看见当前位置及历史位置的加性因果掩码。&quot;&quot;&quot;
+    mask = torch.zeros(1, 1, seq_len, seq_len)
+    return mask.masked_fill(torch.triu(torch.ones_like(mask, dtype=torch.bool), diagonal=1), float('-inf'))
+
+def test_mha_mqa_gqa():
+    try:
+        batch_size, seq_len, hidden_dim, num_heads = 2, 16, 128, 4
+
+        # 1. 测试 MHA
+        print(&quot;Testing MHA (Multi-Head Attention)...&quot;)
+        mha = GroupedQueryAttention(hidden_dim, num_heads, num_kv_heads=num_heads)
+        x = torch.randn(batch_size, seq_len, hidden_dim)
+        full_mask = causal_mask(seq_len)
+        out, _ = mha(x, attention_mask=full_mask)
+        assert out.shape == (batch_size, seq_len, hidden_dim), &quot;MHA 输出形状错误!&quot;
+        assert torch.isfinite(out).all(), &quot;因果 mask 后的 MHA 输出出现 NaN 或 Inf!&quot;
+
+        # 2. 测试 GQA
+        print(&quot;Testing GQA (Grouped-Query Attention)...&quot;)
+        gqa = GroupedQueryAttention(hidden_dim, num_heads, num_kv_heads=2)
+        out, _ = gqa(x, attention_mask=full_mask)
+        assert out.shape == (batch_size, seq_len, hidden_dim), &quot;GQA 输出形状错误!&quot;
+        assert torch.isfinite(out).all(), &quot;GQA 输出出现 NaN 或 Inf!&quot;
+
+        # 3. 测试 KV Cache
+        print(&quot;Testing KV Cache Autoregressive Decoding...&quot;)
+        prefill_len = 5
+        x_prefill = torch.randn(batch_size, prefill_len, hidden_dim)
+        prefill_mask = causal_mask(prefill_len)
+        full_out, _ = mha(x_prefill, attention_mask=prefill_mask)
+        _, kv_cache = mha(x_prefill[:, :-1], attention_mask=causal_mask(prefill_len - 1))
+
+        x_decode = x_prefill[:, -1:]
+        decode_mask = torch.zeros(1, 1, 1, prefill_len)
+        out_decode, new_kv_cache = mha(x_decode, attention_mask=decode_mask, kv_cache=kv_cache)
+        assert new_kv_cache[0].shape == (batch_size, num_heads, prefill_len, hidden_dim // num_heads), &quot;KV Cache 更新错误!&quot;
+        assert torch.allclose(full_out[:, -1:], out_decode, atol=1e-5, rtol=1e-4), &quot;Prefill 与 Cache Decode 的结果不一致!&quot;
+        _, gqa_cache = gqa(x_prefill)
+        _, gqa_cache_next = gqa(x_decode, kv_cache=gqa_cache)
+        assert gqa_cache_next[0].shape[1] == 2, &quot;GQA Cache 的 KV head 数错误!&quot;
+        assert gqa_cache_next[0].shape[2] == prefill_len + 1, &quot;GQA Cache 的序列长度错误!&quot;
+
+        # 4. 参数边界：避免静默截断或无法平均分配 KV head
+        for bad_args in [(130, 4, 2), (128, 3, 1), (128, 4, 3)]:
+            try:
+                GroupedQueryAttention(*bad_args)
+                raise AssertionError(f&quot;非法配置未被拒绝: {bad_args}&quot;)
+            except ValueError:
+                pass
+
+        print(&quot;\n✅ All Tests Passed! Attention 算子实现通过测试。&quot;)
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;\n❌ 测试失败，请检查张量维度: {e}&quot;)
+        raise
+
+test_mha_mqa_gqa()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
-      
+
         <article class="lesson-card inquiry" data-lesson="attention-shape-map">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 3 / TODO 4</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>注意力到底在算什么：打分表 → 概率 → 混合 value</h2>
 
@@ -798,7 +1173,7 @@
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
               <p>一句话版：每个 token 拿自己的 Query 去和所有 token 的 Key 比一比“我跟你多相关”，得到一张打分表；softmax 把每一行变成一组概率；再按这组概率去混合所有 token 的 Value，混出来的就是这个 token 的新表示。下面把这 4 步拆开、每步配图，并在关键处停下来让你先想一想再看解释。</p>
-              
+
           <div class="shape-story">
             <div class="story-panel">
               <strong>0. 先建立画面：一句话里，每个词都在“偷看”别的词</strong>
@@ -904,25 +1279,17 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-shape-map-0">
-                <span>TODO 1：投影结果 view 成 [B,S,H,D] 再 transpose(1,2) → [B,H,S,D]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-shape-map-1">
-                <span>TODO 3：算 Q@Kᵀ/√D，加 mask，softmax，再 @ V。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-shape-map-2">
-                <span>TODO 4：transpose 回来 + contiguous().view 合并多头 → o_proj。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="gqa-kv-cache">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2 / repeat_kv</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>KV Cache 与 GQA：推理为什么慢，又怎么省显存</h2>
 
@@ -955,7 +1322,7 @@ probs  = F.softmax(scores / 8**0.5, dim=-1)  # 沿 key 维归一化
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
               <p>这一关是两个独立但配合使用的优化：① KV Cache——把算过的 K/V 存起来，每步只算新字那一个，把“每步重算整段历史”的浪费去掉；② GQA——让缓存里只存少量共享的 KV 头来省显存，等真正算注意力前再临时把它们复制成和 Query 一样多。最关键的一个细节：复制（repeat_kv）必须放在“存进缓存之后”，先存窄的、后扩宽的——下面会讲为什么反过来就前功尽弃。</p>
-              
+
           <div class="shape-story">
             <div class="story-panel">
               <strong>1. 痛点：不缓存就要每步重算整段历史（O(N²)）</strong>
@@ -1062,18 +1429,10 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
                 <input type="checkbox" data-homework="gqa-kv-cache-0">
-                <span>TODO 2：用 torch.cat([k_cache, xk], dim=2) 在 seq 维拼接历史与新 KV。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gqa-kv-cache-1">
-                <span>确认 new_kv_cache 存的是拼接后、repeat_kv 之前的“窄”KV。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gqa-kv-cache-2">
-                <span>理解 repeat_kv：num_queries_per_kv = num_heads // num_kv_heads，扩充后头数对齐 Query。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1097,16 +1456,29 @@ x = x.reshape(2, 2 * n_rep, 6, 8)  # [2, 4, 6, 8] 对齐 Q</code></pre><p class=
     const predictData = {"attention-shape-map":{"answer":2,"revealNote":"押好了。带着“缩放是为了驯服方差”这个想法，往下看 Q·Kᵀ → /√D → softmax 这条链。"},"gqa-kv-cache":{"answer":1,"revealNote":"押好了。这一步顺序是 GQA 省显存成败的关键，往下看“先存窄、后扩宽”为什么不能反过来。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "04";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-15cd302f3eae";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

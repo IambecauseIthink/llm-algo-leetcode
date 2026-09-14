@@ -1,0 +1,1700 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 40 | GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 2</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 40 | 零基础导学关卡</p>
+        <h1>GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</h1>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <div class="meta">
+          <span class="pill">40_GPTQ_and_AWQ_Weight_Quantization.ipynb</span>
+          <span class="pill">量化压缩</span><span class="pill">权重量化</span><span class="pill">GPTQ/AWQ</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
+        </div>
+        <div class="formula">calibrate -&gt; group -&gt; protect -&gt; quantize -&gt; dequantize -&gt; check error</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="b09a8a968eac2dd5aa95826e28ddd729b665110475bbeaa8192916617b9ca370">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../40_GPTQ_and_AWQ_Weight_Quantization.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>40. GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>权重量化</code>, <code>GPTQ/AWQ</code> | <strong>目标人群：</strong> 量化压缩学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>第 25 节和第 26 节已经把量化的两条主线铺开：W8A16 说明了 weight-only 量化如何减少权重读取压力，QLoRA 说明了 4-bit 权重如何服务于低成本微调。但部署阶段还会遇到一个更细的问题：同样是把权重压到低比特，哪些权重更敏感，哪些误差可以接受，校准数据又应该如何参与量化决策？</p>
+<p>本节用一个极简 <code>WeightQuantizerSim</code> 模拟 GPTQ / AWQ 的核心直觉：GPTQ 更关注校准后的重构误差，AWQ 更强调激活感知和敏感通道保护。学完后，你应该能看清“校准 -&gt; 分组 -&gt; 量化 -&gt; 保护 -&gt; 反量化 -&gt; 误差检查”这条权重量化链路。</p>
+<p>本节还会把三类对象放到同一条链路中比较：GPTQ 关注校准后的误差补偿，AWQ 关注激活感知和敏感通道保护，GGUF 负责量化权重的文件格式与部署封装。真实 artifact、backend 和 kernel 的验证继续连接到 <a href="67_quantized_inference_and_deployment.html">67. 量化推理与部署</a>。</p>
+<p><strong>关键词：</strong> <code>GPTQ</code>, <code>AWQ</code>, <code>weight quantization</code></p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/40_gptq_awq_map_cn.svg" alt="GPTQ 与 AWQ 的校准路径"></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 根据校准激活统计输入通道重要性</li><li>TODO 2: 计算输入维度需要被切成多少个 group</li><li>TODO 3: 标记本组中需要保护的敏感通道</li><li>TODO 4: 为未保护的普通通道计算分组 scale</li><li>TODO 5: 将整数权重反量化回浮点近似值</li><li>TODO 6: 计算原始权重和恢复权重之间的均方误差</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 进入本节前，先能区分权重、激活和 KV Cache 的量化对象，再观察校准数据如何影响低比特权重的误差。</p>
+<ul>
+<li><a href="25_quantization_w8a16.html">25. Quantization W8A16 | W8A16 量化</a></li>
+<li><a href="26_qlora_and_4bit_quantization.html">26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.ipynb">P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8</a></li>
+</ul>
+<hr>
+<h3>Step 1: 为什么 4-bit 量化需要校准</h3>
+<p>W8A16 已经说明低比特可以减少权重存储，但继续压到 4-bit 后，所有权重使用同一套规则可能放大敏感通道的误差。本节先建立一个判断框架：校准数据提供激活统计，分组 scale 控制局部动态范围，GPTQ / AWQ 再用不同方式处理误差或保护敏感通道。</p>
+<p>本节只模拟机制变量，不生成真实 GPTQ / AWQ artifact。学习重点是看清输入、校准信息、量化决策和重构误差之间的关系。</p>
+<h3>Step 2: 校准数据与分组 scale</h3>
+<p>校准样本不是训练数据，而是用来观察激活分布的代表性输入。模拟器先按输入通道汇总激活强度，再把权重按 <code>group_size</code> 划分，每组使用独立 scale。需要观察两个变量：校准统计是否能区分敏感通道，以及分组粒度变化后误差和元数据如何变化。</p>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>改变什么</th>
+<th>观察结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calibration_samples</code></td>
+<td>激活统计的样本量</td>
+<td>重要性估计是否稳定</td>
+</tr>
+<tr>
+<td><code>group_size</code></td>
+<td>每组共享 scale 的范围</td>
+<td>重构误差与 scale 数量</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: GPTQ 与 AWQ 的策略差异</h3>
+<p>两种方法都属于部署前的权重量化，但关注点不同：</p>
+<ul>
+<li>GPTQ：以层输出重构误差为主要观察对象；</li>
+<li>AWQ：利用激活统计识别敏感通道，再对这些通道采取保护策略；</li>
+<li>共同点：都需要校准输入，且都不能仅凭权重绝对值判断最终质量。</li>
+</ul>
+<p>本节的模拟结果只回答“分组、校准和保护策略如何影响局部误差”，真实模型质量和 backend 速度留给 67 节。</p>
+<h3>Step 4: 实现、测试与结果解读</h3>
+<p>下面的题目区实现 <code>WeightQuantizerSim</code>，测试区检查量化权重 dtype、scale 形状、敏感通道标记、恢复形状和重构误差。完成后再阅读参考实现和解析，重点对照每个 TODO 如何改变量化状态。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class WeightQuantizerSim(nn.Module):
+    &quot;&quot;&quot;极简版 GPTQ / AWQ 权重量化模拟器。&quot;&quot;&quot;
+
+    def __init__(self, bits: int = 4, group_size: int = 32, method: str = &quot;gptq&quot;, protect_ratio: float = 0.05, eps: float = 1e-8):
+        super().__init__()
+        if bits &lt; 2:
+            raise ValueError(&quot;bits must be &gt;= 2&quot;)
+        if group_size &lt;= 0:
+            raise ValueError(&quot;group_size must be positive&quot;)
+        self.bits = bits
+        self.group_size = group_size
+        self.method = method.lower()
+        self.protect_ratio = protect_ratio
+        self.eps = eps
+        self.qmax = 2 ** (bits - 1) - 1
+
+        self.register_buffer(&quot;qweight&quot;, torch.empty(0, dtype=torch.int8), persistent=False)
+        self.register_buffer(&quot;scales&quot;, torch.empty(0), persistent=False)
+        self.register_buffer(&quot;protected_weight&quot;, torch.empty(0), persistent=False)
+        self.register_buffer(&quot;protected_mask&quot;, torch.empty(0, dtype=torch.bool), persistent=False)
+        self.register_buffer(&quot;importance&quot;, torch.empty(0), persistent=False)
+        self.weight_shape = None
+
+    def _collect_importance(self, activations: torch.Tensor, in_features: int) -&gt; torch.Tensor:
+        act = activations.detach().float()
+        if act.ndim == 1:
+            importance = act.abs()
+        else:
+            reduce_dims = tuple(range(act.ndim - 1))
+            # ==========================================
+            # TODO 1: 根据校准激活统计输入通道重要性
+            # 提示: 对除最后一维外的维度求 RMS，最后一维对应 in_features
+            # ==========================================
+            # importance = ???
+        if importance.numel() != in_features:
+            raise ValueError(f&quot;Calibration importance dim mismatch: expected {in_features}, got {importance.numel()}&quot;)
+        return importance
+
+    def fit(self, weight: torch.Tensor, activations: torch.Tensor | None = None) -&gt; &quot;WeightQuantizerSim&quot;:
+        w = weight.detach().float()
+        if w.ndim != 2:
+            raise ValueError(&quot;WeightQuantizerSim only supports 2D linear weights.&quot;)
+
+        out_features, in_features = w.shape
+        self.weight_shape = (out_features, in_features)
+        importance = torch.ones(in_features, device=w.device, dtype=w.dtype) if activations is None else self._collect_importance(activations, in_features)
+        self.importance = importance
+
+        # ==========================================
+        # TODO 2: 计算输入维度需要被切成多少个 group
+        # 提示: 使用向上取整，最后一组可以不足 group_size
+        # ==========================================
+        # n_groups = ???
+        qweight = torch.zeros_like(w, dtype=torch.int8)
+        scales = torch.zeros((out_features, n_groups), dtype=w.dtype, device=w.device)
+        protected_weight = torch.zeros_like(w)
+        protected_mask = torch.zeros_like(w, dtype=torch.bool)
+
+        for row in range(out_features):
+            for g in range(n_groups):
+                start = g * self.group_size
+                end = min(start + self.group_size, in_features)
+                wg = w[row, start:end]
+                ig = importance[start:end]
+                if wg.numel() == 0:
+                    continue
+
+                mask = torch.zeros_like(ig, dtype=torch.bool)
+                if self.method == &quot;awq&quot;:
+                    k = max(1, int(round(wg.numel() * self.protect_ratio)))
+                    k = min(k, wg.numel())
+                    topk = torch.topk(ig, k=k, largest=True).indices
+                    # ==========================================
+                    # TODO 3: 标记本组中需要保护的敏感通道
+                    # 提示: topk 是通道下标，把这些位置在 mask 中置为 True
+                    # ==========================================
+                    # mask[topk] = ???
+                    protected_mask[row, start:end] = mask
+                    protected_weight[row, start:end] = wg * mask.to(wg.dtype)
+
+                base = wg[~mask]
+                if base.numel() == 0:
+                    base = wg
+                # ==========================================
+                # TODO 4: 为未保护的普通通道计算分组 scale
+                # 提示: 对称量化 scale = absmax / qmax，并用 eps 避免除零
+                # ==========================================
+                # scale = ???
+
+                q_group = torch.zeros_like(wg, dtype=torch.int8)
+                q_group[~mask] = torch.clamp(torch.round(wg[~mask] / scale), -self.qmax, self.qmax).to(torch.int8)
+                qweight[row, start:end] = q_group
+                scales[row, g] = scale
+
+        self.qweight = qweight
+        self.scales = scales
+        self.protected_weight = protected_weight
+        self.protected_mask = protected_mask
+        return self
+
+    def dequantize(self) -&gt; torch.Tensor:
+        if self.weight_shape is None:
+            raise RuntimeError(&quot;Call fit() before dequantize().&quot;)
+
+        out_features, in_features = self.weight_shape
+        n_groups = self.scales.size(1)
+        weight = torch.zeros((out_features, in_features), dtype=self.scales.dtype, device=self.scales.device)
+
+        for row in range(out_features):
+            for g in range(n_groups):
+                start = g * self.group_size
+                end = min(start + self.group_size, in_features)
+                scale = self.scales[row, g]
+                q_group = self.qweight[row, start:end].to(self.scales.dtype)
+                # ==========================================
+                # TODO 5: 将整数权重反量化回浮点近似值
+                # 提示: 量化时除以 scale，恢复时乘回 scale
+                # ==========================================
+                # dequant = ???
+                protected = self.protected_mask[row, start:end]
+                if protected.any():
+                    dequant = dequant.clone()
+                    dequant[protected] = self.protected_weight[row, start:end][protected]
+                weight[row, start:end] = dequant
+
+        return weight
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        if self.weight_shape is None:
+            raise RuntimeError(&quot;Call fit() before forward().&quot;)
+        weight = self.dequantize().to(x.dtype)
+        return F.linear(x, weight)
+
+    def mse(self, weight: torch.Tensor) -&gt; torch.Tensor:
+        recon = self.dequantize().to(weight.dtype)
+        # ==========================================
+        # TODO 6: 计算原始权重和恢复权重之间的均方误差
+        # 提示: 先相减、平方，再求平均
+        # ==========================================
+        # error = ???
+        return error
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
+def test_weight_quantizer():
+    try:
+        torch.manual_seed(0)
+        weight = torch.randn(4, 8)
+        acts = torch.randn(16, 8)
+        sim = WeightQuantizerSim(bits=4, group_size=4, method=&quot;awq&quot;, protect_ratio=0.25).fit(weight, acts)
+        restored = sim.dequantize()
+        y = sim.forward(torch.randn(2, 8))
+
+        assert sim.qweight.dtype == torch.int8
+        assert sim.scales.shape == (4, 2)
+        assert sim.importance.shape == (8,)
+        assert sim.protected_mask.any()
+        assert restored.shape == weight.shape
+        assert y.shape == (2, 4)
+        assert float(sim.mse(weight)) &gt;= 0.0
+
+        gptq = WeightQuantizerSim(bits=4, group_size=4, method=&quot;gptq&quot;).fit(weight, acts)
+        assert not gptq.protected_mask.any()
+        assert gptq.dequantize().shape == weight.shape
+
+        print(&quot;✅ WeightQuantizerSim 测试通过&quot;)
+    except NotImplementedError as e:
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except (AttributeError, NameError, TypeError, ValueError, RuntimeError, AssertionError) as e:
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+
+
+test_weight_quantizer()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card inquiry" data-lesson="weight-calibration-groups-and-awq-mask">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>先找敏感通道：RMS 校准、向上分组与 AWQ mask</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">in_features=10、group_size=4。</p>
+            <p class="predict-q">n_groups 应该是多少，最后一组有几个通道？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="0">
+                <span>3 组，最后 2 个通道</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="1">
+                <span>2 组，最后 4 个通道</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="2">
+                <span>4 组，最后 0 个通道</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="weight-calibration-groups-and-awq-mask">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="weight-calibration-groups-and-awq-mask">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>Linear 权重 shape 是 [out_features,in_features]；校准激活最后一维也必须是 in_features。</li><li>RMS 的顺序是平方、求平均、开平方；对 activations 除最后一维外的所有维度归约，才能留下每个输入通道一个分数。</li><li>向上取整分组可写成 (length + group_size - 1) // group_size，保证不足一整组的尾部也被覆盖。</li><li>torch.topk(...).indices 返回局部 group 内的下标；布尔 mask 用 True 表示该位置被保护。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>4-bit 可表示的状态很少，误差不能平均分配。Notebook 用校准激活的 RMS 估计输入通道的重要程度：某通道经常出现大激活，它对应的权重误差更容易影响输出。AWQ 教学模式在每个 group 内挑出 top-k，先做一张保护名单，再量化剩余权重。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>activations</b>[样本..., in_features]</span>
+          <span><b>RMS reduce</b>只留下 [in_features]</span>
+          <span><b>ceil groups</b>覆盖最后不足一组的通道</span>
+          <span><b>top-k mask</b>每组保护高重要性位置</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>TODO 1：维度为什么这样消失</h4>
+            <table class="adv-shapes">
+              <thead><tr><th>变量</th><th>shape</th><th>动作</th></tr></thead>
+              <tbody>
+                <tr><td><code>act</code></td><td>[16,8]</td><td>校准 batch 有 16 个样本、8 个输入通道</td></tr>
+                <tr><td><code>reduce_dims</code></td><td>(0,)</td><td>只归约样本维</td></tr>
+                <tr><td><code>importance</code></td><td>[8]</td><td>每个输入通道留下一个 RMS</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="adv-panel good">
+            <h4>TODO 2-3：每组独立保护</h4>
+            <div class="adv-contract">
+              <span><code>in_features=8</code></span><strong>输入通道总数</strong>
+              <span><code>group_size=4</code></span><strong>得到 n_groups=2</strong>
+              <span><code>protect_ratio=.25</code></span><strong>每个 4 元 group 保护 k=1</strong>
+              <span><code>mask[topk]=True</code></span><strong>只标记当前 group 的局部位置</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-flow">
+          <span>权重一行<br>[8]</span>
+          <span>group 0<br>通道 0:4</span>
+          <span>group 1<br>通道 4:8</span>
+          <strong>每组各自 top-k<br>写入二维 protected_mask</strong>
+        </div>
+
+        <div class="adv-callout">这只是 AWQ 核心直觉的教学模拟，不是完整 AWQ 搜索；GPTQ 模式不会进入 method == "awq" 分支，因此 protected_mask 应全部为 False。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用传感器校准值练习 RMS 与分组 top-k</h4><pre><code>samples = torch.tensor([[3.0, 0.0, 1.0, 2.0],
+                        [4.0, 0.0, 1.0, 2.0]])
+dims = tuple(range(samples.ndim - 1))
+importance = samples.pow(2).mean(dim=dims).sqrt()  # [4]
+
+width = 3
+num_groups = (importance.numel() + width - 1) // width
+first_group = importance[0:3]
+mask = torch.zeros_like(first_group, dtype=torch.bool)
+top_index = torch.topk(first_group, k=1).indices
+mask[top_index] = True</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>samples</code> -&gt; <code>activations</code>；最后一维就是 in_features。</li>
+            <li><code>dims</code> 与 RMS 表达式 -&gt; TODO 1，输出元素数必须等于 in_features。</li>
+            <li><code>num_groups</code> -&gt; TODO 2；不能用普通整除丢掉尾组。</li>
+            <li><code>mask[top_index] = True</code> -&gt; TODO 3 的 <code>mask[topk] = True</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>对 shape [batch,seq,in_features] 的 activations，RMS 应归约哪些维？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="0">
+                <span>只归约 in_features</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="1">
+                <span>batch 与 seq，保留最后的 in_features</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="2">
+                <span>三个维度全部归约成标量</span>
+              </label></div>
+              <div class="feedback" data-feedback="weight-calibration-groups-and-awq-mask"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="weight-quantize-dequantize-and-mse">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>低比特闭环：scale 只看普通通道，恢复后再盖回保护值</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">bits=4，某组普通权重 absmax=1.4。</p>
+            <p class="predict-q">Notebook 的 qmax 与 scale 分别是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="0">
+                <span>7 与 0.2</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="1">
+                <span>15 与约 0.093</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="2">
+                <span>127 与约 0.011</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="weight-quantize-dequantize-and-mse">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="weight-quantize-dequantize-and-mse">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>本课采用对称量化：qmax=2^(bits-1)-1；bits=4 时 qmax=7，int8 只是保存这些低比特整数的容器。</li><li>scale = absmax / qmax，因此量化是 round(weight / scale)，反量化必须用 q * scale。</li><li>AWQ 的保护位置没有写入正常 qweight；反量化后要用 protected_weight 覆盖 mask=True 的位置。</li><li>MSE 是 (original - reconstructed)^2 的逐元素平均，返回一个标量 Tensor。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>量化和反量化必须是一对方向相反的操作。先用一个 group 的普通权重确定步长 scale，把连续值落到有限整数格点；恢复时乘回同一步长。被保护通道绕过格点近似，最后像贴补丁一样用原浮点值盖回去。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>普通通道的对称量化</h4>
+            <div class="adv-flow">
+              <span>base.abs().max()</span>
+              <span>除以 qmax<br>得到 scale</span>
+              <span>round(w/scale)</span>
+              <strong>clamp 后存 int8</strong>
+            </div>
+            <p><code>clamp_min(eps)</code> 防止全零 group 产生除零。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>反量化与保护覆盖</h4>
+            <div class="adv-flow">
+              <span>q_group<br>转 scales.dtype</span>
+              <span>q_group * scale</span>
+              <span>mask=True<br>取 protected_weight</span>
+              <strong>恢复完整 weight</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span><code>qweight</code></span><strong>shape [out_features,in_features]，dtype int8</strong>
+          <span><code>scales</code></span><strong>shape [out_features,n_groups]，每行每组一个 scale</strong>
+          <span><code>dequantize()</code></span><strong>恢复 shape [out_features,in_features] 的浮点近似权重</strong>
+          <span><code>forward(x)</code></span><strong>F.linear(x, restored_weight)，[2,8] -&gt; [2,4]</strong>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>TODO</th><th>Notebook 表达式方向</th><th>常见反向错误</th></tr></thead>
+          <tbody>
+            <tr><td>4 scale</td><td><code>absmax / qmax</code></td><td>写成 qmax / absmax</td></tr>
+            <tr><td>5 restore</td><td><code>q_group * scale</code></td><td>再次除以 scale</td></tr>
+            <tr><td>6 MSE</td><td><code>((weight-recon)**2).mean()</code></td><td>只求差值平均，正负会抵消</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">第 40 课会采用另一种 scale 定义 q=round(x*scale)，所以恢复时除 scale。不要只背“量化都乘或都除”；先看当前 scale 的公式，再写互逆操作。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用一组温度权重练习对称量化闭环</h4><pre><code>values = torch.tensor([-1.0, -0.2, 0.6, 1.4])
+qmax = 7
+eps = 1e-8
+
+scale = (values.abs().max() / qmax).clamp_min(eps)
+codes = torch.clamp(torch.round(values / scale), -qmax, qmax)
+restored = codes * scale
+error = ((values - restored) ** 2).mean()
+
+assert restored.shape == values.shape
+assert error &gt;= 0</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>values</code> -&gt; TODO 4 的 <code>base</code>，也就是排除保护位置后的普通权重。</li>
+            <li><code>scale</code> -&gt; <code>scales[row,g]</code>；Notebook 每行每组都单独保存。</li>
+            <li><code>codes * scale</code> -&gt; TODO 5 的 <code>dequant</code>。</li>
+            <li><code>error</code> -&gt; TODO 6；Notebook 比较完整原权重与 <code>dequantize()</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 AWQ 反量化后还要按 protected_mask 覆盖 protected_weight？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="0">
+                <span>为了把所有 qweight 变成 bool</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="1">
+                <span>为了改变输出 shape</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="2">
+                <span>保护通道没有按普通低比特路径保存，需要恢复原浮点权重</span>
+              </label></div>
+              <div class="feedback" data-feedback="weight-quantize-dequantize-and-mse"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="39_inference_fallback_and_tiers.html">上一关：L39</a>
+        <a class="primary" href="41_fp8_and_kv_cache_quantization.html">下一关：L41</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "40";
+    const checkpointData = {"weight-calibration-groups-and-awq-mask":{"answer":1,"explain":"Notebook 用 tuple(range(act.ndim - 1))，也就是保留最后一维的逐通道重要性。"},"weight-quantize-dequantize-and-mse":{"answer":2,"explain":"保护位置绕开了普通量化误差；覆盖只替换数值，不改变 shape。"}};
+    const predictData = {"weight-calibration-groups-and-awq-mask":{"answer":0,"revealNote":"(10+4-1)//4=3，区间依次是 0:4、4:8、8:10。"},"weight-quantize-dequantize-and-mse":{"answer":0,"revealNote":"有符号 4-bit 教学范围使用 qmax=2^(4-1)-1=7，scale=1.4/7=0.2。"}};
+    const predictTotal = 2;
+    const checkpointTotal = 2;
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "39";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-b09a8a968eac";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

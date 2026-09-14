@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="430" viewBox="0 0 1120 430">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 24px sans-serif; fill: #0f172a; }
+      .label { font: 700 18px sans-serif; fill: #0f172a; }
+      .text { font: 16px sans-serif; fill: #334155; }
+      .small { font: 14px sans-serif; fill: #475569; }
+      .box { stroke: #64748b; stroke-width: 2; rx: 14; }
+      .arrow { stroke: #475569; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1120" height="430" fill="#f8fafc"/>
+  <text x="560" y="42" text-anchor="middle" class="title">Radix Tree 命中结果如何进入执行计划</text>
+
+  <rect x="35" y="92" width="230" height="230" class="box" fill="#e0f2fe"/>
+  <text x="150" y="132" text-anchor="middle" class="label">新请求</text>
+  <text x="150" y="174" text-anchor="middle" class="text">prompt tokens</text>
+  <text x="150" y="209" text-anchor="middle" class="text">系统提示词</text>
+  <text x="150" y="239" text-anchor="middle" class="text">+ 用户输入</text>
+  <text x="150" y="287" text-anchor="middle" class="small">从序列开头比较</text>
+
+  <path d="M265 207 H335" class="arrow"/>
+
+  <rect x="335" y="92" width="250" height="230" class="box" fill="#ede9fe"/>
+  <text x="460" y="132" text-anchor="middle" class="label">最长前缀匹配</text>
+  <text x="460" y="179" text-anchor="middle" class="text">沿共享边逐段比较</text>
+  <text x="460" y="216" text-anchor="middle" class="text">得到 hit_len</text>
+  <text x="460" y="266" text-anchor="middle" class="small">hit_len = 0：没有命中</text>
+  <text x="460" y="292" text-anchor="middle" class="small">hit_len &gt; 0：存在可复用前缀</text>
+
+  <path d="M585 207 H655" class="arrow"/>
+
+  <rect x="655" y="92" width="200" height="230" class="box" fill="#dcfce7"/>
+  <text x="755" y="132" text-anchor="middle" class="label">拆分请求</text>
+  <text x="755" y="182" text-anchor="middle" class="text">hit_prefix</text>
+  <text x="755" y="215" text-anchor="middle" class="small">读取已有缓存</text>
+  <text x="755" y="266" text-anchor="middle" class="text">miss_suffix</text>
+  <text x="755" y="299" text-anchor="middle" class="small">继续执行 prefill</text>
+
+  <path d="M855 207 H925" class="arrow"/>
+
+  <rect x="925" y="92" width="160" height="230" class="box" fill="#fef3c7"/>
+  <text x="1005" y="132" text-anchor="middle" class="label">执行计划</text>
+  <text x="1005" y="181" text-anchor="middle" class="text">复用</text>
+  <text x="1005" y="214" text-anchor="middle" class="text">计算</text>
+  <text x="1005" y="264" text-anchor="middle" class="small">再登记新路径</text>
+  <text x="1005" y="292" text-anchor="middle" class="small">供后续请求复用</text>
+
+  <text x="560" y="378" text-anchor="middle" class="small">索引层的 hit_len 需要经过 backend 的 KV Cache 生命周期管理，才能转化为真实的缓存复用收益。</text>
+</svg>

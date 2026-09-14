@@ -1,6 +1,6 @@
 # 31. GPU Virtualization and MIG | GPU 虚拟化与 MIG
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `MIG`, `GPU 虚拟化` | **目标人群：** 多租户推理学习者
+**难度：** Medium | **环境：** CPU-first | **标签：** `硬件系统`, `GPU 虚拟化`, `MIG` | **目标人群：** 硬件约束学习者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页讲的是一张 GPU 同时服务多个任务时，底层资源为什么必须被切分和隔离。
+---
+
+## 本节导读
+
+一张 GPU 同时服务多类任务时，问题不只是“能不能共用”，而是资源怎样切分、隔离粒度够不够，以及多租户场景下性能抖动能不能被控制住。虚拟化与 MIG 的价值，本质上是在共享和稳定性之间做结构化取舍。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的资源隔离与多租户基础页，优先服务后续部署与系统选型判断，也给 `推理优化路线` 补一层共享资源约束前置。学完这里，后面再看 `33` 以及 `Part 04` 的系统优化页时，你会更容易回答“什么时候值得切分 GPU，切分之后会牺牲什么”；如果这里没学明白，后面很容易把 MIG、MPS 和多租户都看成类似部署选项，而判断不清它们分别在隔离粒度、性能抖动和资源利用率上做了什么取舍。按专题归类，这一页更接近全教程的系统背景补充，也和 `推理优化专题`、`通信与并行专题` 共享部分资源管理视角。
 
 **关键词：** `MIG`, `MPS`, `multi-tenancy`
+
+---
 ## 前置阅读
 
 **导语：** 这一页先把资源隔离、动态 shape 和多租户调度的关系接上，再看为什么 GPU 虚拟化必须先切边界。
@@ -28,7 +36,7 @@
 - [19. Operator Fusion Introduction | 算子融合导论](./19_Operator_Fusion_Introduction.md)
 - [32. TVM / MLIR Deep Practice | TVM / MLIR 深度实践](./32_TVM_MLIR_Deep_Practice.md)
 - [33. TCO and Cost Model | 算力评估与 TCO 模型](./33_TCO_and_Cost_Model.md)
-
+---
 ## Q1：GPU 虚拟化为什么首先是资源隔离问题？
 
 <details><summary>点击展开查看解析</summary>

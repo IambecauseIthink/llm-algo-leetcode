@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="680" viewBox="0 0 1280 680">
+<defs>
+  <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#64748b"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:28px;font-weight:700}.sub{font-size:14px;fill:#475569}.group{font-size:18px;font-weight:700}.head{font-size:18px;font-weight:700}.body{font-size:14px}.small{font-size:12px;fill:#475569}
+    .panel{stroke:#94a3b8;stroke-width:2;rx:16}.item{stroke:#cbd5e1;stroke-width:1.5;rx:10}.flow{stroke:#64748b;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.inner{stroke:#94a3b8;stroke-width:1.8;fill:none;marker-end:url(#arrow)}
+  </style>
+</defs>
+<rect width="1280" height="680" fill="#f8fafc"/>
+<text x="640" y="42" text-anchor="middle" class="title">GPU 物理架构与内存：计算如何获得数据</text>
+<text x="640" y="70" text-anchor="middle" class="sub">从执行层级、数据复用和工作集出发，判断计算、带宽、容量或通信瓶颈</text>
+
+<!-- 执行层级 -->
+<rect x="28" y="105" width="228" height="430" fill="#e0f2fe" class="panel"/>
+<text x="142" y="137" text-anchor="middle" class="group">执行层级</text>
+<rect x="58" y="158" width="168" height="58" fill="#fff" class="item"/>
+<text x="142" y="193" text-anchor="middle" class="head">SM</text>
+<text x="142" y="210" text-anchor="middle" class="small">调度线程块与片上资源</text>
+<path d="M142 216V236" class="inner"/>
+<rect x="58" y="239" width="168" height="58" fill="#fff" class="item"/>
+<text x="142" y="274" text-anchor="middle" class="head">Warp</text>
+<text x="142" y="291" text-anchor="middle" class="small">一组线程协同执行指令</text>
+<path d="M142 297V317" class="inner"/>
+<rect x="58" y="320" width="168" height="72" fill="#fff" class="item"/>
+<text x="142" y="349" text-anchor="middle" class="head">CUDA Core</text>
+<text x="142" y="372" text-anchor="middle" class="small">通用线程级计算</text>
+<rect x="58" y="404" width="168" height="72" fill="#fff" class="item"/>
+<text x="142" y="433" text-anchor="middle" class="head">Tensor Core</text>
+<text x="142" y="456" text-anchor="middle" class="small">矩阵乘加与低精度路径</text>
+
+<!-- 内存层级 -->
+<rect x="282" y="105" width="238" height="430" fill="#dcfce7" class="panel"/>
+<text x="401" y="137" text-anchor="middle" class="group">内存层级</text>
+<text x="401" y="158" text-anchor="middle" class="small">近：快、容量小；远：容量大、搬运贵</text>
+<rect x="309" y="178" width="184" height="50" fill="#fff" class="item"/><text x="401" y="209" text-anchor="middle" class="body">寄存器：线程当前数据</text>
+<rect x="309" y="240" width="184" height="50" fill="#fff" class="item"/><text x="401" y="271" text-anchor="middle" class="body">Shared Memory：块内复用</text>
+<rect x="309" y="302" width="184" height="50" fill="#fff" class="item"/><text x="401" y="333" text-anchor="middle" class="body">L2 Cache：跨 SM 缓冲</text>
+<rect x="309" y="364" width="184" height="50" fill="#fff" class="item"/><text x="401" y="395" text-anchor="middle" class="body">全局显存：权重与激活</text>
+<text x="401" y="452" text-anchor="middle" class="small">复用、访问布局与搬运次数</text>
+<text x="401" y="474" text-anchor="middle" class="small">共同决定数据供给效率</text>
+
+<!-- 工作集 -->
+<rect x="546" y="105" width="238" height="430" fill="#fef3c7" class="panel"/>
+<text x="665" y="137" text-anchor="middle" class="group">模型工作集</text>
+<text x="665" y="158" text-anchor="middle" class="small">当前阶段频繁访问或暂存的数据</text>
+<rect x="573" y="180" width="184" height="70" fill="#fff" class="item"/>
+<text x="665" y="211" text-anchor="middle" class="head">权重 / 激活</text>
+<text x="665" y="234" text-anchor="middle" class="small">持续参与计算</text>
+<rect x="573" y="268" width="184" height="94" fill="#fff" class="item"/>
+<text x="665" y="298" text-anchor="middle" class="head">Attention 工作集</text>
+<text x="665" y="322" text-anchor="middle" class="small">Q / K / V / Score</text>
+<text x="665" y="344" text-anchor="middle" class="small">Score 随 seq_len² 增长</text>
+<rect x="573" y="380" width="184" height="70" fill="#fff" class="item"/>
+<text x="665" y="411" text-anchor="middle" class="head">分块 Tile</text>
+<text x="665" y="434" text-anchor="middle" class="small">减少中间结果驻留</text>
+
+<!-- 判断 -->
+<rect x="810" y="105" width="216" height="430" fill="#fce7f3" class="panel"/>
+<text x="918" y="137" text-anchor="middle" class="group">Roofline 判断</text>
+<text x="918" y="158" text-anchor="middle" class="small">Arithmetic Intensity = FLOPs / Bytes</text>
+<rect x="837" y="184" width="162" height="64" fill="#fff" class="item"/>
+<text x="918" y="213" text-anchor="middle" class="head">计算受限</text>
+<text x="918" y="235" text-anchor="middle" class="small">计算单元接近饱和</text>
+<rect x="837" y="270" width="162" height="64" fill="#fff" class="item"/>
+<text x="918" y="299" text-anchor="middle" class="head">带宽受限</text>
+<text x="918" y="321" text-anchor="middle" class="small">数据搬运等待</text>
+<rect x="837" y="356" width="162" height="64" fill="#fff" class="item"/>
+<text x="918" y="385" text-anchor="middle" class="head">容量受限</text>
+<text x="918" y="407" text-anchor="middle" class="small">工作集无法驻留</text>
+<text x="918" y="466" text-anchor="middle" class="small">先形成假设，再用 profiling 验证</text>
+
+<!-- 跨卡扩展 -->
+<rect x="1052" y="105" width="200" height="430" fill="#ede9fe" class="panel"/>
+<text x="1152" y="137" text-anchor="middle" class="group">跨卡扩展</text>
+<text x="1152" y="158" text-anchor="middle" class="small">显存分摊转为通信代价</text>
+<rect x="1078" y="184" width="148" height="84" fill="#fff" class="item"/>
+<text x="1152" y="214" text-anchor="middle" class="head">互连方式</text>
+<text x="1152" y="238" text-anchor="middle" class="small">PCIe / NVLink</text>
+<text x="1152" y="256" text-anchor="middle" class="small">NVSwitch</text>
+<rect x="1078" y="292" width="148" height="84" fill="#fff" class="item"/>
+<text x="1152" y="322" text-anchor="middle" class="head">通信原语</text>
+<text x="1152" y="346" text-anchor="middle" class="small">All-Reduce</text>
+<text x="1152" y="364" text-anchor="middle" class="small">All-Gather</text>
+<rect x="1078" y="400" width="148" height="64" fill="#fff" class="item"/>
+<text x="1152" y="429" text-anchor="middle" class="head">新瓶颈</text>
+<text x="1152" y="451" text-anchor="middle" class="small">带宽、同步、等待</text>
+
+<!-- 主链 -->
+<path d="M256 320H282" class="flow"/>
+<path d="M520 320H546" class="flow"/>
+<path d="M784 320H810" class="flow"/>
+<path d="M1026 320H1052" class="flow"/>
+<text x="269" y="304" text-anchor="middle" class="small">执行</text>
+<text x="533" y="304" text-anchor="middle" class="small">供给</text>
+<text x="797" y="304" text-anchor="middle" class="small">判断</text>
+<text x="1039" y="304" text-anchor="middle" class="small">扩展</text>
+</svg>

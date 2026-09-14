@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 29px sans-serif;fill:#17324d}.sub{font:16px sans-serif;fill:#486581}
+      .head{font:700 20px sans-serif;fill:#17324d}.txt{font:16px sans-serif;fill:#334e68}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="520" fill="#f7fafc"/>
+  <text x="600" y="45" text-anchor="middle" class="title">训练激活策略：保存、重算与搬运</text>
+  <text x="600" y="73" text-anchor="middle" class="sub">同一个 activation 压力，可以沿三条不同的代价路径处理</text>
+
+  <rect x="55" y="185" width="220" height="135" fill="#e6f6f5" class="box"/>
+  <text x="165" y="230" text-anchor="middle" class="head">训练前向</text>
+  <text x="95" y="270" class="txt">产生中间状态</text>
+  <text x="95" y="298" class="txt">反向还要使用</text>
+
+  <rect x="365" y="95" width="235" height="150" fill="#fff4e6" class="box"/>
+  <text x="482" y="140" text-anchor="middle" class="head">Checkpoint</text>
+  <text x="405" y="180" class="txt">少保存 activation</text>
+  <text x="405" y="210" class="txt">反向阶段重算</text>
+
+  <rect x="365" y="285" width="235" height="150" fill="#e0e7ff" class="box"/>
+  <text x="482" y="330" text-anchor="middle" class="head">Offload</text>
+  <text x="405" y="370" class="txt">移出 GPU 驻留</text>
+  <text x="405" y="400" class="txt">搬运与同步</text>
+
+  <rect x="700" y="185" width="220" height="135" fill="#fef3c7" class="box"/>
+  <text x="810" y="230" text-anchor="middle" class="head">Hybrid</text>
+  <text x="740" y="270" class="txt">重算与搬运组合</text>
+  <text x="740" y="298" class="txt">用于更紧预算</text>
+
+  <rect x="1010" y="185" width="140" height="135" fill="#f0f4f8" class="box"/>
+  <text x="1080" y="230" text-anchor="middle" class="head">验证</text>
+  <text x="1035" y="270" class="txt">峰值</text>
+  <text x="1035" y="298" class="txt">时间</text>
+
+  <path d="M275 252 H320 V170 H365" class="line"/>
+  <path d="M275 252 H320 V360 H365" class="line"/>
+  <path d="M600 170 H655 V252 H700" class="line"/>
+  <path d="M600 360 H655 V252 H700" class="line"/>
+  <path d="M920 252 H1010" class="line"/>
+</svg>

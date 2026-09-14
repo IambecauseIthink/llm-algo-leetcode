@@ -1,0 +1,1692 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 46 | Communication Profiling with NCCL | NCCL 通信剖析</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 2</span>
+        <span class="pill" id="status">闯关题：0 / 2</span>
+        <span class="pill" id="xp">XP 0 / 200</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 46 | 零基础导学关卡</p>
+        <h1>Communication Profiling with NCCL | NCCL 通信剖析</h1>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <div class="meta">
+          <span class="pill">46_Communication_Profiling_with_NCCL.ipynb</span>
+          <span class="pill">并行通信</span><span class="pill">NCCL</span><span class="pill">性能剖析</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
+        </div>
+        <div class="formula">record -&gt; overlap check -&gt; aggregate by op -&gt; export timeline</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="a265c1a35d0fef3db2afa5368c759a70b5acbaafa64b91760b424fdd699cb270">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../46_Communication_Profiling_with_NCCL.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>46. Communication Profiling with NCCL | NCCL 通信剖析</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>NCCL</code>, <code>性能剖析</code> | <strong>目标人群：</strong> 并行通信学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>前面的并行章节已经介绍过 ZeRO、Pipeline Parallelism 和 Tensor Parallelism：它们都能把大模型训练或推理拆到多张卡上。但一旦跨卡，性能瓶颈就不再只来自矩阵乘法，通信、同步等待和计算通信重叠都会影响整体吞吐。</p>
+<p>本节用一个极简 <code>NCCLProfilerSim</code> 模拟通信 profiling 的基本思路：记录 compute 事件、记录 communication 事件、判断两者是否 overlap，再按通信算子汇总时间和数据量。学完后，你应该能看清“记录 -&gt; overlap 判断 -&gt; 按 op 汇总 -&gt; 时间线导出”这条通信瓶颈分析链路。</p>
+<p><strong>关键词：</strong> <code>nccl</code>, <code>all-reduce</code>, <code>communication profiling</code>, <code>overlap</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 完成事件记录层</li><li>TODO 2: 完成 overlap 判断与汇总统计</li><li>TODO 3: 导出 timeline 记录</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 进入本节前，先能区分计算事件、通信事件和同步等待，再观察 NCCL 时间线如何定位 overlap 与通信热点。</p>
+<ul>
+<li><a href="29_tensor_parallelism_sim.html">29. Tensor Parallelism Sim | Tensor 并行模拟</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb">P1: 05. Communication Topologies | 通信拓扑与分布式基石</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb">P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础</a></li>
+</ul>
+<hr>
+<h3>Step 1: 原理与痛点</h3>
+<blockquote>
+<p><strong>为什么分布式性能不能只看 GPU 利用率？</strong></p>
+<p>多卡训练或推理中，GPU 可能看起来很忙，但真正限制吞吐的可能是 all-reduce 等通信操作，也可能是某些 rank 在等待其他 rank 同步。只看单个算子的耗时，往往看不出通信和计算之间的阻塞关系。</p>
+</blockquote>
+<p>NCCL profiling 要回答的不是“有没有通信”，而是三件事：</p>
+<ul>
+<li><strong>通信对象是什么</strong>：all-reduce、broadcast、reduce-scatter，还是其他 collective；</li>
+<li><strong>通信耗时是多少</strong>：每类 op 总共花了多久、搬了多少 bytes；</li>
+<li><strong>是否被计算掩盖</strong>：通信是否和 forward / backward 等 compute 区间重叠。</li>
+</ul>
+<p>这一步的核心直觉是：同样一段通信时间，如果能和计算重叠，体感开销会小很多；如果完全落在关键路径上，就会直接拖慢训练或推理。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/46_nccl_profiling_overview.svg" alt="NCCL 通信分析总览"></p>
+<h3>Step 2: 代码实现框架</h3>
+<p>本节会实现一个最小 <code>NCCLProfilerSim</code>。它不调用真实 NCCL，也不依赖多卡环境，而是用时间区间模拟 compute event 和 communication event。</p>
+<p>代码拆成五个动作：</p>
+<table>
+<thead>
+<tr>
+<th>动作</th>
+<th>对应方法 / 变量</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>记录计算</td>
+<td><code>add_compute</code></td>
+<td>保存 compute 区间，例如 forward / backward</td>
+</tr>
+<tr>
+<td>记录通信</td>
+<td><code>add_comm</code></td>
+<td>保存通信 op、起止时间、传输 bytes</td>
+</tr>
+<tr>
+<td>overlap 判断</td>
+<td><code>_has_overlap</code></td>
+<td>判断通信区间是否和任一 compute 区间重叠</td>
+</tr>
+<tr>
+<td>汇总统计</td>
+<td><code>summarize</code></td>
+<td>统计总通信时间、overlap 时间和按 op 聚合结果</td>
+</tr>
+<tr>
+<td>时间线导出</td>
+<td><code>timeline</code></td>
+<td>按时间顺序导出通信事件，便于观察瓶颈</td>
+</tr>
+</tbody>
+</table>
+<p>这个模拟器的重点是 profiling 数据结构，而不是 NCCL API 本身。真实 profiler 可能来自 PyTorch Profiler、Nsight Systems 或 NCCL 日志，但最终都需要把事件整理成可比较的时间线和统计表。</p>
+<h3>Step 3: 核心机制</h3>
+<p>判断两个时间区间是否重叠，可以用一个反向条件：如果通信区间完全在计算区间左侧，或者完全在计算区间右侧，则不重叠；否则就是重叠。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/46_collective_trace.svg" alt="通信事件如何读时间线"></p>
+<p>写成代码就是：</p>
+<pre><code class="language-python">not (comm_end &lt;= compute_start or comm_start &gt;= compute_end)
+</code></pre>
+<p>汇总时，本节计算三个核心指标：</p>
+<ul>
+<li><code>total_comm_time</code>：所有通信事件的总耗时；</li>
+<li><code>overlap_time</code>：被标记为和计算重叠的通信耗时；</li>
+<li><code>overlap_ratio</code>：<code>overlap_time / total_comm_time</code>，用于粗略判断通信是否被计算隐藏。</li>
+</ul>
+<p>需要注意：这里的 <code>overlap_time</code> 是教学近似，直接把整个通信事件计入重叠。真实 profiler 会进一步计算区间交集长度，甚至分析 critical path。</p>
+<h3>Step 4: 动手实战</h3>
+<p><strong>要求</strong>：请补全下方 <code>NCCLProfilerSim</code>，跑通“记录 compute -&gt; 记录 comm -&gt; 判断 overlap -&gt; 汇总 by_op -&gt; 导出 timeline”这条链路。你需要重点完成六个位置：compute 事件字典、通信事件对象、overlap 判断条件、op 聚合桶、op 统计累加，以及 timeline 单条记录。</p>
+<p>完成后观察测试结果：<code>all_reduce</code> 应该被统计到 <code>by_op</code> 中，部分通信事件应该被标记为 overlap，时间线应该按开始时间排序。只要这些结果成立，就说明最小通信 profiling 闭环已经跑通。</p>
+<h3>提示</h3>
+<ul>
+<li>先记 <code>compute</code>，再记 <code>comm</code>；通信是否 overlap，要依赖前面已经登记过的 compute 区间。</li>
+<li>判断 overlap 时，可以先想“什么时候完全不重叠”，再把这个条件取反。</li>
+<li><code>summarize</code> 最好分两步写：先为当前 <code>op</code> 拿到统计桶，再累加 <code>count / time / bytes</code>。</li>
+<li><code>timeline</code> 只是把单条事件导出成字典，字段名保持和测试里访问的一致即可。</li>
+</ul>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>@dataclass
+class CommEvent:
+    op: str
+    start: float
+    end: float
+    bytes: int
+    overlap_with_compute: bool = False
+
+    @property
+    def duration(self) -&gt; float:
+        return max(self.end - self.start, 0.0)
+
+
+class NCCLProfilerSim:
+    &quot;&quot;&quot;极简版 NCCL 通信 profiling 模拟器。&quot;&quot;&quot;
+
+    def __init__(self):
+        self.events: List[CommEvent] = []
+        self.compute_events: List[Dict[str, float]] = []
+
+    def add_compute(self, name: str, start: float, end: float):
+        # ==========================================
+        # TODO 1: 完成事件记录层
+        # 提示: 这里先构造 compute event 字典并 append；
+        # add_comm 里再构造 CommEvent，并补 overlap_with_compute 状态。
+        # ==========================================
+        # event = ???
+        self.compute_events.append(event)
+
+    def add_comm(self, op: str, start: float, end: float, bytes: int):
+        # ==========================================
+        # TODO 1: 完成事件记录层
+        # 提示: 先构造 CommEvent，再调用 _has_overlap 判断是否和 compute 重叠。
+        # ==========================================
+        # event = ???
+        event.overlap_with_compute = self._has_overlap(event.start, event.end)
+        self.events.append(event)
+
+    def _has_overlap(self, start: float, end: float) -&gt; bool:
+        for c in self.compute_events:
+            # ==========================================
+            # TODO 2: 完成 overlap 判断与汇总统计
+            # 提示: 先排除 end &lt;= c[&quot;start&quot;] 或 start &gt;= c[&quot;end&quot;] 这两种完全错开情况。
+            # ==========================================
+            # overlaps = ???
+            if overlaps:
+                return True
+        return False
+
+    def summarize(self) -&gt; Dict[str, Any]:
+        total_comm_time = sum(e.duration for e in self.events)
+        overlap_time = sum(e.duration for e in self.events if e.overlap_with_compute)
+        by_op: Dict[str, Dict[str, float]] = {}
+        for e in self.events:
+            # ==========================================
+            # TODO 2: 完成 overlap 判断与汇总统计
+            # 提示: 先为当前 op 取出或创建 {&quot;count&quot;: 0, &quot;time&quot;: 0.0, &quot;bytes&quot;: 0} 统计桶。
+            # ==========================================
+            # item = ???
+            # ==========================================
+            # TODO 2: 完成 overlap 判断与汇总统计
+            # 提示: 再在同一个 item 上依次累加 count、time 和 bytes。
+            # ==========================================
+            # item[&quot;count&quot;] = ???
+            item[&quot;time&quot;] += e.duration
+            item[&quot;bytes&quot;] += e.bytes
+        return {
+            &quot;num_comm_events&quot;: len(self.events),
+            &quot;total_comm_time&quot;: total_comm_time,
+            &quot;overlap_time&quot;: overlap_time,
+            &quot;overlap_ratio&quot;: overlap_time / max(total_comm_time, 1e-8),
+            &quot;by_op&quot;: by_op,
+        }
+
+    def timeline(self) -&gt; List[Dict[str, Any]]:
+        records = []
+        for e in sorted(self.events, key=lambda x: (x.start, x.end, x.op)):
+            # ==========================================
+            # TODO 3: 导出 timeline 记录
+            # 提示: 返回的字典至少包含 op、start、end、duration、bytes、overlap 这 6 个字段。
+            # ==========================================
+            # record = ???
+            records.append(record)
+        return records
+</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code># 测试你的实现
+def test_nccl_profiler():
+    try:
+        profiler = NCCLProfilerSim()
+        profiler.add_compute('forward', 0.0, 2.0)
+        profiler.add_comm('all_reduce', 1.0, 2.5, 128 * 1024)
+        profiler.add_comm('broadcast', 2.6, 3.0, 64 * 1024)
+        profiler.add_compute('backward', 3.0, 5.0)
+        profiler.add_comm('reduce_scatter', 3.5, 4.3, 96 * 1024)
+
+        timeline = profiler.timeline()
+        summary = profiler.summarize()
+
+        assert len(timeline) == 3
+        assert timeline[0]['op'] == 'all_reduce'
+        assert timeline[0]['overlap'] is True
+        assert timeline[1]['overlap'] is False
+        assert summary['num_comm_events'] == 3
+        assert summary['total_comm_time'] &gt; 0
+        assert summary['overlap_time'] &gt; 0
+        assert 0.0 &lt;= summary['overlap_ratio'] &lt;= 1.0
+        assert summary['by_op']['all_reduce']['count'] == 1
+        assert summary['by_op']['all_reduce']['bytes'] == 128 * 1024
+
+        print('✅ NCCLProfilerSim 测试通过')
+    except NotImplementedError as e:
+        raise NotImplementedError('请先完成 TODO 代码！') from e
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
+        raise NotImplementedError('请先完成 TODO 代码！') from e
+
+
+test_nccl_profiler()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card inquiry" data-lesson="nccl-events-and-interval-overlap">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>先把性能问题变成时间区间：记录事件并判断 overlap</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">compute=[3.0,5.0)，comm=[2.6,3.0)。</p>
+            <p class="predict-q">Notebook 的判断会把它标记成 overlap 吗？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="0">
+                <span>不会，comm_end &lt;= compute_start</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="1">
+                <span>会，因为它们都包含 3.0</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="2">
+                <span>会，因为 bytes 大于 0</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="nccl-events-and-interval-overlap">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="nccl-events-and-interval-overlap">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>compute 事件用 dict 保存 name/start/end；通信事件用 dataclass CommEvent 保存 op/start/end/bytes。</li><li>duration 属性返回 max(end-start,0.0)，可避免错误时间顺序产生负耗时。</li><li>两个区间完全错开的条件是 end &lt;= compute_start 或 start &gt;= compute_end；对这个条件取 not 就得到重叠。</li><li>边界刚好接触不算重叠，例如通信 end=3.0、计算 start=3.0 会满足 end &lt;= start。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>Profiler 的第一步不是优化，而是把发生了什么记录成结构化事件。只要每条事件有类型、起止时间和字节数，就能把“通信似乎很慢”拆成可计算的问题；overlap 判断则回答这段通信有没有被任意计算区间覆盖。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>add_compute</b>保存名称与 [start,end)</span>
+          <span><b>add_comm</b>构造 op/时间/bytes</span>
+          <span><b>_has_overlap</b>遍历已有 compute</span>
+          <span><b>event flag</b>写 overlap_with_compute</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>TODO 1-2 的数据契约</h4>
+            <div class="adv-contract">
+              <span>compute</span><strong><code>{"name":name,"start":start,"end":end}</code></strong>
+              <span>communication</span><strong><code>CommEvent(op=op,start=start,end=end,bytes=bytes)</code></strong>
+              <span>overlap 字段</span><strong>add_comm 时调用 _has_overlap 后写入</strong>
+              <span>保存位置</span><strong>compute_events 与 events 两个列表分开</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>TODO 3 的反向思考</h4>
+            <div class="adv-flow">
+              <span>通信完全在左边<br>end &lt;= c.start</span>
+              <span>或完全在右边<br>start &gt;= c.end</span>
+              <strong>都不是<br>说明有交集</strong>
+            </div>
+            <p>代码是 <code>not (left_case or right_case)</code>，括号不能漏。</p>
+          </section>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>compute</th><th>comm</th><th>结果</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>[0.0,2.0)</td><td>[1.0,2.5)</td><td>True</td><td>区间 1.0 到 2.0 相交</td></tr>
+            <tr><td>[3.0,5.0)</td><td>[2.6,3.0)</td><td>False</td><td>只在 3.0 接触边界</td></tr>
+            <tr><td>[3.0,5.0)</td><td>[3.5,4.3)</td><td>True</td><td>通信落在计算区间内部</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">overlap 标记只在 add_comm 当下根据已经记录的 compute 事件计算，不会因以后新增 compute 自动回溯更新；给定测试按正确顺序添加事件。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用会议日程练习区间是否冲突</h4><pre><code>meetings = [
+    {'name': 'design', 'start': 9.0, 'end': 10.5},
+    {'name': 'review', 'start': 14.0, 'end': 15.0},
+]
+
+candidate_start = 10.0
+candidate_end = 11.0
+has_conflict = False
+for meeting in meetings:
+    overlaps = not (
+        candidate_end &lt;= meeting['start']
+        or candidate_start &gt;= meeting['end']
+    )
+    if overlaps:
+        has_conflict = True
+        break</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>meetings</code> 字典 -&gt; TODO 1 的 compute event。</li>
+            <li><code>candidate_start/end</code> -&gt; TODO 2 创建的 CommEvent 时间。</li>
+            <li><code>overlaps</code> -&gt; TODO 3；字段名替换为 <code>c["start"]</code> 与 <code>c["end"]</code>。</li>
+            <li><code>break</code> -&gt; Notebook 找到任一 overlap 后立即 return True。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>判断通信 [s,e) 与计算 [cs,ce) 重叠的正确表达式是哪一个？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="0">
+                <span>s &lt; e</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="1">
+                <span>not (e &lt;= cs or s &gt;= ce)</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="2">
+                <span>e &lt;= cs and s &gt;= ce</span>
+              </label></div>
+              <div class="feedback" data-feedback="nccl-events-and-interval-overlap"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="nccl-events-and-interval-overlap-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="nccl-summary-buckets-and-timeline">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>把事件变成结论：按 op 聚合，再输出可排序时间线</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">all_reduce 有两条事件，duration 分别 1.2 与 0.8，bytes 分别 100 与 60。</p>
+            <p class="predict-q">聚合桶应该得到什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="0">
+                <span>count=2, time=2.0, bytes=160</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="1">
+                <span>count=1, time=0.8, bytes=60</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="2">
+                <span>count=2, time=0.96, bytes=40</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="nccl-summary-buckets-and-timeline">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="nccl-summary-buckets-and-timeline">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>dict.setdefault(key, default) 会在 key 不存在时写入 default，并无论如何返回该 key 对应的对象。</li><li>item 是 by_op 中嵌套 dict 的引用；修改 item['count'] 会直接更新 by_op[e.op]。</li><li>sorted(events,key=lambda x:(x.start,x.end,x.op)) 用开始时间、结束时间、op 名依次做稳定排序。</li><li>overlap_ratio 使用 max(total_comm_time,1e-8) 防止没有通信事件时除零。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>timeline 回答“什么时候发生”，summary 回答“总体花在哪里”。同一份 CommEvent 既可以按时间排序，也可以按 op 分桶累加。初学者只要先建立一个固定的桶结构，再对每条事件做三次加法，就能得到最小可用的通信分析报告。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>TODO 4-5：聚合桶</h4>
+            <div class="adv-contract">
+              <span>桶 key</span><strong>通信 op，例如 all_reduce</strong>
+              <span>初始值</span><strong><code>{"count":0,"time":0.0,"bytes":0}</code></strong>
+              <span>每条事件</span><strong>count +1，time +duration，bytes +e.bytes</strong>
+              <span>全局指标</span><strong>total、overlap_time、overlap_ratio</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>TODO 6：timeline 单条记录</h4>
+            <div class="adv-contract">
+              <span>身份</span><strong>op</strong>
+              <span>位置</span><strong>start、end、duration</strong>
+              <span>规模</span><strong>bytes</strong>
+              <span>关系</span><strong>overlap=overlap_with_compute</strong>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-flow">
+          <span>events<br>3 条 CommEvent</span>
+          <span>按 op 分桶<br>count/time/bytes</span>
+          <span>按 start 排序<br>生成 records</span>
+          <strong>summary + timeline<br>两个观察视角</strong>
+        </div>
+
+        <table class="adv-shapes">
+          <thead><tr><th>给定测试事件</th><th>duration</th><th>overlap</th><th>进入哪个桶</th></tr></thead>
+          <tbody>
+            <tr><td>all_reduce 1.0-2.5</td><td>1.5</td><td>True</td><td>by_op["all_reduce"]</td></tr>
+            <tr><td>broadcast 2.6-3.0</td><td>0.4</td><td>False</td><td>by_op["broadcast"]</td></tr>
+            <tr><td>reduce_scatter 3.5-4.3</td><td>0.8</td><td>True</td><td>by_op["reduce_scatter"]</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-callout">Notebook 的 overlap_time 是教学近似：只要事件有任何重叠，就把该通信事件的完整 duration 计入，不计算精确交集长度。不要自行改成另一套指标，否则测试含义会变化。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用快递记录练习 setdefault 聚合与时间排序</h4><pre><code>deliveries = [
+    {'kind': 'air', 'start': 3.0, 'end': 5.0, 'boxes': 4},
+    {'kind': 'ground', 'start': 1.0, 'end': 4.0, 'boxes': 7},
+    {'kind': 'air', 'start': 6.0, 'end': 7.0, 'boxes': 2},
+]
+
+by_kind = {}
+for event in deliveries:
+    bucket = by_kind.setdefault(
+        event['kind'], {'count': 0, 'time': 0.0, 'boxes': 0}
+    )
+    bucket['count'] += 1
+    bucket['time'] += event['end'] - event['start']
+    bucket['boxes'] += event['boxes']
+
+timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子 -&gt; Notebook TODO</h4>
+          <ul>
+            <li><code>by_kind</code> -&gt; <code>by_op</code>；<code>event['kind']</code> -&gt; <code>e.op</code>。</li>
+            <li><code>bucket</code> -&gt; TODO 4 的 <code>item</code>，默认字段改为 count/time/bytes。</li>
+            <li>三次累加 -&gt; TODO 5；duration 使用 <code>e.duration</code> 属性。</li>
+            <li><code>timeline</code> -&gt; TODO 6 外层排序；Notebook 还要把 dataclass 转成六字段 dict。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>setdefault 在当前 op 已存在时会做什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="0">
+                <span>返回 None</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="1">
+                <span>每次都把桶清零</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="2">
+                <span>返回已有聚合桶，不覆盖其中已累计的数据</span>
+              </label></div>
+              <div class="feedback" data-feedback="nccl-summary-buckets-and-timeline"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="nccl-summary-buckets-and-timeline-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="45_memory_cut_planning.html">上一关：L45</a>
+        <a class="primary" href="47_moe_expert_parallel.html">下一关：L47</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "46";
+    const checkpointData = {"nccl-events-and-interval-overlap":{"answer":1,"explain":"先写两种完全错开情况，用 or 合并，再整体取反。"},"nccl-summary-buckets-and-timeline":{"answer":2,"explain":"因此循环中的 item 始终指向 by_op[e.op] 的当前桶，可以继续累加。"}};
+    const predictData = {"nccl-events-and-interval-overlap":{"answer":0,"revealNote":"代码采用半开区间式边界，end 与 start 相等属于完全错开。"},"nccl-summary-buckets-and-timeline":{"answer":0,"revealNote":"同 op 的事件逐项累加：次数 2、耗时 1.2+0.8、数据量 100+60。"}};
+    const predictTotal = 2;
+    const checkpointTotal = 2;
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "42";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-a265c1a35d0f";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

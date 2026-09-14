@@ -1,6 +1,6 @@
 # 02. SwiGLU Activation | SwiGLU 激活
 
-**难度：** Easy | **环境：** CPU-first | **标签：** `模型架构`, `激活函数`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Easy | **环境：** CPU-first | **标签：** `基础实现`, `激活函数`, `SwiGLU` | **目标人群：** 基础实现学习者
 
 > 🚀 **云端运行环境**
 >
@@ -23,20 +23,11 @@ SwiGLU 用两条并行分支做门控：一条提供候选特征，另一条决�
 ---
 ## 前置阅读
 
-**导语：** 先把张量运算、激活函数和归一化直觉理顺，再看 MLP 里的门控分支会更容易。
+**导语：** 先能读出逐元素激活、矩阵投影和归一化的位置，再比较 MLP 的单路激活与 SwiGLU 的双路门控。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 14. Activation Functions | 激活函数](../00_Prerequisites/14_Activation_Functions.md)
 - [P0: 15. Normalization Techniques | 归一化技术](../00_Prerequisites/15_Normalization_Techniques.md)
-
-## 相关阅读
-
-**导语：** 理解 SwiGLU 后，可以继续看位置编码、Attention，以及同一类 MLP 算子在混合精度和融合优化里的落地方式。
-
-- [03. RoPE Tutorial | 旋转位置编码教程](../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)
-- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
-- [P1: 12. TensorCore and Mixed Precision | Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
 
 ---
 ### Step 1: 核心思想与痛点
@@ -82,6 +73,29 @@ SwiGLU 用两条并行分支做门控：一条提供候选特征，另一条决�
    解得：$h = \mathbf{\frac{8}{3}d}$
    
 这正是 LLaMA 源码中对中间层维度进行 `int(8 * hidden_size / 3)`计算，并进一步对齐到特定倍数（如 256）的根本原因。
+#### 图解：SwiGLU 的 gate / up / down 三条线
+
+SwiGLU 可以理解成“先升维成两条分支，一条产生内容，一条产生门控，再降回 hidden size”。
+
+```text
+x [B, T, D]
+│
+├─ gate_proj ─► gate [B, T, I] ─► silu(gate) ┐
+│                                             ├─ elementwise multiply ─► down_proj ─► [B, T, D]
+└─ up_proj   ─► up   [B, T, I] ──────────────┘
+```
+
+![SwiGLU 的 gate / up / down 三条线](/02_PyTorch_Algorithms/02_swiglu_gate.svg)
+
+和普通 FFN 对比：
+
+| 结构 | 中间路径 | 直觉 |
+|:---|:---|:---|
+| FFN | `up -> activation -> down` | 所有维度统一经过非线性 |
+| SwiGLU | `gate/up -> multiply -> down` | gate 决定哪些信息通过 |
+
+因此 LLaMA MLP 常见三个投影：`gate_proj / up_proj / down_proj`。后面做 LoRA 时，如果 target modules 扩到 MLP，通常就是这三处。
+
 ### Step 3: 工业级实现框架与性能陷阱 (Memory Bound)
 
 公式和维度都对齐了，接下来进入真实的训练框架。SwiGLU 的实现远比写三行 Linear 复杂——融合矩阵、并行计算、内存带宽，每一步都藏着工程取舍。
@@ -269,3 +283,13 @@ class SwiGLU_MLP(nn.Module):
 - **这一题要解决什么：** 把融合后的输出切回两条分支，再按 SwiGLU 公式完成前向计算。
 - **为什么先切分再激活：** `gate` 负责门控，`up` 负责保留线性信息；先把它们拆开，各自的计算角色更明确。
 - **带走的直觉：** SwiGLU 不是单个激活函数，而是“门控 + 线性分支 + 融合投影”的一整套结构。
+## 相关阅读
+
+本节的门控激活可以继续沿两条线阅读：一条是 GLU 家族的原始设计，另一条是 LLaMA 实现中 gate / up / down 三个投影如何落地。
+
+- [GLU 家族原论文：GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202)
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [03. RoPE 旋转位置编码](../02_PyTorch_Algorithms/03_RoPE_Tutorial.md)
+- [04. 多头注意力与 GQA](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: Tensor Core 与混合精度](../01_Hardware_Math_and_Systems/12_TensorCore_and_Mixed_Precision.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

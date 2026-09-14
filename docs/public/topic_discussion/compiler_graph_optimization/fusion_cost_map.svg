@@ -1,0 +1,40 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Fusion Cost Map</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Fusion matters only when it removes real intermediate cost without creating worse layout, schedule or backend constraints.</text>
+
+  <rect x="108" y="198" width="462" height="188" rx="22" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="136" y="236" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Before fusion</text>
+  <rect x="148" y="276" width="100" height="42" rx="10" fill="#93C5FD"/>
+  <rect x="290" y="276" width="110" height="42" rx="10" fill="#BFDBFE"/>
+  <rect x="442" y="276" width="88" height="42" rx="10" fill="#93C5FD"/>
+  <text x="182" y="303" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">op A</text>
+  <text x="318" y="303" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">tensor</text>
+  <text x="468" y="303" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">op B</text>
+  <path d="M248 297H290" stroke="#374151" stroke-width="3"/>
+  <path d="M400 297H442" stroke="#374151" stroke-width="3"/>
+  <text x="144" y="350" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">intermediate allocation, layout handoff, extra memory traffic</text>
+
+  <rect x="710" y="198" width="462" height="188" rx="22" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="738" y="236" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">After useful fusion</text>
+  <rect x="760" y="276" width="352" height="42" rx="10" fill="#86EFAC"/>
+  <text x="884" y="303" fill="#166534" font-size="16" font-family="Arial, sans-serif">fused op A+B</text>
+  <text x="756" y="350" fill="#166534" font-size="16" font-family="Arial, sans-serif">less intermediate traffic, but only valuable if backend still likes the shape</text>
+
+  <rect x="108" y="432" width="320" height="174" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="136" y="470" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Ask first</text>
+  <text x="136" y="504" fill="#374151" font-size="17" font-family="Arial, sans-serif">1. Is the intermediate actually expensive?</text>
+  <text x="136" y="532" fill="#374151" font-size="17" font-family="Arial, sans-serif">2. Does fusion reduce traffic or just hide names?</text>
+  <text x="136" y="560" fill="#374151" font-size="17" font-family="Arial, sans-serif">3. Does backend keep a good kernel shape?</text>
+
+  <rect x="478" y="432" width="320" height="174" rx="22" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+  <text x="506" y="470" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Common misread</text>
+  <text x="506" y="504" fill="#92400E" font-size="17" font-family="Arial, sans-serif">Fewer nodes do not automatically mean</text>
+  <text x="506" y="532" fill="#92400E" font-size="17" font-family="Arial, sans-serif">better execution. Some fusions create worse layout or schedule pressure.</text>
+
+  <rect x="848" y="432" width="324" height="174" rx="22" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="876" y="470" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Used by page 02</text>
+  <text x="876" y="504" fill="#9D174D" font-size="17" font-family="Arial, sans-serif">This page turns fusion from a slogan</text>
+  <text x="876" y="532" fill="#9D174D" font-size="17" font-family="Arial, sans-serif">into a cost test: which tensor and dependency actually justify it?</text>
+</svg>

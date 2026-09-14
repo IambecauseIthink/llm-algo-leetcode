@@ -1,5 +1,5 @@
 # 23. Speculative Decoding | 投机解码
-**难度：** Hard | **环境：** GPU required | **标签：** `解码`, `Speculative Decoding`, `推理优化` | **目标人群：** 推理加速与系统工程
+**难度：** Hard | **环境：** CPU-first | **标签：** `推理优化`, `解码`, `Speculative Decoding` | **目标人群：** 推理优化学习者
 
 > 🚀 **云端运行环境**
 >
@@ -13,34 +13,24 @@
 
 ## 本节导读
 
-自回归生成最慢的地方，往往不是一次前向有多复杂，而是大模型必须一个 token 一个 token 地往前走。前面我们已经看过 KV Cache 和 PagedAttention 如何减少重复计算和显存碎片，本节继续看另一条推理加速路线：能不能先让小模型多猜几步，再由大模型一次性验证。
+自回归生成的时间压力，常常来自目标模型必须一个 token 一个 token 地推进。前面先用 KV Cache 建立了单步生成的状态视角，本节进一步观察另一种思路：让草稿模型先提出多个候选，再由目标模型集中验证。
 
-投机解码要解决的问题是：在不改变最终生成分布的前提下，减少大模型逐 token 调用的次数。本节不会实现完整推理服务，而是把核心验证循环拆出来：草稿模型提出候选 token，目标模型给出概率校验，能接受就连续前进，拒绝时立刻停止并回到目标模型。
+本节沿着“提议 → 验证 → 接受或修正”的顺序学习投机解码：先理解接受概率为什么需要 residual correction，再看全部接受时为什么还要追加 bonus token。核心判断是，在保持目标模型分布的前提下，是否能够减少目标模型的逐 token 推进。
 
 **关键词：** `speculative decoding`, `draft model`, `verification`
 
 ---
 ## 前置阅读
 
-**导语：** 先理解自回归生成、KV Cache 和推理显存模型，再看投机解码会更容易抓住主线：它不是让小模型替代大模型，而是让小模型帮大模型减少重复的逐 token 调用。
-
-- [22. vLLM PagedAttention | vLLM PagedAttention](../02_PyTorch_Algorithms/22_vLLM_PagedAttention.md)
+**导语：** 先掌握单步解码和 KV Cache 的状态变化，再理解草稿模型如何提出候选、目标模型如何批量验证。
+- [21. Decoding Strategies | 解码策略](./21_Decoding_Strategies.md)
 - [P1: 11. KV Cache and Memory Growth | KV Cache 与显存增长](../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.md)
-- [P1: 14. FlashAttention Memory Model | FlashAttention 显存模型](../01_Hardware_Math_and_Systems/14_FlashAttention_Memory_Model.md)
-
-
-## 相关阅读
-
-**导语：** 投机解码解决的是“少调用大模型几次”，后面可以继续看前缀缓存、异步执行和 profiling，判断真实系统里瓶颈是否真的被转移。
-
-- [P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位](../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.md)
-- [P1: 17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](../01_Hardware_Math_and_Systems/17_CUDA_Stream_and_Asynchrony.md)
 
 ---
 
-### Step 1: 原理与公式
+### Step 1: 提议、验证与分布保持
 
-投机解码（Speculative Decoding）的核心，不是“让小模型直接替代大模型”，而是让小模型先草拟一段 token，再用大模型逐个验证。这样做的关键问题是：**如何在不改变最终分布的前提下，尽量减少大模型的逐 token 推理次数**。
+投机解码（Speculative Decoding）的核心，不是让一个模型直接替代另一个模型，而是让草稿模型（draft model）先快速提出一段 token，再由目标模型（target model）逐个验证。草稿模型通常更小、更快，但不负责最终决定；目标模型负责验证候选并决定最终输出。这样做的关键问题是：**如何在不改变最终分布的前提下，尽量减少目标模型的逐 token 推理次数**。
 
 > **接受概率公式**
 > 对于草拟 token $x$，小模型给出的概率记为 $q(x)$，大模型给出的概率记为 $p(x)$。
@@ -50,12 +40,31 @@
 > 等价地，接受概率可以写成：
 > $$\alpha(x) = \min\left(1, \frac{p(x)}{q(x)}\right)$$
 
-**为什么这能做到“无损加速”？**
-因为在拒绝的情况下，系统会立刻停止后续草稿 token 的验证，并交还给大模型重新采样，因此最终输出的分布仍然和“只用大模型自回归生成”一致。
+**为什么有机会做到分布等价？**
+接受概率本身只负责判断草稿 token；发生拒绝时，还必须从 $\max(p-q,0)$ 归一化得到的 residual distribution 重新采样，全部接受时还要从目标模型的下一个位置采样 bonus token。缺少这两步，不能声称输出分布与目标模型一致。
 
-### Step 2: 代码实现框架
+![Speculative Decoding 流程图](../public/02_PyTorch_Algorithms/23_speculative_decoding_flow.svg)
 
-下面的代码只需要实现一个验证循环：逐个比较 `draft_probs` 和 `target_probs` 中对应 token 的概率，先按 $\alpha(x)$ 决定是否接受，再在拒绝时停止后续验证。这个过程本质上是“带终止条件的接受-拒绝采样”：前面 token 的接受与否，会直接决定后续草稿还能不能继续被验证。
+### Step 2: 验证输入与位置关系
+
+单步接口的输入、用途和检查重点如下：
+
+| 输入 / 状态 | 形状或内容 | 用途 |
+|---|---|---|
+| `draft_probs` | `[K, vocab]` | 草稿模型在 K 个位置上的概率分布 |
+| `target_probs` | `[K+1, vocab]` | 前 K 行验证草稿，最后一行提供 bonus token |
+| `draft_tokens` | 长度为 K 的 token 序列 | 指出每个位置实际提出的候选 |
+| 输入检查 | 非负、行归一化、长度和词表维度 | 防止概率与位置错位后继续计算 |
+
+### Step 3: 接受、修正与推进状态
+按草稿位置从前到后处理：接受就继续验证下一个位置；拒绝就从 residual distribution 采样一个修正 token 并结束本轮；全部 K 个草稿都接受时，再从最后一行目标分布采样 bonus token。这个流程使“接受长度”和“回退位置”成为可检查的状态结果。
+
+CPU 题目区验证概率归一化、接受/拒绝、residual correction、bonus token 和控制流；真实 acceptance rate、目标模型 forward 次数、TTFT、TPOT 和吞吐由 68 的匹配 backend 实验验证。
+
+![Speculative Decoding：验证结果决定下一步](../public/02_PyTorch_Algorithms/23_speculative_acceptance_flow.svg)
+
+### Step 4: 实现单轮投机解码
+请补全 `speculative_decode_step`，按输入检查、逐位置接受、拒绝修正和全接受 bonus 四个阶段返回结果。返回值至少包含最终 token、接受数量、是否拒绝和检查到的 target 位置。
 
 
 ```python
@@ -64,44 +73,60 @@ import torch
 
 
 ```python
-def speculative_verify(draft_probs, target_probs, draft_tokens):
+def speculative_decode_step(draft_probs, target_probs, draft_tokens, generator=None):
     """
-    验证小模型生成的 K 个 Token，返回被接受的 Token 列表。
+    验证 K 个草稿，并在拒绝或全接受时生成修正 token。
     
     Args:
-        draft_probs: 小模型生成各个 token 时的概率预测分布, shape [K, vocab_size]
-        target_probs: 大模型对这 K 个位置的真实概率预测分布, shape [K, vocab_size]
-        draft_tokens: 小模型实际采样出的 K 个 token_id, shape [K]
+        draft_probs: 草稿模型在 K 个位置上的概率分布, shape [K, vocab_size]
+        target_probs: 目标模型在 K 个验证位置及 1 个 bonus 位置的概率分布, shape [K+1, vocab_size]
+        draft_tokens: 草稿模型实际提出的 K 个 token_id, shape [K]
         
     Returns:
-        accepted_tokens: list, 最终被接受的 token_id 序列
+        dict: 包含最终 token 序列、接受数量、拒绝状态和检查位置。
     """
-    K = len(draft_tokens)
+    if draft_probs.dim() != 2 or target_probs.dim() != 2:
+        raise ValueError('概率张量必须是二维 [K, vocab]')
+    K, vocab_size = draft_probs.shape
+    if target_probs.shape != (K + 1, vocab_size) or len(draft_tokens) != K:
+        raise ValueError('draft/target/token 的长度或词表维度不匹配')
+    if not (torch.isfinite(draft_probs).all() and torch.isfinite(target_probs).all()):
+        raise ValueError('概率分布不能包含 NaN 或 Inf')
+    # TODO 1: 检查概率非负，并验证每一行和约等于 1
+    # 提示：归一化检查使用与输入相同 device / dtype 的全 1 张量。
+    # if ...:
+    #     raise ValueError('输入必须是归一化概率分布')
     accepted_tokens = []
     
     for i in range(K):
         token_id = draft_tokens[i]
         
-        # 提取目标概率 p 和草拟概率 q
-        p = target_probs[i, token_id].item()
-        q = draft_probs[i, token_id].item()
+        if not 0 <= int(token_id) < vocab_size:
+            raise ValueError('draft token id 超出词表范围')
+        p = target_probs[i, token_id]
+        q = draft_probs[i, token_id]
         
         # ==========================================
-        # TODO 1: 判断是否 100% 接受
-        # 提示: p >= q 时直接接受
-        # if p >= q:
-        #     accepted_tokens.append(token_id)
+        # TODO 2: 计算 alpha，并据此决定当前候选是否接受
+        # 提示：alpha = min(1, p / q)；q=0 时先处理除零边界。
+        # 接受后追加当前 token 并继续；拒绝后进入 TODO 3。
+        # r = torch.rand((), generator=generator).item()
+        # if ...:
+        #     accepted_tokens.append(int(token_id))
+        #     continue
         # ==========================================
-        # TODO 2: 以 p / q 的概率接受
-        # 提示: 否则按 p/q 掷硬币，拒绝则停止验证
-        # r = ???
-        # if r < p / q:
-        #     accepted_tokens.append(token_id)
-        # else:
-        #     break
+        # TODO 3: 拒绝时从 residual=max(p-q, 0) 归一化后采样
+        # residual = ???
+        # residual_mass = ???  # 先确认存在可采样的剩余概率质量
+        # if residual_mass <= 0:
+        #     raise ValueError('residual 概率质量必须大于 0')
+        # correction = torch.multinomial(???, 1, generator=generator).item()
+        # return {'tokens': accepted_tokens + [correction], 'accepted_count': len(accepted_tokens), 'rejected': True, 'target_positions_checked': i + 1}
         pass
     
-    return accepted_tokens
+    # TODO 4: 全部接受后，从 target_probs[K] 采样 bonus token
+    # bonus = torch.multinomial(???, 1, generator=generator).item()
+    # return {'tokens': accepted_tokens + [bonus], 'accepted_count': K, 'rejected': False, 'target_positions_checked': K}
 
 
 ```
@@ -111,47 +136,49 @@ def speculative_verify(draft_probs, target_probs, draft_tokens):
 def test_speculative_decoding():
     try:
         torch.manual_seed(42)
-        vocab_size = 100
-        K = 4
+        vocab_size = 5
+        K = 3
         
         # 模拟生成
-        draft_tokens = [10, 20, 30, 40]
+        draft_tokens = [0, 1, 2]
+        draft_probs = torch.zeros(K, vocab_size)
+        target_probs = torch.zeros(K + 1, vocab_size)
+        draft_probs[0, 0] = 1.0; target_probs[0, 0] = 1.0  # 必接受
+        draft_probs[1, 1] = 1.0; target_probs[1, 3] = 1.0  # 必拒绝，residual 采样 3
+        draft_probs[2, 2] = 1.0; target_probs[2, 2] = 1.0
+        target_probs[3, 4] = 1.0  # 全部接受时的 bonus token
         
-        draft_probs = torch.rand(K, vocab_size)
-        target_probs = torch.rand(K, vocab_size)
-        
-        # 强行设定：
-        # 第 0 个 token: p > q (必接受)
-        target_probs[0, 10] = 0.8
-        draft_probs[0, 10] = 0.5
-        
-        # 第 1 个 token: p < q, 但随机数使得它刚好被接受 (p=0.4, q=0.5, p/q=0.8, rand设为0.5)
-        target_probs[1, 20] = 0.4
-        draft_probs[1, 20] = 0.5
-        
-        # 第 2 个 token: p 远小于 q，导致拒绝 (p=0.1, q=0.9, p/q=0.11, rand设为0.9)
-        target_probs[2, 30] = 0.1
-        draft_probs[2, 30] = 0.9
-        
-        original_rand = torch.rand
-        def mock_rand(*args, **kwargs):
-            # 依次返回 0.5, 0.9 供判断
-            if not hasattr(mock_rand, 'call_count'):
-                mock_rand.call_count = 0
-            mock_rand.call_count += 1
-            if mock_rand.call_count == 1:
-                return torch.tensor([0.5])
-            else:
-                return torch.tensor([0.9])
-        torch.rand = mock_rand
-        
-        accepted = speculative_verify(draft_probs, target_probs, draft_tokens)
-        
-        # 恢复
-        torch.rand = original_rand
-        
-        assert accepted == [10, 20], f"期望只接受前两个 token，但得到 {accepted}"
-        print("✅ 测试通过！投机解码逻辑实现通过测试。")
+        result = speculative_decode_step(draft_probs, target_probs, draft_tokens)
+        assert result['tokens'] == [0, 3] and result['accepted_count'] == 1 and result['rejected']
+        all_accepted = speculative_decode_step(target_probs[:K], target_probs, [0, 3, 2])
+        assert all_accepted['tokens'] == [0, 3, 2, 4] and not all_accepted['rejected']
+
+        # q=0 且 p>0：候选仍可直接接受，避免除零后错误拒绝
+        zero_q_draft = torch.tensor([[0.0, 1.0, 0.0]])
+        zero_q_target = torch.tensor([[0.5, 0.5, 0.0], [0.0, 1.0, 0.0]])
+        zero_q = speculative_decode_step(zero_q_draft, zero_q_target, [0])
+        assert zero_q['accepted_count'] == 1 and not zero_q['rejected']
+
+        # 非法概率必须在进入接受逻辑前被拒绝
+        invalid = zero_q_draft.clone()
+        invalid[0, 0] = -0.1
+        try:
+            speculative_decode_step(invalid, zero_q_target, [0])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('负概率应明确被拒绝')
+
+        # 草稿提出了 q=0 且目标也为 0 的不可能 token，residual 没有可采样质量
+        zero_residual_draft = torch.tensor([[1.0, 0.0]])
+        zero_residual_target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+        try:
+            speculative_decode_step(zero_residual_draft, zero_residual_target, [1])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('residual 概率质量为 0 时应明确报错')
+        print("✅ 测试通过！接受、residual correction 和 bonus token 均通过。")
         
     except NotImplementedError:
         print("请先完成 TODO 代码。")
@@ -195,45 +222,86 @@ test_speculative_decoding()
 ### 代码
 
 ```python
-def speculative_verify(draft_probs, target_probs, draft_tokens):
-    K = len(draft_tokens)
+def speculative_decode_step(draft_probs, target_probs, draft_tokens, generator=None):
+    """完成一次 speculative decoding step。
+
+    `target_probs[:K]` 验证草稿，`target_probs[K]` 生成 bonus token。
+    """
+    if draft_probs.dim() != 2 or target_probs.dim() != 2:
+        raise ValueError('概率张量必须是二维 [K, vocab]')
+    K, vocab_size = draft_probs.shape
+    if target_probs.shape != (K + 1, vocab_size) or len(draft_tokens) != K:
+        raise ValueError('draft/target/token 的长度或词表维度不匹配')
+    if not (torch.isfinite(draft_probs).all() and torch.isfinite(target_probs).all()):
+        raise ValueError('概率分布不能包含 NaN 或 Inf')
+    # TODO 1：检查概率非负，并验证每一行和约等于 1（参考实现）
+    if (draft_probs < 0).any() or (target_probs < 0).any():
+        raise ValueError('概率分布不能包含负数')
+    ones_draft = torch.ones(K, device=draft_probs.device, dtype=draft_probs.dtype)
+    ones_target = torch.ones(K + 1, device=target_probs.device, dtype=target_probs.dtype)
+    if not (torch.allclose(draft_probs.sum(-1), ones_draft, atol=1e-5) and torch.allclose(target_probs.sum(-1), ones_target, atol=1e-5)):
+        raise ValueError('输入必须是归一化概率分布')
     accepted_tokens = []
     
     for i in range(K):
         token_id = draft_tokens[i]
+        if not 0 <= int(token_id) < vocab_size:
+            raise ValueError('draft token id 超出词表范围')
         p = target_probs[i, token_id].item()
         q = draft_probs[i, token_id].item()
-        
-        # TODO 1: 目标概率不小于草拟概率时，直接接受
-        if p >= q:
-            accepted_tokens.append(token_id)
-        else:
-            # TODO 2: 按 p / q 的概率决定是否接受
-            r = torch.rand(1).item()
-            if r < p / q:
-                accepted_tokens.append(token_id)
-            else:
-                # 拒绝该 token，停止验证后续猜测
-                break
+        # TODO 2: 处理 q=0，并按 alpha 决定接受或拒绝
+        # 提示：alpha = min(1, p / q)；接受时追加 token，拒绝时保留
+        # accepted_tokens 作为前缀并进入 TODO 3。
+        alpha = 1.0 if q == 0.0 and p > 0.0 else (min(1.0, p / q) if q > 0.0 else 0.0)
+        r = torch.rand((), generator=generator).item()
+        if r < alpha:
+            accepted_tokens.append(int(token_id))
+            continue
+        # TODO 3: 拒绝时从 residual=max(p-q, 0) 归一化后采样
+        residual = torch.clamp(target_probs[i] - draft_probs[i], min=0)
+        residual_mass = residual.sum()
+        if residual_mass <= 0:
+            raise ValueError('residual 概率质量必须大于 0')
+        residual = residual / residual_mass
+        correction = torch.multinomial(residual, 1, generator=generator).item()
+        return {'tokens': accepted_tokens + [correction], 'accepted_count': len(accepted_tokens), 'rejected': True, 'target_positions_checked': i + 1}
                 
-    return accepted_tokens
+    # TODO 4: 全部接受后追加 target 的 bonus token
+    bonus = torch.multinomial(target_probs[K], 1, generator=generator).item()
+    return {'tokens': accepted_tokens + [bonus], 'accepted_count': K, 'rejected': False, 'target_positions_checked': K}
 
 
 ```
 
 ### 解析
 
-**1. TODO 1（目标概率不小于草拟概率时，直接接受）**
-- 对每个草拟 token，先读取大模型概率 $p(x)$ 和小模型概率 $q(x)$。
-- 当 $p(x) \ge q(x)$ 时，接受概率 $\alpha(x)$ 直接变成 1。
-- 这意味着目标模型已经认为这个 token 足够合理，不需要再额外掷硬币。
+**1. TODO 1：概率输入检查**
+- 检查概率非负、有限，并确认每行近似归一化；这一步先保证后面的接受概率有合法输入。
 
-**2. TODO 2（按 $p/q$ 的概率决定是否接受）**
-- 当 $p(x) < q(x)$ 时，接受概率退化为 $\alpha(x) = p(x)/q(x)$。
-- 这一步本质上是在校正小模型过于激进的草拟结果。
-- 如果硬币没过，就必须立刻停止当前草稿链路。
+**2. TODO 2：接受概率**
+- 对第 $i$ 个草拟 token，读取目标分布 $p_i$ 与草稿分布 $q_i$ 在该 token 上的概率。
+- $p_i \ge q_i$ 时接受概率为 1；否则为 $\min(1,p_i/q_i)$。
+- 概率必须来自归一化分布，且需要显式处理 $q_i=0$。
 
-**3. 进阶思考**
-- 草拟模型的目标不是“替代”大模型，而是“提速候选生成”。
-- 终止条件之所以重要，是因为后续草稿 token 都建立在前缀被接受的前提上。
-- 这也是为什么 Speculative Decoding 能在不改变输出分布的前提下减少大模型调用次数。
+**3. TODO 3：Residual correction**
+- 第一个拒绝位置不能简单丢弃，而要计算 `clamp(target_probs[i] - draft_probs[i], min=0)`。
+- 将 residual 重新归一化后采样 correction token，才能补回目标分布中未被草稿覆盖的概率质量。
+
+**4. TODO 4：Bonus token 与一次验证**
+- 如果 K 个草稿全部接受，还要从 `target_probs[K]` 采样一个 bonus token。
+- 真实实现应由目标模型一次 forward 产生 K 个验证位置和一个 bonus 位置；CPU 代码中的 `[K+1, vocab]` 只是这个接口的抽象。
+
+**4. 证据边界**
+- 本节能验证接受/拒绝控制流和分布修正逻辑。
+- 本节不能证明 GPU 加速、目标模型调用减少或输出质量无损；这些结论需要 68 节用真实模型和 backend 采集 acceptance rate、forward 次数、TTFT、TPOT 和吞吐。
+
+## 相关阅读
+
+投机解码可以继续从接受采样的论文、Transformers 接口和真实推理 backend 三个角度阅读。
+- [Speculative Sampling 原论文](https://arxiv.org/abs/2302.01318)
+- [Transformers Assisted Generation 文档](https://huggingface.co/docs/transformers/main/en/generation_strategies)
+- [vLLM Speculative Decoding 文档](https://docs.vllm.ai/en/latest/features/spec_decode.html)
+- [Part 02 · 22 vLLM 分页注意力](./22_vLLM_PagedAttention.md)
+- [Part 02 · 35 多 Token 解码](./35_Multi_Token_Decoding.md)
+- [Part 02 · 36 解码调度](./36_Decode_Scheduling.md)
+- [Part 02 · 68 投机解码基准项目](./68_Speculative_Decoding_Benchmark.md)

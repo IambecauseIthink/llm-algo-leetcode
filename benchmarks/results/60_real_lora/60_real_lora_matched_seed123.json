@@ -1,0 +1,147 @@
+{
+  "schema_version": "fine-tuning-project/v1",
+  "project": "60_lora_fine_tuning",
+  "stage": "project_decision",
+  "config": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "model_path": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/model_cache/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+    "dtype": "torch.bfloat16",
+    "batch_size": 1,
+    "seq_len": 256,
+    "steps": 20,
+    "val_ratio": 0.2,
+    "seed": 123,
+    "split_seed": 42
+  },
+  "baseline": {
+    "name": "baseline",
+    "status": "ok",
+    "train_losses": [
+      1.294467568397522,
+      6.142696857452393,
+      2.2423155307769775,
+      3.814112663269043,
+      3.1306891441345215,
+      4.185997009277344,
+      6.3239030838012695,
+      3.1747028827667236,
+      7.059685707092285,
+      3.491853952407837,
+      3.895477533340454,
+      4.757103443145752,
+      2.712176561355591,
+      7.540666103363037,
+      3.635814666748047,
+      3.907562494277954,
+      3.1608095169067383,
+      4.429754257202148,
+      3.0155606269836426,
+      3.07582688331604
+    ],
+    "train_loss": 3.07582688331604,
+    "val_loss": 4.3102951390402655,
+    "trainable_params": 494032768,
+    "peak_memory_mb": 4786.98,
+    "step_time_ms": 106.09,
+    "tokens_per_s": 667.82
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "train_losses": [
+        1.294467568397522,
+        6.142696857452393,
+        2.2423155307769775,
+        3.814112663269043,
+        3.1306891441345215,
+        4.185997009277344,
+        6.3239030838012695,
+        3.1747028827667236,
+        7.059685707092285,
+        3.491853952407837,
+        3.895477533340454,
+        4.757103443145752,
+        2.712176561355591,
+        7.540666103363037,
+        3.635814666748047,
+        3.907562494277954,
+        3.1608095169067383,
+        4.429754257202148,
+        3.0155606269836426,
+        3.07582688331604
+      ],
+      "train_loss": 3.07582688331604,
+      "val_loss": 4.3102951390402655,
+      "trainable_params": 494032768,
+      "peak_memory_mb": 4786.98,
+      "step_time_ms": 106.09,
+      "tokens_per_s": 667.82
+    },
+    {
+      "name": "lora",
+      "status": "ok",
+      "train_losses": [
+        1.294467568397522,
+        4.415614128112793,
+        1.437072515487671,
+        1.7002896070480347,
+        1.962446928024292,
+        1.2331942319869995,
+        4.102962493896484,
+        1.4501640796661377,
+        2.4845569133758545,
+        1.4403843879699707,
+        1.8177326917648315,
+        3.282737970352173,
+        1.2139796018600464,
+        2.5308172702789307,
+        1.5650326013565063,
+        1.2386925220489502,
+        1.3212538957595825,
+        1.1985557079315186,
+        1.303442358970642,
+        1.6967653036117554
+      ],
+      "train_loss": 1.6967653036117554,
+      "val_loss": 2.026253342628479,
+      "trainable_params": 540672,
+      "peak_memory_mb": 1741.94,
+      "step_time_ms": 41.87,
+      "tokens_per_s": 1692.22
+    }
+  ],
+  "quality": {
+    "train_loss": 1.6967653036117554,
+    "val_loss": 2.026253342628479,
+    "baseline_val_loss": 4.3102951390402655,
+    "data_audit": {
+      "total_samples": 32,
+      "empty_response_count": 0,
+      "duplicate_count": 0,
+      "over_length_count": 3,
+      "avg_total_chars": 458.31
+    }
+  },
+  "resources": {
+    "trainable_params": 540672,
+    "peak_memory_mb": 1741.94,
+    "step_time_ms": 41.87,
+    "tokens_per_s": 1692.22
+  },
+  "artifacts": {
+    "adapter": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/60_real_lora/matched_adapter",
+    "report": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/60_real_lora/60_real_lora_matched.json"
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "matched baseline 与 LoRA 已完成，仍需增加重复运行和任务指标后再决定是否采用。",
+    "next_action": "repeat_with_fixed_validation_and_task_metric"
+  },
+  "environment": {
+    "python": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU"
+  }
+}

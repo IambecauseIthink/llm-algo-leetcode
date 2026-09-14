@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 68 | Speculative Decoding Benchmark | 推测解码基准</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+
+        <span class="pill" id="status">闯关题：0 / 1</span>
+        <span class="pill" id="xp">XP 0 / 100</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 68 | 零基础导学关卡</p>
+        <h1>Speculative Decoding Benchmark | 推测解码基准</h1>
+        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <div class="meta">
+          <span class="pill">68_Speculative_Decoding_Benchmark.ipynb</span>
+          <span class="pill">推理优化</span><span class="pill">Speculative Decoding</span><span class="pill">基准对比</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
+        </div>
+        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="a047c2e8ed0d810c465bd815b858d057492b971161f76d2dee3a992fa445b3c7">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../68_Speculative_Decoding_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>68. Speculative Decoding Benchmark | 推测解码基准</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>Speculative Decoding</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
+<strong>主责与复用边界：</strong> 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。</p>
+<p><strong>关键词：</strong> <code>acceptance rate</code>, <code>draft cost</code>, <code>verify cost</code>, <code>benchmark</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。</li><li>TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、</li><li>TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，</li><li>TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先把解码策略、推测解码机制和基础推理对比理顺，再进入这个 benchmark；本节默认你已经知道 draft / verify 的基本链路，重点转向这条链路是否值得保留。</p>
+<ul>
+<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
+<li><a href="23_speculative_decoding.html">23. Speculative Decoding | 推测解码</a></li>
+<li><a href="66_inference_performance_comparison.html">66. Inference Performance Comparison | 推理性能对比实验</a></li>
+<li><a href="20_flashattention_sim.html">20. FlashAttention Sim | FlashAttention 模拟</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成推测解码 benchmark 后，用 69 比较缓存复用，用 70 比较请求调度；两者都应沿用本节的 workload 和指标口径。</p>
+<ul>
+<li><a href="69_prefix_caching_benchmark.html">69. Prefix Caching Benchmark | 前缀缓存基准</a></li>
+<li><a href="70_serving_scheduler_benchmark.html">70. Serving Scheduler Benchmark | 推理服务调度基准</a></li>
+</ul>
+<h3>Step 1：定义实验口径</h3>
+<p>先固定模型、请求集和 speculative 配置，再建立 G0 baseline。下面的 Step 2 比较 baseline 与 candidate，Step 3 解释收益来源，Step 4 输出项目决策；Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">固定项</th>
+<th style="text-align:left">记录内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">模型</td>
+<td style="text-align:left">target、draft、版本和 dtype</td>
+</tr>
+<tr>
+<td style="text-align:left">workload</td>
+<td style="text-align:left">prompt 分布、batch、max new tokens、temperature</td>
+</tr>
+<tr>
+<td style="text-align:left">speculative 配置</td>
+<td style="text-align:left">proposal length、verify policy、acceptance 定义</td>
+</tr>
+<tr>
+<td style="text-align:left">质量门槛</td>
+<td style="text-align:left">输出一致性或任务指标、允许的误差</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 2：建立 target baseline</h3>
+<ul>
+<li>G0 只运行 target，记录 TTFT、TPOT、E2E、吞吐、P99、峰值显存和质量。</li>
+<li>G1 才运行 draft + target；两组必须使用同一 workload 和采样参数。</li>
+<li>普通 vLLM endpoint 只能证明服务链路可用，不能产生 acceptance rate。</li>
+</ul>
+<h3>Step 3：解释收益来源</h3>
+<ul>
+<li>同时检查 acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost、TPOT、吞吐和质量。CPU 模拟先给出每轮推进量，backend 实验再记录真实调用和时间。</li>
+<li>acceptance rate 低或 verify 成本高时，吞吐收益不能直接归因于 speculative。</li>
+<li>G2 一次只改变 proposal length 或 draft model，避免多个变量混合。</li>
+</ul>
+<h3>Step 4：输出项目决策</h3>
+<ul>
+<li>只有吞吐/延迟改善、质量达标且 acceptance 与 verify 成本可解释时，才可 <code>accept</code>。</li>
+<li>证据不足为 <code>tune</code>；质量不达标或性能退化为 <code>reject</code>。</li>
+<li>没有真实 draft + target backend 时，结论只能停留在 CPU 机制验证。</li>
+</ul>
+<p>质量和性能是两条独立的验收线：</p>
+<table>
+<thead>
+<tr>
+<th>证据类别</th>
+<th>主要指标</th>
+<th>回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>质量 / 机制</td>
+<td>输出一致性、任务指标、acceptance rate、accepted tokens per round</td>
+<td>输出是否仍满足任务要求，推测链路是否按预期推进</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>TTFT、TPOT、吞吐、P50、P99、峰值显存</td>
+<td>请求通常多快、尾部是否稳定、资源代价是否可接受</td>
+</tr>
+</tbody>
+</table>
+<p>P50 表示典型请求延迟，P99 表示尾部请求延迟；它们只描述速度分布，不能替代质量校验。质量通过但 P99 明显恶化，或性能变快但质量未达门槛，都不能直接 <code>accept</code>。样本量不足时，P50 / P99 只能作为 smoke 观察值。</p>
+<h4>图解：20-24 如何收束到 68 推测解码基准</h4>
+<pre><code class="language-text">20 FlashAttention -&gt; 21 Decoding -&gt; 23 Speculative
+                                      ↓
+                          68 Speculative Benchmark -&gt; 66 Inference Comparison
+</code></pre>
+<p>项目页最小产物：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">模块</th>
+<th style="text-align:left">必须记录</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">baseline</td>
+<td style="text-align:left">TTFT、TPOT、throughput、P99、质量</td>
+<td style="text-align:left">保证比较合法</td>
+</tr>
+<tr>
+<td style="text-align:left">candidate</td>
+<td style="text-align:left">acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost</td>
+<td style="text-align:left">解释收益来源</td>
+</tr>
+<tr>
+<td style="text-align:left">对比</td>
+<td style="text-align:left">吞吐增益、延迟变化、显存和质量</td>
+<td style="text-align:left">判断是否真的划算</td>
+</tr>
+<tr>
+<td style="text-align:left">决策</td>
+<td style="text-align:left">accept / tune / reject</td>
+<td style="text-align:left">输出 benchmark 结论</td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 9</summary><pre><code># 4 个核心 TODO：逐轮验证、workload 汇总、baseline 对比、项目判断
+# 目标：先在 CPU 上还原可检查的状态转移，再把结果整理成 benchmark 报告。
+# CPU 练习验证 proposal/verify 的计数和成本模型；真实 acceptance rate、TPOT 和 kernel 行为属于 GPU backend 扩展。
+def simulate_speculative_decode(rounds, draft_ms_per_token=1.0, verify_ms_per_round=4.0):
+    &quot;&quot;&quot;模拟多轮 draft proposal / target verify，并返回可审计的状态与成本。
+
+    参数：
+        rounds: 每轮包含 draft_tokens 与 target_tokens 的字典列表。
+        draft_ms_per_token: 教学用 draft 线性成本，不是实测时间。
+        verify_ms_per_round: 教学用每轮 verify 成本，不是 GPU kernel 时间。
+
+    返回：机制指标、成本模型指标和 round_trace；不实现概率性 rejection sampling。&quot;&quot;&quot;
+    if draft_ms_per_token &lt; 0 or verify_ms_per_round &lt; 0:
+        raise ValueError('draft 和 verify 成本不能为负数')
+    # ==========================================
+    # TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。
+    # 要求：校验每轮字段；比较最长相同前缀；记录 accepted_prefix_length、rejected_token；
+    #       分歧后计入一个 correction token，并区分 mechanism_metrics / cost_model_metrics。
+    # 变量提示：使用 proposed_tokens、accepted_tokens、corrected_tokens、accepted_rounds、round_trace；
+    # proposed_tokens = ???；accepted_tokens = ???；corrected_tokens = ???；round_trace = ???。
+    #       每轮结果至少包含 round、proposed、accepted_prefix_length、rejected_token、corrected。
+    #       最终返回 acceptance_rate、effective_output_tokens、draft_cost_ms、verify_cost_ms；
+    #       rounds 为空时返回可解释的零计数摘要，不能伪造一次成功验证。
+    # ==========================================
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def summarize_speculative_benchmark(runs: List[Dict[str, float]]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;汇总同一 workload 的多次运行结果，不把空输入伪装成性能结果。&quot;&quot;&quot;
+    # TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、
+    #       平均吞吐和最高吞吐 run。不要把缺失字段静默当成实测 0。
+    # 变量提示：遍历 runs；读取 name、acceptance_rate、throughput；
+    # run_count = ???；avg_acceptance_rate = ???；avg_throughput = ???；best_throughput_run = ???。
+    #       返回 run_count、best_throughput_run、avg_acceptance_rate、avg_throughput。
+    #       缺失字段应报错或明确标记，不能当成 0 纳入均值。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def compare_speculative_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
+    &quot;&quot;&quot;计算 candidate 相对 G0 的变化，不代表真实 backend 归因。&quot;&quot;&quot;
+    # TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，
+    #       并计算 throughput_speedup；baseline 吞吐为 0 时应明确报错。
+    # 变量提示：从 baseline / candidate 读取 ttft_ms、throughput、acceptance_rate、verify_cost_ms；
+    # ttft_delta_ms = ???；throughput_gain = ???；throughput_speedup = ???。
+    #       返回 ttft_delta_ms、throughput_gain、acceptance_rate、verify_cost_delta、throughput_speedup。
+    #       throughput_speedup = candidate / baseline；baseline 吞吐必须大于 0。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, float], min_acceptance_rate: float, quality_ok: bool = True, max_verify_cost_delta: float = 10.0) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;按吞吐、接受率、质量和验证成本给出教学决策。
+
+    这是项目筛选模板，不是生产环境的自动调参器；门槛必须随 workload 重新校准。&quot;&quot;&quot;
+    # TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和
+    #       verify cost 输出 decision、reason、next_action。
+    # 变量提示：使用 comparison、min_acceptance_rate、quality_ok、max_verify_cost_delta；
+    # acceptance_ok = ???；throughput_ok = ???；verify_cost_ok = ???；decision = ???。
+    #       decision 只能是 accept / tune / reject，并给出对应的下一步动作。
+    #       quality_ok=False 时优先 reject；只有接受率、吞吐和 verify cost 同时过门槛才 accept。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card" data-lesson="current-core">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">新版课程导学</span>
+          </div>
+          <h2>从原理走到本课实现</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
+主责与复用边界： 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。</p>
+            <div class="notebook-content"><h3>Step 1：定义实验口径</h3>
+<p>先固定模型、请求集和 speculative 配置，再建立 G0 baseline。下面的 Step 2 比较 baseline 与 candidate，Step 3 解释收益来源，Step 4 输出项目决策；Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">固定项</th>
+<th style="text-align:left">记录内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">模型</td>
+<td style="text-align:left">target、draft、版本和 dtype</td>
+</tr>
+<tr>
+<td style="text-align:left">workload</td>
+<td style="text-align:left">prompt 分布、batch、max new tokens、temperature</td>
+</tr>
+<tr>
+<td style="text-align:left">speculative 配置</td>
+<td style="text-align:left">proposal length、verify policy、acceptance 定义</td>
+</tr>
+<tr>
+<td style="text-align:left">质量门槛</td>
+<td style="text-align:left">输出一致性或任务指标、允许的误差</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 2：建立 target baseline</h3>
+<ul>
+<li>G0 只运行 target，记录 TTFT、TPOT、E2E、吞吐、P99、峰值显存和质量。</li>
+<li>G1 才运行 draft + target；两组必须使用同一 workload 和采样参数。</li>
+<li>普通 vLLM endpoint 只能证明服务链路可用，不能产生 acceptance rate。</li>
+</ul>
+<h3>Step 3：解释收益来源</h3>
+<ul>
+<li>同时检查 acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost、TPOT、吞吐和质量。CPU 模拟先给出每轮推进量，backend 实验再记录真实调用和时间。</li>
+<li>acceptance rate 低或 verify 成本高时，吞吐收益不能直接归因于 speculative。</li>
+<li>G2 一次只改变 proposal length 或 draft model，避免多个变量混合。</li>
+</ul>
+<h3>Step 4：输出项目决策</h3>
+<ul>
+<li>只有吞吐/延迟改善、质量达标且 acceptance 与 verify 成本可解释时，才可 <code>accept</code>。</li>
+<li>证据不足为 <code>tune</code>；质量不达标或性能退化为 <code>reject</code>。</li>
+<li>没有真实 draft + target backend 时，结论只能停留在 CPU 机制验证。</li>
+</ul>
+<p>质量和性能是两条独立的验收线：</p>
+<table>
+<thead>
+<tr>
+<th>证据类别</th>
+<th>主要指标</th>
+<th>回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>质量 / 机制</td>
+<td>输出一致性、任务指标、acceptance rate、accepted tokens per round</td>
+<td>输出是否仍满足任务要求，推测链路是否按预期推进</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>TTFT、TPOT、吞吐、P50、P99、峰值显存</td>
+<td>请求通常多快、尾部是否稳定、资源代价是否可接受</td>
+</tr>
+</tbody>
+</table>
+<p>P50 表示典型请求延迟，P99 表示尾部请求延迟；它们只描述速度分布，不能替代质量校验。质量通过但 P99 明显恶化，或性能变快但质量未达门槛，都不能直接 <code>accept</code>。样本量不足时，P50 / P99 只能作为 smoke 观察值。</p>
+</div>
+            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>投机解码接受率高，是否必然更快？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="0">
+                <span>只看 draft token 数即可</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="1">
+                <span>必然，验证没有开销</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="2">
+                <span>不一定，还要比较验证成本、吞吐和质量</span>
+              </label></div>
+            <div class="feedback" data-feedback="current-core"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-0">
+                <span>TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-1">
+                <span>TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-2">
+                <span>TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-3">
+                <span>TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="67_quantized_inference_and_deployment.html">上一关：L67</a>
+        <a class="primary" href="69_prefix_caching_benchmark.html">下一关：L69</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "68";
+    const checkpointData = {"current-core":{"answer":2,"explain":"不一定，还要比较验证成本、吞吐和质量。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 1;
+    const homeworkTotal = 4;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = null;
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-a047c2e8ed0d";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

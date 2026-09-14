@@ -1,0 +1,60 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Graph to Backend Chain</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">A clean graph is only the start. Performance emerges after the graph is transformed, legalized, scheduled and validated under backend constraints.</text>
+
+  <rect x="92" y="212" width="170" height="94" rx="18" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="138" y="248" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Graph</text>
+  <text x="118" y="278" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">ops, deps, tensors,</text>
+  <text x="118" y="300" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">high-level semantics</text>
+
+  <rect x="320" y="212" width="180" height="94" rx="18" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="364" y="248" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Fusion</text>
+  <text x="350" y="278" fill="#92400E" font-size="16" font-family="Arial, sans-serif">remove transfers,</text>
+  <text x="350" y="300" fill="#92400E" font-size="16" font-family="Arial, sans-serif">shrink intermediates</text>
+
+  <rect x="558" y="212" width="196" height="94" rx="18" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="598" y="248" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Lowering</text>
+  <text x="582" y="278" fill="#166534" font-size="16" font-family="Arial, sans-serif">legalize, rewrite,</text>
+  <text x="582" y="300" fill="#166534" font-size="16" font-family="Arial, sans-serif">schedule-ready form</text>
+
+  <rect x="812" y="212" width="186" height="94" rx="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="852" y="248" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Backend</text>
+  <text x="842" y="278" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">layout, kernel shape,</text>
+  <text x="842" y="300" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">launch constraints</text>
+
+  <rect x="1056" y="212" width="126" height="94" rx="18" fill="#E9D5FF" stroke="#7C3AED" stroke-width="2"/>
+  <text x="1080" y="248" fill="#5B21B6" font-size="22" font-family="Arial, sans-serif" font-weight="700">Bench</text>
+  <text x="1078" y="278" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">system</text>
+  <text x="1078" y="300" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">outcome</text>
+
+  <path d="M262 259H320" stroke="#374151" stroke-width="3"/>
+  <path d="M500 259H558" stroke="#374151" stroke-width="3"/>
+  <path d="M754 259H812" stroke="#374151" stroke-width="3"/>
+  <path d="M998 259H1056" stroke="#374151" stroke-width="3"/>
+  <path d="M305 251L320 259L305 267" fill="#374151"/>
+  <path d="M543 251L558 259L543 267" fill="#374151"/>
+  <path d="M797 251L812 259L797 267" fill="#374151"/>
+  <path d="M1041 251L1056 259L1041 267" fill="#374151"/>
+
+  <rect x="98" y="382" width="1082" height="116" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="126" y="420" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">What this topic insists on</text>
+  <text x="126" y="454" fill="#374151" font-size="18" font-family="Arial, sans-serif">Performance is not decided by graph structure alone. Each stage can preserve or destroy the previous stage's gains.</text>
+  <text x="126" y="484" fill="#374151" font-size="18" font-family="Arial, sans-serif">That is why the topic is organized as a chain, not as a list of compiler terms.</text>
+
+  <rect x="98" y="536" width="332" height="100" rx="18" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <text x="124" y="570" fill="#92400E" font-size="21" font-family="Arial, sans-serif" font-weight="700">Used by page 01</text>
+  <text x="124" y="600" fill="#92400E" font-size="16" font-family="Arial, sans-serif">It introduces the full chain before</text>
+  <text x="124" y="622" fill="#92400E" font-size="16" font-family="Arial, sans-serif">any individual optimization is discussed.</text>
+
+  <rect x="474" y="536" width="332" height="100" rx="18" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+  <text x="500" y="570" fill="#1E3A8A" font-size="21" font-family="Arial, sans-serif" font-weight="700">Cross-topic role</text>
+  <text x="500" y="600" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">Profiling proves where the chain breaks.</text>
+  <text x="500" y="622" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">This topic explains why it breaks there.</text>
+
+  <rect x="850" y="536" width="330" height="100" rx="18" fill="#DCFCE7" stroke="#22C55E" stroke-width="2"/>
+  <text x="876" y="570" fill="#166534" font-size="21" font-family="Arial, sans-serif" font-weight="700">Validation rule</text>
+  <text x="876" y="600" fill="#166534" font-size="16" font-family="Arial, sans-serif">No graph story is complete until it</text>
+  <text x="876" y="622" fill="#166534" font-size="16" font-family="Arial, sans-serif">survives backend and benchmark checks.</text>
+</svg>

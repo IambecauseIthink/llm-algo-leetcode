@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1908" height="887" viewBox="0 0 1908 887" role="img" aria-labelledby="title desc">
+  <title id="title">大模型算法与系统教程</title>
+  <desc id="desc">从基础计算、硬件与系统，到模型机制、项目实验和底层实现，进入推理优化、显存优化、算子优化和后训练优化四条主线。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1225"/>
+      <stop offset="0.55" stop-color="#111d3a"/>
+      <stop offset="1" stop-color="#1b2751"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fbff" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#eaf2ff" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#020617" flood-opacity="0.35"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#8ab4ff"/>
+    </marker>
+    <style>
+      .title { font: 700 42px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
+      .subtitle { font: 500 20px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .part { font: 700 19px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
+      .note { font: 500 14px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #475569; }
+      .section { font: 700 17px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #dbeafe; }
+      .route { font: 700 19px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #ffffff; }
+      .badge { font: 700 12px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #ffffff; }
+      .route-note { font: 500 13px "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #dbeafe; }
+    </style>
+  </defs>
+
+  <rect width="1908" height="887" fill="url(#bg)"/>
+  <circle cx="1540" cy="130" r="230" fill="#3b82f6" opacity="0.12"/>
+  <circle cx="1700" cy="690" r="330" fill="#8b5cf6" opacity="0.12"/>
+  <path d="M760 130 C1080 40 1320 180 1530 100 S1800 80 1908 150" fill="none" stroke="#60a5fa" stroke-opacity="0.2" stroke-width="3"/>
+  <path d="M750 660 C1010 540 1280 710 1500 590 S1810 540 1908 620" fill="none" stroke="#a78bfa" stroke-opacity="0.2" stroke-width="3"/>
+
+  <rect x="56" y="58" width="650" height="716" rx="30" fill="url(#panel)" filter="url(#shadow)"/>
+  <text x="100" y="133" class="title">大模型算法与系统教程</text>
+  <text x="102" y="173" class="subtitle">从算法机制，到硬件执行与系统优化</text>
+  <text x="102" y="211" class="note">Notebook-first · 机制理解 · 项目实验 · 工程决策</text>
+
+  <rect x="102" y="266" width="558" height="76" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="130" y="300" class="part">Part 00　基础计算</text>
+  <text x="130" y="326" class="note">张量、自动微分、训练循环与数据基础</text>
+  <rect x="102" y="360" width="558" height="88" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+  <text x="130" y="397" class="part">Part 01　硬件与系统底座</text>
+  <text x="130" y="425" class="note">精度、计算量、GPU、显存、Attention 与性能</text>
+  <rect x="102" y="466" width="558" height="88" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="4"/>
+  <rect x="510" y="476" width="122" height="24" rx="12" fill="#7c3aed"/>
+  <text x="571" y="493" text-anchor="middle" class="badge">推荐入口</text>
+  <text x="130" y="503" class="part">Part 02　机制与项目</text>
+  <text x="130" y="531" class="note">最小实现、受控实验、指标比较与项目决策</text>
+  <rect x="102" y="572" width="558" height="88" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="130" y="609" class="part">Part 03 / 04　底层实现</text>
+  <text x="130" y="637" class="note">Triton、Kernel、编译、CUDA 与系统优化</text>
+  <path d="M380 342 L380 360 M380 448 L380 466 M380 554 L380 572" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="790" y="118" class="section">四条可进入的主线</text>
+  <text x="790" y="148" class="route-note">从共同基础出发，按问题选择方向；机制、实验与系统实现相互衔接。</text>
+
+  <path d="M710 320 C780 320 790 240 850 240" fill="none" stroke="#60a5fa" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M710 390 C790 390 800 360 850 360" fill="none" stroke="#4ade80" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M710 490 C790 490 800 480 850 480" fill="none" stroke="#fbbf24" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M710 610 C790 610 800 600 850 600" fill="none" stroke="#c084fc" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="850" y="190" width="850" height="104" rx="22" fill="#2563eb" fill-opacity="0.95" stroke="#93c5fd" stroke-width="2"/>
+  <text x="890" y="234" class="route">推理优化</text>
+  <text x="890" y="263" class="route-note">请求链路 · 解码策略 · KV Cache · Serving · 量化部署</text>
+  <rect x="850" y="310" width="850" height="104" rx="22" fill="#16a34a" fill-opacity="0.95" stroke="#86efac" stroke-width="2"/>
+  <text x="890" y="354" class="route">显存优化</text>
+  <text x="890" y="383" class="route-note">参数与状态 · Activation · Checkpoint · Offload · 显存预算</text>
+  <rect x="850" y="430" width="850" height="104" rx="22" fill="#d97706" fill-opacity="0.95" stroke="#fde68a" stroke-width="2"/>
+  <text x="890" y="474" class="route">算子优化</text>
+  <text x="890" y="503" class="route-note">算子语义 · Kernel · 融合 · 编译图 · CUDA 与 Triton</text>
+  <rect x="850" y="550" width="850" height="104" rx="22" fill="#7c3aed" fill-opacity="0.95" stroke="#d8b4fe" stroke-width="2"/>
+  <text x="890" y="594" class="route">后训练优化</text>
+  <text x="890" y="623" class="route-note">监督微调 · LoRA / QLoRA · 偏好优化 · 强化学习 · 数据工程</text>
+
+  <rect x="850" y="708" width="850" height="66" rx="18" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+  <text x="1275" y="748" text-anchor="middle" class="section">共同方法：机制理解 → 可复现实验 → 指标证据 → 工程决策</text>
+</svg>

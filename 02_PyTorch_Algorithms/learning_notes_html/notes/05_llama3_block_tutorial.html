@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 05 | LLaMA3 Block Tutorial</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 05 | LLaMA3 Block Tutorial | LLaMA3 Block 教程</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -738,11 +748,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 05 | 零基础导学关卡</p>
-        <h1>LLaMA3 Block Tutorial</h1>
+        <h1>LLaMA3 Block Tutorial | LLaMA3 Block 教程</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">05_LLaMA3_Block_Tutorial.ipynb</span>
-          <span class="pill">Decoder Block</span><span class="pill">Residual</span><span class="pill">RMSNorm</span>
+          <span class="pill">模型结构</span><span class="pill">Transformer</span><span class="pill">LLaMA Block</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -756,16 +766,235 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="ba3da9fbfd8313969cc976eec85f51d2af25d33e3075751582f19fd5cc03d607">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../05_LLaMA3_Block_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>05. LLaMA3 Block Tutorial | LLaMA3 Block 教程</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>模型结构</code>, <code>Transformer</code>, <code>LLaMA Block</code> | <strong>目标人群：</strong> 模型结构学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>前面的 RMSNorm、SwiGLU、RoPE 和 GQA 如果单独看，只是几个分散的组件；真正进入模型结构时，它们必须按固定顺序接成一个 Decoder Layer。这里最容易出错的不是单个公式，而是归一化位置、残差连接、Attention 分支和 MLP 分支之间的组织关系。</p>
+<p>本节进入组装阶段：把 RMSNorm、RoPE、GQA 和 SwiGLU MLP 拼成一个最小 LLaMA-3 Decoder Layer。完成后，你应该能把 Decoder Layer 理解成一条清晰流水线：先归一化，再分别经过 Attention / MLP 变换，最后用残差连接把原始输入和新特征合回去。它是本部分第一个结构组合小项目：前面练习单个机制，这里验证这些机制能否组成一个完整模型模块；后续第 61 节再把这种结构实现推进到候选架构比较。</p>
+<p><strong>关键词：</strong> <code>LLaMA3</code>, <code>Transformer Block</code>, <code>Decoder Layer</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 定义 SwiGLU 所需的三个线性层 (无 bias)</li><li>TODO 2: 实现 SwiGLU 的前向传播</li><li>TODO 3: 实现 LLaMA 的 Pre-Norm 残差连接</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 进入本节前，先能指出 RMSNorm、RoPE、GQA 和 SwiGLU 在 Decoder Layer 中分别承担什么作用，再把它们按执行顺序组合起来。</p>
+<ul>
+<li><a href="01_rmsnorm_tutorial.html">01. RMSNorm Tutorial | RMSNorm 教程</a></li>
+<li><a href="02_swiglu_activation.html">02. SwiGLU Activation | SwiGLU 激活</a></li>
+<li><a href="03_rope_tutorial.html">03. RoPE Tutorial | 旋转位置编码教程</a></li>
+<li><a href="04_attention_mha_gqa.html">04. Attention MHA GQA | 多头注意力</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心思想与痛点</h3>
+<p>LLaMA 系列模型在 Transformer 基础上做了多项关键改进。这些改进共同构成了 LLaMA 的架构基础，也是后续实现 Decoder 层的核心依据。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/05_llama_block.svg" alt="LLaMA Decoder Block：组件如何组装成一层"></p>
+<p><strong>LLaMA 架构 vs 传统 Transformer (如 GPT-2)</strong></p>
+<ol>
+<li><strong>归一化位置 (Pre-Norm vs Post-Norm)</strong>：LLaMA 使用 Pre-Norm（在 Attention 和 MLP <strong>之前</strong>进行归一化），这让深层网络的训练更加稳定；而早期模型多用 Post-Norm。</li>
+<li><strong>归一化算法</strong>：将 LayerNorm 替换为无偏置、不减均值的 <strong>RMSNorm</strong>，提升计算效率。</li>
+<li><strong>激活函数</strong>：将 ReLU/GELU 替换为 <strong>SwiGLU</strong>，通过门控机制（Gating）显著提升了模型的表达能力。</li>
+<li><strong>位置编码</strong>：彻底抛弃绝对位置编码，拥抱 <strong>RoPE</strong>。</li>
+<li><strong>注意力机制</strong>：从 LLaMA-2 开始，为了优化推理时的 KV Cache，将标准 MHA 升级为 <strong>GQA</strong>（通过减少 KV 头数压缩 Cache 大小，详见 04 Step1 的架构对比）。</li>
+</ol>
+<h3>Step 2: 模块集成框架</h3>
+<p>LLaMA-3 的单个 Decoder 层遵循 Pre-Norm 架构，沿着一条固定的前向流水线处理输入：先归一化，再通过 Attention/MLP 做变换，最后通过残差连接与原始输入相加。</p>
+<ol>
+<li>输入经过 Attention 层的 <strong>RMSNorm</strong>。</li>
+<li>执行带 KV Cache 的 GQA 注意力机制（Q/K 投影后应用 RoPE 旋转）。</li>
+<li>将残差相加：<code>x = x + attn_out</code>。</li>
+<li>经过 MLP 层的 <strong>RMSNorm</strong>。</li>
+<li>执行 SwiGLU 前馈网络并再次加上残差。<code>x = x + mlp_out</code></li>
+</ol>
+<h4>可视化：一个 LLaMA Block 如何把 01-04 串起来</h4>
+<p><code>01-04</code> 是零件，<code>05</code> 是组装。一个 decoder block 可以先按下面这条数据流理解：</p>
+<pre><code class="language-text">x [B, T, D]
+│
+├─► RMSNorm ─► Attention(MHA/GQA + RoPE) ─► + residual
+│                                                │
+└────────────────────────────────────────────────┘
+                                                 ▼
+                                           h [B, T, D]
+                                                 │
+                                                 ├─► RMSNorm ─► SwiGLU MLP ─► + residual
+                                                 │                              │
+                                                 └──────────────────────────────┘
+                                                                                ▼
+                                                                        output [B, T, D]
+</code></pre>
+<p>组件和前面章节的对应关系：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Block 位置</th>
+<th style="text-align:left">对应章节</th>
+<th style="text-align:left">负责什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">RMSNorm</td>
+<td style="text-align:left"><code>01</code></td>
+<td style="text-align:left">稳定每个 token 的 hidden state 尺度</td>
+</tr>
+<tr>
+<td style="text-align:left">SwiGLU MLP</td>
+<td style="text-align:left"><code>02</code></td>
+<td style="text-align:left">用 gate/up/down 三个投影做非线性变换</td>
+</tr>
+<tr>
+<td style="text-align:left">RoPE</td>
+<td style="text-align:left"><code>03</code></td>
+<td style="text-align:left">给 Q/K 注入位置信息</td>
+</tr>
+<tr>
+<td style="text-align:left">Attention / GQA</td>
+<td style="text-align:left"><code>04</code></td>
+<td style="text-align:left">让每个 token 读取上下文</td>
+</tr>
+<tr>
+<td style="text-align:left">Residual</td>
+<td style="text-align:left"><code>05</code></td>
+<td style="text-align:left">保留原表示，让深层堆叠更稳定</td>
+</tr>
+</tbody>
+</table>
+<p>初学时不要先背所有公式，先确认每一步输入输出都仍是 <code>[B, T, D]</code>，再逐个拆开 attention 和 MLP 内部。</p>
+<h3>Step 3: 核心公式与架构</h3>
+<p>前面的模块已经拼起来了，这一步先把 Decoder Layer 的公式骨架和残差关系画清楚。</p>
+<p><strong>1. SwiGLU MLP:</strong>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>SwiGLU</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">(</mo><mtext>Swish</mtext><mo stretchy="false">(</mo><mi>x</mi><msub><mi>W</mi><mtext>gate</mtext></msub><mo stretchy="false">)</mo><mo>⊙</mo><mo stretchy="false">(</mo><mi>x</mi><msub><mi>W</mi><mtext>up</mtext></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo><msub><mi>W</mi><mtext>down</mtext></msub></mrow><annotation encoding="application/x-tex"> \text{SwiGLU}(x) = (\text{Swish}(x W_{\text{gate}}) \odot (x W_{\text{up}})) W_{\text{down}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">SwiGLU</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord">Swish</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">gate</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⊙</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">up</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">))</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">down</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></eqn></section>
+其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>Swish</mtext><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo><mo>=</mo><mi>z</mi><mo>⋅</mo><mi>σ</mi><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{Swish}(z) = z \cdot \sigma(z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Swish</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></eq> (在 PyTorch 中对应 <code>F.silu</code>)，其中 <code>⊙</code> 表示逐元素乘（Hadamard product）。注意，为了保持参数量与传统 MLP 一致，LLaMA 中的隐藏层维度通常设置为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>8</mn><mn>3</mn></mfrac><mi>d</mi></mrow><annotation encoding="application/x-tex">\frac{8}{3} d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">3</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">8</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathnormal">d</span></span></span></span></eq> 并向上取整（约 2.67 倍），其中 d 为 hidden_dim。</p>
+<p><strong>2. Decoder Layer 残差连接 (Residual Connections):</strong>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>h</mi><mo>=</mo><mi>x</mi><mo>+</mo><mtext>Attention</mtext><mo stretchy="false">(</mo><mtext>RMSNorm</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> h = x + \text{Attention}(\text{RMSNorm}(x)) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Attention</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">RMSNorm</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">))</span></span></span></span></span></eqn></section>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>out</mtext><mo>=</mo><mi>h</mi><mo>+</mo><mtext>MLP</mtext><mo stretchy="false">(</mo><mtext>RMSNorm</mtext><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \text{out} = h + \text{MLP}(\text{RMSNorm}(h)) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord text"><span class="mord">out</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">MLP</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">RMSNorm</span></span><span class="mopen">(</span><span class="mord mathnormal">h</span><span class="mclose">))</span></span></span></span></span></eqn></section>
+<em>注意：这里的 Attention 内部包含了 RoPE 旋转位置编码（作用于 Q 和 K 投影后）</em></p>
+<h3>Step 4: 动手实战</h3>
+<p>骨架画清楚之后，这里开始把 RMSNorm、Attention、SwiGLU 和残差连接逐个落到代码里，真正拼成一个完整的 Decoder Layer。</p>
+<p><strong>要求</strong>：请补全下方 <code>LlamaMLP</code> 和 <code>LlamaDecoderLayer</code>。
+为了让你直接上手核心逻辑，我们假设 <code>RMSNorm</code> 和 <code>Attention</code> 模块已经由你之前的代码提供（这里我们用 Dummy Class 占位模拟）。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 9</summary><pre><code># ---------------------------------------------------------
+# 以下是我们之前实现的组件 (此处用极简占位符代替，以保持代码整洁)
+# ---------------------------------------------------------
+class DummyRMSNorm(nn.Module):
+    &quot;&quot;&quot;占位 RMSNorm，仅用于验证结构，不做真实归一化。&quot;&quot;&quot;
+    def __init__(self, dim): super().__init__(); self.w = nn.Parameter(torch.ones(dim))
+    def forward(self, x): return x * self.w
 
+class DummyAttention(nn.Module):
+    def __init__(self, dim): super().__init__(); self.proj = nn.Linear(dim, dim)
+    def forward(self, x): return self.proj(x) # 假装它做了 RoPE 和 GQA
+# ---------------------------------------------------------
 
+class LlamaMLP(nn.Module):
+    def __init__(self, hidden_size: int, intermediate_size: int):
+        super().__init__()
+        # ==========================================
+        # TODO 1: 定义 SwiGLU 所需的三个线性层 (无 bias)
+        # 提示: gate_proj / up_proj 将 hidden_size 映射到 intermediate_size
+        #      down_proj 将 intermediate_size 映射回 hidden_size
+        # ==========================================
+        # self.gate_proj = ???
+        # self.up_proj = ???
+        # self.down_proj = ???
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;)
 
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        # ==========================================
+        # TODO 2: 实现 SwiGLU 的前向传播
+        # 提示: gate 分支先过 F.silu，再和 up 分支逐元素相乘，最后过 down_proj
+        # ==========================================
+        # hidden_states = ???
+        # output = ???
+        return output
+
+class LlamaDecoderLayer(nn.Module):
+    def __init__(self, hidden_size: int, intermediate_size: int):
+        super().__init__()
+        self.hidden_size = hidden_size
+
+        # 1. 注意力模块与它的前置 LayerNorm
+        self.input_layernorm = DummyRMSNorm(hidden_size)
+        self.self_attn = DummyAttention(hidden_size)
+
+        # 2. MLP 模块与它的前置 LayerNorm
+        self.post_attention_layernorm = DummyRMSNorm(hidden_size)
+        self.mlp = LlamaMLP(hidden_size, intermediate_size)
+
+    def forward(self, hidden_states: torch.Tensor) -&gt; torch.Tensor:
+        &quot;&quot;&quot;
+        Args:
+            hidden_states: [batch, seq_len, hidden_size]
+        Returns:
+            output: [batch, seq_len, hidden_size]
+        &quot;&quot;&quot;
+        # ==========================================
+        # TODO 3: 实现 LLaMA 的 Pre-Norm 残差连接
+        # 提示: 先做 Attention residual，再做 MLP residual
+        # ==========================================
+        # --- Attention Block ---
+        # residual = ???
+        # hidden_states = ???
+        # hidden_states = ???
+        # hidden_states = ???
+
+        # --- MLP Block ---
+        # residual = ???
+        # hidden_states = ???
+        # hidden_states = ???
+        # hidden_states = ???
+
+        return hidden_states
+</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
+def test_llama_block():
+    try:
+        batch_size, seq_len, hidden_size = 2, 16, 512
+        # LLaMA 通常设置 intermediate_size 为 8/3 * hidden_size，并向 multiple_of 取整
+        intermediate_size = 1376
+
+        layer = LlamaDecoderLayer(hidden_size, intermediate_size)
+        x = torch.randn(batch_size, seq_len, hidden_size)
+
+        out = layer(x)
+
+        assert out.shape == (batch_size, seq_len, hidden_size), &quot;输出形状错误！&quot;
+
+        # 简单验证一下计算图是否连通 (是否包含所有的参数)
+        out.sum().backward()
+        for name, param in layer.named_parameters():
+            assert param.grad is not None, f&quot;参数 {name} 没有接收到梯度，请检查前向传播连接！&quot;
+
+        print(&quot;\n✅ All Tests Passed! LLaMA-3 Transformer Block 组装完成，所有测试通过。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError) as e:
+        print(f&quot;代码可能未完成: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+    except Exception as e:
+        print(f&quot;\n❌ 测试失败: {e}&quot;)
+        raise
+
+test_llama_block()
+
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
-      
+
         <article class="lesson-card inquiry" data-lesson="llama-mlp-swiglu">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 / TODO 2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>LLaMA MLP：为什么是 gate、up、down 三条路</h2>
 
@@ -798,7 +1027,7 @@
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
               <p>普通 MLP 像“把信息放大后统一加工”；SwiGLU 更像“内容通道 + 阀门通道”：up_proj 负责把可用内容拿出来，gate_proj 经 SiLU 后决定每个中间特征开多大，最后 down_proj 把中间表示收回到原来的 hidden_size，方便残差相加。写作业时不要先背答案，先追每一步的 shape，shape 对了，代码通常就顺了。</p>
-              
+
           <div class="shape-story">
             <div class="story-panel">
               <strong>0. 先把 TODO 1/2 拆成两个小任务</strong>
@@ -942,25 +1171,17 @@
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-mlp-swiglu-0">
-                <span>TODO 1：在 __init__ 定义 gate_proj、up_proj、down_proj，三者都用 bias=False；gate/up 是 hidden_size→intermediate_size，down 是 intermediate_size→hidden_size。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="llama-mlp-swiglu-1">
-                <span>TODO 2：forward 里先分别算 gate 分支和 up 分支，再用逐元素乘法 *，最后交给 down_proj；这里不要写成矩阵乘法 @。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="llama-mlp-swiglu-2">
-                <span>测试时确认 LlamaMLP 的输出 shape 回到 [batch_size, seq_len, hidden_size]，并且 gate/up/down 三组参数都连在计算图上。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="llama-prenorm-residual">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Pre-Norm 残差：每个子层只写一份 update</h2>
 
@@ -993,7 +1214,7 @@
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
               <p>把 hidden_states 想成一条主干信息流。Attention 和 MLP 不直接替换主干，而是在“归一化后的输入”上算一份 update，再加回主干。这样深层网络反传时始终有一条清晰的梯度通路。写作业时只记一个口令：每个子层开始先拍一张 residual 快照，子层结束把 update 加回这张快照。</p>
-              
+
           <div class="shape-story">
             <div class="story-panel">
               <strong>0. TODO 3 是“同一个模板连续套两次”</strong>
@@ -1155,18 +1376,10 @@ x = prenorm_step(x, norm_b, mlp_like_block)</code></pre><p class="syntax-tip">�
           <div class="lesson-section homework">
             <h3>回到 notebook 的作业</h3>
             <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
-            
+
               <label class="homework-item">
                 <input type="checkbox" data-homework="llama-prenorm-residual-0">
-                <span>TODO 3 第一段：写 Attention block，顺序是保存当前 hidden_states → input_layernorm → self_attn → 加回刚才保存的 residual。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="llama-prenorm-residual-1">
-                <span>TODO 3 第二段：不要复用最初的 residual；先把 Attention 后的 hidden_states 重新保存，再写 post_attention_layernorm → mlp → residual add。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="llama-prenorm-residual-2">
-                <span>跑 notebook 测试：输出 shape 必须等于输入 shape；若某个参数 grad 为 None，就回头检查对应子层有没有参与最终输出。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1190,16 +1403,29 @@ x = prenorm_step(x, norm_b, mlp_like_block)</code></pre><p class="syntax-tip">�
     const predictData = {"llama-mlp-swiglu":{"answer":0,"revealNote":"关键是参数量近似相等：普通 MLP ≈ 8d²，SwiGLU ≈ 3dm，所以 m≈8/3d。实际模型还会按硬件友好的倍数取整。"},"llama-prenorm-residual":{"answer":1,"revealNote":"第二段 residual 要重新保存 Attention 后的 hidden_states。每个子层都有自己的 residual 主路。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "05";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-ba3da9fbfd83";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

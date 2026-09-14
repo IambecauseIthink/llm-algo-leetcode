@@ -1,6 +1,6 @@
 # 30. Dynamic Shape Handling | 动态 Shape 处理
 
-**难度：** Medium-Hard | **环境：** CPU-first | **标签：** `动态 Shape`, `推理服务` | **目标人群：** 动态 batching 学习者
+**难度：** Medium-Hard | **环境：** CPU-first | **标签：** `系统工程`, `动态 Shape`, `推理服务` | **目标人群：** 编译与系统入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页讲的是输入长度不固定时，为什么 batching、缓存和执行路径会同时变复杂。
+---
+
+## 本节导读
+
+输入长度一旦不固定，问题就不再只是 padding 多一点少一点，而是 batching、缓存组织、kernel 选择和执行路径都会一起变复杂。静态 shape 下顺手成立的很多假设，到了动态输入场景里都可能失效。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的服务约束基础页，优先服务 `推理优化路线` 的请求编排与执行稳定性判断，也给后续 `编译与图优化专题` 补一层动态输入前置。学完这里，后面再看 `34 / 37 / 66` 以及服务侧调度相关的页时，你会更容易判断一个动态输入问题是在影响算子选择、缓存管理，还是整条服务执行链；如果这里没学明白，后面很容易把吞吐抖动简单归因到 batch 不稳定，却忽略 dynamic shape 已经同时改变了编译假设、缓存组织和调度路径。按专题归类，这一页主要属于 `推理优化专题`，并和 `编译与图优化专题` 共享一部分系统约束视角。
 
 **关键词：** `dynamic shape`, `batching`, `padding`
+
+---
 ## 前置阅读
 
 **导语：** 这一页先把动态 batching、缓存复用和执行路径的关系接上，再看输入长度变化为什么会让系统更难稳定优化。
@@ -28,7 +36,7 @@
 - [19. Operator Fusion Introduction | 算子融合导论](./19_Operator_Fusion_Introduction.md)
 - [15. CUDA Custom Kernel Intro | CUDA 自定义算子入门](../04_CUDA_and_System_Optimization/15_CUDA_Custom_Kernel_Intro.md)
 - [18. CUDA Graph and JIT Compile | CUDA Graph 与 JIT 编译](../04_CUDA_and_System_Optimization/18_CUDA_Graph_and_JIT_Compile.md)
-
+---
 ## Q1：动态 shape 为什么会让复用变差？
 
 <details><summary>点击展开查看解析</summary>

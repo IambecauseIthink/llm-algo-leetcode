@@ -1,0 +1,913 @@
+{
+  "upstream": {
+    "commit": "4fa62623ae7f2f207871b43c3f254a765765bf2e",
+    "date": "2026-09-14"
+  },
+  "levels": [
+    {
+      "id": "00",
+      "oldId": "00",
+      "title": "PyTorch Warmup | PyTorch 热身",
+      "file": "00_PyTorch_Warmup.ipynb",
+      "sourceHash": "edb18c13168600e4382b2e1fb1c80943dafb99edeeefae175b2dfcc75cb27669",
+      "page": "00_pytorch_warmup.html"
+    },
+    {
+      "id": "01",
+      "oldId": "01",
+      "title": "RMSNorm Tutorial | RMSNorm 教程",
+      "file": "01_RMSNorm_Tutorial.ipynb",
+      "sourceHash": "74c82355108d003adf9659735b0aa696e917e9fce8eb881b483df3213ff69bb1",
+      "page": "01_rmsnorm_tutorial.html"
+    },
+    {
+      "id": "02",
+      "oldId": "02",
+      "title": "SwiGLU Activation | SwiGLU 激活",
+      "file": "02_SwiGLU_Activation.ipynb",
+      "sourceHash": "cf0db8d04dac91f2816a9f621c91678c952968afa0aabd4fd023ebdf1449187b",
+      "page": "02_swiglu_activation.html"
+    },
+    {
+      "id": "03",
+      "oldId": "03",
+      "title": "RoPE Tutorial | 旋转位置编码教程",
+      "file": "03_RoPE_Tutorial.ipynb",
+      "sourceHash": "44b6126f7a66ae1049d66e8ed6a961edce697e53f40c155d411df1aaa9bbd5c5",
+      "page": "03_rope_tutorial.html"
+    },
+    {
+      "id": "04",
+      "oldId": "04",
+      "title": "Attention MHA GQA | 多头注意力",
+      "file": "04_Attention_MHA_GQA.ipynb",
+      "sourceHash": "15cd302f3eaef02f1d31dfa68c3c3482e8e267057ff86526e4a4df5f543a9cf3",
+      "page": "04_attention_mha_gqa.html"
+    },
+    {
+      "id": "05",
+      "oldId": "05",
+      "title": "LLaMA3 Block Tutorial | LLaMA3 Block 教程",
+      "file": "05_LLaMA3_Block_Tutorial.ipynb",
+      "sourceHash": "ba3da9fbfd8313969cc976eec85f51d2af25d33e3075751582f19fd5cc03d607",
+      "page": "05_llama3_block_tutorial.html"
+    },
+    {
+      "id": "06",
+      "oldId": "06",
+      "title": "MoE Router | MoE 路由器",
+      "file": "06_MoE_Router.ipynb",
+      "sourceHash": "12b710c33a318116d0959604ebbe1b651c8773c6d935ede57c0405f6f68af97b",
+      "page": "06_moe_router.html"
+    },
+    {
+      "id": "07",
+      "oldId": "07",
+      "title": "MoE Load Balancing Loss | MoE 负载均衡损失",
+      "file": "07_MoE_Load_Balancing_Loss.ipynb",
+      "sourceHash": "117afcc84220fced30ea725027880389d552209ab41112081944639d22488136",
+      "page": "07_moe_load_balancing_loss.html"
+    },
+    {
+      "id": "08",
+      "oldId": "08",
+      "title": "Architecture Tricks | 架构技巧",
+      "file": "08_Architecture_Tricks.ipynb",
+      "sourceHash": "11b7148e79d0fb4fc0f87f20427dea8f18e7e7c7ae0e1d5713d35b7203a4ae57",
+      "page": "08_architecture_tricks.html"
+    },
+    {
+      "id": "09",
+      "oldId": "09",
+      "title": "SFT Training Loop | 监督微调训练循环",
+      "file": "09_SFT_Training_Loop.ipynb",
+      "sourceHash": "7ab9a5d67da715c630f0de93ccf2722cd3a3b10da6763421c40c4e574e4fe09e",
+      "page": "09_sft_training_loop.html"
+    },
+    {
+      "id": "10",
+      "oldId": "10",
+      "title": "LoRA Tutorial | LoRA 教程",
+      "file": "10_LoRA_Tutorial.ipynb",
+      "sourceHash": "b7dd564e2bdcddf8568e8213b41969a318b9dd4e192eaebc2fa6d4e59bfadf36",
+      "page": "10_lora_tutorial.html"
+    },
+    {
+      "id": "11",
+      "oldId": "11",
+      "title": "LR Schedulers WSD Cosine | WSD 余弦学习率调度器",
+      "file": "11_LR_Schedulers_WSD_Cosine.ipynb",
+      "sourceHash": "bb39c118e729a43250bf6d863cbff2dcfb74a9347150cc1dd6ae5b75249b150b",
+      "page": "11_lr_schedulers_wsd_cosine.html"
+    },
+    {
+      "id": "12",
+      "oldId": "12",
+      "title": "Gradient Accumulation | 梯度累积",
+      "file": "12_Gradient_Accumulation.ipynb",
+      "sourceHash": "12349af8a0f2b75ef63eae1879df8d3e9d26374b16618668cbe288cc4433695f",
+      "page": "12_gradient_accumulation.html"
+    },
+    {
+      "id": "13",
+      "oldId": "13",
+      "title": "End-to-End Fine-Tuning Experiment | 端到端微调实验",
+      "file": "13_End_to_End_Fine_Tuning_Experiment.ipynb",
+      "sourceHash": "a708cd7b5e092a6d27db2315b9954196cf20767c06ec46f4e579b4a548f3aa37",
+      "page": "13_end_to_end_fine_tuning_experiment.html"
+    },
+    {
+      "id": "14",
+      "oldId": "14",
+      "title": "RLHF PPO Memory | RLHF 与 PPO 显存占用与流转",
+      "file": "14_RLHF_PPO_Memory.ipynb",
+      "sourceHash": "da0da53c21ab89957e0baebc93a6ae6195c64bda3cb78ad5986fc4da7b92f4c1",
+      "page": "14_rlhf_ppo_memory.html"
+    },
+    {
+      "id": "15",
+      "oldId": "15",
+      "title": "DPO Loss Tutorial | 直接偏好优化损失教程",
+      "file": "15_DPO_Loss_Tutorial.ipynb",
+      "sourceHash": "2f922144907be37d28c406de2b1444f32147be38552b4b7cdee010c6202edc01",
+      "page": "15_dpo_loss_tutorial.html"
+    },
+    {
+      "id": "16",
+      "oldId": "16",
+      "title": "GRPO Loss Tutorial | 群体相对策略优化损失教程",
+      "file": "16_GRPO_Loss_Tutorial.ipynb",
+      "sourceHash": "9055efa096bd7b1dc10fcf6fb872714460df1bdd3b69b500abb6b0ce429d96e1",
+      "page": "16_grpo_loss_tutorial.html"
+    },
+    {
+      "id": "17",
+      "oldId": "17",
+      "title": "Attention Backward and Custom Autograd | Attention 反向传播与自定义 Autograd",
+      "file": "17_Autograd_Basics.ipynb",
+      "sourceHash": "2dc08a2d56780891c4623bac5a30521ec16898a6cd8282c84a4df9507a6c3e19",
+      "page": "17_autograd_basics.html"
+    },
+    {
+      "id": "18",
+      "oldId": "18",
+      "title": "Activation and Loss Backward | 激活与损失反向",
+      "file": "18_Activation_and_Loss_Backward.ipynb",
+      "sourceHash": "de7ec59a49aae113499617b6fd77e6e5f47a24a878546717037d36ef669a3ea6",
+      "page": "18_activation_and_loss_backward.html"
+    },
+    {
+      "id": "19",
+      "oldId": "19",
+      "title": "Activation Checkpointing | 激活检查点",
+      "file": "19_Activation_Checkpointing_and_Activation_Offload.ipynb",
+      "sourceHash": "124b2c6a891f527f2744b476c13973940f62a7e1b5d7acca9470869f2f43c4ef",
+      "page": "19_activation_checkpointing_and_activation_offload.html"
+    },
+    {
+      "id": "20",
+      "oldId": "20",
+      "title": "FlashAttention Sim | FlashAttention 模拟",
+      "file": "20_FlashAttention_Sim.ipynb",
+      "sourceHash": "f08d2f8935fb6583df22a2fdaf523ebe7434bd43e0802e4c90a5419e3716f61c",
+      "page": "20_flashattention_sim.html"
+    },
+    {
+      "id": "21",
+      "oldId": "21",
+      "title": "Decoding Strategies | 解码策略",
+      "file": "21_Decoding_Strategies.ipynb",
+      "sourceHash": "e086ed13c194bb33b52e42a651210c52e91c88fe84e3669c64baa931885d275b",
+      "page": "21_decoding_strategies.html"
+    },
+    {
+      "id": "22",
+      "oldId": "22",
+      "title": "vLLM PagedAttention | vLLM 分页注意力",
+      "file": "22_vLLM_PagedAttention.ipynb",
+      "sourceHash": "d174395731e67d23ca4cef8f316acf4e62c64dd6c8b3371081977e20c4b554ff",
+      "page": "22_vllm_pagedattention.html"
+    },
+    {
+      "id": "23",
+      "oldId": "23",
+      "title": "Speculative Decoding | 投机解码",
+      "file": "23_Speculative_Decoding.ipynb",
+      "sourceHash": "cd5d34dea4cddcf163aa0952d236127d580a9d21b94eee637a6d8def99c82cb4",
+      "page": "23_speculative_decoding.html"
+    },
+    {
+      "id": "24",
+      "oldId": "24",
+      "title": "SGLang RadixAttention | SGLang 基数注意力",
+      "file": "24_SGLang_RadixAttention.ipynb",
+      "sourceHash": "288696ab5b87ac31942a71b932483cb7dd84e4acd6b7f72b97437b0e0bd5f3d2",
+      "page": "24_sglang_radixattention.html"
+    },
+    {
+      "id": "25",
+      "oldId": "25",
+      "title": "Quantization W8A16 | W8A16 量化",
+      "file": "25_Quantization_W8A16.ipynb",
+      "sourceHash": "862aea35537d593019f2bb877c854eb25fa8df939a1610487f493a6860e2e275",
+      "page": "25_quantization_w8a16.html"
+    },
+    {
+      "id": "26",
+      "oldId": "26",
+      "title": "QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化",
+      "file": "26_QLoRA_and_4bit_Quantization.ipynb",
+      "sourceHash": "5469fa7556bfe2c7a903c881589573c61362c0beaf71abe9e1e16133ea969038",
+      "page": "26_qlora_and_4bit_quantization.html"
+    },
+    {
+      "id": "27",
+      "oldId": "27",
+      "title": "ZeRO Optimizer Sim | ZeRO 优化器模拟",
+      "file": "27_ZeRO_Optimizer_Sim.ipynb",
+      "sourceHash": "8de971fd727c7ad19fb87e393fbf382c61fcd12a9cd3079d33de96f8ba919ec3",
+      "page": "27_zero_optimizer_sim.html"
+    },
+    {
+      "id": "28",
+      "oldId": "28",
+      "title": "Pipeline Parallelism MicroBatch | Pipeline 并行微批次",
+      "file": "28_Pipeline_Parallelism_MicroBatch.ipynb",
+      "sourceHash": "ff517640696262f3bdb6b5a4fc9ced338237ecf322b8b1372de47a06f05ec90c",
+      "page": "28_pipeline_parallelism_microbatch.html"
+    },
+    {
+      "id": "29",
+      "oldId": "29",
+      "title": "Tensor Parallelism Sim | Tensor 并行模拟",
+      "file": "29_Tensor_Parallelism_Sim.ipynb",
+      "sourceHash": "fa07ba7c9b7a07b5c8c5dd98b653b6ede8491af468d37916d100cdfa3f0b3020",
+      "page": "29_tensor_parallelism_sim.html"
+    },
+    {
+      "id": "30",
+      "title": "Long Context Fine-Tuning | 长上下文微调",
+      "file": "30_Long_Context_Fine_Tuning.ipynb",
+      "sourceHash": "5a689790bf0b9bafd90ce2dcce15b11a5fe22b911ffa8791cbe20ff6361de9aa",
+      "page": "30_long_context_fine_tuning.html"
+    },
+    {
+      "id": "31",
+      "title": "LoRA Variants Theory | LoRA 变体原理",
+      "file": "31_LoRA_Variants_Theory.ipynb",
+      "sourceHash": "1d0b48ce57efab140d6c135ce205bd2b9968fe1fa7cd54fd60f33d8b73c30b5e",
+      "page": "31_lora_variants_theory.html"
+    },
+    {
+      "id": "32",
+      "title": "Data Engineering for SFT | SFT 数据工程",
+      "file": "32_Data_Engineering_for_SFT.ipynb",
+      "sourceHash": "8d4d83f56d328c1785482de4e2928cc9dd6d6e3bb8c50ede405739e501eb2d92",
+      "page": "32_data_engineering_for_sft.html"
+    },
+    {
+      "id": "33",
+      "title": "Fine-Tuning Readiness | 微调 Readiness",
+      "file": "33_Fine_Tuning_Readiness.ipynb",
+      "sourceHash": "9279e39b69b513e638935c0f4d0cfe9db4d5bd0ecec90cc15689f7bcf5e8d7d4",
+      "page": "33_fine_tuning_readiness.html"
+    },
+    {
+      "id": "34",
+      "oldId": "36",
+      "title": "Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充",
+      "file": "34_Prefix_Caching_and_Chunked_Prefill.ipynb",
+      "sourceHash": "c3c6cf73d92bfac73d99cf79018019ee4c006ec6546521fcfe74600d2d746502",
+      "page": "34_prefix_caching_and_chunked_prefill.html"
+    },
+    {
+      "id": "35",
+      "oldId": "37",
+      "title": "Multi-Token Decoding | 多 Token 解码",
+      "file": "35_Multi_Token_Decoding.ipynb",
+      "sourceHash": "6ff61bf0d3df8376b0447eeaa17d72f730064e74d8821ace0939ab2fde350e0b",
+      "page": "35_multi_token_decoding.html"
+    },
+    {
+      "id": "36",
+      "oldId": "38",
+      "title": "Decode Scheduling | 解码调度",
+      "file": "36_Decode_Scheduling.ipynb",
+      "sourceHash": "04e51c620471201bad77abf82d0e2b5e4bc871d370b6f52859b146d3e7a724bb",
+      "page": "36_decode_scheduling.html"
+    },
+    {
+      "id": "37",
+      "oldId": "41",
+      "title": "KV Cache Scheduling | KV Cache 调度",
+      "file": "37_KV_Cache_Scheduling.ipynb",
+      "sourceHash": "3c11f6cf87dbbc4af2e9f2ef9be85af05ddf7c161e03e7ffb93aacdf09a98d77",
+      "page": "37_kv_cache_scheduling.html"
+    },
+    {
+      "id": "38",
+      "title": "Prefill-Decode Disaggregation | PD 分离",
+      "file": "38_Prefill_Decode_Disaggregation.ipynb",
+      "sourceHash": "cd219df85273a3fba52172fc9268764b9839a7c376fe771e0accc8f2919303e2",
+      "page": "38_prefill_decode_disaggregation.html"
+    },
+    {
+      "id": "39",
+      "title": "Inference Fallback and Tiers | 推理分层与回退策略",
+      "file": "39_Inference_Fallback_and_Tiers.ipynb",
+      "sourceHash": "5e78094b01080e84f6fee7c61e83b77dcc3c3431b10ac1261fed5a95576486ac",
+      "page": "39_inference_fallback_and_tiers.html"
+    },
+    {
+      "id": "40",
+      "oldId": "39",
+      "title": "GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化",
+      "file": "40_GPTQ_and_AWQ_Weight_Quantization.ipynb",
+      "sourceHash": "b09a8a968eac2dd5aa95826e28ddd729b665110475bbeaa8192916617b9ca370",
+      "page": "40_gptq_and_awq_weight_quantization.html"
+    },
+    {
+      "id": "41",
+      "oldId": "40",
+      "title": "FP8 and KV Cache Quantization | FP8 与 KV Cache 量化",
+      "file": "41_FP8_and_KV_Cache_Quantization.ipynb",
+      "sourceHash": "d46edde6d60e974ee5d0e013a0f6d4cd01c8e00e7f88f3b76ecd3e78b5f9b7df",
+      "page": "41_fp8_and_kv_cache_quantization.html"
+    },
+    {
+      "id": "42",
+      "title": "Activation Offload | 激活卸载",
+      "file": "42_Activation_Offload.ipynb",
+      "sourceHash": "bfb152a794d2be2e028db6f564795d355088c3f220b2ffd808b317a1649b4984",
+      "page": "42_activation_offload.html"
+    },
+    {
+      "id": "43",
+      "title": "Unified Memory Management | 统一内存管理",
+      "file": "43_Unified_Memory_Management.ipynb",
+      "sourceHash": "ba1b8e311f78cddf45a01c79dd1b8027ad730c67075be041d7349f7b906805b7",
+      "page": "43_unified_memory_management.html"
+    },
+    {
+      "id": "44",
+      "title": "Auto Tuning Framework | 自动调优框架",
+      "file": "44_Auto_Tuning_Framework.ipynb",
+      "sourceHash": "8598635d1379ec50bf02806065a56790732ebb635c087fca114d6b7b8e85bb66",
+      "page": "44_auto_tuning_framework.html"
+    },
+    {
+      "id": "45",
+      "title": "Memory Cut Planning | 显存裁剪规划",
+      "file": "45_Memory_Cut_Planning.ipynb",
+      "sourceHash": "0a338a7eabad1bfe890fe0017b49c39edd61a09daf3fc36066d0c79aa9a69edf",
+      "page": "45_memory_cut_planning.html"
+    },
+    {
+      "id": "46",
+      "oldId": "42",
+      "title": "Communication Profiling with NCCL | NCCL 通信剖析",
+      "file": "46_Communication_Profiling_with_NCCL.ipynb",
+      "sourceHash": "a265c1a35d0fef3db2afa5368c759a70b5acbaafa64b91760b424fdd699cb270",
+      "page": "46_communication_profiling_with_nccl.html"
+    },
+    {
+      "id": "47",
+      "title": "MoE Expert Parallel | MoE 专家并行",
+      "file": "47_MoE_Expert_Parallel.ipynb",
+      "sourceHash": "3e73f127c576036725713e059120d17b51b9e52cdcbe61d52f2a8bec11fd2c9d",
+      "page": "47_moe_expert_parallel.html"
+    },
+    {
+      "id": "48",
+      "title": "Communication Hotspots and Mitigation | 通信热点与缓解策略",
+      "file": "48_Communication_Hotspots_and_Mitigation.ipynb",
+      "sourceHash": "bf9a2ec28e9e5b008e6319621c992ab94a855e1fe3e9a6079a5052177c4f360e",
+      "page": "48_communication_hotspots_and_mitigation.html"
+    },
+    {
+      "id": "49",
+      "title": "Parallelism Strategy Selection | 并行策略选型",
+      "file": "49_Parallelism_Strategy_Selection.ipynb",
+      "sourceHash": "cd38e0db2cb30ccc86e66ac8a3e5fb31dd4e4fae1370929caf0fcbde667dd057",
+      "page": "49_parallelism_strategy_selection.html"
+    },
+    {
+      "id": "50",
+      "title": "Preference Data and Evaluation | 偏好数据与对齐评测",
+      "file": "50_Preference_Data_and_Evaluation.ipynb",
+      "sourceHash": "1c888563275246ea7df03e876ce2f68ebcf1758c5948a83cf26531ca117f4a8a",
+      "page": "50_preference_data_and_evaluation.html"
+    },
+    {
+      "id": "51",
+      "title": "Online DPO | 在线 DPO",
+      "file": "51_Online_DPO.ipynb",
+      "sourceHash": "3fd847b60d6a359efb13e67c43dba1c67f1268b74504ea34ccb95c0f30cb5b12",
+      "page": "51_online_dpo.html"
+    },
+    {
+      "id": "52",
+      "title": "Alignment Conflicts and Thresholds | 对齐冲突与阈值",
+      "file": "52_Alignment_Conflicts_and_Thresholds.ipynb",
+      "sourceHash": "cf007059a35c2c581eea49b3c5a96d46b9d90e31b437657ecc0a30341d9804f0",
+      "page": "52_alignment_conflicts_and_thresholds.html"
+    },
+    {
+      "id": "60",
+      "oldId": "30",
+      "title": "LoRA Fine-Tuning Project | LoRA 微调项目",
+      "file": "60_LoRA_Fine_Tuning_Project.ipynb",
+      "sourceHash": "3288a3f355e502abb783385783c3256b1aea0c1f30691932368b87d916f36c2d",
+      "page": "60_lora_fine_tuning_project.html"
+    },
+    {
+      "id": "61",
+      "title": "Model Architecture Exploration | 架构验证",
+      "file": "61_Model_Architecture_Exploration.ipynb",
+      "sourceHash": "803e5b8d4c4e4b4da2e4e8844dcbe8840b3ecad563ae589a63c19052aebbdec1",
+      "page": "61_model_architecture_exploration.html"
+    },
+    {
+      "id": "62",
+      "title": "Instruction Fine-Tuning Project | 指令微调项目",
+      "file": "62_Instruction_Fine_Tuning_Project.ipynb",
+      "sourceHash": "550a597a127ad56955f70a6bdd2c037387af14bbfa51e4ecbea45821e02bfede",
+      "page": "62_instruction_fine_tuning_project.html"
+    },
+    {
+      "id": "63",
+      "title": "LoRA Variants Benchmark | LoRA 变体对比项目",
+      "file": "63_LoRA_Variants_Benchmark.ipynb",
+      "sourceHash": "69b19598518107b005ab2832b5e5c6dfb1f28d8ffb724fe80a0f69573420238e",
+      "page": "63_lora_variants_benchmark.html"
+    },
+    {
+      "id": "64",
+      "title": "SFT Data Quality Project | SFT 数据质量项目",
+      "file": "64_SFT_Data_Quality_Project.ipynb",
+      "sourceHash": "60398b4691e6b048a59f59d09221970e2ab5fd4ec672cac6e0514ef8fe3d78fb",
+      "page": "64_sft_data_quality_project.html"
+    },
+    {
+      "id": "65",
+      "title": "QLoRA Selection Project | QLoRA 选型项目",
+      "file": "65_QLoRA_Selection_Project.ipynb",
+      "sourceHash": "6f3c4ae6c218b5bfc28a87693bfb74d9c33c9c2921a02b6866d97af8cba30094",
+      "page": "65_qlora_selection_project.html"
+    },
+    {
+      "id": "66",
+      "oldId": "31",
+      "title": "Inference Performance Comparison | 推理性能对比实验",
+      "file": "66_Inference_Performance_Comparison.ipynb",
+      "sourceHash": "d9748ea72c9cc67d58d07f9ef59ebe80ce31c704bab9e765fba7a45ccb5459e3",
+      "page": "66_inference_performance_comparison.html"
+    },
+    {
+      "id": "67",
+      "oldId": "35",
+      "title": "Quantized Inference and Deployment | 量化推理与部署",
+      "file": "67_Quantized_Inference_and_Deployment.ipynb",
+      "sourceHash": "681c6188310482d23bb80a5f77c03348e0fd83c6ee532c33409854678a8ba6c8",
+      "page": "67_quantized_inference_and_deployment.html"
+    },
+    {
+      "id": "68",
+      "title": "Speculative Decoding Benchmark | 推测解码基准",
+      "file": "68_Speculative_Decoding_Benchmark.ipynb",
+      "sourceHash": "a047c2e8ed0d810c465bd815b858d057492b971161f76d2dee3a992fa445b3c7",
+      "page": "68_speculative_decoding_benchmark.html"
+    },
+    {
+      "id": "69",
+      "title": "Prefix Caching Benchmark | 前缀缓存基准",
+      "file": "69_Prefix_Caching_Benchmark.ipynb",
+      "sourceHash": "97db291baf46d4cdb90545640931c624279f96396091243d916aedd69cd360dd",
+      "page": "69_prefix_caching_benchmark.html"
+    },
+    {
+      "id": "70",
+      "title": "Serving Scheduler Benchmark | 推理服务调度基准",
+      "file": "70_Serving_Scheduler_Benchmark.ipynb",
+      "sourceHash": "340a6a166eb70b8f97d23478fb340ac9de26a064f2d807e9252d99fb82b2cdd9",
+      "page": "70_serving_scheduler_benchmark.html"
+    },
+    {
+      "id": "71",
+      "title": "MLA / KV Cache Architecture Benchmark | MLA 与 KV Cache 结构基准",
+      "file": "71_MLA_KV_Cache_Architecture_Benchmark.ipynb",
+      "sourceHash": "57a01d00f1344efe525df76b33fc63a80a1d4b132fdce44091971a2975fd50a2",
+      "page": "71_mla_kv_cache_architecture_benchmark.html"
+    },
+    {
+      "id": "73",
+      "oldId": "32",
+      "title": "Training Performance Analysis | 训练性能分析",
+      "file": "73_Training_Performance_Analysis.ipynb",
+      "sourceHash": "c16a39cc6d6908ad909800bd9d722f6d411df2f68cb1625a43f0b8de98832034",
+      "page": "73_training_performance_analysis.html"
+    },
+    {
+      "id": "74",
+      "oldId": "33",
+      "title": "Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口",
+      "file": "74_Profiling_Driven_End_to_End_Optimization.ipynb",
+      "sourceHash": "121236230a9e17005fb727a3e995b9dcb29397a5c2bb049677574d8454d996be",
+      "page": "74_profiling_driven_end_to_end_optimization.html"
+    },
+    {
+      "id": "75",
+      "title": "Memory Budget Compression Project | 显存预算压缩项目",
+      "file": "75_Memory_Budget_Compression_Project.ipynb",
+      "sourceHash": "5ff16b392db2c10b1813f5486094294fb2147a3314c60cd4512b4726532dbd51",
+      "page": "75_memory_budget_compression_project.html"
+    },
+    {
+      "id": "76",
+      "title": "Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目",
+      "file": "76_Activation_Checkpoint_Offload_Benchmark.ipynb",
+      "sourceHash": "7a499d08e9362b1530d78a37c58c8851701491e49ca335893031b84414003d21",
+      "page": "76_activation_checkpoint_offload_benchmark.html"
+    },
+    {
+      "id": "79",
+      "oldId": "34",
+      "title": "Distributed Parallel Benchmark | 分布式并行基准",
+      "file": "79_Distributed_Parallel_Benchmark.ipynb",
+      "sourceHash": "0849d10941b3689e181c78970f973e1abf9522a209e06c355e53d93044367fc6",
+      "page": "79_distributed_parallel_benchmark.html"
+    },
+    {
+      "id": "80",
+      "title": "MoE Expert Parallel Benchmark | MoE 专家并行基准",
+      "file": "80_MoE_Expert_Parallel_Benchmark.ipynb",
+      "sourceHash": "607b5ce2dd042b9c3da360449b93a39e79274c98d321245b511a52e49da851ed",
+      "page": "80_moe_expert_parallel_benchmark.html"
+    },
+    {
+      "id": "81",
+      "title": "Distributed Inference Logic Validation | 分布式推理逻辑验证",
+      "file": "81_Distributed_Inference_Project.ipynb",
+      "sourceHash": "8dda39de2ef8b9610cda828dffb2292e48f5ace94abaf2505b530adf79c9d846",
+      "page": "81_distributed_inference_project.html"
+    },
+    {
+      "id": "84",
+      "title": "DPO Preference Project | DPO 偏好优化项目",
+      "file": "84_DPO_Preference_Project.ipynb",
+      "sourceHash": "bf9e787c66c694825fdcd81047305d491602b28f66de2d7aaaf1102877733e42",
+      "page": "84_dpo_preference_project.html"
+    },
+    {
+      "id": "85",
+      "title": "GRPO Groupwise Alignment Project | GRPO 组内对齐项目",
+      "file": "85_GRPO_Groupwise_Alignment_Project.ipynb",
+      "sourceHash": "fdcb3f7d198f563dafcc5fb706aaa47d672c25dcd6cd91e7977e68ccb6282461",
+      "page": "85_grpo_groupwise_alignment_project.html"
+    },
+    {
+      "id": "86",
+      "title": "DPO Online Benchmark | DPO 在线基准",
+      "file": "86_DPO_Online_Benchmark.ipynb",
+      "sourceHash": "9f66c9513ea14e5eb89cbc093f3035e6deedbb9184857c5b3fdf918a228e6d48",
+      "page": "86_dpo_online_benchmark.html"
+    }
+  ],
+  "reserved": [
+    {
+      "id": "53",
+      "file": "53_Reserved_53.ipynb",
+      "title": "Reserved 53 | 通用预留"
+    },
+    {
+      "id": "54",
+      "file": "54_Reserved_54.ipynb",
+      "title": "Reserved 54 | 通用预留"
+    },
+    {
+      "id": "55",
+      "file": "55_Reserved_55.ipynb",
+      "title": "Reserved 55 | 通用预留"
+    },
+    {
+      "id": "56",
+      "file": "56_Reserved_56.ipynb",
+      "title": "Reserved 56 | 通用预留"
+    },
+    {
+      "id": "57",
+      "file": "57_Reserved_57.ipynb",
+      "title": "Reserved 57 | 通用预留"
+    },
+    {
+      "id": "58",
+      "file": "58_Reserved_58.ipynb",
+      "title": "Reserved 58 | 通用预留"
+    },
+    {
+      "id": "59",
+      "file": "59_Reserved_59.ipynb",
+      "title": "Reserved 59 | 通用预留"
+    },
+    {
+      "id": "72",
+      "file": "72_Reserved_72.ipynb",
+      "title": "Reserved 72 | 推理优化预留"
+    },
+    {
+      "id": "77",
+      "file": "77_Reserved_77.ipynb",
+      "title": "Reserved 77 | 显存优化预留"
+    },
+    {
+      "id": "78",
+      "file": "78_Reserved_78.ipynb",
+      "title": "Reserved 78 | 显存优化预留"
+    },
+    {
+      "id": "82",
+      "file": "82_Reserved_82.ipynb",
+      "title": "Reserved 82 | 通信与并行预留"
+    },
+    {
+      "id": "83",
+      "file": "83_Reserved_83.ipynb",
+      "title": "Reserved 83 | 通信与并行预留"
+    },
+    {
+      "id": "87",
+      "file": "87_Reserved_87.ipynb",
+      "title": "Reserved 87 | 通用预留"
+    },
+    {
+      "id": "88",
+      "file": "88_Reserved_88.ipynb",
+      "title": "Reserved 88 | 通用预留"
+    },
+    {
+      "id": "89",
+      "file": "89_Reserved_89.ipynb",
+      "title": "Reserved 89 | 通用预留"
+    }
+  ],
+  "moves": [
+    {
+      "oldId": "00",
+      "id": "00",
+      "oldFile": "00_PyTorch_Warmup.ipynb",
+      "file": "00_PyTorch_Warmup.ipynb"
+    },
+    {
+      "oldId": "01",
+      "id": "01",
+      "oldFile": "01_RMSNorm_Tutorial.ipynb",
+      "file": "01_RMSNorm_Tutorial.ipynb"
+    },
+    {
+      "oldId": "02",
+      "id": "02",
+      "oldFile": "02_SwiGLU_Activation.ipynb",
+      "file": "02_SwiGLU_Activation.ipynb"
+    },
+    {
+      "oldId": "03",
+      "id": "03",
+      "oldFile": "03_RoPE_Tutorial.ipynb",
+      "file": "03_RoPE_Tutorial.ipynb"
+    },
+    {
+      "oldId": "04",
+      "id": "04",
+      "oldFile": "04_Attention_MHA_GQA.ipynb",
+      "file": "04_Attention_MHA_GQA.ipynb"
+    },
+    {
+      "oldId": "05",
+      "id": "05",
+      "oldFile": "05_LLaMA3_Block_Tutorial.ipynb",
+      "file": "05_LLaMA3_Block_Tutorial.ipynb"
+    },
+    {
+      "oldId": "06",
+      "id": "06",
+      "oldFile": "06_MoE_Router.ipynb",
+      "file": "06_MoE_Router.ipynb"
+    },
+    {
+      "oldId": "07",
+      "id": "07",
+      "oldFile": "07_MoE_Load_Balancing_Loss.ipynb",
+      "file": "07_MoE_Load_Balancing_Loss.ipynb"
+    },
+    {
+      "oldId": "08",
+      "id": "08",
+      "oldFile": "08_Architecture_Tricks.ipynb",
+      "file": "08_Architecture_Tricks.ipynb"
+    },
+    {
+      "oldId": "09",
+      "id": "09",
+      "oldFile": "09_SFT_Training_Loop.ipynb",
+      "file": "09_SFT_Training_Loop.ipynb"
+    },
+    {
+      "oldId": "10",
+      "id": "10",
+      "oldFile": "10_LoRA_Tutorial.ipynb",
+      "file": "10_LoRA_Tutorial.ipynb"
+    },
+    {
+      "oldId": "11",
+      "id": "11",
+      "oldFile": "11_LR_Schedulers_WSD_Cosine.ipynb",
+      "file": "11_LR_Schedulers_WSD_Cosine.ipynb"
+    },
+    {
+      "oldId": "12",
+      "id": "12",
+      "oldFile": "12_Gradient_Accumulation.ipynb",
+      "file": "12_Gradient_Accumulation.ipynb"
+    },
+    {
+      "oldId": "13",
+      "id": "13",
+      "oldFile": "13_End_to_End_Fine_Tuning_Experiment.ipynb",
+      "file": "13_End_to_End_Fine_Tuning_Experiment.ipynb"
+    },
+    {
+      "oldId": "14",
+      "id": "14",
+      "oldFile": "14_RLHF_PPO_Memory.ipynb",
+      "file": "14_RLHF_PPO_Memory.ipynb"
+    },
+    {
+      "oldId": "15",
+      "id": "15",
+      "oldFile": "15_DPO_Loss_Tutorial.ipynb",
+      "file": "15_DPO_Loss_Tutorial.ipynb"
+    },
+    {
+      "oldId": "16",
+      "id": "16",
+      "oldFile": "16_GRPO_Loss_Tutorial.ipynb",
+      "file": "16_GRPO_Loss_Tutorial.ipynb"
+    },
+    {
+      "oldId": "17",
+      "id": "17",
+      "oldFile": "17_Autograd_Basics.ipynb",
+      "file": "17_Autograd_Basics.ipynb"
+    },
+    {
+      "oldId": "18",
+      "id": "18",
+      "oldFile": "18_Activation_and_Loss_Backward.ipynb",
+      "file": "18_Activation_and_Loss_Backward.ipynb"
+    },
+    {
+      "oldId": "19",
+      "id": "19",
+      "oldFile": "19_Activation_Checkpointing_and_Activation_Offload.ipynb",
+      "file": "19_Activation_Checkpointing_and_Activation_Offload.ipynb"
+    },
+    {
+      "oldId": "20",
+      "id": "20",
+      "oldFile": "20_FlashAttention_Sim.ipynb",
+      "file": "20_FlashAttention_Sim.ipynb"
+    },
+    {
+      "oldId": "21",
+      "id": "21",
+      "oldFile": "21_Decoding_Strategies.ipynb",
+      "file": "21_Decoding_Strategies.ipynb"
+    },
+    {
+      "oldId": "22",
+      "id": "22",
+      "oldFile": "22_vLLM_PagedAttention.ipynb",
+      "file": "22_vLLM_PagedAttention.ipynb"
+    },
+    {
+      "oldId": "23",
+      "id": "23",
+      "oldFile": "23_Speculative_Decoding.ipynb",
+      "file": "23_Speculative_Decoding.ipynb"
+    },
+    {
+      "oldId": "24",
+      "id": "24",
+      "oldFile": "24_SGLang_RadixAttention.ipynb",
+      "file": "24_SGLang_RadixAttention.ipynb"
+    },
+    {
+      "oldId": "25",
+      "id": "25",
+      "oldFile": "25_Quantization_W8A16.ipynb",
+      "file": "25_Quantization_W8A16.ipynb"
+    },
+    {
+      "oldId": "26",
+      "id": "26",
+      "oldFile": "26_QLoRA_and_4bit_Quantization.ipynb",
+      "file": "26_QLoRA_and_4bit_Quantization.ipynb"
+    },
+    {
+      "oldId": "27",
+      "id": "27",
+      "oldFile": "27_ZeRO_Optimizer_Sim.ipynb",
+      "file": "27_ZeRO_Optimizer_Sim.ipynb"
+    },
+    {
+      "oldId": "28",
+      "id": "28",
+      "oldFile": "28_Pipeline_Parallelism_MicroBatch.ipynb",
+      "file": "28_Pipeline_Parallelism_MicroBatch.ipynb"
+    },
+    {
+      "oldId": "29",
+      "id": "29",
+      "oldFile": "29_Tensor_Parallelism_Sim.ipynb",
+      "file": "29_Tensor_Parallelism_Sim.ipynb"
+    },
+    {
+      "oldId": "30",
+      "id": "60",
+      "oldFile": "30_LoRA_Fine_Tuning_Project.ipynb",
+      "file": "60_LoRA_Fine_Tuning_Project.ipynb"
+    },
+    {
+      "oldId": "31",
+      "id": "66",
+      "oldFile": "31_Inference_Performance_Comparison.ipynb",
+      "file": "66_Inference_Performance_Comparison.ipynb"
+    },
+    {
+      "oldId": "32",
+      "id": "73",
+      "oldFile": "32_Training_Performance_Analysis.ipynb",
+      "file": "73_Training_Performance_Analysis.ipynb"
+    },
+    {
+      "oldId": "33",
+      "id": "74",
+      "oldFile": "33_Profiling_Driven_End_to_End_Optimization.ipynb",
+      "file": "74_Profiling_Driven_End_to_End_Optimization.ipynb"
+    },
+    {
+      "oldId": "34",
+      "id": "79",
+      "oldFile": "34_Distributed_Parallel_Benchmark.ipynb",
+      "file": "79_Distributed_Parallel_Benchmark.ipynb"
+    },
+    {
+      "oldId": "35",
+      "id": "67",
+      "oldFile": "35_Quantized_Inference_and_Deployment.ipynb",
+      "file": "67_Quantized_Inference_and_Deployment.ipynb"
+    },
+    {
+      "oldId": "36",
+      "id": "34",
+      "oldFile": "36_Prefix_Caching_and_Chunked_Prefill.ipynb",
+      "file": "34_Prefix_Caching_and_Chunked_Prefill.ipynb"
+    },
+    {
+      "oldId": "37",
+      "id": "35",
+      "oldFile": "37_Multi_Token_Decoding.ipynb",
+      "file": "35_Multi_Token_Decoding.ipynb"
+    },
+    {
+      "oldId": "38",
+      "id": "36",
+      "oldFile": "38_Decode_Scheduling.ipynb",
+      "file": "36_Decode_Scheduling.ipynb"
+    },
+    {
+      "oldId": "39",
+      "id": "40",
+      "oldFile": "39_GPTQ_and_AWQ_Weight_Quantization.ipynb",
+      "file": "40_GPTQ_and_AWQ_Weight_Quantization.ipynb"
+    },
+    {
+      "oldId": "40",
+      "id": "41",
+      "oldFile": "40_FP8_and_KV_Cache_Quantization.ipynb",
+      "file": "41_FP8_and_KV_Cache_Quantization.ipynb"
+    },
+    {
+      "oldId": "41",
+      "id": "37",
+      "oldFile": "41_KV_Cache_Scheduling.ipynb",
+      "file": "37_KV_Cache_Scheduling.ipynb"
+    },
+    {
+      "oldId": "42",
+      "id": "46",
+      "oldFile": "42_Communication_Profiling_with_NCCL.ipynb",
+      "file": "46_Communication_Profiling_with_NCCL.ipynb"
+    }
+  ]
+}

@@ -6,10 +6,11 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 **/.DS_Store
+
+# Local scratch area, process notes, and one-off utilities.
 scripts/
 ROADMAP.md
 format_skill.py
-scripts/
 plan_ci_learning.md
 log/
 trace.json

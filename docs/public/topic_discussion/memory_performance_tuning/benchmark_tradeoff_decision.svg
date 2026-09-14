@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="700" viewBox="0 0 1280 700">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>.title{font:700 29px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#526581}.label{font:700 18px sans-serif;fill:#172b4d}.txt{font:15px sans-serif;fill:#243b53}.small{font:14px sans-serif;fill:#526581}.card{stroke-width:2;rx:16}.flow{stroke:#486581;stroke-width:2.4;fill:none;marker-end:url(#arrow)}.dash{stroke:#9fb3c8;stroke-width:2;fill:none;stroke-dasharray:7 6}</style>
+<rect width="1280" height="700" fill="#f7fafc"/>
+<text x="640" y="48" text-anchor="middle" class="title">Benchmark：从公平对照到资源决策</text>
+<text x="640" y="78" text-anchor="middle" class="sub">先固定条件，再分别跑 baseline 和候选策略；结论必须能回到数据与约束。</text>
+
+<rect x="90" y="140" width="270" height="150" class="card" fill="#e6f0ff" stroke="#8fb3d8"/><text x="225" y="184" text-anchor="middle" class="label">固定实验口径</text><text x="225" y="220" text-anchor="middle" class="txt">模型 · dtype · workload</text><text x="225" y="250" text-anchor="middle" class="small">硬件 · 版本 · seed</text>
+<rect x="505" y="140" width="270" height="150" class="card" fill="#fff4d6" stroke="#e0b34f"/><text x="640" y="184" text-anchor="middle" class="label">两组运行</text><text x="640" y="220" text-anchor="middle" class="txt">Baseline / Candidate</text><text x="640" y="250" text-anchor="middle" class="small">只改变一个主变量</text>
+<rect x="920" y="140" width="270" height="150" class="card" fill="#e8f5ee" stroke="#76b893"/><text x="1055" y="184" text-anchor="middle" class="label">结果归一</text><text x="1055" y="220" text-anchor="middle" class="txt">峰值 · 时间 · 吞吐</text><text x="1055" y="250" text-anchor="middle" class="small">质量 · OOM · 代价</text>
+<path d="M360 215 H505" class="flow"/><path d="M775 215 H920" class="flow"/>
+
+<rect x="355" y="380" width="570" height="120" rx="28" fill="#fff" stroke="#829ab1" stroke-width="2"/><text x="640" y="425" text-anchor="middle" class="label">证据解释</text><text x="640" y="458" text-anchor="middle" class="txt">显存收益是否转移成重算、搬运、通信或质量代价？</text><text x="640" y="483" text-anchor="middle" class="small">预算变化时，结论是否仍然稳定？</text>
+<path d="M225 290 V330 H450 V380" class="flow"/><path d="M640 290 V380" class="flow"/><path d="M1055 290 V330 H830 V380" class="flow"/>
+
+<path d="M640 500 V545 H300 V575" class="flow"/><path d="M640 500 V575" class="flow"/><path d="M640 545 H980 V575" class="flow"/>
+<rect x="150" y="575" width="300" height="70" rx="20" fill="#e8f5ee" stroke="#76b893"/><text x="300" y="606" text-anchor="middle" class="label">ACCEPT</text><text x="300" y="630" text-anchor="middle" class="small">收益稳定且满足约束</text>
+<rect x="490" y="575" width="300" height="70" rx="20" fill="#fff4d6" stroke="#e0b34f"/><text x="640" y="606" text-anchor="middle" class="label">TUNE</text><text x="640" y="630" text-anchor="middle" class="small">方向正确，证据或阈值不足</text>
+<rect x="830" y="575" width="300" height="70" rx="20" fill="#fce8e6" stroke="#d98b87"/><text x="980" y="606" text-anchor="middle" class="label">REJECT / SWITCH</text><text x="980" y="630" text-anchor="middle" class="small">代价过高或质量不达标</text>
+</svg>

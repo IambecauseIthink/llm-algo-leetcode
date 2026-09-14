@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 14 | RLHF PPO Memory</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 14 | RLHF PPO Memory | RLHF 与 PPO 显存占用与流转</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 14 | 零基础导学关卡</p>
-        <h1>RLHF PPO Memory</h1>
+        <h1>RLHF PPO Memory | RLHF 与 PPO 显存占用与流转</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">14_RLHF_PPO_Memory.ipynb</span>
-          <span class="pill">RLHF</span><span class="pill">PPO</span><span class="pill">Clipped Objective</span>
+          <span class="pill">后训练对齐</span><span class="pill">RLHF</span><span class="pill">PPO</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,195 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="da0da53c21ab89957e0baebc93a6ae6195c64bda3cb78ad5986fc4da7b92f4c1">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../14_RLHF_PPO_Memory.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/14_RLHF_PPO_Memory.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>14. RLHF PPO Memory | RLHF 与 PPO 显存占用与流转</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>RLHF</code>, <code>PPO</code> | <strong>目标人群：</strong> 训练机制学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>完成 SFT 以后，模型已经能模仿数据里的回答，但还没有真正学会“哪个回答更符合人类偏好”。RLHF/PPO 要解决的就是这个问题：让模型根据奖励信号继续调整生成策略；代价是训练链路一下变重，Actor、Reference、Reward Model 和 Critic 会同时进入显存账本。</p>
+<p>本节不展开完整 RLHF 系统，而是抓住两个最关键的落点：PPO Actor Loss 如何用 ratio 和 advantage 控制更新方向，以及四模型流转为什么会带来明显显存压力。完成后，你应该能看懂 PPO 对齐训练为什么比普通 SFT 更重，也能理解后面 DPO / GRPO 为什么会尝试把这条链路做轻。</p>
+<p><strong>关键词：</strong> <code>PPO</code>, <code>ratio</code>, <code>advantage</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 计算概率比率 ratio (r_t)</li><li>TODO 2: 计算无截断的 surrogate 目标</li><li>TODO 3: 计算截断后的 surrogate 目标</li><li>TODO 4: 计算最终的 Loss</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先补齐训练闭环和优化器基础，再看 RLHF / PPO 如何在 SFT 之后继续做偏好对齐会更顺。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失函数</a></li>
+<li><a href="../../../00_Prerequisites/12_PyTorch_Minimal_Training_Interface.ipynb">P0: 12. PyTorch Minimal Training Interface | PyTorch 最小训练接口</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> PPO 之后最自然的延伸，是继续看更轻的偏好优化损失，以及训练系统侧的显存、性能和通信瓶颈。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb">P1: 06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb">P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb">P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础</a></li>
+<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | 直接偏好优化损失教程</a></li>
+<li><a href="16_grpo_loss_tutorial.html">16. GRPO Loss Tutorial | 群体相对策略优化损失教程</a></li>
+</ul>
+<hr>
+<h3>Step 1: PPO 算法与 Actor Loss 公式</h3>
+<p>PPO 的核心思想是：<strong>让 Actor 往 Reward 高的方向更新，但步子不能迈得太大。</strong>
+为此，PPO 引入了优势函数 (Advantage, <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">A_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>) 和重要性采样比率 (Ratio, <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>r</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">r_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>)。</p>
+<ol>
+<li>
+<p><strong>重要性采样比率 r_t</strong>：
+r_t = pi_theta(a_t|s_t) / pi_old(a_t|s_t)
+也就是当前模型生成某个 Token 的概率，除以旧模型生成该 Token 的概率。</p>
+</li>
+<li>
+<p><strong>Clip 截断目标函数 (Actor Loss)</strong>：
+L^CLIP(theta) = - min(r_t * A_t, clip(r_t, 1-epsilon, 1+epsilon) * A_t)
+如果优势 A_t &gt; 0（这个 Token 很好），我们要提高它的概率，但如果 r_t 已经超过 1+epsilon（涨得太多了），就停止给予梯度奖励，防止模型“发疯”。</p>
+</li>
+</ol>
+<h3>Step 2: RLHF 训练流转与显存账本</h3>
+<p>RLHF / PPO 的难点不只在公式，而在训练链路里同时存在多个状态对象：</p>
+<pre><code class="language-text">prompt -&gt; rollout / sampling -&gt; reward model -&gt; advantage -&gt; PPO update
+         \-&gt; reference model (frozen)
+         \-&gt; critic / value baseline
+</code></pre>
+<p>这意味着一次更新里，除了要算 Actor 的新旧策略比率，还要保存参考模型、奖励模型和价值模型相关的中间结果。相比 SFT，PPO 的显存压力不是来自“单个 loss 更复杂”，而是来自“训练对象更多、流转步骤更长、每一步都要保留更多状态”。</p>
+<h4>四模型显存账本</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">模型 / 状态</th>
+<th style="text-align:left">主要作用</th>
+<th style="text-align:left">资源含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Actor</td>
+<td style="text-align:left">生成当前策略并接受梯度更新</td>
+<td style="text-align:left">需要反向传播，保存激活与梯度</td>
+</tr>
+<tr>
+<td style="text-align:left">Reference</td>
+<td style="text-align:left">提供稳定参照</td>
+<td style="text-align:left">冻结，但仍会占 forward 显存</td>
+</tr>
+<tr>
+<td style="text-align:left">Reward Model</td>
+<td style="text-align:left">给生成结果打分</td>
+<td style="text-align:left">额外前向开销，常与 rollout 配合</td>
+</tr>
+<tr>
+<td style="text-align:left">Critic / Value Model</td>
+<td style="text-align:left">估计 advantage 的基线</td>
+<td style="text-align:left">额外 forward / backward 路径</td>
+</tr>
+</tbody>
+</table>
+<h4>为什么 PPO 比 SFT 重</h4>
+<ul>
+<li><strong>对象更多</strong>：SFT 主要是一个模型 + 一个 loss；PPO 往往是策略、参考、奖励和价值模型一起出现。</li>
+<li><strong>状态更多</strong>：PPO 需要保存 rollout、log prob、reward 和 advantage 的中间量。</li>
+<li><strong>更新更谨慎</strong>：clip、ratio 和 advantage 让每一步都要额外检查更新幅度。</li>
+</ul>
+<h4>和 DPO / GRPO 的关系</h4>
+<ul>
+<li><code>DPO</code> 试图把偏好对齐收敛成更轻的 logprob 差值，不再维护完整 PPO 流程。</li>
+<li><code>GRPO</code> 继续保留组内比较，但进一步弱化对显式 Critic 的依赖。</li>
+<li>所以这节的角色不是“再造一个 RLHF 系统”，而是先把 PPO 为什么重讲清楚，后面的轻量方法才有对照意义。</li>
+</ul>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/14_rlhf_memory_flow.svg" alt="RLHF PPO 显存流转图"></p>
+<h3>Step 3: 动手实战</h3>
+<p><strong>要求</strong>：完成下方的 <code>compute_actor_loss</code>。你将接收到新旧模型的 log probability，以及用于控制更新方向的优势 <code>advantage</code>。</p>
+<p>实现主线分三步：计算新旧策略概率比 <code>ratio</code>，构造 clipped surrogate，再汇总得到 PPO actor loss。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 7</summary><pre><code>def compute_actor_loss(log_probs_new, log_probs_old, advantages, clip_range=0.2):
+    &quot;&quot;&quot;
+    计算 PPO 的 Actor Clip Loss。
 
+    Args:
+        log_probs_new: 当前 Actor 模型在采样的 Token 上的对数概率, shape [batch_size, seq_len]
+        log_probs_old: 采样时(旧) Actor 模型在对应 Token 上的对数概率, shape [batch_size, seq_len]
+        advantages: 优势函数 (Reward - Critic Value), shape [batch_size, seq_len]
+        clip_range: 截断范围 epsilon，默认 0.2
 
+    Returns:
+        actor_loss: 标量
+    &quot;&quot;&quot;
 
+    # ==========================================
+    # TODO 1: 计算概率比率 ratio (r_t)
+    # ==========================================
+    # ratio = ???
+
+    # ==========================================
+    # TODO 2: 计算无截断的 surrogate 目标
+    # ==========================================
+    # surr1 = ???
+
+    # ==========================================
+    # TODO 3: 计算截断后的 surrogate 目标
+    # ==========================================
+    # surr2 = ???
+
+    # ==========================================
+    # TODO 4: 计算最终的 Loss
+    # ==========================================
+    # loss = ???
+
+    return loss
+</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code># 测试
+def test_ppo_actor_loss():
+    try:
+        torch.manual_seed(42)
+        log_p_new = torch.tensor([[-2.0, -1.5], [-1.0, -0.5]], requires_grad=True)
+        log_p_old = torch.tensor([[-2.1, -1.4], [-1.0, -0.6]])
+        # 假设第一句生成很好(优势全正), 第二句生成很差(优势全负)
+        adv = torch.tensor([[1.0, 0.5], [-1.0, -0.5]])
+
+        loss = compute_actor_loss(log_p_new, log_p_old, adv, clip_range=0.2)
+
+        # 解析解计算
+        ratio = torch.exp(log_p_new - log_p_old)
+        s1 = ratio * adv
+        s2 = torch.clamp(ratio, 0.8, 1.2) * adv
+        expected_loss = -torch.min(s1, s2).mean()
+
+        assert torch.allclose(loss, expected_loss), &quot;Loss 计算不正确！&quot;
+        print(&quot;✅ 测试通过！PPO Actor Loss 实现通过测试。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;\n❌ 测试失败: {e}&quot;)
+        raise
+
+test_ppo_actor_loss()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="ppo-log-ratio">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：计算重要性采样比率 ratio</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>从 log probability 恢复新旧策略比率</h2>
 
@@ -1113,26 +1302,14 @@ print(change)  # [1.2, 0.9]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="ppo-log-ratio-0">
-                <span>完成 ratio，并确认 shape、dtype、device 与 log_probs_new 一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-log-ratio-1">
-                <span>用 Notebook 的第一项手算：exp(-2.0-(-2.1))=exp(0.1)，应略大于 1。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-log-ratio-2">
-                <span>错误诊断：出现负 ratio 说明公式错误；ratio 全为 1 时检查是否错误地用同一个 Tensor 相减。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-log-ratio-3">
-                <span>保留 log_probs_new 的计算图；不要 detach，否则最终 loss 无法训练 Actor。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="ppo-clipped-surrogates">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2 + TODO 3：计算 surr1 与 surr2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>让 advantage 决定方向，让 clip 限制步幅</h2>
 
@@ -1227,26 +1404,14 @@ safe_score = safe_change * quality</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="ppo-clipped-surrogates-0">
-                <span>完成 surr1 与 surr2，确认二者 shape 都是 [B,S]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clipped-surrogates-1">
-                <span>分别造一个正 advantage 且 ratio&gt;1.2、一个负 advantage 且 ratio&lt;0.8 的元素，手算两条 surrogate。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clipped-surrogates-2">
-                <span>错误诊断：数值无变化时检查 clamp 上下界；方向反转时检查是否误对 advantage clamp。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-clipped-surrogates-3">
-                <span>不要在此处 mean；逐 token 的 min 选择要留给下一任务。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="ppo-loss-and-contract">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 4：-min(surr1,surr2).mean()</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>取更保守的目标，再转成优化器要最小化的 loss</h2>
 
@@ -1331,19 +1496,7 @@ loss = -conservative.mean()</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="ppo-loss-and-contract-0">
-                <span>完成最终 loss，并运行 test_ppo_actor_loss，让结果与测试现场计算的 expected_loss allclose。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-loss-and-contract-1">
-                <span>确认输出 loss.ndim==0，且若 log_probs_new.requires_grad=True，loss 仍可 backward。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-loss-and-contract-2">
-                <span>错误诊断：差一个负号时检查最大化/最小化转换；只差聚合尺度时检查是否漏 mean；数值奇怪时回查 ratio 是否由 log 差取 exp。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="ppo-loss-and-contract-3">
-                <span>用一句话串起四步：log ratio → 两条 surrogate → 逐元素 min → 负均值。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1367,16 +1520,29 @@ loss = -conservative.mean()</code></pre></div>
     const predictData = {"ppo-log-ratio":{"answer":0,"revealNote":"两者相减为 0，exp(0)=1，表示策略概率没有变化。"},"ppo-clipped-surrogates":{"answer":0,"revealNote":"surr1=1.5×2=3；ratio 截到 1.2 后，surr2=1.2×2=2.4。"},"ppo-loss-and-contract":{"answer":0,"revealNote":"逐元素 min 后对所有位置 mean，最终得到一个标量。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "14";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-da0da53c21ab";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620">
+<defs>
+  <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+    <path d="M0 0L8 4L0 8Z" fill="#64748b"/>
+  </marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+    .title{font-size:28px;font-weight:700}.sub{font-size:15px;fill:#475569}
+    .group{font-size:18px;font-weight:700}.head{font-size:15px;font-weight:700}
+    .small{font-size:12px;fill:#475569}
+    .panel{stroke:#94a3b8;stroke-width:2;rx:16}.item{stroke:#cbd5e1;stroke-width:1.5;rx:10}
+    .flow{stroke:#64748b;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+  </style>
+</defs>
+
+<rect width="1280" height="620" fill="#f8fafc"/>
+<text x="640" y="42" text-anchor="middle" class="title">梯度控制：从运行阶段到状态管理</text>
+<text x="640" y="70" text-anchor="middle" class="sub">先组合模块模式与梯度记录，再管理梯度状态和单个 Tensor 的连接</text>
+
+<!-- 运行阶段 -->
+<rect x="20" y="112" width="220" height="390" fill="#e0f2fe" class="panel"/>
+<text x="130" y="148" text-anchor="middle" class="group">运行阶段</text>
+<rect x="46" y="184" width="168" height="72" fill="#fff" class="item"/>
+<text x="130" y="216" text-anchor="middle" class="head">训练</text>
+<text x="130" y="239" text-anchor="middle" class="small">train + 启用梯度</text>
+<rect x="46" y="282" width="168" height="72" fill="#fff" class="item"/>
+<text x="130" y="314" text-anchor="middle" class="head">验证</text>
+<text x="130" y="337" text-anchor="middle" class="small">eval + no_grad</text>
+<rect x="46" y="380" width="168" height="72" fill="#fff" class="item"/>
+<text x="130" y="412" text-anchor="middle" class="head">推理</text>
+<text x="130" y="435" text-anchor="middle" class="small">eval + inference_mode</text>
+
+<!-- 可组合控制 -->
+<rect x="264" y="112" width="220" height="390" fill="#dcfce7" class="panel"/>
+<text x="374" y="148" text-anchor="middle" class="group">可组合控制</text>
+<rect x="290" y="184" width="168" height="92" fill="#fff" class="item"/>
+<text x="374" y="218" text-anchor="middle" class="head">模块行为</text>
+<text x="374" y="242" text-anchor="middle" class="small">train() / eval()</text>
+<text x="374" y="262" text-anchor="middle" class="small">影响 Dropout 等模块</text>
+<rect x="290" y="302" width="168" height="110" fill="#fff" class="item"/>
+<text x="374" y="336" text-anchor="middle" class="head">计算图记录</text>
+<text x="374" y="360" text-anchor="middle" class="small">启用梯度 / no_grad</text>
+<text x="374" y="382" text-anchor="middle" class="small">inference_mode 更严格</text>
+
+<!-- 梯度状态 -->
+<rect x="508" y="112" width="220" height="390" fill="#fef3c7" class="panel"/>
+<text x="618" y="148" text-anchor="middle" class="group">梯度状态</text>
+<rect x="534" y="184" width="168" height="78" fill="#fff" class="item"/>
+<text x="618" y="218" text-anchor="middle" class="head">梯度累积</text>
+<text x="618" y="242" text-anchor="middle" class="small">多次 backward 会叠加</text>
+<rect x="534" y="288" width="168" height="78" fill="#fff" class="item"/>
+<text x="618" y="322" text-anchor="middle" class="head">梯度清零</text>
+<text x="618" y="346" text-anchor="middle" class="small">下一轮更新前清理</text>
+<rect x="534" y="392" width="168" height="54" fill="#fff" class="item"/>
+<text x="618" y="425" text-anchor="middle" class="head">当前轮梯度</text>
+
+<!-- Tensor 连接 -->
+<rect x="752" y="112" width="220" height="390" fill="#fce7f3" class="panel"/>
+<text x="862" y="148" text-anchor="middle" class="group">Tensor 连接</text>
+<rect x="778" y="184" width="168" height="82" fill="#fff" class="item"/>
+<text x="862" y="218" text-anchor="middle" class="head">detach()</text>
+<text x="862" y="242" text-anchor="middle" class="small">切断单个 Tensor</text>
+<rect x="778" y="292" width="168" height="82" fill="#fff" class="item"/>
+<text x="862" y="326" text-anchor="middle" class="head">no_grad()</text>
+<text x="862" y="350" text-anchor="middle" class="small">影响一段新计算</text>
+<rect x="778" y="400" width="168" height="54" fill="#fff" class="item"/>
+<text x="862" y="433" text-anchor="middle" class="head">离开上下文后恢复</text>
+
+<!-- 后续动作 -->
+<rect x="996" y="112" width="264" height="390" fill="#ede9fe" class="panel"/>
+<text x="1128" y="148" text-anchor="middle" class="group">后续动作</text>
+<rect x="1022" y="184" width="212" height="82" fill="#fff" class="item"/>
+<text x="1128" y="218" text-anchor="middle" class="head">参数更新</text>
+<text x="1128" y="242" text-anchor="middle" class="small">使用当前轮梯度</text>
+<rect x="1022" y="294" width="212" height="82" fill="#fff" class="item"/>
+<text x="1128" y="328" text-anchor="middle" class="head">指标计算</text>
+<text x="1128" y="352" text-anchor="middle" class="small">不保留无用计算图</text>
+<rect x="1022" y="404" width="212" height="50" fill="#fff" class="item"/>
+<text x="1128" y="435" text-anchor="middle" class="head">状态可复查</text>
+
+<path d="M240 297H264" class="flow"/>
+<path d="M484 297H508" class="flow"/>
+<path d="M728 297H752" class="flow"/>
+<path d="M972 297H996" class="flow"/>
+</svg>

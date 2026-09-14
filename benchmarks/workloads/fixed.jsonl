@@ -1,0 +1,5 @@
+{"prompt": "Explain KV cache in one sentence."}
+{"prompt": "What is the difference between prefill and decode?"}
+{"prompt": "Why can prefix caching reduce TTFT?"}
+{"prompt": "Give two metrics for evaluating an inference backend."}
+{"prompt": "When can a throughput improvement be unsuitable for online serving?"}

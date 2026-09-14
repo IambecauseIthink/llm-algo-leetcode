@@ -1,0 +1,151 @@
+{
+  "schema_version": "training-memory-benchmark/v1",
+  "project": "75",
+  "stage": "memory_budget_decision",
+  "config": {
+    "model": null,
+    "device": null,
+    "torch": null,
+    "cuda": null,
+    "dtype": null,
+    "batch_size": null,
+    "seq_len": null,
+    "warmup": null,
+    "iters": null,
+    "workload": null
+  },
+  "budget": {
+    "memory_cap_mb": 11200.0,
+    "min_samples_per_s": 1.0
+  },
+  "quality_floor": {
+    "max_val_loss": 12.60363306
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": null,
+        "samples_per_s": 2.097,
+        "peak_memory_mb": 9782.74,
+        "peak_reserved_mb": null,
+        "memory_saving_mb": 0.0,
+        "throughput_ratio": 1.0,
+        "oom": null
+      },
+      "quality": {
+        "loss": null,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "baseline",
+        "peak_memory_mb": 9782.74,
+        "samples_per_s": 2.097,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503
+      }
+    },
+    {
+      "name": "checkpoint",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": null,
+        "samples_per_s": 1.687,
+        "peak_memory_mb": 9450.76,
+        "peak_reserved_mb": null,
+        "memory_saving_mb": 331.98,
+        "throughput_ratio": 0.804483,
+        "oom": null
+      },
+      "quality": {
+        "loss": null,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "checkpoint",
+        "peak_memory_mb": 9450.76,
+        "samples_per_s": 1.687,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503
+      }
+    },
+    {
+      "name": "offload",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": null,
+        "samples_per_s": 0.528,
+        "peak_memory_mb": 9448.33,
+        "peak_reserved_mb": null,
+        "memory_saving_mb": 334.41,
+        "throughput_ratio": 0.251788,
+        "oom": null
+      },
+      "quality": {
+        "loss": null,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "offload",
+        "peak_memory_mb": 9448.33,
+        "samples_per_s": 0.528,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503
+      }
+    },
+    {
+      "name": "hybrid",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": null,
+        "samples_per_s": 1.305,
+        "peak_memory_mb": 9454.64,
+        "peak_reserved_mb": null,
+        "memory_saving_mb": 328.1,
+        "throughput_ratio": 0.622318,
+        "oom": null
+      },
+      "quality": {
+        "loss": null,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "hybrid",
+        "peak_memory_mb": 9454.64,
+        "samples_per_s": 1.305,
+        "eval_loss": 12.356503,
+        "val_loss": 12.356503
+      }
+    }
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "feasible_count": 3,
+    "best_candidate": "checkpoint",
+    "quality_failed_count": 0,
+    "feasible_names": [
+      "checkpoint",
+      "hybrid",
+      "baseline"
+    ],
+    "baseline_peak_memory_mb": 9782.74,
+    "throughput_ratio": 0.8044825941821651,
+    "best_peak_memory_mb": 9450.76,
+    "memory_saving_mb": 331.97999999999956
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "memory_saving_below_meaningful_threshold",
+    "next_action": "test_larger_pressure_or_optimizer_compression"
+  },
+  "legacy_source": "benchmarks/results/75_memory_budget_decision.json"
+}

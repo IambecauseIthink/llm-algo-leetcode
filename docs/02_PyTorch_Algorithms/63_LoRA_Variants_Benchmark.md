@@ -1,0 +1,383 @@
+# 63. LoRA Variants Benchmark | LoRA 变体对比项目
+**难度：** Hard | **环境：** CPU-first | **标签：** `训练微调`, `LoRA`, `基准对比` | **目标人群：** 项目决策练习者
+
+> 🚀 **云端运行环境**
+>
+> 本章节的实战代码可以点击以下链接在免费 GPU 算力平台上直接运行：
+>
+> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/datawhalechina/llm-algo-leetcode/blob/main/02_PyTorch_Algorithms/63_LoRA_Variants_Benchmark.ipynb)
+> [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
+
+
+---
+
+## 本节导读
+
+本节要求你在统一训练预算下比较多种 LoRA 配置。固定数据、步数和评测口径后，分别记录 rank、alpha、dropout、target modules 对效果、显存、训练步时和可训练参数量的影响。最终输出一张 benchmark 排名与推荐表，并说明推荐结果依赖哪些约束。
+
+**关键词：** `LoRA`, `variant`, `benchmark`, `budget`, `decision`
+
+---
+## 前置阅读
+
+**导语：** 进入这个 benchmark 前，先能完成一次 LoRA 微调并固定有效 batch、训练步数和评测口径，再比较不同变体的资源与质量。
+
+- [10. LoRA Tutorial | LoRA 教程](./10_LoRA_Tutorial.md)
+- [12. Gradient Accumulation | 梯度累积](./12_Gradient_Accumulation.md)
+- [13. End-to-End Fine-Tuning Experiment | 端到端微调实验](./13_End_to_End_Fine_Tuning_Experiment.md)
+- [60. LoRA Fine-Tuning Project | LoRA 微调项目](./60_LoRA_Fine_Tuning_Project.md)
+
+
+### Step 1（项目设计）：明确问题与单变量实验
+
+本节默认你已经能完成一次基础 LoRA 微调；现在要回答的不是“哪个配置名字更好”，而是某一个 LoRA 变量改变后，容量、质量和训练代价如何变化。先选一个主变量，例如 `rank`，再把其他条件固定下来。
+
+`rank` 主要改变适配器容量，`alpha` 改变缩放，`dropout` 改变正则化，`target_modules` 改变可更新的投影位置。每轮只改变其中一项，并写下 baseline、候选值、预算上限和质量下限。
+
+| 实验组 | 环境 | 固定内容 | 单一变量 | 主要输出 |
+|:---|:---|:---|:---|:---|
+| CPU 机制 | CPU | 候选配置和演示指标 | 候选字段 | 排序、预算过滤和决策逻辑 |
+| GPU benchmark | 单卡 GPU | 模型、数据 split、dtype、batch、steps | rank 或 alpha 或 dropout 或 target_modules 之一 | loss、显存、步时、吞吐和任务质量 |
+
+CPU 评分中的权重只用于教学排序，不代表真实业务收益；真实结论必须来自同 workload 的 GPU 对照。
+
+![LoRA 变体的单变量实验](../public/02_PyTorch_Algorithms/63_lora_variant_experiment_flow.svg)
+<div align="center"><strong>LoRA 变体的单变量实验：</strong>每轮只改变一个配置变量，才能把指标差异归因到该变量。</div>
+
+### Step 2（项目设计）：固定 baseline 与比较条件
+
+先用一条基础 LoRA 配置填满 baseline：模型、target modules、rank、alpha、dropout、训练步数、显存上限和质量门槛。然后为每个候选记录只改变的字段，避免把 rank 和 target modules 同时改掉。
+
+CPU 代码至少要检查候选字段完整、rank/alpha/dropout 合法、target modules 非空，并计算可训练参数量和相对 baseline 的变化。缺字段时报告问题，不替候选补默认效果。
+
+### Step 3（项目设计）：确定机制、指标与候选方案
+
+GPU 验证沿用 60 节的训练数据、split、dtype、batch、seq_len、steps 和 seed；只替换 Step 1 选定的 LoRA 变量。每个候选都要完成相同的 warmup、训练和验证，不能用不同步数换取更低 loss。
+
+记录 `train_loss`、`val_loss`、`step_time_ms`、`tokens_per_s`、`peak_memory_mb`、`trainable_params` 和 OOM 状态。单一分数只用于发现候选，不能替代质量、资源和复现条件。
+
+### Step 4（项目设计）：确定报告字段与决策约束
+
+对每个候选计算相对 baseline 的参数、显存、步时和验证质量差分，再依次检查质量下限、显存上限、吞吐下限和实现成本。这样可以解释“分数最高但不可交付”的候选为什么被排除。
+
+候选满足全部约束才进入 `accept`；有潜力但超出一项约束进入 `tune`；质量失败、OOM 或缺少关键证据进入 `reject`。
+
+### Step 5（CPU）：实现候选校验、差分和决策
+
+题目区用小型字典表示 baseline 和候选，不要求在 CPU 上模拟训练。你需要实现配置校验、可训练参数估算、相对差分、约束过滤和最终决策；报告中的 CPU 数字应标记为 `estimated` 或 `demo`。真实训练和 GPU 资源测量属于后续可选实验。
+
+![63 Step 5：LoRA 变体的 CPU 决策实现](../public/02_PyTorch_Algorithms/63_lora_cpu_todo_flow.svg)
+<div align="center"><strong>LoRA 变体的 CPU 决策实现：</strong>先校验候选，再计算成本、排序并执行预算决策。</div>
+#### 图解：10-60 如何收束到 63 LoRA Benchmark
+
+`63` 把 LoRA 机制和项目经验收成一张统一的 benchmark 表。
+
+```text
+10 LoRA          target modules / rank / alpha / dropout
+      │
+12 Accumulation  micro batch -> effective batch
+      │
+13 E2E report    train loss / val loss / step time / memory
+      │
+60 LoRA project  baseline vs LoRA artifact and ledger
+      │
+      ▼
+63 LoRA bench    variant ranking + budget-aware delivery decision
+```
+
+项目页最小产物：
+
+| 模块 | 必须记录 | 用途 |
+|:---|:---|:---|
+| baseline | 基础 LoRA 口径、预算上限 | 保证比较合法 |
+| candidate | rank、target modules、资源变化 | 解释变体收益来源 |
+| 对比 | 效果、显存、步时、参数占比 | 判断是否值得 adopt |
+| 决策 | accept / tune / reject | 输出 benchmark 结论 |
+
+### 参数口径说明
+
+`rank` 控制 LoRA 低秩容量，`alpha` 控制缩放，`dropout` 影响正则化，`target_modules` 决定 adapter 挂载位置。benchmark 时固定模型、数据、split、batch、seq_len、学习率和 steps，只改变这些 LoRA 变量；`train_loss / val_loss / step_time_ms / memory_mb / trainable_ratio` 分别用于效果、资源和参数效率比较。
+
+```python
+from typing import Dict, List
+
+```
+
+
+```python
+# 4 个核心 TODO：变体校验、评分、排序、项目推荐
+# 目标：把不同 LoRA 变体转成统一 benchmark 结果，而不是只给一张排名表。
+# CPU 代码只验证输入、排序和预算逻辑；真实质量、显存和吞吐必须来自固定 workload 的 GPU 对照。
+
+def validate_lora_variant(variant: Dict[str, float]) -> List[str]:
+    """检查变体是否包含可比较的 loss、资源和参数比例字段。
+
+    返回错误列表；空列表表示可以进入评分。缺失字段不能默认填 0，
+    否则会把未测量候选误认为低成本方案。
+    """
+    # TODO 1：required 至少包含 name、train_loss、val_loss、step_time_ms、memory_mb、trainable_ratio。
+    # 提示：数值字段必须可转换、有限且资源值不为负；trainable_ratio 不应超过 1。
+    # required = ???；issues = ???；is_valid = ???。
+    raise NotImplementedError("请先完成 TODO 代码！")
+
+def score_lora_variant(variant: Dict[str, float]) -> Dict[str, float]:
+    """按给定权重计算教学用综合成本，并保留原始关键指标。
+
+    综合成本只用于 CPU 示例排序，不代表业务效用或 GPU 性能；调用前应先校验输入。
+    """
+    # TODO 2：使用 val_loss、train_loss、step_time_ms、memory_mb 和 trainable_ratio。
+    # 提示：成本越低排名越靠前；不要在函数内偷偷改变权重或补缺失指标。
+    #       若候选提供 variable_name、variable_value、fixed_conditions，结果中一并保留。
+    # composite_cost = ???；score_parts = ???。
+    raise NotImplementedError("请先完成 TODO 代码！")
+
+def rank_lora_variants(variants: List[Dict[str, float]]) -> List[Dict[str, float]]:
+    """校验并按综合成本升序返回变体评分结果。
+
+    空输入应返回空列表；非法候选应明确报错，不能静默跳过。
+    """
+    # TODO 3：对每个 variant 调用 score_lora_variant，再按 composite_cost 排序。
+    # 提示：排序结果必须稳定，返回值至少保留 name、composite_cost、
+    #       variable_name、variable_value、fixed_conditions（若输入提供）和关键资源字段。
+    # scored_variants = ???；ranked = ???。
+    raise NotImplementedError("请先完成 TODO 代码！")
+
+def recommend_lora_variant(baseline: Dict[str, float], variants: List[Dict[str, float]], memory_budget_mb: int) -> Dict[str, object]:
+    """在显存预算下比较候选与 baseline，并输出项目推荐。
+
+    推荐结果至少包含 decision、recommended_name 和 next_action；
+    只有满足预算且质量没有明显退化的候选才可 accept。
+    """
+    # TODO 4：先过滤 memory_mb <= memory_budget_mb，再结合 baseline 的 val_loss 判断。
+    # 提示：无可行候选返回 reject；可行但不是当前推荐方案时返回 tune。
+    # feasible = ???；recommended_name = ???；decision = ???；next_action = ???。
+    raise NotImplementedError("请先完成 TODO 代码！")
+
+```
+
+
+```python
+# 测试你的实现
+def test_lora_benchmark_template():
+    baseline = {'name': 'baseline_lora', 'val_loss': 1.28, 'step_time_ms': 100, 'memory_mb': 1250, 'trainable_ratio': 0.06}
+    variants = [
+        {'name': 'rank4', 'train_loss': 1.2, 'val_loss': 1.4, 'step_time_ms': 90, 'memory_mb': 1100, 'trainable_ratio': 0.04},
+        {'name': 'rank8', 'train_loss': 1.1, 'val_loss': 1.2, 'step_time_ms': 110, 'memory_mb': 1350, 'trainable_ratio': 0.08},
+        {'name': 'rank16', 'train_loss': 1.0, 'val_loss': 1.15, 'step_time_ms': 140, 'memory_mb': 1700, 'trainable_ratio': 0.16},
+    ]
+    assert validate_lora_variant(variants[0]) == []
+    assert validate_lora_variant({'name': 'broken', 'val_loss': -1})
+    assert 'composite_cost' in score_lora_variant(variants[0])
+    ranked = rank_lora_variants(variants)
+    assert isinstance(ranked, list) and ranked[0]['name'] == 'rank8'
+    decision = recommend_lora_variant(baseline, variants, memory_budget_mb=1500)
+    assert decision['decision'] == 'accept'
+    assert decision['recommended_name'] == 'rank8'
+    assert decision['next_action'] == 'promote_to_extended_eval'
+
+    tight_budget_variants = [
+        {'name': 'budget_rank4', 'train_loss': 1.18, 'val_loss': 1.28, 'step_time_ms': 92, 'memory_mb': 1180, 'trainable_ratio': 0.04},
+        {'name': 'budget_rank8', 'train_loss': 1.12, 'val_loss': 1.22, 'step_time_ms': 108, 'memory_mb': 1520, 'trainable_ratio': 0.08},
+    ]
+    tight_budget_decision = recommend_lora_variant(baseline, tight_budget_variants, memory_budget_mb=1200)
+    assert tight_budget_decision['decision'] == 'tune'
+    assert tight_budget_decision['recommended_name'] == 'budget_rank4'
+    assert tight_budget_decision['next_action'] == 'refine_rank_or_target_modules'
+
+    weak_variants = [
+        {'name': 'worse_rank4', 'train_loss': 1.3, 'val_loss': 1.35, 'step_time_ms': 95, 'memory_mb': 1120, 'trainable_ratio': 0.04},
+        {'name': 'worse_rank8', 'train_loss': 1.25, 'val_loss': 1.31, 'step_time_ms': 108, 'memory_mb': 1300, 'trainable_ratio': 0.08},
+    ]
+    reject_decision = recommend_lora_variant(baseline, weak_variants, memory_budget_mb=1500)
+    assert reject_decision['decision'] == 'reject'
+    assert reject_decision['recommended_name'] == 'worse_rank8'
+    assert reject_decision['next_action'] == 'fallback_to_baseline_lora'
+
+
+test_lora_benchmark_template()
+print('测试通过：LoRA 变体 benchmark 模板可以工作。')
+
+```
+
+---
+
+🛑 **STOP HERE** 🛑
+<br><br><br><br><br><br><br><br><br><br>
+> 请先尝试自己完成代码并跑通测试。<br>
+> 如果你正在 Colab 中运行，并且遇到困难没有思路，可以向下滚动查看参考答案。
+<br><br><br><br><br><br><br><br><br><br>
+
+---
+
+## 参考代码与解析
+
+### 代码
+
+
+```python
+# TODO 1：校验 LoRA 变体输入，避免缺失字段被默认成 0
+def validate_lora_variant(variant: Dict[str, float]) -> List[str]:
+    errors = []
+    required = ('name', 'train_loss', 'val_loss', 'step_time_ms', 'memory_mb', 'trainable_ratio')
+    for key in required:
+        if key not in variant:
+            errors.append(f'missing:{key}')
+    if errors:
+        return errors
+    for key in ('train_loss', 'val_loss', 'step_time_ms', 'memory_mb', 'trainable_ratio'):
+        try:
+            value = float(variant[key])
+        except (TypeError, ValueError):
+            errors.append(f'non_numeric:{key}')
+            continue
+        if value != value or value in (float('inf'), float('-inf')):
+            errors.append(f'non_finite:{key}')
+        if key in ('step_time_ms', 'memory_mb', 'trainable_ratio') and value < 0:
+            errors.append(f'negative:{key}')
+    if float(variant.get('trainable_ratio', 0.0)) > 1.0:
+        errors.append('trainable_ratio>1')
+    return errors
+
+
+# TODO 2：计算 LoRA 变体的综合成本
+def score_lora_variant(variant: Dict[str, float]) -> Dict[str, float]:
+    errors = validate_lora_variant(variant)
+    if errors:
+        raise ValueError(f'非法 LoRA 变体: {errors}')
+    train_loss = float(variant.get('train_loss', 0.0))
+    val_loss = float(variant.get('val_loss', 0.0))
+    step_time_ms = float(variant.get('step_time_ms', 0.0))
+    memory_mb = float(variant.get('memory_mb', 0.0))
+    trainable_ratio = float(variant.get('trainable_ratio', 0.0))
+    composite_cost = val_loss * 100 + train_loss * 10 + step_time_ms * 0.1 + memory_mb * 0.01 + trainable_ratio * 100
+    return {
+        'name': variant.get('name', 'variant'),
+        'composite_cost': composite_cost,
+        'memory_mb': memory_mb,
+        'trainable_ratio': trainable_ratio,
+        'val_loss': val_loss,
+        'variable_name': variant.get('variable_name'),
+        'variable_value': variant.get('variable_value'),
+        'fixed_conditions': variant.get('fixed_conditions', {}),
+    }
+
+
+# TODO 3：对 LoRA 变体排序
+def rank_lora_variants(variants: List[Dict[str, float]]) -> List[Dict[str, float]]:
+    return sorted([score_lora_variant(variant) for variant in variants], key=lambda item: item['composite_cost'])
+
+
+# TODO 4：输出项目推荐结论
+def recommend_lora_variant(baseline: Dict[str, float], variants: List[Dict[str, float]], memory_budget_mb: int) -> Dict[str, object]:
+    feasible = [variant for variant in variants if float(variant.get('memory_mb', 10**9)) <= memory_budget_mb]
+    if not feasible:
+        return {
+            'decision': 'reject',
+            'recommended_name': None,
+            'reason': '没有候选满足显存预算',
+            'next_action': 'reduce_rank_or_scope',
+        }
+
+    best = min(
+        feasible,
+        key=lambda item: (
+            float(item.get('val_loss', 10**9)),
+            float(item.get('memory_mb', 10**9)),
+            float(item.get('trainable_ratio', 10**9)),
+            float(item.get('step_time_ms', 10**9)),
+        ),
+    )
+    baseline_val_loss = float(baseline.get('val_loss', 10**9))
+    baseline_memory = float(baseline.get('memory_mb', 10**9))
+
+    if float(best.get('val_loss', 10**9)) < baseline_val_loss and float(best.get('memory_mb', 10**9)) <= memory_budget_mb:
+        return {
+            'decision': 'accept',
+            'recommended_name': best.get('name', 'variant'),
+            'reason': '在预算内带来更好的效果表现',
+            'next_action': 'promote_to_extended_eval',
+        }
+    if float(best.get('val_loss', 10**9)) <= baseline_val_loss:
+        return {
+            'decision': 'tune',
+            'recommended_name': best.get('name', 'variant'),
+            'reason': '效果可用，但显存或训练参数代价仍偏高',
+            'next_action': 'refine_rank_or_target_modules',
+        }
+    return {
+        'decision': 'reject',
+        'recommended_name': best.get('name', 'variant'),
+        'reason': '候选未带来稳定效果收益',
+        'next_action': 'fallback_to_baseline_lora',
+    }
+
+```
+
+### 解析
+
+这一页保留 `4` 个核心 TODO：输入校验、变体评分、统一排序和项目推荐。它不要求把 LoRA 训练过程重写一遍，而是要求把 benchmark 决策补完整。
+
+**1. TODO 1：校验 LoRA 变体输入**
+- **实现方式**：检查必需字段、数值可转换性、有限性和资源值边界。
+- **关键点**：缺失或未测量的字段不能默认成 0，否则会把无效候选排到前面。
+- **项目意义**：先保证输入可信，后面的排序和 GPU 对照才有解释力。
+
+**2. TODO 2：计算 LoRA 变体的综合成本**
+- **实现方式**：把 `val_loss`、`train_loss`、`step_time_ms`、`memory_mb` 和 `trainable_ratio` 折算成统一的 `composite_cost`。
+- **关键点**：这一步的目标不是追求完美公式，而是把效果和资源放进同一排序口径里。
+- **项目意义**：综合成本只用于 CPU 示例排序，不是 GPU 性能结论。
+
+**3. TODO 3：对 LoRA 变体排序**
+- **实现方式**：先对每个变体调用 `score_lora_variant`，再按 `composite_cost` 从低到高稳定排序。
+- **关键点**：排序只是候选筛选，不等于最终 `accept`；真正结论还要回到 baseline 和预算边界。
+- **项目意义**：这一步让不同 rank、alpha 或 target modules 进入同一候选池，而不是零散比较。
+
+**4. TODO 4：输出项目推荐结论**
+- **实现方式**：结合 baseline、显存预算和候选效果，输出 `accept / tune / reject` 与下一轮动作。
+- **关键点**：预算内效果更好时才 `accept`；效果可用但预算边界偏紧时走 `tune`；没有稳定收益时 `reject`。
+- **项目意义**：这一步把页面从“变体排序”推进到“项目选型”，回答的是哪种 LoRA 配置值得继续采用。
+
+### 可选：统一项目报告导出
+默认关闭。只有完成 baseline、LoRA 变体、预算和质量比较后，才导出统一 JSON。报告模板见 `docs/verification/fine_tuning_projects.md`。
+
+```python
+try:
+    from tools.fine_tuning_project_runtime import preflight_runtime, runtime_snapshot, save_project_report, validate_project_config
+except ModuleNotFoundError:
+    preflight_runtime = lambda torch_module, run_mode='cpu', **kwargs: {'run_mode': run_mode, 'ready': False, 'reasons': ['共享运行时工具不可用']}
+    runtime_snapshot = lambda: {'device': 'unknown'}
+    validate_project_config = lambda config: []
+    save_project_report = None
+RUN_MODE = 'cpu'  # cpu / dry_run / real_gpu；本节默认只运行 CPU 决策逻辑。
+PROJECT_ID = '63_lora_variants_benchmark'
+PROJECT_RESULT_PATH = 'benchmarks/results/63_lora_variants.json'
+PROJECT_CONFIG = {'project': PROJECT_ID, 'model': 'template', 'dtype': 'fp32', 'batch_size': 1, 'seq_len': 128, 'steps': 1, 'seed': 42, 'run_mode': RUN_MODE}
+RUN_PROJECT_EXPORT = False  # True 只保存已完成的 benchmark 报告。
+config_errors = validate_project_config(PROJECT_CONFIG)
+if config_errors:
+    raise ValueError('; '.join(config_errors))
+print('runtime:', runtime_snapshot())
+if RUN_MODE == 'dry_run':
+    try:
+        import torch
+        print('dry_run:', preflight_runtime(torch, run_mode='dry_run'))
+    except ImportError as exc:
+        print({'run_mode': 'dry_run', 'ready': False, 'reasons': [f'缺少 torch：{exc}']})
+if RUN_PROJECT_EXPORT:
+    if 'PROJECT_REPORT' not in globals():
+        raise RuntimeError('请先组装完整的 PROJECT_REPORT')
+    PROJECT_REPORT.setdefault('project', PROJECT_ID)
+    PROJECT_REPORT.setdefault('config', PROJECT_CONFIG)
+    PROJECT_REPORT.setdefault('environment', runtime_snapshot())
+    save_project_report(PROJECT_RESULT_PATH, PROJECT_REPORT)
+
+```
+
+## 相关阅读
+
+完成 LoRA 变体的统一规格、指标记录和排名后，可以继续回看指令微调项目，并用训练性能分析验证当前选型。
+
+- [LoRA 原论文：Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
+- [Hugging Face PEFT 官方仓库](https://github.com/huggingface/peft)
+- [62. Instruction Fine-Tuning Project | 指令微调项目](./62_Instruction_Fine_Tuning_Project.md)
+- [73. Training Performance Analysis | 训练性能分析](./73_Training_Performance_Analysis.md)

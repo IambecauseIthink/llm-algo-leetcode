@@ -13,7 +13,7 @@
 ##### Task3：高级推理与压缩 - [2.7 高级推理与压缩优化](../../02_PyTorch_Algorithms/2_7.md)
 ##### Task4：并行策略与项目收口 - [2.8 分布式并行策略](../../02_PyTorch_Algorithms/2_8.md) -> [2.9 项目实战](../../02_PyTorch_Algorithms/2_9.md)
 
-##### 收尾项目：`31 Inference Performance Comparison` - [31 Inference Performance Comparison](../../02_PyTorch_Algorithms/31_Inference_Performance_Comparison.ipynb)
+##### 收尾项目：`31 Inference Performance Comparison` - [31 Inference Performance Comparison](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb)
 
 ## 3. 群内讨论
 后续按本周期实际讨论材料补充。

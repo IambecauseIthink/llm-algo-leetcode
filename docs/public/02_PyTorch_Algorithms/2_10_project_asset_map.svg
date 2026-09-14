@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">
+  <style>
+    text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#1f2937}
+    .title{font-size:26px;font-weight:700}.head{font-size:19px;font-weight:700}.label{font-size:17px;font-weight:600}.small{font-size:15px}.box{fill:#f8fafc;stroke:#64748b;stroke-width:2;rx:12}.route{fill:#eff6ff;stroke:#3b82f6;stroke-width:2;rx:12}.out{fill:#ecfdf5;stroke:#10b981;stroke-width:2;rx:12}.line{stroke:#64748b;stroke-width:3;fill:none}.arrow{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#arrow)}
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1100" height="650" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="550" y="38" text-anchor="middle" class="title">项目资产之间的承接关系</text>
+
+  <rect x="355" y="65" width="390" height="70" class="box"/>
+  <text x="550" y="94" text-anchor="middle" class="head">Part02 机制与方法小节</text>
+  <text x="550" y="119" text-anchor="middle" class="small">训练、推理、显存、量化、并行等基础能力</text>
+
+  <path d="M550 135 V165" class="arrow"/>
+  <rect x="75" y="165" width="950" height="65" class="box"/>
+  <text x="550" y="193" text-anchor="middle" class="head">项目设计：明确输入、变量、指标和证据边界</text>
+  <text x="550" y="217" text-anchor="middle" class="small">CPU 检查机制与报告逻辑；GPU / backend 产生真实实验数据</text>
+
+  <path d="M550 230 V260" class="arrow"/>
+  <rect x="35" y="260" width="190" height="145" class="route"/>
+  <text x="130" y="292" text-anchor="middle" class="head">训练微调</text>
+  <text x="130" y="325" text-anchor="middle" class="label">60–65</text>
+  <text x="130" y="353" text-anchor="middle" class="small">Project</text>
+  <text x="130" y="378" text-anchor="middle" class="small">Benchmark / Decision</text>
+
+  <rect x="245" y="260" width="190" height="145" class="route"/>
+  <text x="340" y="292" text-anchor="middle" class="head">推理优化</text>
+  <text x="340" y="325" text-anchor="middle" class="label">66–71</text>
+  <text x="340" y="353" text-anchor="middle" class="small">Benchmark</text>
+  <text x="340" y="378" text-anchor="middle" class="small">Project + Benchmark</text>
+
+  <rect x="455" y="260" width="190" height="145" class="route"/>
+  <text x="550" y="292" text-anchor="middle" class="head">显存优化</text>
+  <text x="550" y="325" text-anchor="middle" class="label">73–76</text>
+  <text x="550" y="353" text-anchor="middle" class="small">Analysis</text>
+  <text x="550" y="378" text-anchor="middle" class="small">Benchmark / Decision</text>
+
+  <rect x="665" y="260" width="190" height="145" class="route"/>
+  <text x="760" y="292" text-anchor="middle" class="head">分布式并行</text>
+  <text x="760" y="325" text-anchor="middle" class="label">79–81</text>
+  <text x="760" y="353" text-anchor="middle" class="small">Benchmark</text>
+  <text x="760" y="378" text-anchor="middle" class="small">Project</text>
+
+  <rect x="875" y="260" width="190" height="145" class="route"/>
+  <text x="970" y="292" text-anchor="middle" class="head">后训练对齐</text>
+  <text x="970" y="325" text-anchor="middle" class="label">84–86</text>
+  <text x="970" y="353" text-anchor="middle" class="small">Project</text>
+  <text x="970" y="378" text-anchor="middle" class="small">Benchmark</text>
+
+  <path d="M130 405 V435 H550 M340 405 V435 H550 M550 405 V435 M760 405 V435 H550 M970 405 V435 H550" class="line"/>
+  <path d="M550 435 V455" class="arrow"/>
+  <rect x="175" y="455" width="750" height="90" class="out"/>
+  <text x="550" y="490" text-anchor="middle" class="head">统一项目产出</text>
+  <text x="550" y="518" text-anchor="middle" class="small">实验条件 · 指标结果 · 失败原因 · 报告文件 · accept / tune / reject</text>
+
+  <path d="M550 545 V575" class="arrow"/>
+  <rect x="245" y="575" width="610" height="52" class="box"/>
+  <text x="550" y="608" text-anchor="middle" class="small">横向专题负责复用和解释；项目节负责在具体条件下验证</text>
+</svg>

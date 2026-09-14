@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 760" role="img" aria-labelledby="title desc">
+  <title id="title">SwiGLU Gate Diagram</title>
+  <desc id="desc">SwiGLU uses gate and up branches, multiplies them elementwise, then projects down.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
+      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
+      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
+      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
+      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .magenta { stroke: #db2777; stroke-width: 4; fill: none; marker-end: url(#arrowPink); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowPink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#db2777"/>
+    </marker>
+  </defs>
+  <rect width="1500" height="760" fill="url(#bg)"/>
+  <text x="64" y="66" class="title">SwiGLU: gate + content + down projection</text>
+  <text x="64" y="96" class="sub">One branch carries content, one branch gates it, then project down.</text>
+
+  <rect x="70" y="170" width="220" height="90" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="180" y="208" text-anchor="middle" class="label">Input x</text>
+  <text x="180" y="233" text-anchor="middle" class="small">hidden state</text>
+
+  <rect x="360" y="120" width="230" height="90" class="box" fill="#ecfccb" stroke="#65a30d"/>
+  <text x="475" y="158" text-anchor="middle" class="label">gate_proj</text>
+  <text x="475" y="183" text-anchor="middle" class="small">gate path</text>
+
+  <rect x="360" y="240" width="230" height="90" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="475" y="278" text-anchor="middle" class="label">up_proj</text>
+  <text x="475" y="303" text-anchor="middle" class="small">candidate content</text>
+
+  <rect x="640" y="160" width="240" height="110" class="box" fill="#fff1f2" stroke="#e11d48"/>
+  <text x="760" y="200" text-anchor="middle" class="label">SiLU / Swish</text>
+  <text x="760" y="226" text-anchor="middle" class="small">gate nonlinearity</text>
+  <text x="760" y="248" text-anchor="middle" class="small">smooth gate</text>
+
+  <rect x="930" y="170" width="220" height="90" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="1040" y="208" text-anchor="middle" class="label">Multiply</text>
+  <text x="1040" y="233" text-anchor="middle" class="small">elementwise gate</text>
+
+  <rect x="1220" y="170" width="220" height="90" class="box" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="1330" y="208" text-anchor="middle" class="label">down_proj</text>
+  <text x="1330" y="233" text-anchor="middle" class="small">back to hidden size</text>
+
+  <path d="M 290 215 L 360 165" class="arrow"/>
+  <path d="M 290 215 L 360 285" class="arrow"/>
+  <path d="M 590 165 L 640 200" class="arrow"/>
+  <path d="M 590 285 L 640 220" class="arrow"/>
+  <path d="M 880 215 L 930 215" class="magenta"/>
+  <path d="M 1150 215 L 1220 215" class="arrow"/>
+
+  <rect x="120" y="430" width="1260" height="170" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="750" y="470" text-anchor="middle" class="label">Read it in one line</text>
+  <text x="210" y="525" class="small">gate_proj -> SiLU</text>
+  <text x="520" y="525" class="small">up_proj -> candidate content</text>
+  <text x="850" y="525" class="small">multiply -> selective activation</text>
+  <text x="1160" y="525" class="small">down_proj -> back to hidden size</text>
+  <text x="750" y="565" text-anchor="middle" class="small">SwiGLU adds selection inside the MLP instead of using one plain activation path.</text>
+</svg>

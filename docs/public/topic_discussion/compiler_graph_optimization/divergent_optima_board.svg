@@ -1,0 +1,42 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="100" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">Divergent Optima Board</text>
+  <text x="88" y="132" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">The same graph can have different best paths on different backends because the cost model, execution assumptions and deployment constraints are different.</text>
+
+  <rect x="110" y="208" width="214" height="94" rx="18" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="150" y="244" fill="#1E3A8A" font-size="22" font-family="Arial, sans-serif" font-weight="700">Same Graph</text>
+  <text x="136" y="274" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">same semantics, same</text>
+  <text x="136" y="296" fill="#1E3A8A" font-size="16" font-family="Arial, sans-serif">high-level structure</text>
+
+  <rect x="392" y="176" width="232" height="128" rx="20" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="438" y="214" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Backend A</text>
+  <text x="420" y="246" fill="#92400E" font-size="16" font-family="Arial, sans-serif">prefers larger fusion, fewer launches,</text>
+  <text x="420" y="268" fill="#92400E" font-size="16" font-family="Arial, sans-serif">layout stays favorable</text>
+  <text x="420" y="298" fill="#92400E" font-size="16" font-family="Arial, sans-serif">best path A</text>
+
+  <rect x="392" y="352" width="232" height="128" rx="20" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="438" y="390" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Backend B</text>
+  <text x="420" y="422" fill="#166534" font-size="16" font-family="Arial, sans-serif">prefers different layout, smaller tiles,</text>
+  <text x="420" y="444" fill="#166534" font-size="16" font-family="Arial, sans-serif">resource pressure dominates</text>
+  <text x="420" y="474" fill="#166534" font-size="16" font-family="Arial, sans-serif">best path B</text>
+
+  <rect x="710" y="208" width="418" height="272" rx="22" fill="#F3F4F6" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="738" y="246" fill="#111827" font-size="22" font-family="Arial, sans-serif" font-weight="700">Why optima diverge</text>
+  <text x="738" y="282" fill="#374151" font-size="17" font-family="Arial, sans-serif">1. Different layout and memory hierarchies</text>
+  <text x="738" y="310" fill="#374151" font-size="17" font-family="Arial, sans-serif">2. Different launch and runtime overhead models</text>
+  <text x="738" y="338" fill="#374151" font-size="17" font-family="Arial, sans-serif">3. Different occupancy / register / SRAM trade-offs</text>
+  <text x="738" y="366" fill="#374151" font-size="17" font-family="Arial, sans-serif">4. Different deployment constraints and TCO targets</text>
+  <text x="738" y="410" fill="#374151" font-size="17" font-family="Arial, sans-serif">The important lesson is not “one backend is better”.</text>
+  <text x="738" y="438" fill="#374151" font-size="17" font-family="Arial, sans-serif">It is that the optimization story must stay attached to the backend it is supposed to serve.</text>
+
+  <path d="M324 254H392" stroke="#374151" stroke-width="3"/>
+  <path d="M324 254C358 254 358 240 392 240" stroke="#374151" stroke-width="3" fill="none"/>
+  <path d="M324 254C358 254 358 416 392 416" stroke="#374151" stroke-width="3" fill="none"/>
+  <path d="M377 232L392 240L377 248" fill="#374151"/>
+  <path d="M377 408L392 416L377 424" fill="#374151"/>
+
+  <rect x="110" y="548" width="1018" height="84" rx="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="138" y="582" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Used by page 05</text>
+  <text x="138" y="614" fill="#9D174D" font-size="17" font-family="Arial, sans-serif">This page explains why compiler judgment must stay backend-specific. If the backend changes, the optimization story may need to change with it.</text>
+</svg>

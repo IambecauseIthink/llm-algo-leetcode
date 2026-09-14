@@ -30,7 +30,7 @@ def iter_source_pages() -> set[Path]:
         if not base.exists():
             continue
         for path in base.rglob("*"):
-            if path.suffix != ".md":
+            if path.suffix != ".md" or "node_modules" in path.parts or "learning_notes_html" in path.parts:
                 continue
             rel = path.relative_to(ROOT)
             expected.add(Path("docs") / rel.with_suffix(".md"))

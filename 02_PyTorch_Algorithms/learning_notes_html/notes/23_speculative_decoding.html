@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 23 | Speculative Decoding</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 23 | Speculative Decoding | 投机解码</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 23 | 零基础导学关卡</p>
-        <h1>Speculative Decoding</h1>
+        <h1>Speculative Decoding | 投机解码</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">23_Speculative_Decoding.ipynb</span>
-          <span class="pill">Draft Model</span><span class="pill">Verification</span><span class="pill">Acceptance</span>
+          <span class="pill">推理优化</span><span class="pill">解码</span><span class="pill">Speculative Decoding</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,218 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="cd5d34dea4cddcf163aa0952d236127d580a9d21b94eee637a6d8def99c82cb4">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../23_Speculative_Decoding.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/23_Speculative_Decoding.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>23. Speculative Decoding | 投机解码</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>解码</code>, <code>Speculative Decoding</code> | <strong>目标人群：</strong> 推理优化学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>自回归生成的时间压力，常常来自目标模型必须一个 token 一个 token 地推进。前面先用 KV Cache 建立了单步生成的状态视角，本节进一步观察另一种思路：让草稿模型先提出多个候选，再由目标模型集中验证。</p>
+<p>本节沿着“提议 → 验证 → 接受或修正”的顺序学习投机解码：先理解接受概率为什么需要 residual correction，再看全部接受时为什么还要追加 bonus token。核心判断是，在保持目标模型分布的前提下，是否能够减少目标模型的逐 token 推进。</p>
+<p><strong>关键词：</strong> <code>speculative decoding</code>, <code>draft model</code>, <code>verification</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 检查概率非负，并验证每一行和约等于 1</li><li>TODO 2: 计算 alpha，并据此决定当前候选是否接受</li><li>TODO 3: 拒绝时从 residual=max(p-q, 0) 归一化后采样</li><li>TODO 4: 全部接受后，从 target_probs[K] 采样 bonus token</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先掌握单步解码和 KV Cache 的状态变化，再理解草稿模型如何提出候选、目标模型如何批量验证。</p>
+<ul>
+<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb">P1: 11. KV Cache and Memory Growth | KV Cache 与显存增长</a></li>
+</ul>
+<hr>
+<h3>Step 1: 提议、验证与分布保持</h3>
+<p>投机解码（Speculative Decoding）的核心，不是让一个模型直接替代另一个模型，而是让草稿模型（draft model）先快速提出一段 token，再由目标模型（target model）逐个验证。草稿模型通常更小、更快，但不负责最终决定；目标模型负责验证候选并决定最终输出。这样做的关键问题是：<strong>如何在不改变最终分布的前提下，尽量减少目标模型的逐 token 推理次数</strong>。</p>
+<blockquote>
+<p><strong>接受概率公式</strong>
+对于草拟 token <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></eq>，小模型给出的概率记为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">q(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></eq>，大模型给出的概率记为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></eq>。</p>
+<ul>
+<li>若 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>≥</mo><mi>q</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p(x) \ge q(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></eq>，直接接受该 token。</li>
+<li>若 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>&lt;</mo><mi>q</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p(x) &lt; q(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></eq>，则以 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mrow><mi>q</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\frac{p(x)}{q(x)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.53em;vertical-align:-0.52em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.01em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.485em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.52em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq> 的概率接受它。</li>
+</ul>
+<p>等价地，接受概率可以写成：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>α</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mi>min</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mn>1</mn><mo separator="true">,</mo><mfrac><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mrow><mi>q</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\alpha(x) = \min\left(1, \frac{p(x)}{q(x)}\right)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="mop">min</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span></span></span></span></span></eqn></section></p>
+</blockquote>
+<p><strong>为什么有机会做到分布等价？</strong>
+接受概率本身只负责判断草稿 token；发生拒绝时，还必须从 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>max</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>p</mi><mo>−</mo><mi>q</mi><mo separator="true">,</mo><mn>0</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\max(p-q,0)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">max</span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span><span class="mclose">)</span></span></span></span></eq> 归一化得到的 residual distribution 重新采样，全部接受时还要从目标模型的下一个位置采样 bonus token。缺少这两步，不能声称输出分布与目标模型一致。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/23_speculative_decoding_flow.svg" alt="Speculative Decoding 流程图"></p>
+<h3>Step 2: 验证输入与位置关系</h3>
+<p>单步接口的输入、用途和检查重点如下：</p>
+<table>
+<thead>
+<tr>
+<th>输入 / 状态</th>
+<th>形状或内容</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>draft_probs</code></td>
+<td><code>[K, vocab]</code></td>
+<td>草稿模型在 K 个位置上的概率分布</td>
+</tr>
+<tr>
+<td><code>target_probs</code></td>
+<td><code>[K+1, vocab]</code></td>
+<td>前 K 行验证草稿，最后一行提供 bonus token</td>
+</tr>
+<tr>
+<td><code>draft_tokens</code></td>
+<td>长度为 K 的 token 序列</td>
+<td>指出每个位置实际提出的候选</td>
+</tr>
+<tr>
+<td>输入检查</td>
+<td>非负、行归一化、长度和词表维度</td>
+<td>防止概率与位置错位后继续计算</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: 接受、修正与推进状态</h3>
+<p>按草稿位置从前到后处理：接受就继续验证下一个位置；拒绝就从 residual distribution 采样一个修正 token 并结束本轮；全部 K 个草稿都接受时，再从最后一行目标分布采样 bonus token。这个流程使“接受长度”和“回退位置”成为可检查的状态结果。</p>
+<p>CPU 题目区验证概率归一化、接受/拒绝、residual correction、bonus token 和控制流；真实 acceptance rate、目标模型 forward 次数、TTFT、TPOT 和吞吐由 68 的匹配 backend 实验验证。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/23_speculative_acceptance_flow.svg" alt="Speculative Decoding：验证结果决定下一步"></p>
+<h3>Step 4: 实现单轮投机解码</h3>
+<p>请补全 <code>speculative_decode_step</code>，按输入检查、逐位置接受、拒绝修正和全接受 bonus 四个阶段返回结果。返回值至少包含最终 token、接受数量、是否拒绝和检查到的 target 位置。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 5</summary><pre><code>def speculative_decode_step(draft_probs, target_probs, draft_tokens, generator=None):
+    &quot;&quot;&quot;
+    验证 K 个草稿，并在拒绝或全接受时生成修正 token。
 
+    Args:
+        draft_probs: 草稿模型在 K 个位置上的概率分布, shape [K, vocab_size]
+        target_probs: 目标模型在 K 个验证位置及 1 个 bonus 位置的概率分布, shape [K+1, vocab_size]
+        draft_tokens: 草稿模型实际提出的 K 个 token_id, shape [K]
 
+    Returns:
+        dict: 包含最终 token 序列、接受数量、拒绝状态和检查位置。
+    &quot;&quot;&quot;
+    if draft_probs.dim() != 2 or target_probs.dim() != 2:
+        raise ValueError('概率张量必须是二维 [K, vocab]')
+    K, vocab_size = draft_probs.shape
+    if target_probs.shape != (K + 1, vocab_size) or len(draft_tokens) != K:
+        raise ValueError('draft/target/token 的长度或词表维度不匹配')
+    if not (torch.isfinite(draft_probs).all() and torch.isfinite(target_probs).all()):
+        raise ValueError('概率分布不能包含 NaN 或 Inf')
+    # TODO 1: 检查概率非负，并验证每一行和约等于 1
+    # 提示：归一化检查使用与输入相同 device / dtype 的全 1 张量。
+    # if ...:
+    #     raise ValueError('输入必须是归一化概率分布')
+    accepted_tokens = []
 
+    for i in range(K):
+        token_id = draft_tokens[i]
+
+        if not 0 &lt;= int(token_id) &lt; vocab_size:
+            raise ValueError('draft token id 超出词表范围')
+        p = target_probs[i, token_id]
+        q = draft_probs[i, token_id]
+
+        # ==========================================
+        # TODO 2: 计算 alpha，并据此决定当前候选是否接受
+        # 提示：alpha = min(1, p / q)；q=0 时先处理除零边界。
+        # 接受后追加当前 token 并继续；拒绝后进入 TODO 3。
+        # r = torch.rand((), generator=generator).item()
+        # if ...:
+        #     accepted_tokens.append(int(token_id))
+        #     continue
+        # ==========================================
+        # TODO 3: 拒绝时从 residual=max(p-q, 0) 归一化后采样
+        # residual = ???
+        # residual_mass = ???  # 先确认存在可采样的剩余概率质量
+        # if residual_mass &lt;= 0:
+        #     raise ValueError('residual 概率质量必须大于 0')
+        # correction = torch.multinomial(???, 1, generator=generator).item()
+        # return {'tokens': accepted_tokens + [correction], 'accepted_count': len(accepted_tokens), 'rejected': True, 'target_positions_checked': i + 1}
+        pass
+
+    # TODO 4: 全部接受后，从 target_probs[K] 采样 bonus token
+    # bonus = torch.multinomial(???, 1, generator=generator).item()
+    # return {'tokens': accepted_tokens + [bonus], 'accepted_count': K, 'rejected': False, 'target_positions_checked': K}
+
+</code></pre></details><details><summary>题目与测试代码 · Cell 6</summary><pre><code>def test_speculative_decoding():
+    try:
+        torch.manual_seed(42)
+        vocab_size = 5
+        K = 3
+
+        # 模拟生成
+        draft_tokens = [0, 1, 2]
+        draft_probs = torch.zeros(K, vocab_size)
+        target_probs = torch.zeros(K + 1, vocab_size)
+        draft_probs[0, 0] = 1.0; target_probs[0, 0] = 1.0  # 必接受
+        draft_probs[1, 1] = 1.0; target_probs[1, 3] = 1.0  # 必拒绝，residual 采样 3
+        draft_probs[2, 2] = 1.0; target_probs[2, 2] = 1.0
+        target_probs[3, 4] = 1.0  # 全部接受时的 bonus token
+
+        result = speculative_decode_step(draft_probs, target_probs, draft_tokens)
+        assert result['tokens'] == [0, 3] and result['accepted_count'] == 1 and result['rejected']
+        all_accepted = speculative_decode_step(target_probs[:K], target_probs, [0, 3, 2])
+        assert all_accepted['tokens'] == [0, 3, 2, 4] and not all_accepted['rejected']
+
+        # q=0 且 p&gt;0：候选仍可直接接受，避免除零后错误拒绝
+        zero_q_draft = torch.tensor([[0.0, 1.0, 0.0]])
+        zero_q_target = torch.tensor([[0.5, 0.5, 0.0], [0.0, 1.0, 0.0]])
+        zero_q = speculative_decode_step(zero_q_draft, zero_q_target, [0])
+        assert zero_q['accepted_count'] == 1 and not zero_q['rejected']
+
+        # 非法概率必须在进入接受逻辑前被拒绝
+        invalid = zero_q_draft.clone()
+        invalid[0, 0] = -0.1
+        try:
+            speculative_decode_step(invalid, zero_q_target, [0])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('负概率应明确被拒绝')
+
+        # 草稿提出了 q=0 且目标也为 0 的不可能 token，residual 没有可采样质量
+        zero_residual_draft = torch.tensor([[1.0, 0.0]])
+        zero_residual_target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+        try:
+            speculative_decode_step(zero_residual_draft, zero_residual_target, [1])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('residual 概率质量为 0 时应明确报错')
+        print(&quot;✅ 测试通过！接受、residual correction 和 bonus token 均通过。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码。&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了操作错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        elif isinstance(e, AssertionError):
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        elif isinstance(e, RuntimeError):
+            print(&quot;代码可能未完成，导致了运行时错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+
+test_speculative_decoding()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="speculative-direct-accept">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：读取对应 token 的 p、q；当 p &gt;= q 时 append token_id</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先对齐当前位置：p 不小于 q 时，当前草稿必接受</h2>
 
@@ -1122,22 +1334,14 @@ for i, item_id in enumerate(chosen_items):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="speculative-direct-accept-0">
-                <span>完成 TODO 1 的 if 分支，只在 p&gt;=q 时 append；不要在该分支消耗随机数。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="speculative-direct-accept-1">
-                <span>手工核对可见测试第 0 项：行 0、列 10，p=0.8、q=0.5，应无条件接受 token 10。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="speculative-direct-accept-2">
-                <span>若 accepted_tokens 中出现错误 token，检查 append 的是不是 token_id；若第一项触发随机数，检查比较方向是否写反。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="speculative-random-stop">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：r = torch.rand(1).item()；r &lt; p/q 时接受，否则 break</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>p 小于 q 时掷一次硬币；一旦拒绝，后续草稿全部停止</h2>
 
@@ -1239,15 +1443,7 @@ print(passed)  # [0]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="speculative-random-stop-0">
-                <span>完成 TODO 2：只在 p&lt;q 时生成一个随机数，r&lt;p/q 则 append，否则 break。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="speculative-random-stop-1">
-                <span>按可见测试走表：第 0 项必接受，第 1 项用 r=0.5 接受，第 2 项用 r=0.9 拒绝，最终严格等于 [10,20]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="speculative-random-stop-2">
-                <span>若结果包含 40，检查是否误用 continue；若第 1 项被拒绝，检查随机数调用是否被第 0 项提前消耗或比较符号是否写反。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1271,16 +1467,29 @@ print(passed)  # [0]</code></pre></div>
     const predictData = {"speculative-direct-accept":{"answer":0,"revealNote":"p>=q 时 min(1,p/q)=1，没有随机拒绝的可能。"},"speculative-random-stop":{"answer":0,"revealNote":"p/q≈0.11，r=0.9 不小于接受概率；当前拒绝后后续草稿前缀失效，必须 break。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 6;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "23";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-cd5d34dea4cd";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 840" role="img" aria-labelledby="title desc">
+  <title id="title">MoE and Sparsity Evolution</title>
+  <desc id="desc">Dense FFN evolves into routed sparse experts, with top-k selection, load balancing, and expert parallel execution.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#fff1f2"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
+      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
+      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
+      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
+      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .blue { stroke: #2563eb; stroke-width: 4; fill: none; marker-end: url(#arrowBlue); }
+      .pink { stroke: #db2777; stroke-width: 4; fill: none; marker-end: url(#arrowPink); }
+      .green { stroke: #16a34a; stroke-width: 4; fill: none; marker-end: url(#arrowGreen); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowPink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#db2777"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <rect width="1660" height="840" fill="url(#bg)"/>
+  <text x="64" y="66" class="title">MoE / Sparsity evolution</text>
+  <text x="64" y="96" class="sub">From dense FFN to sparse routing, then to balanced dispatch and expert parallel execution</text>
+
+  <rect x="70" y="160" width="280" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="210" y="200" text-anchor="middle" class="label">Dense FFN</text>
+  <text x="210" y="228" text-anchor="middle" class="small">every token uses the same MLP</text>
+  <text x="210" y="250" text-anchor="middle" class="small">simple, stable, but expensive</text>
+
+  <rect x="400" y="160" width="280" height="110" class="box" fill="#ecfccb" stroke="#65a30d"/>
+  <text x="540" y="200" text-anchor="middle" class="label">Router + Experts</text>
+  <text x="540" y="228" text-anchor="middle" class="small">token selects a few experts</text>
+  <text x="540" y="250" text-anchor="middle" class="small">capacity grows faster than compute</text>
+
+  <rect x="730" y="160" width="280" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="870" y="200" text-anchor="middle" class="label">Top-k + Balance</text>
+  <text x="870" y="228" text-anchor="middle" class="small">avoid expert collapse</text>
+  <text x="870" y="250" text-anchor="middle" class="small">keep expert usage spread out</text>
+
+  <rect x="1060" y="160" width="280" height="110" class="box" fill="#fff1f2" stroke="#e11d48"/>
+  <text x="1200" y="200" text-anchor="middle" class="label">Expert Parallel</text>
+  <text x="1200" y="228" text-anchor="middle" class="small">dispatch / gather across devices</text>
+  <text x="1200" y="250" text-anchor="middle" class="small">communication becomes first-class</text>
+
+  <rect x="1390" y="160" width="200" height="110" class="box" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="1490" y="200" text-anchor="middle" class="label">System cost</text>
+  <text x="1490" y="228" text-anchor="middle" class="small">latency / throughput</text>
+  <text x="1490" y="250" text-anchor="middle" class="small">training + inference</text>
+
+  <path d="M 350 215 L 400 215" class="arrow"/>
+  <path d="M 680 215 L 730 215" class="blue"/>
+  <path d="M 1010 215 L 1060 215" class="pink"/>
+  <path d="M 1340 215 L 1390 215" class="green"/>
+
+  <rect x="90" y="350" width="440" height="250" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="310" y="392" text-anchor="middle" class="label">Sparse routing pipeline</text>
+  <text x="130" y="432" class="small">token hidden -> router logits -> softmax</text>
+  <text x="130" y="464" class="small">top-k experts -> dispatch token to selected experts</text>
+  <text x="130" y="496" class="small">experts compute specialized transformations</text>
+  <text x="130" y="528" class="small">outputs are weighted and combined</text>
+  <text x="130" y="560" class="small">this keeps activation sparse while capacity stays large</text>
+
+  <rect x="585" y="350" width="450" height="250" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="810" y="392" text-anchor="middle" class="label">Why load balancing matters</text>
+  <text x="620" y="432" class="small">- prevents a few hot experts from taking all tokens</text>
+  <text x="620" y="464" class="small">- keeps all experts useful during training</text>
+  <text x="620" y="496" class="small">- stabilizes sparse routing under long training runs</text>
+  <text x="620" y="528" class="small">- makes MoE capacity actually usable</text>
+  <text x="620" y="560" class="small">this is why router loss and auxiliary loss matter</text>
+
+  <rect x="1085" y="350" width="490" height="250" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1330" y="392" text-anchor="middle" class="label">Where it meets system design</text>
+  <text x="1120" y="432" class="small">dispatch / gather creates communication overhead</text>
+  <text x="1120" y="464" class="small">expert parallel is needed for larger expert counts</text>
+  <text x="1120" y="496" class="small">benchmarking must include latency, throughput, and utilization</text>
+  <text x="1120" y="528" class="small">MoE is both a model design and a systems problem</text>
+  <text x="1120" y="560" class="small">DeepSeek / Mixtral / GShard live on this path</text>
+</svg>

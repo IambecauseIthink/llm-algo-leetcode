@@ -1,0 +1,66 @@
+<svg width="1280" height="920" viewBox="0 0 1280 920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="920" fill="#F6F8FB"/>
+  <rect x="44" y="36" width="1192" height="840" rx="28" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+
+  <text x="88" y="86" fill="#0F172A" font-size="30" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">Decode 调度：请求如何被选择和推进</text>
+  <text x="88" y="120" fill="#475569" font-size="18" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">请求携带状态进入队列，调度器反复选择并推进。</text>
+
+  <rect x="88" y="176" width="236" height="76" rx="16" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
+  <text x="142" y="207" fill="#334155" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">解码规则</text>
+  <text x="142" y="233" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">采样 · 贪心</text>
+
+  <rect x="386" y="176" width="236" height="76" rx="16" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
+  <text x="432" y="207" fill="#334155" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">生成步幅</text>
+  <text x="432" y="233" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">单 Token · 多 Token</text>
+
+  <rect x="684" y="176" width="236" height="76" rx="16" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
+  <text x="728" y="207" fill="#334155" font-size="20" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">草稿验证</text>
+  <text x="728" y="233" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">候选 token：接受或拒绝</text>
+
+  <path d="M206 252V300M504 252V300H206M802 252V300H206M206 300V338" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 7"/>
+  <path d="M198 324L206 338L214 324" fill="#64748B"/>
+
+  <rect x="88" y="370" width="310" height="230" rx="20" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+  <text x="116" y="414" fill="#075985" font-size="25" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">请求</text>
+  <text x="116" y="440" fill="#0369A1" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">进入活动队列的状态对象</text>
+  <rect x="116" y="458" width="254" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="132" y="480" fill="#0F172A" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">① 输入：编号 · 输入长度</text>
+  <rect x="116" y="498" width="254" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="132" y="520" fill="#0F172A" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">② 状态：阶段 · 生成进度</text>
+  <rect x="116" y="538" width="254" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="132" y="560" fill="#0F172A" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">③ 约束：生成上限 · 缓存 · 优先级</text>
+
+  <rect x="468" y="370" width="360" height="230" rx="20" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+  <text x="500" y="414" fill="#92400E" font-size="25" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">调度</text>
+  <text x="500" y="440" fill="#78350F" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">从活动请求中决定下一步推进谁</text>
+  <rect x="500" y="458" width="296" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="516" y="480" fill="#78350F" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">① 读取：过滤未完成请求</text>
+  <rect x="500" y="498" width="296" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="516" y="520" fill="#78350F" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">② 比较：阶段 · 缓存 · 优先级 · 长度</text>
+  <rect x="500" y="538" width="296" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="516" y="560" fill="#78350F" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">③ 选择：排序最前者，每步重选</text>
+
+  <rect x="898" y="370" width="254" height="230" rx="20" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="930" y="414" fill="#9D174D" font-size="25" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif" font-weight="700">结果</text>
+  <text x="930" y="440" fill="#9D174D" font-size="15" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">一次调度产生一个事件</text>
+  <rect x="930" y="458" width="190" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="946" y="480" fill="#9D174D" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">事件：状态推进</text>
+  <rect x="930" y="498" width="190" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="946" y="520" fill="#9D174D" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">记录：进度 · 等待</text>
+  <rect x="930" y="538" width="190" height="32" rx="8" fill="#FFFFFF"/>
+  <text x="946" y="560" fill="#9D174D" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">更新：进入下一轮</text>
+
+  <path d="M398 485H468" stroke="#475569" stroke-width="3"/>
+  <path d="M454 477L468 485L454 493" fill="#475569"/>
+  <path d="M828 485H898" stroke="#475569" stroke-width="3"/>
+  <path d="M884 477L898 485L884 493" fill="#475569"/>
+
+  <path d="M1025 600V680H648V600" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 7"/>
+  <path d="M640 616L648 600L656 616" fill="#64748B"/>
+  <text x="748" y="710" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">结果更新后，回到下一轮调度</text>
+
+  <line x1="88" y1="792" x2="174" y2="792" stroke="#475569" stroke-width="3"/>
+  <text x="188" y="798" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">实线：请求状态流向调度与结果</text>
+  <line x1="568" y1="792" x2="654" y2="792" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 7"/>
+  <text x="668" y="798" fill="#475569" font-size="16" font-family="Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif">虚线：前置信息输入或结果回流到下一轮</text>
+</svg>

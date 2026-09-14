@@ -1,0 +1,44 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F7F4EC"/>
+  <rect x="56" y="48" width="1168" height="624" rx="28" fill="#FFFDF7" stroke="#1F2937" stroke-width="2"/>
+  <text x="88" y="98" fill="#111827" font-size="30" font-family="Arial, sans-serif" font-weight="700">VRAM Ledger: Which Object Is Filling the Budget?</text>
+  <text x="88" y="130" fill="#4B5563" font-size="18" font-family="Arial, sans-serif">Memory optimization starts by decomposing peak usage into objects. Without the ledger, every later action becomes blind trial-and-error.</text>
+
+  <rect x="100" y="186" width="1080" height="80" rx="20" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+  <text x="130" y="233" fill="#1E3A8A" font-size="24" font-family="Arial, sans-serif" font-weight="700">Total GPU Memory Budget</text>
+
+  <rect x="100" y="302" width="230" height="242" rx="22" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+  <text x="126" y="340" fill="#92400E" font-size="22" font-family="Arial, sans-serif" font-weight="700">Parameters</text>
+  <text x="126" y="374" fill="#92400E" font-size="16" font-family="Arial, sans-serif">resident model weights</text>
+  <text x="126" y="404" fill="#92400E" font-size="16" font-family="Arial, sans-serif">mostly static during a run</text>
+  <text x="126" y="452" fill="#92400E" font-size="16" font-family="Arial, sans-serif">Typical actions:</text>
+  <text x="126" y="478" fill="#92400E" font-size="16" font-family="Arial, sans-serif">• sharding</text>
+  <text x="126" y="502" fill="#92400E" font-size="16" font-family="Arial, sans-serif">• weight quantization</text>
+
+  <rect x="362" y="302" width="230" height="242" rx="22" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <text x="388" y="340" fill="#166534" font-size="22" font-family="Arial, sans-serif" font-weight="700">Optimizer / Gradients</text>
+  <text x="388" y="374" fill="#166534" font-size="16" font-family="Arial, sans-serif">training-side resident states</text>
+  <text x="388" y="404" fill="#166534" font-size="16" font-family="Arial, sans-serif">grow with trainable params</text>
+  <text x="388" y="452" fill="#166534" font-size="16" font-family="Arial, sans-serif">Typical actions:</text>
+  <text x="388" y="478" fill="#166534" font-size="16" font-family="Arial, sans-serif">• ZeRO / sharding</text>
+  <text x="388" y="502" fill="#166534" font-size="16" font-family="Arial, sans-serif">• optimizer offload</text>
+
+  <rect x="624" y="302" width="230" height="242" rx="22" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+  <text x="650" y="340" fill="#9D174D" font-size="22" font-family="Arial, sans-serif" font-weight="700">Activations</text>
+  <text x="650" y="374" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">training forward/backward</text>
+  <text x="650" y="404" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">intermediate states</text>
+  <text x="650" y="452" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">Typical actions:</text>
+  <text x="650" y="478" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">• checkpointing</text>
+  <text x="650" y="502" fill="#9D174D" font-size="16" font-family="Arial, sans-serif">• activation offload</text>
+
+  <rect x="886" y="302" width="294" height="242" rx="22" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="912" y="340" fill="#5B21B6" font-size="22" font-family="Arial, sans-serif" font-weight="700">KV Cache / Buffers / Fragmentation</text>
+  <text x="912" y="374" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">inference-side growing cache</text>
+  <text x="912" y="404" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">plus allocator / backend overhead</text>
+  <text x="912" y="452" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">Typical actions:</text>
+  <text x="912" y="478" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• paging / reuse / scheduling</text>
+  <text x="912" y="502" fill="#5B21B6" font-size="16" font-family="Arial, sans-serif">• KV cache quantization</text>
+
+  <rect x="100" y="590" width="1080" height="40" rx="14" fill="#ECFCCB" stroke="#65A30D" stroke-width="1.5"/>
+  <text x="126" y="616" fill="#365314" font-size="17" font-family="Arial, sans-serif">Routing rule: first identify which object dominates peak memory, then choose between sharding, recompute, offload, paging, or quantization.</text>
+</svg>

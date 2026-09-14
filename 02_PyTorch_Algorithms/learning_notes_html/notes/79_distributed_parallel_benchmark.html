@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 79 | Distributed Parallel Benchmark | 分布式并行基准</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+  <style>
+
+    .hero,
+    .hero > *,
+    .hero .meta,
+    .hero .map-steps {
+      min-width: 0;
+    }
+    .hero .formula,
+    .hero .pill {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry,
+    .lesson-card.inquiry .lesson-top,
+    .lesson-card.inquiry .gated,
+    .lesson-card.inquiry .lesson-section {
+      min-width: 0;
+    }
+    .lesson-card.inquiry .todo-pill,
+    .lesson-card.inquiry h2,
+    .lesson-card.inquiry code {
+      overflow-wrap: anywhere;
+    }
+    .lesson-card.inquiry .predict-option > span,
+    .lesson-card.inquiry .checkpoint-option > span,
+    .lesson-card.inquiry .homework-item > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .adv-course,
+    .adv-practice {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+    .adv-course > *,
+    .adv-practice > *,
+    .adv-roadmap,
+    .adv-contract,
+    .adv-callout {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .adv-course h4,
+    .adv-practice h4 {
+      margin: 0;
+      font-size: 17px;
+      color: #182033;
+    }
+    .adv-course p,
+    .adv-practice p { margin: 0; }
+    .adv-roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      border: 1px solid #cdd9ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f7faff;
+    }
+    .adv-roadmap > span {
+      min-height: 78px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      border-right: 1px solid #cdd9ef;
+      color: #42516b;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .adv-roadmap > span:last-child { border-right: 0; }
+    .adv-roadmap b {
+      color: #1d4ed8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-grid {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .adv-panel,
+    .adv-example,
+    .adv-map {
+      padding: 14px;
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+    .adv-panel.neutral { border-top: 4px solid #657184; }
+    .adv-panel.good,
+    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
+    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
+    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
+    .adv-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .adv-flow > span,
+    .adv-flow > strong {
+      min-height: 62px;
+      padding: 9px;
+      border: 1px solid #dce3eb;
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .adv-flow > strong {
+      border-color: #99d6bf;
+      background: #e9f7f0;
+      color: #125b45;
+    }
+    .adv-contract {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
+      border: 1px solid #dce3eb;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .adv-contract > span,
+    .adv-contract > strong {
+      min-height: 48px;
+      padding: 10px 12px;
+      display: grid;
+      align-items: center;
+      border-bottom: 1px solid #dce3eb;
+      line-height: 1.45;
+    }
+    .adv-contract > span {
+      border-right: 1px solid #dce3eb;
+      background: #f7f9fc;
+      color: #526077;
+      font-weight: 800;
+    }
+    .adv-contract > strong {
+      overflow-wrap: anywhere;
+    }
+    .adv-contract > span:nth-last-child(-n+2),
+    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
+    .adv-contract code,
+    .adv-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .adv-shapes {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      border: 1px solid #dce3eb;
+    }
+    .adv-shapes th,
+    .adv-shapes td {
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    .adv-shapes th {
+      background: #eaf1ff;
+      color: #1d4ed8;
+    }
+    .adv-shapes code { white-space: normal; }
+    .adv-steps {
+      display: grid;
+      gap: 8px;
+    }
+    .adv-steps > div {
+      display: grid;
+      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .adv-steps > div > b {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2563eb;
+      color: #fff;
+    }
+    .adv-steps code {
+      color: #172033;
+      font-weight: 800;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .adv-steps span { color: #5f6d82; }
+    .adv-callout {
+      padding: 12px 14px;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      background: #fff6e7;
+      color: #74400d;
+      line-height: 1.6;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .adv-map { background: #f7f9fc; }
+    .adv-map ul,
+    .adv-map ol { margin: 0; padding-left: 20px; }
+    .adv-map li { margin: 6px 0; line-height: 1.5; }
+    .adv-practice {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .adv-practice .syntax-card { margin-top: 0; }
+    .adv-checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .adv-checks > span {
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid #dce3eb;
+      border-radius: 7px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 760px) {
+      .adv-grid.two,
+      .adv-grid.three,
+      .adv-practice { grid-template-columns: 1fr; }
+      .adv-roadmap { grid-template-columns: 1fr; }
+      .adv-roadmap > span {
+        border-right: 0;
+        border-bottom: 1px solid #cdd9ef;
+      }
+      .adv-roadmap > span:last-child { border-bottom: 0; }
+      .adv-contract { grid-template-columns: 1fr; }
+      .adv-contract > span { border-right: 0; }
+      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
+      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
+      .adv-steps > div > span { grid-column: 2; }
+      .adv-shapes { font-size: 13px; }
+      .adv-shapes th,
+      .adv-shapes td { padding: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+        <span class="pill" id="predict-count">预判 0 / 3</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 79 | 零基础导学关卡</p>
+        <h1>Distributed Parallel Benchmark | 分布式并行基准</h1>
+        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <div class="meta">
+          <span class="pill">79_Distributed_Parallel_Benchmark.ipynb</span>
+          <span class="pill">并行通信</span><span class="pill">分布式</span><span class="pill">基准对比</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">先猜一猜</div>
+          <div class="map-step">图解原理</div>
+          <div class="map-step">巩固 + 作业</div>
+        </div>
+        <div class="formula">parallel value = memory/throughput gain - communication/scheduling cost</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="0849d10941b3689e181c78970f973e1abf9522a209e06c355e53d93044367fc6">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../79_Distributed_Parallel_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>79. Distributed Parallel Benchmark | 分布式并行基准</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>分布式</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节要求你在统一 workload 下比较 ZeRO、Pipeline Parallelism 和 Tensor Parallelism。先明确模型规模、显存上限与吞吐目标，再记录各方案的显存、吞吐、延迟、通信量和 pipeline bubble。最终输出并行策略选择，并说明结论受哪些模型和硬件条件限制。
+<strong>层级定位：</strong> 本项目主落在 L3 分布式运行时，依赖 L2 的 NCCL 等通信库和 L1 的互联拓扑；集群资源申请、作业排队和跨团队资源治理属于 L5，不由本 benchmark 单独证明。
+<strong>主责与复用边界：</strong> 本项目主责是参数、梯度和 optimizer state 的切分、通信与扩展效率；显存优化路线复用各 rank 的显存分摊，性能分析专题复用通信等待和 trace 口径，推理服务的副本路由不在本项目内验证。</p>
+<p><strong>关键词：</strong> <code>distributed training</code>, <code>benchmark</code>, <code>parallelism</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 先做 warmup，再测量平均耗时</li><li>TODO 2: 汇总 baseline / parallel 的核心指标差异</li><li>TODO 3: 生成并行策略选型报告</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先把三类并行策略和通信 / profiling 的最小口径理顺，再进入并行 benchmark 项目会更容易把显存、吞吐和通信代价区分开。</p>
+<ul>
+<li><a href="27_zero_optimizer_sim.html">27. ZeRO Optimizer Sim | ZeRO 优化器模拟</a></li>
+<li><a href="28_pipeline_parallelism_microbatch.html">28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次</a></li>
+<li><a href="29_tensor_parallelism_sim.html">29. Tensor Parallelism Sim | Tensor 并行模拟</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb">P1: 05. Communication Topologies | 通信拓扑与分布式基石</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成并行策略 benchmark 后，用 80 继续检查 MoE 专家并行的通信与负载均衡；如果需要验证端到端收益，再交给 74 做 profiling 闭环。</p>
+<ul>
+<li><a href="80_moe_expert_parallel_benchmark.html">80. MoE Expert Parallel Benchmark | MoE 专家并行基准</a></li>
+<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling-Driven End-to-End Optimization | 端到端 profiling 优化</a></li>
+</ul>
+<hr>
+<h3>Step 1: 定义 distributed benchmark 目标</h3>
+<p>先回答一个问题：在同一模型、同一输入和同一硬件条件下，哪种并行策略更适合当前瓶颈？</p>
+<ul>
+<li>固定模型结构、参数量、输入长度、global batch size、micro-batch 数和训练 step 数。</li>
+<li>固定硬件环境、GPU 数、网络拓扑和运行后端，避免把环境差异误判为策略收益。</li>
+<li>统一记录 peak memory、throughput、latency / step time、communication overhead 和是否稳定收敛。</li>
+<li>先写清约束条件，例如单卡显存上限、最低吞吐要求、最大可接受延迟或通信占比。</li>
+<li>这一步的目标是保证 ZeRO、Pipeline、Tensor Parallelism 能在同一口径下比较。</li>
+</ul>
+<h3>Step 2: 先确认 workload 和评测口径合法</h3>
+<p>分布式并行 benchmark 必须先确认 workload、硬件环境和通信条件可复现，不能直接把不同 GPU 数、不同拓扑或不同 batch 的结果放在一起比较。</p>
+<ul>
+<li>固定模型结构、参数量、输入长度、global batch size、micro-batch 数、训练 step 数和硬件环境，保证 baseline 与 candidate 的改动边界清晰。</li>
+<li>ZeRO、Pipeline 和 Tensor Parallelism 的指标必须来自同一套评测字段，避免把不同实验口径拼成一张表。</li>
+<li>每种策略至少都要有 baseline 与 candidate 两组结果，避免只描述理论收益。</li>
+<li>如果 baseline 自身波动很大，后面的并行收益与通信结论就没有解释空间。</li>
+</ul>
+<h3>Step 3: 用统一口径比较收益与代价</h3>
+<p>分布式并行项目必须同时看 peak memory、throughput、latency 和 communication overhead，不能只挑显存或单项吞吐收益下结论。</p>
+<ul>
+<li>如果 peak memory 降了但 throughput 也下降，要判断通信或调度开销是否抵消了显存收益。</li>
+<li>如果 throughput 提升但 latency 变差，要说明这个策略更适合离线训练还是在线服务。</li>
+<li>如果通信占比过高，要记录瓶颈来自 All-Reduce、All-Gather、Reduce-Scatter 还是 pipeline bubble。</li>
+<li>如果某个策略只在大 batch 或特定模型规模下有效，要写清适用条件。</li>
+<li>这一阶段的产物应该是“收益 + 代价 + 适用条件”，而不是只输出排行榜。</li>
+</ul>
+<h3>Step 4: 输出选型结论</h3>
+<p>并行策略最终不是输出“哪个方案更高级”，而是输出它在当前 workload 和通信条件下是否值得继续保留、微调或采用。</p>
+<ul>
+<li>输出 ZeRO / Pipeline / Tensor Parallelism 的对比表，至少包含 peak memory、throughput、latency 和 communication overhead。</li>
+<li>写清楚每种策略适合什么模型规模、显存瓶颈和通信条件。</li>
+<li>给出“什么时候选它、什么时候别选它”的结论。</li>
+<li>如果后面要扩展 FSDP、sequence parallel 或 expert parallel，就沿用同一套评测字段。</li>
+<li>最终产物应回答：当前 workload 下推荐哪种并行策略，理由是什么，下一轮需要验证什么。</li>
+</ul>
+<h3>Step 5: 最小代码模板</h3>
+<p>上面的 Step 1-4 是完整分布式并行 benchmark 流程。下面的代码只实现其中最小、可复用的三块：测平均耗时、汇总 baseline / parallel 指标差异、生成并行策略报告。真实项目中的多卡启动、通信 trace 和 profiler 截图，需要基于这三个结果继续补充。</p>
+<h3>测试</h3>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>def benchmark_fn(fn, warmup=2, iters=5):
+    &quot;&quot;&quot;null&quot;&quot;&quot;
+    # ==========================================
+    # TODO 1: 先做 warmup，再测量平均耗时
+    # 提示: 用 time.perf_counter() 记录起止时间
+    # 返回单位统一为 ms，方便和 latency / step time 对齐
+    # ==========================================
+    for _ in range(warmup):
+        fn()
+
+    # start = ???
+    for _ in range(iters):
+        fn()
+    # total = ???
+    # avg_time_ms = ???
+    return avg_time_ms
+
+
+def summarize_parallel_result(base_metrics, parallel_metrics):
+    &quot;&quot;&quot;null&quot;&quot;&quot;
+    # ==========================================
+    # TODO 2: 汇总 baseline / parallel 的核心指标差异
+    # 提示: memory / latency / communication 越低越好，throughput 越高越好
+    # 正数表示 parallel 相比 baseline 有改善
+    # ==========================================
+    # memory_delta = ???
+    # throughput_delta = ???
+    # latency_delta = ???
+    # communication_delta = ???
+
+    summary = {
+        'memory_delta_mb': round(memory_delta, 2),
+        'throughput_delta': round(throughput_delta, 2),
+        'latency_delta_ms': round(latency_delta, 2),
+        'communication_delta_ms': round(communication_delta, 2),
+        'memory_improved': memory_delta &gt; 0,
+        'throughput_improved': throughput_delta &gt; 0,
+        'latency_improved': latency_delta &gt; 0,
+        'communication_improved': communication_delta &gt; 0,
+    }
+    return summary
+
+
+def format_parallel_report(strategy_name, summary, recommendation):
+    &quot;&quot;&quot;null&quot;&quot;&quot;
+    # ==========================================
+    # TODO 3: 生成并行策略选型报告
+    # 提示: 把策略名、核心指标变化和推荐结论放在一起
+    # ==========================================
+    header = &quot;| 指标 | 变化 | 判断 |&quot;
+    sep = &quot;| --- | --- | --- |&quot;
+    # rows = ???
+    # conclusion = ???
+    return &quot;\n&quot;.join([f&quot;策略：{strategy_name}&quot;, header, sep] + rows + [conclusion])
+</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code>def test_parallel_project_template():
+    try:
+        counter = {'n': 0}
+
+        def fn():
+            counter['n'] += 1
+
+        avg = benchmark_fn(fn, warmup=0, iters=2)
+        assert counter['n'] == 2, &quot;benchmark 应该运行 iters 次&quot;
+        assert avg &gt;= 0.0, &quot;平均耗时应该非负&quot;
+
+        baseline = {
+            'peak_mem_mb': 12000.0,
+            'throughput': 80.0,
+            'latency_ms': 120.0,
+            'communication_ms': 30.0,
+        }
+        parallel = {
+            'peak_mem_mb': 9000.0,
+            'throughput': 100.0,
+            'latency_ms': 96.0,
+            'communication_ms': 24.0,
+        }
+        summary = summarize_parallel_result(baseline, parallel)
+
+        assert summary['memory_delta_mb'] == 3000.0
+        assert summary['throughput_delta'] == 20.0
+        assert summary['latency_delta_ms'] == 24.0
+        assert summary['communication_delta_ms'] == 6.0
+        assert summary['memory_improved'] is True
+        assert summary['throughput_improved'] is True
+        assert summary['latency_improved'] is True
+        assert summary['communication_improved'] is True
+
+        report = format_parallel_report('Tensor Parallelism', summary, '当前单层矩阵较大，优先保留 TP 并继续观察 All-Reduce')
+        assert 'Tensor Parallelism' in report
+        assert '| 指标 | 变化 | 判断 |' in report
+        assert 'All-Reduce' in report
+
+        print(&quot;✅ 分布式并行基准项目模板代码通过基础校验。&quot;)
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print(&quot;代码可能未完成，导致变量未定义&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+
+
+test_parallel_project_template()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card inquiry" data-lesson="parallel-benchmark-fairness">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>公平比较从计时开始：同一 workload、同一单位、同一轮次</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">warmup=0、iters=2，fn 每调用一次就让 counter 加 1。</p>
+            <p class="predict-q">函数返回前 counter 应该是多少？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="0">
+                <span>2</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="1">
+                <span>0</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-benchmark-fairness" value="2">
+                <span>4</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="parallel-benchmark-fairness">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="parallel-benchmark-fairness">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>并行策略比较必须固定模型、输入、global batch、硬件数量和后端，否则差异无法归因。</li><li>warmup 调用不计时，正式 iters 调用才构成 total。</li><li>time.perf_counter() 的差值单位是秒，报告中的 latency 使用毫秒。</li><li>本 Notebook 是 CPU-first 最小模板，不会真的启动 ZeRO、Pipeline 或 Tensor Parallel 多卡进程。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>选择并行策略像比较三种运输方案：货物、路程和车辆数量都相同，时间才有可比性。代码里的 benchmark_fn 只是共同秒表；真正的公平性还来自 Step 1 固定 workload 的实验纪律。</p>
+              <div class="adv-course">
+        <div class="adv-grid two">
+          <section class="adv-panel blue">
+            <h4>代码层计时契约</h4>
+            <div class="adv-flow">
+              <span>warmup 次<br>不统计</span>
+              <span>perf_counter<br>开始</span>
+              <span>iters 次<br>正式运行</span>
+              <strong>平均 latency<br>ms</strong>
+            </div>
+          </section>
+          <section class="adv-panel good">
+            <h4>实验层公平契约</h4>
+            <div class="adv-checks">
+              <span>模型与输入一致</span>
+              <span>global batch 一致</span>
+              <span>GPU 数与拓扑一致</span>
+              <span>运行后端一致</span>
+            </div>
+          </section>
+        </div>
+
+        <div class="adv-contract">
+          <span><code>fn</code></span><strong>待测的一次完整工作负载</strong>
+          <span><code>warmup=2</code></span><strong>默认先运行两次，不进入平均值</strong>
+          <span><code>iters=5</code></span><strong>默认正式运行五次</strong>
+          <span><code>avg_time_ms</code></span><strong>每次平均耗时，非负浮点数</strong>
+        </div>
+
+        <div class="adv-callout">真实 GPU 多卡 benchmark 还需要同步、通信 trace 和稳定性检查。当前 TODO 只要求实现 CPU 计时骨架，先通过它建立可复用的评测入口。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用排序算法练习统一计时入口</h4><pre><code>import time
+
+def average_ms(task, warmup=2, trials=5):
+    for _ in range(warmup):
+        task()
+
+    start = time.perf_counter()
+    for _ in range(trials):
+        task()
+    total_seconds = time.perf_counter() - start
+    return total_seconds / trials * 1000</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>task/trials</code> 对应 <code>fn/iters</code>。</li>
+            <li><code>total_seconds</code> 对应 TODO 的 <code>total</code>，其单位仍是秒。</li>
+            <li>返回表达式对应 <code>avg_time_ms</code>：除以正式轮次，再乘 1000。</li>
+            <li>测试用 counter 验证调用次数，因此不能把 warmup 循环移动到正式计时循环内部。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>只把 TP 的 batch size 调大后，能否把它和原 baseline 直接比较来证明 TP 更快？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="0">
+                <span>能，只要 throughput 更高</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="1">
+                <span>不能，workload 同时变化，收益无法只归因于 TP</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="2">
+                <span>能，因为 benchmark_fn 会自动修正 batch 差异</span>
+              </label></div>
+              <div class="feedback" data-feedback="parallel-benchmark-fairness"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-benchmark-fairness-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="parallel-four-metric-ledger">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>四本账一起看：显存、吞吐、延迟、通信都统一为正收益</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">baseline communication=20 ms，parallel communication=32 ms。</p>
+            <p class="predict-q">communication_delta 与 communication_improved 是什么？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="0">
+                <span>-12，False</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="1">
+                <span>12，True</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-four-metric-ledger" value="2">
+                <span>-12，True</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="parallel-four-metric-ledger">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="parallel-four-metric-ledger">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>peak_mem_mb、latency_ms、communication_ms 越低越好，使用 baseline - parallel。</li><li>throughput 越高越好，使用 parallel - baseline。</li><li>通信时间下降为正收益；若并行方案引入更多通信，communication_delta 会是负数。</li><li>summary 的键名是后续报告和测试的接口，必须逐字保留。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>并行方案经常用一项资源换另一项资源：更省显存，却增加通信；吞吐变高，却让单请求延迟变差。四项指标放在同一张账本里，才不会把局部收益误判成整体胜利。</p>
+              <div class="adv-course">
+        <table class="adv-shapes">
+          <thead><tr><th>指标</th><th>偏好</th><th>差值公式</th><th>测试数据</th></tr></thead>
+          <tbody>
+            <tr><td>peak memory</td><td>低</td><td><code>base - parallel</code></td><td>12000 - 9000 = 3000 MB</td></tr>
+            <tr><td>throughput</td><td>高</td><td><code>parallel - base</code></td><td>100 - 80 = 20</td></tr>
+            <tr><td>latency</td><td>低</td><td><code>base - parallel</code></td><td>120 - 96 = 24 ms</td></tr>
+            <tr><td>communication</td><td>低</td><td><code>base - parallel</code></td><td>30 - 24 = 6 ms</td></tr>
+          </tbody>
+        </table>
+
+        <div class="adv-grid three">
+          <section class="adv-panel blue">
+            <h4>ZeRO 常看</h4>
+            <p>训练状态切分后的单卡显存，以及 Reduce-Scatter / All-Gather 代价。</p>
+          </section>
+          <section class="adv-panel neutral">
+            <h4>Pipeline 常看</h4>
+            <p>按层切分后的显存、吞吐、stage 等待和 bubble ratio。</p>
+          </section>
+          <section class="adv-panel good">
+            <h4>TP 常看</h4>
+            <p>单层矩阵分摊后的显存与计算，以及 All-Reduce / All-Gather 开销。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">四个 improved 都由对应 delta 是否大于 0 得出。不要让“communication overhead 本来是代价”扰乱公式：这里比较的是代价减少了多少。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用数据库方案练习多指标取舍</h4><pre><code>base = {'memory': 64, 'queries': 120, 'latency': 18}
+candidate = {'memory': 48, 'queries': 150, 'latency': 21}
+
+memory_gain = base['memory'] - candidate['memory']
+query_gain = candidate['queries'] - base['queries']
+latency_gain = base['latency'] - candidate['latency']
+
+tradeoff = {
+    'memory_improved': memory_gain &gt; 0,
+    'queries_improved': query_gain &gt; 0,
+    'latency_improved': latency_gain &gt; 0,
+}</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>memory</code> 对应 <code>peak_mem_mb</code>，低者更好。</li>
+            <li><code>queries</code> 对应 <code>throughput</code>，高者更好。</li>
+            <li><code>latency</code> 对应 <code>latency_ms</code>；再用同样模式加入 <code>communication_ms</code>。</li>
+            <li>将四个原始差值写入已给出的 summary，数值统一 <code>round(..., 2)</code>。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>某方案显存下降 3000 MB，但 communication_delta=-15 ms。正确解读是什么？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="0">
+                <span>四项指标都改善</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="1">
+                <span>通信指标应取绝对值后判定改善</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="2">
+                <span>它省显存，但通信时间增加了 15 ms，需要权衡</span>
+              </label></div>
+              <div class="feedback" data-feedback="parallel-four-metric-ledger"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-four-metric-ledger-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card inquiry" data-lesson="parallel-selection-report">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+          </div>
+          <h2>报告不是排行榜：策略名、四项取舍与推荐条件缺一不可</h2>
+
+          <div class="lesson-section predict">
+            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <p class="predict-hook">summary 中 memory_improved=True，latency_improved=False。</p>
+            <p class="predict-q">报告应如何呈现？</p>
+            <div class="predict-options">
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-selection-report" value="0">
+                <span>memory 写改善，latency 写未改善</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-selection-report" value="1">
+                <span>只保留改善的 memory 行</span>
+              </label>
+              <label class="predict-option">
+                <input type="radio" name="predict-parallel-selection-report" value="2">
+                <span>两行都写改善</span>
+              </label></div>
+            <div class="predict-feedback" data-predict-feedback="parallel-selection-report">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+          </div>
+
+          <div class="gated" data-gated="parallel-selection-report">
+            <div class="lesson-section">
+              <h3>先补的知识</h3>
+              <ul><li>format_parallel_report 接收 strategy_name、summary、recommendation，不能依赖函数外的固定变量。</li><li>rows 要覆盖 memory、throughput、latency、communication 四项。</li><li>每一行既展示 delta，也根据对应布尔键展示改善或未改善。</li><li>返回字符串的第一行先写策略名，再接 Markdown 表格和推荐结论。</li></ul>
+            </div>
+
+            <div class="lesson-section intuition">
+              <h3>图解原理</h3>
+              <p>并行选型没有脱离 workload 的冠军。报告要把策略是谁、改善了什么、牺牲了什么、为什么推荐写在一起。这样同事才能知道这条建议只适用于当前模型规模和通信条件。</p>
+              <div class="adv-course">
+        <div class="adv-roadmap">
+          <span><b>策略名</b>ZeRO / Pipeline / TP</span>
+          <span><b>四项 rows</b>收益和代价同屏</span>
+          <span><b>recommendation</b>说明适用条件</span>
+          <span><b>下一轮</b>指出需继续观察的开销</span>
+        </div>
+
+        <div class="adv-grid two">
+          <section class="adv-panel good">
+            <h4>Notebook 测试要看到</h4>
+            <div class="adv-checks">
+              <span>Tensor Parallelism</span>
+              <span>Markdown 表头</span>
+              <span>四项指标变化</span>
+              <span>All-Reduce 建议</span>
+            </div>
+          </section>
+          <section class="adv-panel warn">
+            <h4>推荐要有边界</h4>
+            <p>“优先保留 TP”不是永恒结论；样例理由是当前单层矩阵较大，同时还要继续观察 All-Reduce。换 workload 后应重新测量。</p>
+          </section>
+        </div>
+
+        <div class="adv-callout">测试会搜索字符串，但不要只拼测试关键字。完整四行让报告在指标不全都改善时仍可用于真实决策。</div>
+      </div>
+              <div class="adv-practice">
+        <div class="syntax-card"><h4>语法热身：用存储方案练习参数化报告</h4><pre><code>plan_name = '分片存储'
+saved_gb = 12
+saved = saved_gb &gt; 0
+rows = [
+    f"| 容量 | {saved_gb} GB | {'改善' if saved else '未改善'} |",
+]
+advice = '适合容量瓶颈，继续观察网络读取'
+
+report = "\n".join(
+    [f"方案：{plan_name}", '| 指标 | 变化 | 判断 |', '| --- | --- | --- |']
+    + rows
+    + [f"推荐结论：{advice}。"]
+)</code></pre></div>
+        <div class="adv-map">
+          <h4>独立例子如何迁移到 Notebook</h4>
+          <ul>
+            <li><code>plan_name</code> 对应 <code>strategy_name</code>，必须来自函数参数。</li>
+            <li>容量单行扩展成 memory、throughput、latency、communication 四行。</li>
+            <li><code>advice</code> 对应 <code>recommendation</code>。</li>
+            <li>第一行前缀改成 Notebook 规定的“策略：”，结论前缀改成“推荐结论：”。</li>
+          </ul>
+        </div>
+      </div>
+            </div>
+
+            <div class="lesson-section checkpoint">
+              <h3>巩固一下</h3>
+              <p>为什么 strategy_name 必须出现在报告里？</p>
+              <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-selection-report" value="0">
+                <span>否则同一份指标无法知道对应 ZeRO、Pipeline 还是 TP</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-selection-report" value="1">
+                <span>因为测试不允许中文结论</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-parallel-selection-report" value="2">
+                <span>因为 join 只能处理带策略名的列表</span>
+              </label></div>
+              <div class="feedback" data-feedback="parallel-selection-report"></div>
+            </div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="parallel-selection-report-0">
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="76_activation_checkpoint_offload_benchmark.html">上一关：L76</a>
+        <a class="primary" href="80_moe_expert_parallel_benchmark.html">下一关：L80</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "79";
+    const checkpointData = {"parallel-benchmark-fairness":{"answer":1,"explain":"统一计时函数不会替你固定实验条件，公平性仍需由 benchmark 设计保证。"},"parallel-four-metric-ledger":{"answer":2,"explain":"负差值是有价值的代价证据，不能取绝对值把退步伪装成收益。"},"parallel-selection-report":{"answer":0,"explain":"指标离开策略和 workload 上下文就无法支持选型。"}};
+    const predictData = {"parallel-benchmark-fairness":{"answer":0,"revealNote":"没有预热调用，正式循环执行两次，测试正是用它排查额外调用。"},"parallel-four-metric-ledger":{"answer":0,"revealNote":"低指标用 baseline - parallel：20 - 32 = -12，说明并行方案增加了通信等待。"},"parallel-selection-report":{"answer":0,"revealNote":"报告要保留完整取舍，不能隐藏不利指标。"}};
+    const predictTotal = 3;
+    const checkpointTotal = 3;
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "34";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-0849d10941b3";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

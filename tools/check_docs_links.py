@@ -64,7 +64,14 @@ def scan_markdown_links() -> int:
             target = target.split("#", 1)[0].strip()
             if not target or target == "...":
                 continue
-            resolved = (path.parent / target).resolve()
+            # VitePress serves files under docs/public at the site root. Most
+            # root-relative links in topic pages are image assets such as
+            # /topic_discussion/...svg, so resolve them against public/ rather
+            # than against the Markdown file's directory.
+            if target.startswith("/"):
+                resolved = (DOCS / "public" / target.lstrip("/")).resolve()
+            else:
+                resolved = (path.parent / target).resolve()
             if not resolved.exists():
                 missing.append((str(path.relative_to(ROOT)), target))
 

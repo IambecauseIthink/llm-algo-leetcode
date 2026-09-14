@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 760" role="img" aria-labelledby="title desc">
+  <title id="title">RoPE Rotation Diagram</title>
+  <desc id="desc">RoPE rotates query and key vectors by position-dependent angles before attention dot product.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 30px "Inter", "Noto Sans SC", sans-serif; fill: #0f172a; }
+      .sub { font: 500 16px "Inter", "Noto Sans SC", sans-serif; fill: #475569; }
+      .box { fill: #ffffff; stroke-width: 3; rx: 18; ry: 18; }
+      .label { font: 700 18px "Inter", "Noto Sans SC", sans-serif; fill: #111827; }
+      .small { font: 500 13px "Inter", "Noto Sans SC", sans-serif; fill: #334155; }
+      .arrow { stroke: #475569; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .blue { stroke: #2563eb; stroke-width: 4; fill: none; marker-end: url(#arrowBlue); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+  <rect width="1500" height="760" fill="url(#bg)"/>
+  <text x="64" y="66" class="title">RoPE: rotate Q / K by position</text>
+  <text x="64" y="96" class="sub">Position enters attention through a rotation, not by adding a separate position vector</text>
+
+  <rect x="70" y="180" width="220" height="92" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="180" y="218" text-anchor="middle" class="label">Token position m</text>
+  <text x="180" y="244" text-anchor="middle" class="small">query side</text>
+
+  <rect x="70" y="320" width="220" height="92" class="box" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="180" y="358" text-anchor="middle" class="label">Token position n</text>
+  <text x="180" y="384" text-anchor="middle" class="small">key side</text>
+
+  <rect x="360" y="180" width="240" height="92" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="480" y="218" text-anchor="middle" class="label">Q before RoPE</text>
+  <text x="480" y="244" text-anchor="middle" class="small">xq projection</text>
+
+  <rect x="360" y="320" width="240" height="92" class="box" fill="#ecfccb" stroke="#65a30d"/>
+  <text x="480" y="358" text-anchor="middle" class="label">K before RoPE</text>
+  <text x="480" y="384" text-anchor="middle" class="small">xk projection</text>
+
+  <rect x="670" y="190" width="250" height="112" class="box" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="795" y="228" text-anchor="middle" class="label">Rotate pairs</text>
+  <text x="795" y="254" text-anchor="middle" class="small">(x0, x1), (x2, x3), ...</text>
+  <text x="795" y="276" text-anchor="middle" class="small">angle depends on position</text>
+
+  <rect x="1010" y="190" width="360" height="112" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1190" y="228" text-anchor="middle" class="label">Attention score sees relative distance</text>
+  <text x="1190" y="254" text-anchor="middle" class="small">Q(m) · K(n) encodes m - n</text>
+  <text x="1190" y="276" text-anchor="middle" class="small">position lives inside the dot product</text>
+
+  <path d="M 290 226 L 360 226" class="arrow"/>
+  <path d="M 290 366 L 360 366" class="arrow"/>
+  <path d="M 600 226 L 670 226" class="blue"/>
+  <path d="M 600 366 L 670 254" class="arrow"/>
+  <path d="M 920 246 L 1010 246" class="arrow"/>
+  <path d="M 920 246 L 1010 246" class="arrow"/>
+  <path d="M 920 246 C 970 246 980 246 1010 246" class="arrow"/>
+
+  <rect x="120" y="500" width="1260" height="170" class="box" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="750" y="540" text-anchor="middle" class="label">What RoPE changes</text>
+  <text x="150" y="580" class="small">- It does not modify V</text>
+  <text x="150" y="610" class="small">- It does not add a separate position vector to embeddings</text>
+  <text x="150" y="640" class="small">- It rotates Q / K so the attention dot product is position aware</text>
+  <text x="760" y="595" class="small">That is why RoPE becomes the default position encoding in many modern LLMs</text>
+  <text x="760" y="625" class="small">Long-context scaling methods change the rotation schedule, not the basic idea</text>
+</svg>

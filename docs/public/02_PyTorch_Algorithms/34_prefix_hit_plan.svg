@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="t d">
+<title id="t">前缀命中如何进入执行计划</title><desc id="d">请求前缀命中缓存后拆分为可复用前缀和需要计算的后缀。</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#475569"/></marker><style>.h{font:700 26px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#0f172a}.s{font:500 15px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#475569}.l{font:700 18px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#111827}.b{font:500 14px "Noto Sans SC","Microsoft YaHei",sans-serif;fill:#334155}.box{stroke-width:3;rx:16}.f{stroke:#475569;stroke-width:4;fill:none;marker-end:url(#a)}</style></defs>
+<rect width="1200" height="500" fill="#f8fafc"/><text x="50" y="55" class="h">命中前缀如何进入执行计划</text><text x="50" y="83" class="s">命中结果不是最终收益，必须转换成复用、计算和登记三个动作。</text>
+<rect x="55" y="190" width="245" height="110" class="box" fill="#fff7ed" stroke="#f59e0b"/><text x="177" y="232" text-anchor="middle" class="l">新请求</text><text x="177" y="263" text-anchor="middle" class="b">prompt tokens</text>
+<rect x="380" y="190" width="245" height="110" class="box" fill="#eff6ff" stroke="#3b82f6"/><text x="502" y="232" text-anchor="middle" class="l">最长前缀匹配</text><text x="502" y="263" text-anchor="middle" class="b">得到 hit_len</text>
+<rect x="705" y="120" width="220" height="95" class="box" fill="#ecfccb" stroke="#65a30d"/><text x="815" y="158" text-anchor="middle" class="l">命中前缀</text><text x="815" y="188" text-anchor="middle" class="b">读取已有 KV</text>
+<rect x="705" y="255" width="220" height="95" class="box" fill="#fce7f3" stroke="#db2777"/><text x="815" y="293" text-anchor="middle" class="l">未命中后缀</text><text x="815" y="323" text-anchor="middle" class="b">继续 prefill</text>
+<rect x="1000" y="190" width="150" height="110" class="box" fill="#f5f3ff" stroke="#8b5cf6"/><text x="1075" y="232" text-anchor="middle" class="l">登记</text><text x="1075" y="263" text-anchor="middle" class="b">新缓存路径</text>
+<path d="M300 245H380M625 235L705 170M625 265L705 300M925 170L1000 225M925 300L1000 265" class="f"/>
+</svg>

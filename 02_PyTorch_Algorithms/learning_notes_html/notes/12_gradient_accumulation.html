@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 12 | Gradient Accumulation</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 12 | Gradient Accumulation | 梯度累积</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 12 | 零基础导学关卡</p>
-        <h1>Gradient Accumulation</h1>
+        <h1>Gradient Accumulation | 梯度累积</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">12_Gradient_Accumulation.ipynb</span>
-          <span class="pill">Gradient Accumulation</span><span class="pill">Micro-batch</span><span class="pill">Memory</span>
+          <span class="pill">训练微调</span><span class="pill">梯度累积</span><span class="pill">显存优化</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,298 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="12349af8a0f2b75ef63eae1879df8d3e9d26374b16618668cbe288cc4433695f">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../12_Gradient_Accumulation.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/12_Gradient_Accumulation.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>12. Gradient Accumulation | 梯度累积</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>梯度累积</code>, <code>显存优化</code> | <strong>目标人群：</strong> 训练机制学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>训练规模、更新节奏和显存预算往往需要同时考虑：扩大训练规模可能改善统计稳定性，却也会提高单次计算的资源压力。本节帮助你建立这三者之间的判断口径，理解如何在资源受限时保持可比较的训练目标。</p>
+<p>学习过程中，你会逐步区分一次更新看到了多少数据、单次计算承担了多少数据，以及资源代价应该如何记录。完成后，再把这套口径放回微调和训练性能实验中观察。</p>
+<p><strong>关键词：</strong> <code>gradient accumulation</code>, <code>micro-batch</code>, <code>effective batch</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 切分当前 micro-batch</li><li>TODO 2: 处理当前 micro-batch 的 loss</li><li>TODO 3: 完成一次参数更新并返回结果</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先把模型封装、优化器和训练循环补齐，再看多个 micro-batch 如何合成一次有效更新。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | nn.Module 基础</a></li>
+<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | 优化器与损失</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练</a></li>
+</ul>
+<hr>
+<h3>Step 1: 从显存约束到有效 batch</h3>
+<p>完整 batch 不能一次放入显存时，可以把一次参数更新拆成多个较小的计算批次：每个批次完成前向和反向，梯度暂时汇总，达到设定次数后再完成一次更新。学习这条机制时，要同时看单次计算的 activation 峰值，以及一次更新实际看到了多少样本。
+比较两种设置时，应尽量保持有效 batch、数据顺序和优化器条件一致，再观察单步峰值、吞吐与更新口径。下面的表格先把一次更新涉及的对象和变化对齐，主图再展示训练推进的整体关系。</p>
+<table>
+<thead>
+<tr>
+<th>观察对象</th>
+<th>它回答的问题</th>
+<th>梯度累积带来的变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单次计算批次</td>
+<td>一次前向 / 反向处理多少样本？</td>
+<td>控制单次 activation 峰值</td>
+</tr>
+<tr>
+<td>累积次数</td>
+<td>多少次小批次合成一次更新？</td>
+<td>改变更新频率和等待时间</td>
+</tr>
+<tr>
+<td>有效 batch</td>
+<td>一次参数更新看到了多少样本？</td>
+<td>通常为单次计算批次 × 累积次数</td>
+</tr>
+<tr>
+<td>参数、梯度、optimizer state</td>
+<td>哪些状态仍需长期驻留？</td>
+<td>不会因累积自动消失</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/12_gradient_accumulation_overview.svg" alt="梯度累积总览"></p>
+<h3>Step 2: Micro-batch 如何改变显存峰值</h3>
+<p>Step 1 的有效 batch 是训练口径；本步关注它如何被拆成一次次计算。单次计算批次决定一次前向 / 反向需要保留多少 activation，累积次数决定多少次小批次共享一次参数更新。因此，梯度累积适合在不能直接扩大单次计算、但仍希望保持较大有效 batch 时使用；它与参数高效微调、checkpointing 或量化组合时，各自改变的是不同显存对象。下面的表格把这些变化和需要观察的结果放在一起。</p>
+<table>
+<thead>
+<tr>
+<th>对象或设置</th>
+<th>梯度累积改变什么</th>
+<th>梯度累积不改变什么</th>
+<th>需要观察的结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单次计算批次</td>
+<td>单次输入规模和 activation 峰值</td>
+<td>参数、梯度和 optimizer state 的规模</td>
+<td>单步 peak memory、单步时间</td>
+</tr>
+<tr>
+<td>累积次数</td>
+<td>一次更新前经历的小批次数量</td>
+<td>单个小批次的 activation 上限</td>
+<td>更新次数、吞吐和训练节奏</td>
+</tr>
+<tr>
+<td>有效 batch</td>
+<td>一次更新使用的样本总量</td>
+<td>不代表一次前向的 batch 大小</td>
+<td>loss 归一化和更新口径</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: 梯度等价与更新口径</h3>
+<p>显存峰值下降并不自动意味着参数更新等价。设一个完整 batch 被切成 <code>K</code> 个 micro-batch，且每个 micro-batch 使用相同的 <code>mean</code> reduction，则需要把每次 loss 缩放后再反向：</p>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">∇</mi><mi>L</mi><mo>=</mo><mfrac><mn>1</mn><mi>K</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></munderover><mi mathvariant="normal">∇</mi><msub><mi>L</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\nabla L = \frac{1}{K} \sum_{i=1}^{K} \nabla L_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">∇</span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.106em;vertical-align:-1.2777em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∇</span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></eqn></section><p>要获得可比较的更新，至少要对齐四件事：同一批样本及顺序、loss reduction、每次 loss 除以 <code>K</code>、累积完成后再执行一次参数更新。输入、目标和掩码等 batch 字段也必须同步切分。</p>
+<p>如果忘记缩放 loss，累计梯度会放大约 <code>K</code> 倍；如果 batch size 不能被 <code>K</code> 整除，则需要显式处理尾部样本或直接报错。本节先选择可整除并报错的口径，便于把差异归因到梯度累积本身。</p>
+<p>这是一种有条件的近似等价，不是对 dropout、BatchNorm、动态 loss 或不同 scheduler 节奏下所有训练配置的普遍保证。下面的图把这些对齐条件集中展示。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/12_gradient_accumulation_equivalence.svg" alt="梯度累积的等价条件"></p>
+<h3>Step 4: 实现并验证两条更新路径</h3>
+<p>代码区将完整 batch 和累积 batch 并排实现：<code>train_step_full_batch</code> 一次更新，<code>train_step_with_accumulation</code> 先切分 micro-batch、缩放 loss、累积梯度，再统一更新。<code>slice_micro_batch</code> 用来保证输入、目标和 SFT batch 字典同步切分。测试区再比较两条路径的输出、参数更新和异常输入；下面的表格把题目区函数与验证重点对应起来。</p>
+<table>
+<thead>
+<tr>
+<th>实现对象</th>
+<th>输入</th>
+<th>输出</th>
+<th>验证重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slice_micro_batch</code></td>
+<td>batch 字典、索引、累积步数</td>
+<td>对齐后的 micro-batch</td>
+<td>第一维一致、切分范围正确</td>
+</tr>
+<tr>
+<td><code>train_step_full_batch</code></td>
+<td>模型、优化器、完整 batch</td>
+<td>一次参数更新和 loss</td>
+<td>baseline 更新口径</td>
+</tr>
+<tr>
+<td><code>train_step_with_accumulation</code></td>
+<td>模型、优化器、完整 batch、<code>accum_steps</code></td>
+<td>一次参数更新和累计 loss</td>
+<td>loss 缩放、step 时机、参数更新</td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class TinyRegressor(nn.Module):
+    def __init__(self, in_dim=4, out_dim=2):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, 16),
+            nn.ReLU(),
+            nn.Linear(16, out_dim),
+        )
+
+    def forward(self, x):
+        return self.net(x)
 
 
+def slice_micro_batch(batch: dict[str, torch.Tensor], idx: int, accum_steps: int):
+    &quot;&quot;&quot;按 micro-batch 同步切分 SFT batch 字典。&quot;&quot;&quot;
+    if accum_steps &lt;= 0:
+        raise ValueError(&quot;accum_steps 必须为正数&quot;)
+    if idx &lt; 0 or idx &gt;= accum_steps:
+        raise IndexError(&quot;micro-batch idx 超出范围&quot;)
+    batch_size = next(iter(batch.values())).size(0)
+    if any(value.size(0) != batch_size for value in batch.values()):
+        raise ValueError(&quot;batch 字典中的 tensor 第一维必须一致&quot;)
+    if batch_size % accum_steps != 0:
+        raise ValueError(&quot;batch size 必须能被 accum_steps 整除&quot;)
+    micro_size = batch_size // accum_steps
+    start = idx * micro_size
+    end = (idx + 1) * micro_size
+    return {key: value[start:end] for key, value in batch.items()}
 
+
+def train_step_full_batch(model, optimizer, x, y):
+    &quot;&quot;&quot;使用完整 batch 完成一次参数更新。
+
+    Args:
+        model: 待训练模型。
+        optimizer: 与 model 参数绑定的优化器。
+        x, y: 第一维为 batch 的输入和目标张量。
+
+    Returns:
+        未缩放的当前 batch loss。
+    &quot;&quot;&quot;
+    model.train()
+    criterion = nn.MSELoss(reduction='mean')
+    optimizer.zero_grad()
+    pred = model(x)
+    loss = criterion(pred, y)
+    loss.backward()
+    optimizer.step()
+    return loss.detach().item()
+
+
+def train_step_with_accumulation(model, optimizer, x, y, accum_steps=4):
+    &quot;&quot;&quot;使用多个 micro-batch 完成一次参数更新。
+
+    Args:
+        model: 待训练模型。
+        optimizer: 与 model 参数绑定的优化器。
+        x, y: 第一维为 batch 的输入和目标张量。
+        accum_steps: micro-batch 数量，要求 batch size 可整除。
+
+    Returns:
+        未缩放的累计 loss，用于日志记录。
+
+    Note:
+        每个 micro-batch 的 loss 除以 accum_steps 后再 backward；
+        整个逻辑 batch 只执行一次 optimizer.step()。
+    &quot;&quot;&quot;
+    if accum_steps &lt;= 0:
+        raise ValueError(&quot;accum_steps 必须为正数&quot;)
+    if x.size(0) % accum_steps != 0:
+        raise ValueError(&quot;batch size 必须能被 accum_steps 整除&quot;)
+
+    model.train()
+    criterion = nn.MSELoss(reduction='mean')
+    optimizer.zero_grad()
+
+    micro_size = x.size(0) // accum_steps
+    total_loss = 0.0
+    for idx in range(accum_steps):
+        # ==========================================
+        # 先切出当前 micro-batch，逐个处理而不是一次性喂完整 batch。
+        # TODO 1: 切分当前 micro-batch
+        # 提示：按 idx 和 micro_size 同步切分 x / y，保持样本对应。
+        # ==========================================
+        # xb = ???
+        # yb = ???
+
+        pred = model(xb)
+
+        # ==========================================
+        # TODO 2: 处理当前 micro-batch 的 loss
+        # 提示: 先计算 micro_loss，再除以 accum_steps 后调用 backward()，
+        #       保证累积后的梯度仍然对应完整 batch 的平均梯度。
+        #       当前使用 MSELoss(reduction='mean')，不要把返回日志 loss 一起缩放。
+        # ==========================================
+        # loss = ???
+        loss.backward()
+        # total_loss = ???
+
+    # ==========================================
+    # TODO 3: 完成一次参数更新并返回结果
+    # 提示: 所有 micro-batch 都 backward 后，只调用一次 optimizer.step()，
+    #       返回未缩放 loss 的累计值。
+    # ==========================================
+    # 优化器操作
+    return total_loss
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
+def test_gradient_accumulation():
+    try:
+        torch.manual_seed(42)
+        x = torch.randn(8, 4)
+        y = torch.randn(8, 2)
+
+        base_model = TinyRegressor()
+        model_full = copy.deepcopy(base_model)
+        model_accum = copy.deepcopy(base_model)
+
+        opt_full = torch.optim.SGD(model_full.parameters(), lr=0.1)
+        opt_accum = torch.optim.SGD(model_accum.parameters(), lr=0.1)
+
+        loss_full = train_step_full_batch(model_full, opt_full, x, y)
+        loss_accum = train_step_with_accumulation(model_accum, opt_accum, x, y, accum_steps=4)
+
+        print(f&quot;Full batch loss: {loss_full:.6f}&quot;)
+        print(f&quot;Accumulated loss: {loss_accum:.6f}&quot;)
+        assert abs(loss_full - loss_accum) &lt; 1e-6, &quot;梯度累积的 loss 口径不一致&quot;
+
+
+        sft_batch = {
+            &quot;input_ids&quot;: torch.arange(24).view(8, 3),
+            &quot;attention_mask&quot;: torch.ones(8, 3, dtype=torch.long),
+            &quot;labels&quot;: torch.arange(24).view(8, 3),
+        }
+        mb = slice_micro_batch(sft_batch, idx=1, accum_steps=4)
+        assert mb[&quot;input_ids&quot;].shape == (2, 3), &quot;SFT micro-batch 切分 shape 错误&quot;
+        assert torch.equal(mb[&quot;input_ids&quot;], sft_batch[&quot;input_ids&quot;][2:4]), &quot;SFT micro-batch 切分范围错误&quot;
+
+        for p_full, p_accum in zip(model_full.parameters(), model_accum.parameters()):
+            assert torch.allclose(p_full, p_accum, atol=1e-6), &quot;梯度累积与 full batch 更新不一致！&quot;
+
+        print(&quot;✅ CPU 机制验证通过：当前 toy 设置下，梯度累积与完整 batch 的 loss 和参数更新口径一致。&quot;)
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分。&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分。&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分。&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+
+test_gradient_accumulation()</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="gradient-accumulation-slice">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：切分当前 micro-batch</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先拆 batch：输入与标签必须切同一段</h2>
 
@@ -1131,26 +1423,14 @@ for group_idx in range(group_count):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="gradient-accumulation-slice-0">
-                <span>完成 TODO 1，并在每轮临时打印 xb.shape、yb.shape；它们应分别是 [2,4] 和 [2,2]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-slice-1">
-                <span>确认 xb/yb 的 dtype 与 device 分别继承 x/y；不要调用 cpu、to 或重新构造 Tensor。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-slice-2">
-                <span>错误诊断：Linear 维度不匹配时检查是否切了特征维；监督错位时检查 x、y 是否用了完全相同的 start 和 stop。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-slice-3">
-                <span>最终测试会逐参数比较 full batch 与累积路径；切片遗漏或重复会让 torch.allclose 失败。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="gradient-accumulation-scale">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：计算、缩放、反传并记录 loss</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再攒梯度：先缩放 loss，再连续 backward</h2>
 
@@ -1247,26 +1527,14 @@ for part_x, part_y in parts:
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="gradient-accumulation-scale-0">
-                <span>完成 TODO 2：计算当前段 loss、按 accum_steps 缩放、反传，并把 detach 后的数值加入 total_loss。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-scale-1">
-                <span>检查 pred 与 yb 都是 [micro_size,2] 且 device 一致；loss 是 0 维浮点 Tensor，total_loss 是 Python float。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-scale-2">
-                <span>错误诊断：参数差固定约 4 倍时检查缩放；出现 float 没有 backward 时检查是否过早 item；图被长期保留时检查日志是否漏 detach。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-scale-3">
-                <span>不要在这一段调用 optimizer.step；参数要等所有 micro-batch 的梯度到齐后才更新。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="gradient-accumulation-step">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：统一 step、清梯度并返回 total_loss</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>最后只更新一次：让参数更新真正等价</h2>
 
@@ -1364,19 +1632,7 @@ optimizer.zero_grad()</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="gradient-accumulation-step-0">
-                <span>在 micro-batch 循环外完成一次 optimizer.step，然后按 Notebook 要求 zero_grad 并返回 total_loss。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-step-1">
-                <span>运行 test_gradient_accumulation，确认 full batch 与 accumulation 的每一对参数都通过 atol=1e-6。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-step-2">
-                <span>错误诊断顺序：先查 step 是否在循环外，再查 loss 是否除 accum_steps，最后查切片是否完整且 x/y 对齐。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gradient-accumulation-step-3">
-                <span>用 accum_steps=2 再试一次，验证实现没有把 4 写死。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1400,16 +1656,29 @@ optimizer.zero_grad()</code></pre></div>
     const predictData = {"gradient-accumulation-slice":{"answer":0,"revealNote":"micro_size=2，所以 start=3×2=6、stop=4×2=8；切的是第 0 维。"},"gradient-accumulation-scale":{"answer":0,"revealNote":"完整 batch 对应四段梯度的平均；未缩放的连续 backward 得到四段梯度的和。"},"gradient-accumulation-step":{"answer":0,"revealNote":"四段梯度必须来自同一参数状态，才能代表一个完整 batch 的单次更新。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "12";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-12349af8a0f2";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

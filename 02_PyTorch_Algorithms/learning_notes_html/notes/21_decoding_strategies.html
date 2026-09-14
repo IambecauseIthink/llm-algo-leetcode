@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 21 | Decoding Strategies</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 21 | Decoding Strategies | 解码策略</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 21 | 零基础导学关卡</p>
-        <h1>Decoding Strategies</h1>
+        <h1>Decoding Strategies | 解码策略</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">21_Decoding_Strategies.ipynb</span>
-          <span class="pill">Temperature</span><span class="pill">Top-K</span><span class="pill">Top-P</span>
+          <span class="pill">推理优化</span><span class="pill">解码</span><span class="pill">Sampling</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,342 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="e086ed13c194bb33b52e42a651210c52e91c88fe84e3669c64baa931885d275b">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../21_Decoding_Strategies.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/21_Decoding_Strategies.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>21. Decoding Strategies | 解码策略</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>解码</code>, <code>Sampling</code> | <strong>目标人群：</strong> 推理优化学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>模型生成下一个 token 时，会先为整张词表打分，再从候选中选择一个结果。永远选择最高分比较稳定，但可能缺少变化；完全随机又难以控制。解码策略要解决的，就是如何在确定性和多样性之间建立可调节的选择规则。</p>
+<p>阅读时先把 greedy 作为确定性基线，再观察 temperature 如何改变分布形状、top-k / top-p 如何改变候选集合，最后比较这些变化对候选数量、熵和随机性的影响。CPU-first 路径帮助建立选择规则的直觉；真实模型质量和服务性能进入后续项目 benchmark。</p>
+<p><strong>关键词：</strong> <code>top-k</code>, <code>top-p</code>, <code>temperature</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 检查 temperature 并完成缩放</li><li>TODO 2: Top-K 截断</li><li>TODO 3: Top-p 核心逻辑</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先理解模型如何输出词表 logits，再比较不同解码规则怎样改变候选集合和采样结果。</p>
+<ul>
+<li><a href="04_attention_mha_gqa.html">04. Attention MHA GQA | 注意力机制：MHA、MQA、GQA</a></li>
+<li><a href="05_llama3_block_tutorial.html">05. LLaMA3 Block Tutorial | LLaMA3 Block 实现</a></li>
+</ul>
+<hr>
+<h3>Step 1: 解码问题与候选空间</h3>
+<blockquote>
+<p><strong>大模型的最后一步输出什么？</strong>
+模型对下一个词的预测是一串未经归一化的得分，称为 <code>Logits</code>（形状为 <code>[vocab_size]</code>，比如 32000 个数字）。</p>
+<p><strong>三种常用的截断与平滑策略：</strong></p>
+<ol>
+<li><strong>Temperature (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span></eq>)</strong>：在 Softmax 之前，将 logits 除以 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span></eq>。<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">T&lt;1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq> 通常使分布更尖锐，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>&gt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">T&gt;1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq> 通常使分布更平缓；它不改变 logits 的排序。</li>
+<li><strong>Top-K 截断</strong>：保留得分排名靠前的候选，其余位置置为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">-\infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">∞</span></span></span></span></eq>；本节会额外观察相同分数（ties）时的阈值语义。</li>
+<li><strong>Top-p (Nucleus) 核采样</strong>：按概率从大到小排序，保留累计概率首次达到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span></eq> 的最小候选集合，后续候选被屏蔽。</li>
+</ol>
+</blockquote>
+<p>这三种策略本质上都是在修改 logits 的分布形状，下一步看它们如何串成完整的解码流水线。</p>
+<p>先保留一个最小基线：<code>greedy</code> 直接选择最大 logits，对同一组 logits 不引入随机性；<code>sampling</code> 才会在截断和重整化后按概率抽样。后面比较 temperature、Top-K 和 Top-p 时，都可以先和 greedy 对照候选数量、熵以及输出稳定性。</p>
+<table>
+<thead>
+<tr>
+<th>路径</th>
+<th>选择规则</th>
+<th>适合观察的现象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>greedy</td>
+<td>取最大 logits</td>
+<td>确定性和重复倾向</td>
+</tr>
+<tr>
+<td>sampling</td>
+<td>从重整化概率中抽样</td>
+<td>多样性和随机性</td>
+</tr>
+<tr>
+<td>Top-K / Top-p sampling</td>
+<td>先缩小候选集合，再抽样</td>
+<td>截断规则如何改变候选空间</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/21_decoding_pipeline.svg" alt="解码策略流程"></p>
+<h3>Step 2: 候选处理顺序与观察量</h3>
+<p>把最后一个位置的 logits 依次处理，再进入确定性选择或概率采样。本节先固定每个阶段的输入、输出和观察重点；实际实现时，选择阶段可以使用确定性取最大值或按概率采样。本节采用 Temperature → Top-K → Top-p → Softmax → 选择的顺序；顺序会影响候选集合，实际 backend 可能有不同约定。<code>temperature</code> 很小时仍然可能采样到其他 token，不能把它当作 greedy。</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>输入</th>
+<th>输出 / 作用</th>
+<th>观察重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Temperature</td>
+<td>原始 logits、温度 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span></eq></td>
+<td>缩放后的 logits</td>
+<td>排序不变，分布尖锐程度改变</td>
+</tr>
+<tr>
+<td>Top-K</td>
+<td>缩放后的 logits、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq></td>
+<td>只保留前 K 个候选</td>
+<td>固定数量；相同分数可能保留超过 K 个</td>
+</tr>
+<tr>
+<td>Top-p</td>
+<td>候选 logits、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span></eq></td>
+<td>保留累计概率达到阈值的最小集合</td>
+<td>必须保留首次达到阈值的边界 token</td>
+</tr>
+<tr>
+<td>选择</td>
+<td>重整化后的概率或 logits</td>
+<td>一个下一个 token</td>
+<td>greedy 取最大值，sampling 按概率选择</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3: Top-p 边界与概率重整化</h3>
+<p>关键判断是：Top-p 如何保留达到阈值的边界 token？
+假设词表只有 5 个词，排序后的概率分别是：<code>[0.5, 0.3, 0.1, 0.05, 0.05]</code>。阈值 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.85</mn></mrow><annotation encoding="application/x-tex">p = 0.85</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.85</span></span></span></span></eq>。</p>
+<ol>
+<li>计算累加和 (Cumulative Sum, <code>cumsum</code>)：<code>[0.5, 0.8, 0.9, 0.95, 1.0]</code></li>
+<li>找到累计概率<strong>首次达到或超过 0.85</strong> 的位置（这里是第三个 token）</li>
+<li>保留这个边界 token，把它后面的 token 对应 logits 设为 <code>-inf</code></li>
+<li>对剩下的有效 Logits 重新执行一次 <code>Softmax</code> 进行概率归一化。</li>
+</ol>
+<p>前面的步骤修改候选范围，Softmax 和最终选择才决定输出 token。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/21_top_p_boundary.svg" alt="Top-p 边界保留示意"></p>
+<h3>Step 4: 实现解码策略与最小生成循环</h3>
+<p><strong>要求</strong>：请依次补全 <code>apply_temperature</code>、<code>apply_top_k</code> 和 <code>apply_top_p</code>，组合采样函数，并补充一个最小自回归循环。题目区需要处理非法参数、batch 维度和随机种子；不要把 CPU 合成 logits 的结果写成真实模型质量或吞吐结论。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def apply_temperature(logits: torch.Tensor, temperature: float) -&gt; torch.Tensor:
+    &quot;&quot;&quot;在 Softmax 前缩放 logits。
 
+    参数：
+        logits: 最后一维为词表维度的分数张量，支持单样本或 batch。
+        temperature: 有限正数；越小通常使分布更尖锐。
+    &quot;&quot;&quot;
+    # ==========================================
+    # TODO 1: 检查 temperature 并完成缩放
+    # 输入 logits 形状为 [..., vocab]；输出保持相同形状，只改变分数尺度。
+    # ==========================================
+    # if temperature &lt;= 0 or not torch.isfinite(torch.tensor(temperature)):
+    #     raise ValueError('temperature 必须是有限正数')
+    # temp = ???
+    return logits / temp
 
+def apply_top_k(logits: torch.Tensor, top_k: int) -&gt; torch.Tensor:
+    &quot;&quot;&quot;按第 K 大值筛选 logits，保留 ties 是本实现的明确语义。
 
+    `top_k=0` 或不小于词表大小时保持输入不变。
+    &quot;&quot;&quot;
+    if top_k is None:
+        return logits
+    if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k &lt; 0:
+        raise ValueError('top_k 必须为非负整数')
+    if top_k == 0 or top_k &gt;= logits.size(-1):
+        return logits
+
+    # ==========================================
+    # TODO 2: Top-K 截断
+    # 输出仍为 [..., vocab]；只把低于第 K 大分数的位置改为 -inf，ties 按阈值语义保留。
+    # ==========================================
+    # filter_value = ???
+    # kth_values = ???  # 形状保留最后一维，便于 batch 广播
+    # logits = ???      # 小于阈值的位置置为 filter_value
+    return logits
+
+def apply_top_p(logits: torch.Tensor, top_p: float) -&gt; torch.Tensor:
+    &quot;&quot;&quot;按累计概率保留最小候选集合，并恢复原始词表顺序。
+
+    边界 token 会被保留；因此这里的 top-p 是“首次达到阈值”的语义。
+    &quot;&quot;&quot;
+    if top_p is None or top_p == 1.0:
+        return logits
+    if not 0.0 &lt; top_p &lt; 1.0:
+        raise ValueError('top_p 必须满足 0 &lt; top_p &lt;= 1')
+
+    # 1. 首先需要将 logits 从大到小排序
+    # 注意我们需要记住原始的索引 (indices)，因为截断完了还要把它复原回原来的位置！
+    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+
+    # 2. 对排序后的 logits 做 Softmax，再计算累加概率
+    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+    # ==========================================
+    # TODO 3: Top-p 核心逻辑
+    # 先在排序空间确定边界，再恢复原词表顺序；输出形状必须与 logits 一致。
+    # ==========================================
+    # sorted_indices_to_remove = ???  # 超过边界的后续 token
+    # sorted_indices_to_remove[..., 1:] = ???
+    # sorted_indices_to_remove[..., 0] = ???
+    # sorted_logits[sorted_indices_to_remove] = ???
+    # restored_logits = ???
+    return restored_logits
+
+def decode_next_token(logits: torch.Tensor, temperature=0.7, top_k=50, top_p=0.9, do_sample=True, generator=None):
+    &quot;&quot;&quot;完成一次候选过滤和 token 选择，支持 greedy 与可复现 sampling。
+
+    输入可以是 `[vocab]` 或 `[batch, vocab]`；输出保留最后一维并返回 `[batch, 1]`。
+    &quot;&quot;&quot;
+    # 1. 调温
+    logits = apply_temperature(logits, temperature)
+
+    # 2. Top-K 截断 (通常先 K 后 p)
+    logits = apply_top_k(logits, top_k)
+
+    # 3. Top-p 截断
+    logits = apply_top_p(logits, top_p)
+
+    # 4. 概率重归一化
+    probs = F.softmax(logits, dim=-1)
+
+    # 5. greedy 直接取最大值；sampling 才使用 multinomial
+    if not do_sample:
+        return torch.argmax(logits, dim=-1, keepdim=True)
+    next_token = torch.multinomial(probs, num_samples=1, generator=generator)
+
+    return next_token
+
+def autoregressive_decode(prompt_ids, logits_fn, max_new_tokens, **decode_kwargs):
+    &quot;&quot;&quot;用 logits_fn 演示逐 token 解码；不代表真实模型性能。&quot;&quot;&quot;
+    tokens = prompt_ids.clone()
+    for _ in range(max_new_tokens):
+        step_logits = logits_fn(tokens)
+        if step_logits.dim() == 3:
+            step_logits = step_logits[:, -1, :]
+        next_token = decode_next_token(step_logits, **decode_kwargs)
+        tokens = torch.cat([tokens, next_token], dim=-1)
+    return tokens
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
+def test_decoding():
+    try:
+        # 为了保证可重复性
+        torch.manual_seed(42)
+        vocab_size = 10
+        # 伪造一组 Logits: [0.1, 2.3, 0.4, 1.2, -0.5, 4.0, 3.1, 0.0, 1.1, -1.0]
+        # 最大的两个: index 5 (4.0), index 6 (3.1)
+        logits = torch.tensor([[0.1, 2.3, 0.4, 1.2, -0.5, 4.0, 3.1, 0.0, 1.1, -1.0]])
+
+        print(&quot;原始 Logits (前10个单词):&quot;, logits.squeeze().tolist())
+
+        # 1. 测试 Temperature
+        t_logits = apply_temperature(logits.clone(), 0.5)
+        # 温度 0.5 应该会让差异翻倍
+        assert torch.allclose(t_logits[0, 5] - t_logits[0, 6], (logits[0, 5] - logits[0, 6]) * 2), &quot;温度调节错误！&quot;
+        print(&quot;✅ Temperature 温度调节通过！&quot;)
+
+        # 2. 测试 Top-K
+        k_logits = apply_top_k(logits.clone(), 3)
+        # 只保留最大的三个：5, 6, 1
+        valid_count = (k_logits != float('-inf')).sum().item()
+        assert valid_count == 3, f&quot;Top-K 截断没有正确执行，保留了 {valid_count} 个值&quot;
+        print(&quot;✅ Top-K 暴力截断通过！&quot;)
+
+        # 3. 测试 Top-p
+        # 原始概率: [0.01, 0.10, 0.01, 0.03, 0.00, 0.54, 0.22, 0.01, 0.03, 0.00]
+        # 降序: 0.54 (idx 5), 0.22 (idx 6), 0.10 (idx 1) ...
+        # 累加和: 0.54, 0.76, 0.86
+        # 所以只有 idx 5, 6, 1 会被保留
+        p_logits = apply_top_p(logits.clone(), 0.8)
+        valid_count = (p_logits != float('-inf')).sum().item()
+        assert valid_count == 3, f&quot;Top-p 核采样截断没算准，保留了 {valid_count} 个值&quot;
+        print(&quot;✅ Top-p (Nucleus) 核采样动态截断通过！&quot;)
+
+        # 边界：Top-k 采用阈值语义，因此 ties 可能保留超过 k 个候选
+        tied = torch.tensor([[2.0, 2.0, 2.0, 1.0]])
+        tied_result = apply_top_k(tied, 2)
+        assert torch.isfinite(tied_result).sum().item() == 3, &quot;Top-k ties 的阈值语义不一致&quot;
+        for invalid_p in (0.0, 1.1):
+            try:
+                apply_top_p(logits, invalid_p)
+                raise AssertionError('非法 top_p 未被拒绝')
+            except ValueError:
+                pass
+
+        # 4. 测试完整管线
+        next_token = decode_next_token(logits.clone(), temperature=0.7, top_k=50, top_p=0.9)
+        assert next_token.shape == (1, 1), &quot;解码的词张量维度不对&quot;
+
+        # 5. greedy、参数边界与最小自回归循环
+        greedy = decode_next_token(logits, temperature=1.0, top_k=0, top_p=1.0, do_sample=False)
+        assert greedy.item() == 5, &quot;greedy 应选择最大 logits 的索引&quot;
+        assert torch.equal(torch.argsort(logits, dim=-1), torch.argsort(t_logits, dim=-1)), &quot;temperature 不应改变排序&quot;
+        try:
+            apply_temperature(logits, 0.0)
+            raise AssertionError('非法 temperature 未被拒绝')
+        except ValueError:
+            pass
+
+        prompt = torch.tensor([[1, 2]])
+        def fake_logits(tokens):
+            output = torch.zeros(tokens.size(0), tokens.size(1), vocab_size)
+            output[..., 3] = 2.0
+            return output
+        generated = autoregressive_decode(prompt, fake_logits, max_new_tokens=3, temperature=1.0, top_k=0, top_p=1.0, do_sample=False)
+        assert generated.shape == (1, 5) and torch.equal(generated[0, -3:], torch.tensor([3, 3, 3])), &quot;自回归循环结果错误&quot;
+
+        # 6. batch 输入和随机种子：检查张量接口与 sampling 可复现性
+        batch_logits = logits.repeat(2, 1)
+        assert apply_top_k(batch_logits, 3).shape == batch_logits.shape
+        assert apply_top_p(batch_logits, 0.8).shape == batch_logits.shape
+        g1 = torch.Generator().manual_seed(7)
+        g2 = torch.Generator().manual_seed(7)
+        sample_1 = decode_next_token(logits, generator=g1)
+        sample_2 = decode_next_token(logits, generator=g2)
+        assert torch.equal(sample_1, sample_2), &quot;相同随机种子应得到相同采样结果&quot;
+
+        # 7. 用候选数和熵观察策略差异；这不是质量或吞吐结论
+        for name, kwargs in {
+            'greedy': {'temperature': 1.0, 'top_k': 0, 'top_p': 1.0},
+            'top_k': {'temperature': 1.0, 'top_k': 3, 'top_p': 1.0},
+            'top_p': {'temperature': 1.0, 'top_k': 0, 'top_p': 0.8},
+        }.items():
+            filtered = apply_temperature(logits.clone(), kwargs['temperature'])
+            filtered = apply_top_k(filtered, kwargs['top_k'])
+            filtered = apply_top_p(filtered, kwargs['top_p'])
+            probs = F.softmax(filtered, dim=-1)
+            entropy = -(probs * probs.clamp_min(1e-12).log()).sum(dim=-1)
+            print(f'{name}: candidates={(torch.isfinite(filtered)).sum().item()}, entropy={entropy.item():.4f}')
+        print(f&quot;\n✅ All Tests Passed! 解码策略实现通过测试。本次采样的下一个 token ID 是: {next_token.item()}&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了操作错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        elif isinstance(e, RuntimeError):
+            print(&quot;代码可能未完成，导致了运行时错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+
+test_decoding()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="decoding-temperature">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：temp = max(temperature, 1e-6)，返回 logits / temp</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Temperature：先保护除数，再保持 logits 的形状与索引</h2>
 
@@ -1114,22 +1450,14 @@ print(adjusted[0,0] - adjusted[0,1])  # 6.0</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="decoding-temperature-0">
-                <span>完成 temp 的正数下限和 logits / temp；确认函数没有排序、采样或提前 Softmax。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-temperature-1">
-                <span>运行 Temperature 断言。若分差变成一半，检查是否误写成 logits * temperature；若出现 inf，检查是否漏了下限。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-temperature-2">
-                <span>分别手算 T=0.5、1.0、2.0 时 [4.0,3.0] 的分差，解释哪一种更确定。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="decoding-top-k">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：filter_value、kth_values 与 torch.where 条件替换</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Top-K：用第 K 大值做门槛，过滤但不删除词表列</h2>
 
@@ -1225,22 +1553,14 @@ print(screened.shape) # [2,4]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="decoding-top-k-0">
-                <span>保留函数已有边界分支，只补 filter_value、Top-K values、[B,1] 门槛与 torch.where。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-top-k-1">
-                <span>运行可见 Top-K 测试，非 -inf 数量应为 3。若不对，检查是否取成第一大值、比较方向写反或误删等于门槛的位置。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-top-k-2">
-                <span>额外用两行 logits 验证每行门槛不同，确认不是对整个 batch 只求一条全局门槛。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="decoding-top-p">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：移除掩码、右移、-inf 过滤与 scatter_ 恢复</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Top-p：在排名坐标累计概率，再 scatter 回 token 坐标</h2>
 
@@ -1341,15 +1661,7 @@ restored = torch.zeros_like(scores).scatter_(-1, original_pos, ranked)</code></p
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="decoding-top-p-0">
-                <span>完成布尔掩码、右移 clone、首项保护、-inf 赋值与 scatter_；所有中间量 shape 都应保持 [B,V]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-top-p-1">
-                <span>运行 Top-p 测试与完整管线测试：应保留 3 个有限值，next_token shape 为 [1,1]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="decoding-top-p-2">
-                <span>若保留 2 个，检查是否忘了右移；若 token_id 对不上，检查 scatter_ 的 dim、index、src；若掩码异常，检查右移时是否漏了 clone。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1373,16 +1685,29 @@ restored = torch.zeros_like(scores).scatter_(-1, original_pos, ranked)</code></p
     const predictData = {"decoding-temperature":{"answer":0,"revealNote":"原分差 0.9 除以 0.5，得到 1.8；逐元素除法不会转置张量。"},"decoding-top-k":{"answer":0,"revealNote":"前两大是 4.0、3.0，最后一个 Top-K 值 3.0 就是门槛；只过滤严格小于门槛的位置。"},"decoding-top-p":{"answer":0,"revealNote":"第三个候选让累计概率首次超过 0.8，它仍是达到阈值所必需的成员。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "21";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-e086ed13c194";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

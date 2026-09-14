@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">模型、部署产物、推理框架与推理引擎关系</title>
+  <desc id="desc">模型经过转换和压缩形成部署产物，再进入框架、Runtime 和 Backend，分别连接 Serving、GPU Kernel 与验证结果。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#55708f"/></marker>
+    <style>
+      .title{font:700 28px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}.group{font:700 19px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}.head{font:700 18px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172b4d}.body{font:500 15px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#52606d}.small{font:500 14px "Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#52606d}.box{stroke-width:2;rx:16}.flow{stroke:#55708f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.bus{stroke:#829ab1;stroke-width:2;fill:none}
+    </style>
+  </defs>
+  <rect width="1600" height="760" fill="#f7fafc"/>
+  <text x="800" y="42" text-anchor="middle" class="title">从模型对象到在线推理</text>
+  <text x="800" y="70" text-anchor="middle" class="small">先确定加载什么，再理解由谁执行、如何服务以及怎样验证。</text>
+
+  <rect x="24" y="102" width="1552" height="178" fill="#eef6ff" stroke="#8ab4df" class="box"/>
+  <text x="48" y="132" class="group">模型侧：从训练权重得到可部署产物</text>
+  <rect x="120" y="158" width="300" height="86" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="270" y="190" text-anchor="middle" class="head">训练模型</text><text x="270" y="218" text-anchor="middle" class="body">架构 · 权重 · 配置</text>
+  <rect x="650" y="158" width="300" height="86" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="800" y="190" text-anchor="middle" class="head">转换与压缩</text><text x="800" y="218" text-anchor="middle" class="body">量化 · 转换 · 编译</text>
+  <rect x="1180" y="158" width="300" height="86" fill="#fef3c7" stroke="#d97706" class="box"/>
+  <text x="1330" y="190" text-anchor="middle" class="head">部署产物</text><text x="1330" y="218" text-anchor="middle" class="body">FP16 · GPTQ · AWQ · GGUF · Engine</text>
+  <path d="M420 201 H650" class="flow"/><path d="M950 201 H1180" class="flow"/>
+
+  <rect x="650" y="248" width="300" height="32" fill="#ffffff" stroke="#829ab1" class="box"/>
+  <text x="800" y="270" text-anchor="middle" class="small">运行层分流</text>
+
+  <rect x="24" y="320" width="1552" height="178" fill="#fff8eb" stroke="#e0a23b" class="box"/>
+  <text x="48" y="350" class="group">运行层：部署产物进入三个互补的执行组件</text>
+  <rect x="120" y="378" width="300" height="86" fill="#f0eefb" stroke="#8069b5" class="box"/>
+  <text x="270" y="410" text-anchor="middle" class="head">推理框架</text><text x="270" y="438" text-anchor="middle" class="body">加载 · 张量计算 · 生成接口</text>
+  <rect x="650" y="378" width="300" height="86" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="800" y="410" text-anchor="middle" class="head">推理引擎 / Runtime</text><text x="800" y="438" text-anchor="middle" class="body">KV Cache · 批处理 · 调度</text>
+  <rect x="1180" y="378" width="300" height="86" fill="#eef6ff" stroke="#4c8eda" class="box"/>
+  <text x="1330" y="410" text-anchor="middle" class="head">Backend 与 Kernel</text><text x="1330" y="438" text-anchor="middle" class="body">vLLM · SGLang · TRT-LLM · llama.cpp</text>
+  <path d="M1330 244 V264 H950" class="flow"/>
+  <path d="M800 280 V310" class="flow"/>
+  <path d="M270 310 H1330" class="bus"/>
+  <path d="M270 310 V378" class="flow"/><path d="M800 310 V378" class="flow"/><path d="M1330 310 V378" class="flow"/>
+
+  <rect x="24" y="538" width="1552" height="178" fill="#f2effc" stroke="#a795d0" class="box"/>
+  <text x="48" y="568" class="group">在线服务与证据出口</text>
+  <rect x="120" y="596" width="300" height="86" fill="#e8f1fb" stroke="#4c8eda" class="box"/>
+  <text x="270" y="628" text-anchor="middle" class="head">Serving 接口</text><text x="270" y="656" text-anchor="middle" class="small">请求接入 · 并发 · 协议 · 观测</text>
+  <rect x="650" y="596" width="300" height="86" fill="#fff5e6" stroke="#e0a23b" class="box"/>
+  <text x="800" y="628" text-anchor="middle" class="head">GPU 与 Kernel 执行</text><text x="800" y="656" text-anchor="middle" class="small">计算 · 访存 · 执行效率</text>
+  <rect x="1180" y="596" width="300" height="86" fill="#e8f7ef" stroke="#45a36b" class="box"/>
+  <text x="1330" y="628" text-anchor="middle" class="head">验证结果</text><text x="1330" y="656" text-anchor="middle" class="small">TTFT · TPOT · 吞吐 · P99 · 显存 · 质量</text>
+  <path d="M270 464 V596" class="flow"/><path d="M800 464 V596" class="flow"/><path d="M1330 464 V596" class="flow"/>
+</svg>

@@ -9,11 +9,19 @@
 > [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/datawhalechina/llm-algo-leetcode/blob/main/01_Hardware_Math_and_Systems/08_Programming_Models_CUDA_Triton.ipynb)
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
-**标签：** `CUDA`, `Triton`, `Programming Model` | **目标人群：** kernel 入门者
+**标签：** `算子编程`, `CUDA`, `Triton` | **目标人群：** 编译与系统入门者
 
-这一页把从 PyTorch 到 CUDA / Triton 的编程模型演进讲清楚，重点是知道为什么自定义算子会比原生操作更接近硬件。
+---
+
+## 本节导读
+
+从 PyTorch 写法走到 CUDA / Triton，并不是为了“更底层”本身，而是因为框架级算子组合并不总能贴住硬件执行粒度。只要中间张量太多、launch 太碎，或者数据布局和 tile 组织没法显式控制，性能上限就会很快被访存和调度开销卡住。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 通向 `Part 03 / Part 04` 的桥接页，优先服务 `推理优化路线` 里的算子下沉判断，也给后续系统优化页建立编程模型前置。学完这里，后面再看 `18 / 19 / 32` 以及 `Part 03` 的 Triton kernel 实战时，你会更容易判断瓶颈到底停留在框架级组合、算子级组织，还是已经值得下沉到 CUDA / Triton；如果这里没学明白，后面很容易把“自定义 kernel”误当成默认更高级的选择，而说不清它到底补的是哪一层控制权。按专题归类，这一页主要属于 `编译与图优化专题` 的基础入口，同时支撑后续 kernel 实现主线。
 
 **关键词：** `grid`, `block`, `kernel`
+
+---
 ## 前置阅读
 **导语：** 这一页先把从 PyTorch 到 CUDA / Triton 的编程模型演进接上，再看为什么自定义算子会更接近硬件。
 - [Group 1D: Heterogeneous Scheduling and Operator Programming | 1D: 异构调度与算子编程](./1D.md)
@@ -24,6 +32,7 @@
 - [Part 03: Triton Kernel Development | 第三部分：Triton 算子开发](../03_Triton_Kernels/intro.md)
 - [01. Triton 入门与 Hello World：向量加法 (Vector Addition)](../03_Triton_Kernels/01_Triton_Vector_Addition.md)
 - [04. Triton 矩阵乘法 (GEMM) 与自动调优 (Autotune)](../03_Triton_Kernels/04_Triton_GEMM_Tutorial.md)
+---
 ## Q1：为什么我们需要用 CUDA 或 Triton 编写自定义算子？
 
 <details><summary>点击展开查看解析</summary>

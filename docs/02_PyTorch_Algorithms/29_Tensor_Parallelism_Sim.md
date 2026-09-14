@@ -1,6 +1,6 @@
 # 29. Tensor Parallelism Sim | Tensor 并行模拟
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `分布式训练`, `Tensor Parallelism`, `通信` | **目标人群：** 分布式训练工程师
+**难度：** Hard | **环境：** CPU-first | **标签：** `并行通信`, `Tensor Parallelism`, `通信` | **目标人群：** 并行通信学习者
 
 > 🚀 **云端运行环境**
 >
@@ -24,24 +24,17 @@ Tensor Parallelism 的核心就是按张量维度切分 Linear：Column Parallel
 
 ## 前置阅读
 
-**导语：** 先看 ZeRO、Pipeline 并行和并行策略框架，再看 Tensor Parallelism 会更容易把三种并行策略区分开。
+**导语：** 进入本节前，先能回答 ZeRO 切分训练状态、Pipeline 切分模型层分别解决什么问题，再观察 Tensor Parallelism 如何切分单个矩阵。
 
 - [27. ZeRO Optimizer Sim | ZeRO 优化器模拟](../02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim.md)
 - [28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次](../02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch.md)
 - [P1: 26. Parallel Strategy Decision Framework | 并行策略决策框架](../01_Hardware_Math_and_Systems/26_Parallel_Strategy_Decision_Framework.md)
 
 
-## 相关阅读
-
-**导语：** 并行策略看完后，可以继续从通信调度和项目页做综合收口。
-
-- [P1: 17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](../01_Hardware_Math_and_Systems/17_CUDA_Stream_and_Asynchrony.md)
-- [P1: 27. Communication Scheduling Optimization | 通信调度优化](../01_Hardware_Math_and_Systems/27_Communication_Scheduling_Optimization.md)
-- [P1: 08. Programming Models and CUDA/Triton | 编程模型演进](../01_Hardware_Math_and_Systems/08_Programming_Models_CUDA_Triton.md)
-- [35. Multi-GPU Strategy Selection Project | 多卡策略选择项目](../02_PyTorch_Algorithms/35_Multi_GPU_Strategy_Selection_Project.md)
-
 ---
-### Step 1: TP的两种切法
+### Step 1: TP 的两种切法
+
+![Tensor Parallelism：权重切分决定通信位置](../public/02_PyTorch_Algorithms/29_tensor_parallel_split.svg)
 
 假设输入 $X$ 形状为 `(batch, in_dim)`，权重 $A$ 形状为 `(in_dim, out_dim)`，经过线性层变为 $Y = XA$，形状 `(batch, out_dim)`。
 
@@ -60,7 +53,10 @@ Tensor Parallelism 的核心就是按张量维度切分 Linear：Column Parallel
 
 **精妙之处**：如果把 Column Parallel 放前面，Row Parallel 放后面，中间甚至可以省掉一次通信！
 
-### Step 2: Column 与 Row Parallelism 推导
+
+### Step 2: Column 与 Row Parallelism 的通信路径
+
+![Tensor Parallelism：切分方向决定通信算子](../public/02_PyTorch_Algorithms/29_tensor_parallel_communication.svg)
 在一个两层的前馈网络 $Y = X \cdot W_1 \cdot W_2$ 中：
 - 我们将 $W_1$ 按列切分（Column Parallel），得到两块。计算后各个 GPU 得到不完整的部分输出矩阵。
 - 紧接着，将 $W_2$ 按行切分（Row Parallel），利用刚才的部分输出分别与之相乘。
@@ -347,3 +343,13 @@ def tensor_parallel_row_sim(X, A, num_gpus):
 - **通信特点**：Column Parallel 需要广播输入、合并输出；Row Parallel 需要切分输入、最后求和
 - **适用场景**：Column Parallel 更适合扩维层，Row Parallel 更适合缩维层
 - **组合方式**：在两层 MLP 中常见 Column -> Row 的组合，可以减少中间通信
+
+## 相关阅读
+
+Tensor Parallelism 的关键不是切分本身，而是切分后计算和通信如何交替。可以继续阅读 Megatron-LM 和分布式基准项目。
+
+- [Megatron-LM 原论文](https://arxiv.org/abs/2104.04473)
+- [Megatron-LM 开源仓库](https://github.com/NVIDIA/Megatron-LM)
+- [P1: CUDA Stream 与异步执行](../01_Hardware_Math_and_Systems/17_CUDA_Stream_and_Asynchrony.md)
+- [P1: 通信调度优化](../01_Hardware_Math_and_Systems/27_Communication_Scheduling_Optimization.md)
+- [79. 分布式并行基准](../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.md)

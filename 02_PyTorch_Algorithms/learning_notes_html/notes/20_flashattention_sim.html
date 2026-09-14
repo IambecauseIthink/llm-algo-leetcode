@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 20 | FlashAttention Sim</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 20 | FlashAttention Sim | FlashAttention 模拟</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 20 | 零基础导学关卡</p>
-        <h1>FlashAttention Sim</h1>
+        <h1>FlashAttention Sim | FlashAttention 模拟</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">20_FlashAttention_Sim.ipynb</span>
-          <span class="pill">FlashAttention</span><span class="pill">Online Softmax</span><span class="pill">Tiling</span>
+          <span class="pill">推理优化</span><span class="pill">Attention</span><span class="pill">FlashAttention</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,332 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="f08d2f8935fb6583df22a2fdaf523ebe7434bd43e0802e4c90a5419e3716f61c">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../20_FlashAttention_Sim.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/20_FlashAttention_Sim.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>20. FlashAttention Sim | FlashAttention 模拟</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>Attention</code>, <code>FlashAttention</code> | <strong>目标人群：</strong> 推理优化学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节关注 Attention 计算中的中间状态、存储访问和资源代价，帮助你建立“结果保持一致时，计算过程可以如何组织”的观察口径。</p>
+<p>学习过程中，你会逐步区分算法等价、工作集大小、数值状态和硬件执行代价；完成后能够判断哪些结论来自机制推导，哪些结论必须交给具体设备和 workload 验证。
+本节使用 FlashAttention-1/2 共有的核心思想作为学习对象；更近期的硬件特化实现作为扩展阅读，不作为本节的实现要求。</p>
+<p><strong>关键词：</strong> <code>FlashAttention</code>, <code>online softmax</code>, <code>tiling</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 初始化输出 O，全局最大值 m，全局指数和 l</li><li>TODO 2: 计算当前 Q/K block 的缩放 score S_ij</li><li>TODO 2a（可选 causal mask）：若 causal=True，屏蔽 key_pos &gt; query_pos 的 score。</li><li>TODO 3: 计算当前块的局部最大值 m_block，并求出新的全局最大值 m_new</li><li>TODO 4: 计算尚未归一化的指数权重 exp_scores</li><li>TODO 5: 计算当前块的局部指数和 l_block，并更新全局指数和 l_new</li><li>TODO 6: 更新输出 O_i（修正旧状态并累加当前 V block）</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先能解释 Attention 的工作集和 GPU 内存层级，再观察分块计算如何减少中间 Score 的存储。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.ipynb">P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/14_FlashAttention_Memory_Model.ipynb">P1: 14. FlashAttention Memory Model | FlashAttention 显存模型</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/24_SRAM_Optimization_Techniques.ipynb">P1: 24. SRAM Optimization Techniques | SRAM 优化技术</a></li>
+</ul>
+<hr>
+<h3>Step 1: Attention 中间工作集与分块动机</h3>
+<p>给定 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mtext>、</mtext><mi>K</mi><mtext>、</mtext><mi>V</mi></mrow><annotation encoding="application/x-tex">Q、K、V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 后，标准实现先计算完整的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo>=</mo><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">S=QK^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0358em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span></eq>，再对每一行做 softmax，最后与 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 相乘。序列长度为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq> 时，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq> 包含 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>N</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">N^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></eq> 个元素；它不是最终输出，却可能成为主要的中间工作集。</p>
+<p>先观察完整 Score 与单个 tile 的区别；图中左侧先交代完整 Score 和 GPU 存储访问，中间聚焦本节要实现的分块与 Online Softmax，右侧的版本演进只作为扩展阅读。下一步再解释分块后的状态如何保持结果一致。</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>标准 Attention</th>
+<th>分块路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Score</td>
+<td>先得到完整 <code>QKᵀ</code></td>
+<td>只计算当前 <code>Q block × K block</code></td>
+</tr>
+<tr>
+<td>Softmax</td>
+<td>对完整行统一计算</td>
+<td>用 <code>m / l</code> 逐块更新</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>最后与完整概率矩阵相乘</td>
+<td>逐块累加 <code>V block</code> 的贡献</td>
+</tr>
+<tr>
+<td>工作集</td>
+<td>完整 Score 需要长期处理较大的中间区域</td>
+<td>单个 tile 限制当前暂存区域</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/20_flashattention_tiling.svg" alt="FlashAttention 分块图"></p>
+<h3>Step 2: Online Softmax 如何保持数值等价</h3>
+<p>分块以后不能简单地对每个 tile 单独 Softmax，再把结果相加，因为每个 Q 行的归一化分母跨越所有 K block。算法为每个 Q 行保留三项状态：当前最大值 <code>m</code>、以该最大值为基准的指数和 <code>l</code>、以及已经累积的部分输出 <code>O</code>。每轮更新后，这三项状态都代表已经处理过的全部 K block。
+当新的 block 有更大的 Score 时，旧状态必须先换到同一个 <code>m_new</code> 基准下，再与当前块相加；表格中的三项状态分别对应最大值、归一化分母和加权输出的重新标定。这样最后的输出才有机会与标准 Attention 对齐。</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>作用</th>
+<th>新 K/V block 到来时发生什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m_i</code></td>
+<td>已处理 score 的最大值</td>
+<td>与 <code>m_block</code> 比较，得到 <code>m_new</code></td>
+</tr>
+<tr>
+<td><code>l_i</code></td>
+<td>旧状态的归一化分母</td>
+<td>按 <code>exp(m_i - m_new)</code> 修正后再加当前块</td>
+</tr>
+<tr>
+<td><code>O_i</code></td>
+<td>旧块贡献的加权输出</td>
+<td>按旧分母占比缩放，再加入当前块贡献</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/20_online_softmax_state.svg" alt="Online Softmax 状态更新图"></p>
+<h3>Step 3: 一个 Q 分块如何吸收全部 K/V 分块</h3>
+<p>Step 2 的状态更新需要按固定的计算顺序推进：先固定一个 Q 分块，再让它依次接收所有 K/V 分块的信息。每接收一个 K/V 分块，就把局部结果并入同一组 <code>m / l / O</code>；直到所有 K/V 分块处理完，这个 Q 分块才得到最终输出。这里关注状态的生命周期，不展开实现所用的循环变量。</p>
+<table>
+<thead>
+<tr>
+<th>计算阶段</th>
+<th>保持不变的对象</th>
+<th>状态变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开始处理一个 Q 分块</td>
+<td>当前 Q 分块</td>
+<td>建立对应的 <code>m / l / O</code> 初始状态</td>
+</tr>
+<tr>
+<td>接收一个 K/V 分块</td>
+<td>当前 Q 分块与历史状态</td>
+<td>产生当前分数块，并按 Step 2 合并状态</td>
+</tr>
+<tr>
+<td>接收完全部 K/V 分块</td>
+<td>当前 Q 分块</td>
+<td>得到包含完整上下文信息的 Attention 输出</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 4: CPU 实现任务与验证标准</h3>
+<p>本步把前面的数据流转成可执行任务：输入是形状为 <code>[seq_len, dim]</code> 的 Q、K、V，输出是形状相同的 Attention 结果。先完成 CPU 分块函数，再用标准 Attention、causal、dtype 和数值稳定性测试检查实现。完成 CPU 测试后，再由 Step 5 观察固定 workload 下的 GPU backend 延迟、显存和误差。下面的表格先对齐 CPU 实验对象和判断方式。</p>
+<table>
+<thead>
+<tr>
+<th>实验对象</th>
+<th>输入与输出</th>
+<th>判断方式</th>
+<th>结果用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU 分块模拟</td>
+<td>二维 Q/K/V → 同形状输出</td>
+<td>与标准 Attention 的最大误差</td>
+<td>检查 <code>m / l / O</code> 状态更新</td>
+</tr>
+<tr>
+<td>causal 扩展</td>
+<td><code>causal=True</code> 的二维 Q/K/V</td>
+<td>与带上三角 mask 的标准结果对齐</td>
+<td>检查未来位置是否被屏蔽</td>
+</tr>
+<tr>
+<td>dtype 与稳定性</td>
+<td><code>float64</code> 和较大 Score 输入</td>
+<td>输出 dtype 正确且无 NaN/Inf</td>
+<td>检查数值实现边界</td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def flash_attention_forward_sim(q, k, v, block_size=2, causal=False):
+    &quot;&quot;&quot;计算二维输入上的 FlashAttention 前向模拟。
+
+    Args:
+        q, k, v: [seq_len, dim] 张量，device 和 dtype 应保持一致。
+        block_size: Q/K/V 的分块大小，必须为正数。
+        causal: 是否只允许关注当前位置及之前的 K token。
+
+    Returns:
+        [seq_len, dim] 的 attention 输出。
+
+    Note:
+        只模拟 online softmax 和分块数据流，不实现真实 CUDA/Triton kernel、
+        batch/head、dropout 或 backward；causal mask 是基础路径后的扩展目标。out、m、l 显式使用输入 dtype；
+        真实 kernel 常会使用更高精度累加器，不能由本模拟推断具体实现。
+    &quot;&quot;&quot;
+    if q.ndim != 2 or k.ndim != 2 or v.ndim != 2:
+        raise ValueError('q、k、v 必须是 [seq_len, dim] 二维张量')
+    if q.shape != k.shape or k.shape != v.shape:
+        raise ValueError('q、k、v 的形状必须一致')
+    if q.device != k.device or k.device != v.device:
+        raise ValueError('q、k、v 必须位于同一 device')
+    if q.dtype != k.dtype or k.dtype != v.dtype:
+        raise TypeError('q、k、v 必须使用相同 dtype')
+    if block_size &lt;= 0:
+        raise ValueError('block_size 必须为正数')
+
+    seq_len, dim = q.shape
+
+    # TODO 1: 初始化输出 O，全局最大值 m，全局指数和 l
+    # 提示: out 与 q 同 device、同 dtype，形状为 [seq_len, dim]；m/l 形状为 [seq_len, 1]
+    # out = ???；m = ???；l = ???；m 初始为 -inf，l 初始为 0。
+    # out = ???
+    # m = ???
+    # l = ???
+
+    scale = 1.0 / math.sqrt(dim)
+
+    # 外层循环：遍历 Q 的分块
+    for i in range(0, seq_len, block_size):
+        q_block = q[i:i+block_size] * scale
+        m_i = m[i:i+block_size]
+        l_i = l[i:i+block_size]
+        out_i = out[i:i+block_size]
+
+        # 内层循环：遍历 K, V 的分块
+        for j in range(0, seq_len, block_size):
+            k_block = k[j:j+block_size]
+            v_block = v[j:j+block_size]
+
+            # TODO 2: 计算当前 Q/K block 的缩放 score S_ij
+            # S_ij = (Q_i / sqrt(d)) @ K_j.T
+            # TODO 2a（可选 causal mask）：若 causal=True，屏蔽 key_pos &gt; query_pos 的 score。
+            # 提示：query_pos = arange(i, ...)，key_pos = arange(j, ...)。
+
+            # TODO 3: 计算当前块的局部最大值 m_block，并求出新的全局最大值 m_new
+            # m_block = ???；m_new = ???
+            # m_new 是新的数值稳定基准；若 m_new 变化，旧 l_i 和 out_i 都必须重标定。
+
+            # TODO 4: 计算尚未归一化的指数权重 exp_scores
+            # exp_scores = exp(S_ij - m_new)
+
+            # TODO 5: 计算当前块的局部指数和 l_block，并更新全局指数和 l_new
+            # l_block = ???
+            # l_new = ???
+
+            # TODO 6: 更新输出 O_i（修正旧状态并累加当前 V block）
+            # out_i = ???
+
+            # 更新全局状态
+            # m_i = ???
+            # l_i = ???
+            pass
+
+        # 写回全局变量
+        # out[i:i+block_size] = ???
+        # m[i:i+block_size] = ???
+        # l[i:i+block_size] = ???
+
+    return out
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
+# 测试顺序对应 Step 5 的验证目标：数值等价 → causal 扩展 → dtype / 稳定性 → 工作集 → 输入校验。
+def test_flash_attention_sim():
+    try:
+        import math
+
+        def run_case(seq_len, dim, block_size, seed):
+            torch.manual_seed(seed)
+            q = torch.randn(seq_len, dim)
+            k = torch.randn(seq_len, dim)
+            v = torch.randn(seq_len, dim)
+
+            scale = 1.0 / math.sqrt(dim)
+            scores = (q @ k.transpose(-2, -1)) * scale
+            attn = torch.nn.functional.softmax(scores, dim=-1)
+            out_ref = attn @ v
+
+            out_sim = flash_attention_forward_sim(q, k, v, block_size=block_size)
+            diff = torch.max(torch.abs(out_ref - out_sim))
+            print(f&quot;[seq={seq_len}, dim={dim}, block={block_size}] 最大误差: {diff.item():.6e}&quot;)
+            assert diff &lt; 1e-5, f&quot;计算结果与标准 Attention 不一致！(seq={seq_len}, dim={dim}, block={block_size})&quot;
+
+        run_case(seq_len=8, dim=4, block_size=2, seed=42)
+        run_case(seq_len=5, dim=3, block_size=3, seed=7)
+        run_case(seq_len=3, dim=2, block_size=1, seed=123)
+
+        # causal 扩展测试：位置 i 只能读取位置 &lt;= i 的 K/V
+        torch.manual_seed(11)
+        q = torch.randn(6, 4)
+        k = torch.randn(6, 4)
+        v = torch.randn(6, 4)
+        causal_scores = (q @ k.transpose(-2, -1)) / math.sqrt(4)
+        causal_scores = causal_scores.masked_fill(torch.triu(torch.ones(6, 6, dtype=torch.bool), diagonal=1), -float('inf'))
+        causal_ref = torch.softmax(causal_scores, dim=-1) @ v
+        causal_out = flash_attention_forward_sim(q, k, v, block_size=2, causal=True)
+        assert torch.allclose(causal_ref, causal_out, atol=1e-5, rtol=1e-5)
+
+        # dtype 边界：模拟应保留输入 dtype；这里只在 CPU 上检查 float64 数值一致性
+        torch.manual_seed(9)
+        q64 = torch.randn(4, 3, dtype=torch.float64)
+        k64 = torch.randn(4, 3, dtype=torch.float64)
+        v64 = torch.randn(4, 3, dtype=torch.float64)
+        ref64 = torch.softmax((q64 @ k64.transpose(-2, -1)) / math.sqrt(3), dim=-1) @ v64
+        out64 = flash_attention_forward_sim(q64, k64, v64, block_size=2)
+        assert out64.dtype == q64.dtype
+        assert torch.allclose(ref64, out64, atol=1e-10, rtol=1e-10)
+
+        # 理论工作集观察：这里只比较 score 元素数量，不冒充真实显存测量
+        seq_len = 128
+        full_score_elements = seq_len * seq_len
+        for block_size in [1, 4, 16, 32]:
+            tile_score_elements = block_size * block_size
+            print(f&quot;block={block_size}: 完整 score={full_score_elements}; 单 tile={tile_score_elements}&quot;)
+            assert tile_score_elements &lt; full_score_elements
+        # 数值稳定性：较大的 score 不应导致 NaN/Inf
+        q_large = torch.full((3, 2), 100.0)
+        k_large = torch.full((3, 2), 100.0)
+        v_large = torch.randn(3, 2)
+        stable_out = flash_attention_forward_sim(q_large, k_large, v_large, block_size=2)
+        assert torch.isfinite(stable_out).all(), 'online softmax 应保持有限输出'
+
+        try:
+            flash_attention_forward_sim(torch.randn(2, 2), torch.randn(2, 2), torch.randn(2, 2), block_size=0)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('block_size &lt;= 0 应该被拒绝')
+
+        print(&quot;✅ Online Softmax 与分块计算逻辑正确！&quot;)
+        print(&quot;\n FlashAttention 分块计算逻辑验证通过。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except NameError as exc:
+        # 题目区未完成 TODO 时通常会出现变量未定义；仅这一类错误转为预期失败。
+        print(&quot;题目区仍有变量未完成，请根据 TODO 补全实现。&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from exc
+    except (AttributeError, TypeError, ValueError, AssertionError, RuntimeError):
+        # 形状、dtype、断言和运行时错误保留原始信息，避免掩盖真实问题。
+        raise
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
 
 
-
+test_flash_attention_sim()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="flash-tiles-and-state">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：初始化 out、m、l；理解两层分块循环与最后一块</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先建状态账本：分块改变计算顺序，不改变 Attention 答案</h2>
 
@@ -1135,22 +1461,14 @@ for start in range(0, rows, 3):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="flash-tiles-and-state-0">
-                <span>完成 TODO 1 前先在纸上写出 out、m、l 的 shape 和初值含义，再根据 q.device 创建它们。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-tiles-and-state-1">
-                <span>手工走一遍 seq_len=5、block_size=3 的 i、j 取值，确认 Q 和 K/V 的尾块都允许只有 2 行。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-tiles-and-state-2">
-                <span>若第一轮出现未定义变量，检查三个状态是否都在 scale 和循环之前初始化；若设备报错，检查新状态是否跟随 q.device。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="flash-online-softmax">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2–5：S_ij、m_block/m_new、P_ij、l_block/l_new</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再合并一个分数块：最大值换基准，旧统计量必须重标定</h2>
 
@@ -1248,22 +1566,14 @@ joint_sum = old_sum * torch.exp(old_max - joint_max) + batch_sum</code></pre></d
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="flash-online-softmax-0">
-                <span>按 shape 链完成 TODO 2–5：每写一行就标注输出 shape，确保所有行级统计量都保持 [Bq,1]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-online-softmax-1">
-                <span>用极端值手算一行：旧最大值 2、新块最大值 5，验证旧 l 的修正因子小于 1，而不是大于 1。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-online-softmax-2">
-                <span>若结果出现 inf/NaN，检查是否先减 m_new 再 exp；若广播报错，检查 max/sum 是否漏了 keepdim=True。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="flash-output-and-tests">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 6 + 状态更新 + 外层写回；通过三组标准 Attention 对照测试</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>最后更新输出并写回：旧贡献和新贡献都要除以同一个 l_new</h2>
 
@@ -1367,15 +1677,7 @@ print(merged.shape)  # [1,2]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="flash-output-and-tests-0">
-                <span>完成 TODO 6、m_i/l_i 更新和三个全局写回；逐项确认 out_i 与 P_ij @ v_block 都是 [Bq,D]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-output-and-tests-1">
-                <span>运行三组测试并记录最大绝对误差。若只有非整除用例失败，优先排查是否用固定 block_size 创建了临时张量或写回边界。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="flash-output-and-tests-2">
-                <span>若所有结果都有系统性偏差，检查 scale 是否只应用一次；若后几个 K 块贡献异常，检查每轮是否更新 m_i 和 l_i。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1399,16 +1701,29 @@ print(merged.shape)  # [1,2]</code></pre></div>
     const predictData = {"flash-tiles-and-state":{"answer":0,"revealNote":"切片终点可以超过序列长度，Python 会自然返回剩余两行。可见测试专门覆盖了不能整除的尾块。"},"flash-online-softmax":{"answer":0,"revealNote":"旧项原本以 2 为基准，改成更大的 5 后，每个旧指数都要缩小 exp(2-5) 倍。"},"flash-output-and-tests":{"answer":0,"revealNote":"out_i 在循环中被重新绑定为新张量；必须显式写回全局 out 的当前切片。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 9;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "20";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-f08d2f8935fb";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

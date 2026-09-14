@@ -1,6 +1,6 @@
 # 18. Triton Block Model | Triton Block 模型
 
-**难度：** Medium | **环境：** GPU optional | **标签：** `Triton`, `Block Model`, `Kernel` | **目标人群：** Triton 入门者
+**难度：** Medium | **环境：** GPU optional | **标签：** `算子编程`, `Triton`, `Block Model` | **目标人群：** 编译与系统入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,27 +10,33 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页把 Triton 的 block 思维讲清楚，重点是知道 program、block 和 tile 怎么对应到张量空间，后面写 kernel 时才知道代码在覆盖什么。
+---
+
+## 本节导读
+
+Triton 的 block 思维，核心不是换一套语法去写 CUDA，而是把“一个 program 负责哪块数据、怎样按 tile 覆盖张量空间”这件事讲得更直接。只要这层空间映射没有建立起来，后面看 Triton kernel 时就很容易只看到代码，不知道每个 program 到底在处理什么。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 通向 Triton 实战的桥接页，优先服务后续 `Part 03` 的 kernel 编写主线，也给 `推理优化路线` 补一层 tile 组织视角。学完这里，后面再看 `19` 和 `Part 03` 的 Triton kernel 页时，你会更容易先把 kernel 画成“谁负责哪块区域”，再去分析代码细节；如果这里没学明白，后面很容易只会顺着代码读 program 和 tile，却说不清它们和张量空间覆盖、访存路径、归约粒度之间的关系。按专题归类，这一页主要属于 `编译与图优化专题`，同时支撑 Triton 下沉主线。
 
 **关键词：** `program`, `block`, `tile`
+
+---
 ## 前置阅读
 
-**导语：** 先把执行层级和 stream 概念对齐，再看 Triton 的 program / block / tile 会更顺。
+**导语：** 先把 CUDA 执行模型、warp / block 组织和编程模型层级接上，再看 Triton 的 block 视角，会更容易把 program 和张量空间对应起来。
 
-- [Group 1D: Heterogeneous Scheduling and Operator Programming | 1D: 异构调度与算子编程](./1D.md)
+- [08. Programming Models and CUDA/Triton | 编程模型演进](./08_Programming_Models_CUDA_Triton.md)
 - [15. CUDA Execution Model | CUDA 执行模型](./15_CUDA_Execution_Model.md)
 - [16. Warp Block SharedMemory Basics | Warp、Block 与 Shared Memory 基础](./16_Warp_Block_SharedMemory_Basics.md)
-- [17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](./17_CUDA_Stream_and_Asynchrony.md)
 
 ## 相关阅读
 
-**导语：** 把 Triton 的 block 模型和后面的 kernel 实现、FlashAttention 一起看，更容易串起来。
+**导语：** 把 Triton 的 block 模型继续接到入门 kernel、GEMM 和 FlashAttention，会更容易把空间划分和真实实现串起来。
 
-- [Part 03: Triton Kernel Development | 第三部分：Triton 算子开发](../03_Triton_Kernels/intro.md)
 - [01. Triton 入门与 Hello World：向量加法 (Vector Addition)](../03_Triton_Kernels/01_Triton_Vector_Addition.md)
 - [04. Triton 矩阵乘法 (GEMM) 与自动调优 (Autotune)](../03_Triton_Kernels/04_Triton_GEMM_Tutorial.md)
 - [08. Triton Flash Attention | 真正的 Flash Attention 前向算子](../03_Triton_Kernels/08_Triton_Flash_Attention.md)
-
+---
 ## Q1：Triton 里的 program、block 和 tile 分别是什么？
 
 <details>

@@ -1,6 +1,6 @@
 # 06. MoE Router | MoE 路由器
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `模型架构`, `MoE`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Medium | **环境：** CPU-first | **标签：** `模型结构`, `MoE`, `Router` | **目标人群：** 模型结构学习者
 
 > 🚀 **云端运行环境**
 >
@@ -23,24 +23,18 @@ MoE 的核心就是把 MLP 拆成多个 expert，再用 Router 为每个 token �
 ---
 ## 前置阅读
 
-**导语：** 先把 Decoder Layer 的基本结构和 `nn.Module` 封装理顺，再看 MoE 如何替换其中的稠密 MLP。
+**导语：** 先能定位 Decoder Layer 中稠密 MLP 的输入和输出，再观察 MoE 如何用多个 expert 与 Router 替换这条计算路径。
 
 - [05. LLaMA3 Block Tutorial | LLaMA3 Block 教程](../02_PyTorch_Algorithms/05_LLaMA3_Block_Tutorial.md)
 - [P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
 
 
-## 相关阅读
-
-**导语：** 理解 Router 的 Top-K 决策后，下一步要看训练中如何避免专家塌缩，以及 MoE 在分布式执行中的通信压力。
-
-- [07. MoE Load Balancing Loss | MoE 负载均衡损失](../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [P1: 05. Communication Topologies | 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)
-
 ---
 ### Step 1: 核心思想与痛点
 
 稠密模型的主要成本来自每个 token 都要经过全部参数，而 MoE 的核心思路是只激活少数专家来降低计算量。
+
+![MoE Router：一个 token 如何选择少数专家](../public/02_PyTorch_Algorithms/06_moe_router.svg)
 
 > **Dense (稠密) 模型的痛点：**
 > 在标准的 Transformer 中，每一个 Token 都必须经过全网络的所有参数（比如 70B 的 LLaMA）。这导致随着模型变大，推理和训练的计算量呈线性爆炸。
@@ -55,6 +49,37 @@ MoE 的核心就是把 MLP 拆成多个 expert，再用 Router 为每个 token �
 在门控网络中，首先计算输入对所有专家的打分矩阵（logits）。**关键陷阱**：必须先在全维度（num_experts）上进行 Softmax 将打分转为概率分布，然后再通过 `torch.topk` 获取最大的 K 个概率及其对应的专家索引。最后，为了保证加权和仍为 1，必须对截取出的 K 个概率值进行重归一化（Re-normalize）。
 
 因此实现顺序一定是 `router_logits -> 全局 softmax -> top-k -> 重归一化 -> sparse dispatch`；如果先截断再做 Softmax，就会丢掉全局相对置信度，路由结果也会变得不稳定。
+
+#### 图解：token 如何被 Router 分给专家
+
+MoE Router 不让每个 token 经过所有 MLP，而是为每个 token 选择少数专家。
+
+```text
+token hidden [D]
+      │
+      ▼
+router linear -> logits over experts [E]
+      │
+      ▼
+softmax over all experts
+      │
+      ▼
+top-k select experts
+      │
+      ├─ expert id:      [e2, e5]
+      └─ expert weights: [0.7, 0.3]
+```
+
+
+一个 batch 内可以这样理解：
+
+| token | Top-1 | Top-2 | 输出组合 |
+|:---:|:---:|:---:|:---|
+| token 0 | expert 2 | expert 5 | `0.7 * E2(x) + 0.3 * E5(x)` |
+| token 1 | expert 1 | expert 2 | `w1 * E1(x) + w2 * E2(x)` |
+| token 2 | expert 5 | expert 7 | `w5 * E5(x) + w7 * E7(x)` |
+
+本页只实现 Router 的 Top-K 选择；完整 MoE 还要负责 expert dispatch、combine 和负载均衡。
 
 ###  Step 3: 核心数学机制：Top-K Routing
 
@@ -323,3 +348,13 @@ class SparseMoEBlock(nn.Module):
 
 - **稀疏激活的本质**：MoE 的核心价值在于"大容量、低激活"。通过 Top-K 路由，每个 Token 只激活少数专家（通常 K=2），使得 56B 参数的模型实际计算量仅相当于 14B 的稠密模型。
 - **高效聚合**：代码中的 `SparseMoEBlock` 使用 For 循环遍历专家是为了便于理解。工业界框架（vLLM、Megatron-LM）会使用 Token Sorting（按专家索引排序）将去往同一专家的 Token 汇聚成批次，一次性计算以提升 GPU 利用率。
+
+## 相关阅读
+
+理解 Top-K 路由后，先看稀疏专家的代表性论文，再进入负载均衡和分布式执行。
+
+- [Switch Transformers 原论文](https://arxiv.org/abs/2101.03961)
+- [Mixtral 开源模型说明](https://huggingface.co/docs/transformers/main/en/model_doc/mixtral)
+- [07. MoE 负载均衡损失](../02_PyTorch_Algorithms/07_MoE_Load_Balancing_Loss.md)
+- [P1: GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+- [P1: 通信拓扑与分布式基石](../01_Hardware_Math_and_Systems/05_Communication_Topologies.md)

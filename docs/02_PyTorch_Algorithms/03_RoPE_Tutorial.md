@@ -1,6 +1,6 @@
 # 03. RoPE Tutorial | 旋转位置编码教程
 
-**难度：** Medium | **环境：** CPU-first | **标签：** `基础架构`, `位置编码`, `PyTorch` | **目标人群：** 模型微调与工程部署
+**难度：** Medium | **环境：** CPU-first | **标签：** `基础实现`, `位置编码`, `RoPE` | **目标人群：** 基础实现学习者
 
 > 🚀 **云端运行环境**
 >
@@ -23,18 +23,10 @@ RoPE 的做法不是给 token 额外加一个位置向量，而是把位置信�
 ---
 ## 前置阅读
 
-**导语：** 先把张量变换和注意力直觉理顺，再看位置信息如何进入 Query / Key 会更顺。
+**导语：** 先确认 Query / Key 的形状和注意力点积如何计算，再观察旋转角度和位置频率如何改变相对位置信息。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 16. Attention Mechanism Intro | 注意力机制导论](../00_Prerequisites/16_Attention_Mechanism_Intro.md)
-
-## 相关阅读
-
-**导语：** 理解 RoPE 后，可以继续看它如何进入多头注意力，以及相关算子在硬件和融合优化中的落地方式。
-
-- [04. Attention MHA GQA | 多头注意力](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-- [P1: 19. Operator Fusion Introduction | 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)
 
 ---
 ### Step 1: 核心思想与痛点
@@ -52,6 +44,35 @@ RoPE 的做法不是给 token 额外加一个位置向量，而是把位置信�
 
 
 因此实现时的主线其实很固定：先算出 freqs_cis （即预计算的复数旋转因子），再把它和 xq / xk（即 Attention 中的 Query 和 Key 投影张量）做广播对齐，最后完成复数旋转并回到原始实数形状。这样学习者在写 TODO 1/2/3 时，就能清楚地知道每段代码对应实现流程中的哪个环节。
+
+#### 可视化：RoPE 在 Attention 里站哪
+
+RoPE 不直接改 value，也不是额外加到 embedding 上；它作用在 Query / Key 上，让 attention score 带上相对位置信息。
+
+```text
+token hidden states
+      │
+      ├── q_proj ─► Q ─► RoPE rotate ─┐
+      │                                │
+      ├── k_proj ─► K ─► RoPE rotate ─┼─► QK^T / sqrt(d) ─► attention weights
+      │                                │
+      └── v_proj ─► V ─────────────────┘                    │
+                                                              ▼
+                                                        weighted sum V
+```
+
+![RoPE 在 Attention 里的位置](/02_PyTorch_Algorithms/03_rope_rotation.svg)
+
+张量形状可以按这条线记：
+
+| 阶段 | 典型形状 | 说明 |
+|:---|:---|:---|
+| hidden states | `[B, T, D]` | block 的输入表示 |
+| Q / K | `[B, T, H, Dh]` | 每个 head 的 query/key |
+| RoPE 后 Q / K | `[B, T, H, Dh]` | 形状不变，只旋转偶/奇维 |
+| attention scores | `[B, H, T, T]` | 位置关系进入打分 |
+
+读代码时只要抓住一点：RoPE 改的是 Q/K 的方向关系，不改 V 的内容存储。
 
 ###  Step 3: 核心公式与张量维度
 
@@ -381,3 +402,12 @@ def apply_rotary_emb(
   - **NTK-aware Scaling：** 动态调整基频 （如从 10000 增大到 100000），降低高频分量的旋转速度。
   - **YaRN：** 结合低频外推和高频插值，在不同维度使用不同的缩放策略。
 - **工程实践：** LLaMA 2 使用线性插值支持 32K 上下文，Qwen 使用动态 NTK 支持 128K，这些技术使得 RoPE 成为当前大模型位置编码的事实标准。
+## 相关阅读
+
+先读 RoPE 的原始设计，再回到 Attention 实现观察旋转因子如何进入 Query / Key；如果继续研究长序列的执行代价，可以再阅读 GPU 架构与算子融合相关材料。
+
+- [RoFormer 原论文：Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
+- [Transformers 中的 LLaMA 模型实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
+- [04. 多头注意力与 GQA](../02_PyTorch_Algorithms/04_Attention_MHA_GQA.md)
+- [P1: GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
+- [P1: 算子融合导论](../01_Hardware_Math_and_Systems/19_Operator_Fusion_Introduction.md)

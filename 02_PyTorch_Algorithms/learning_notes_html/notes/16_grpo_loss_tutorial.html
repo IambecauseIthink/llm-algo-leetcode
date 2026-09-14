@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 16 | GRPO Loss Tutorial</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 16 | GRPO Loss Tutorial | 群体相对策略优化损失教程</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 16 | 零基础导学关卡</p>
-        <h1>GRPO Loss Tutorial</h1>
+        <h1>GRPO Loss Tutorial | 群体相对策略优化损失教程</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">16_GRPO_Loss_Tutorial.ipynb</span>
-          <span class="pill">GRPO</span><span class="pill">Group Advantage</span><span class="pill">Alignment</span>
+          <span class="pill">后训练对齐</span><span class="pill">GRPO</span><span class="pill">奖励优化</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,187 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="9055efa096bd7b1dc10fcf6fb872714460df1bdd3b69b500abb6b0ce429d96e1">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../16_GRPO_Loss_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/16_GRPO_Loss_Tutorial.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>16. GRPO Loss Tutorial | 群体相对策略优化损失教程</h1>
+<p><strong>难度：</strong> Medium-Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>GRPO</code>, <code>奖励优化</code> | <strong>目标人群：</strong> 训练机制学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>在偏好优化里，模型常常会针对同一个 prompt 生成多个候选答案。此时我们不只关心某个答案的绝对奖励，更关心它在同一组候选里相对好还是相对差。</p>
+<p>GRPO 的重点就是把这种“组内比较”变成训练信号：先把同组奖励归一化成相对优势，再用类似 PPO 的裁剪目标限制策略更新幅度，从而减少对显式 Critic 的依赖。本节实现一个简化版 GRPO Loss。完成后，你应该能看懂 <code>group_ids</code>、相对优势和策略比率裁剪各自解决什么问题，并把 <code>RLHF -&gt; DPO -&gt; GRPO</code> 这条对齐链路串起来。</p>
+<p><strong>关键词：</strong> <code>GRPO</code>, <code>group relative</code>, <code>reward</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 计算组内相对优势</li><li>TODO 2: 计算策略比率与两个 surrogate 目标</li><li>TODO 3: 计算最终 loss 并返回</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先理解训练闭环、偏好优化和显存账本，再看 GRPO 如何用组内相对优势稳定策略更新。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+<li><a href="../../../00_Prerequisites/20_Profiling_and_Memory_Ledger.ipynb">P0: 20. Profiling and Memory Ledger | 性能分析与显存账本</a></li>
+<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | 直接偏好优化损失教程</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成对齐损失后，可以继续从性能分析和通信基础理解大规模对齐训练的工程瓶颈。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb">P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb">P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心思想</h3>
+<blockquote>
+<p><strong>为什么需要 GRPO？</strong>
+GRPO 关注的是同一组样本内部的相对优劣，而不是把每个样本都单独拉到一个绝对奖励空间里。
+这种做法的好处是：</p>
+<ul>
+<li>训练目标更稳，减少极端奖励对更新方向的冲击。</li>
+<li>可以和策略比率裁剪一起使用，限制一次更新的幅度。</li>
+<li>在某些场景下可以减少对显式 Critic 的依赖。</li>
+</ul>
+</blockquote>
+<h4>组内比较为什么更稳</h4>
+<p>GRPO 的关键不是“再造一个 PPO 变体”，而是把一个 prompt 下的多个候选答案放在同一个组里比较，从而降低奖励尺度波动带来的训练不稳定。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">维度</th>
+<th style="text-align:left">单样本 reward</th>
+<th style="text-align:left">组内相对 reward</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">评价方式</td>
+<td style="text-align:left">直接看绝对奖励</td>
+<td style="text-align:left">看同组里谁更好</td>
+</tr>
+<tr>
+<td style="text-align:left">稳定性</td>
+<td style="text-align:left">容易受奖励尺度影响</td>
+<td style="text-align:left">先中心化再标准化，方差更小</td>
+</tr>
+<tr>
+<td style="text-align:left">数据组织</td>
+<td style="text-align:left">一条样本就能训练</td>
+<td style="text-align:left">需要同一 prompt 下的多个候选</td>
+</tr>
+<tr>
+<td style="text-align:left">训练直觉</td>
+<td style="text-align:left">绝对分数高就更新</td>
+<td style="text-align:left">组内相对更优的样本获得更强信号</td>
+</tr>
+</tbody>
+</table>
+<h4>一个最小例子</h4>
+<p>假设同一个 prompt 生成了 4 个候选：</p>
+<ul>
+<li><code>group 0</code>: reward = <code>[1.0, 2.0]</code></li>
+<li><code>group 1</code>: reward = <code>[0.5, 1.5]</code></li>
+</ul>
+<p>GRPO 不直接拿这 4 个分数去做全局比较，而是分别在各自组内做均值和标准差归一化。这样做的结果是：</p>
+<ul>
+<li>组内平均值被拉回 0，避免组与组之间的绝对奖励尺度干扰更新。</li>
+<li>高于组均值的候选得到正优势，低于组均值的候选得到负优势。</li>
+<li>策略更新更关注“同一个 prompt 下谁更好”，而不是“不同 prompt 的 reward 绝对值有多大”。</li>
+</ul>
+<p>这也是 GRPO 适合做组内排序、候选比较和生成优化的原因。</p>
+<h3>Step 2: 数学形式</h3>
+<p>给定同一组中的奖励 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>r</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">r_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>，先计算组内均值和标准差：</p>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>r</mi><mo>ˉ</mo></mover><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><msub><mi>r</mi><mi>i</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>σ</mi><mo>=</mo><msqrt><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><mo stretchy="false">(</mo><msub><mi>r</mi><mi>i</mi></msub><mo>−</mo><mover accent="true"><mi>r</mi><mo>ˉ</mo></mover><msup><mo stretchy="false">)</mo><mn>2</mn></msup><mo>+</mo><mi>ϵ</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">
+\bar r = \frac{1}{N} \sum_{i=1}^{N} r_i, \quad\sigma = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (r_i - \bar r)^2 + \epsilon}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5678em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.5678em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.106em;vertical-align:-1.2777em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.3338em;vertical-align:-1.2777em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.0561em;"><span class="svg-align" style="top:-5.2938em;"><span class="pstrut" style="height:5.2938em;"></span><span class="mord" style="padding-left:1.056em;"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.5678em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">ϵ</span></span></span><span style="top:-4.0161em;"><span class="pstrut" style="height:5.2938em;"></span><span class="hide-tail" style="min-width:0.742em;height:3.3738em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="3.3738em" viewBox="0 0 400000 3373" preserveAspectRatio="xMinYMin slice"><path d="M702 80H40000040
+H742v3239l-4 4-4 4c-.667.7 -2 1.5-4 2.5s-4.167 1.833-6.5 2.5-5.5 1-9.5 1
+h-12l-28-84c-16.667-52-96.667 -294.333-240-727l-212 -643 -85 170
+c-4-3.333-8.333-7.667-13 -13l-13-13l77-155 77-156c66 199.333 139 419.667
+219 661 l218 661zM702 80H400000v40H742z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span></span></span></span></span></eqn></section><p>然后把相对优势定义为：</p>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>A</mi><mi>i</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>r</mi><mi>i</mi></msub><mo>−</mo><mover accent="true"><mi>r</mi><mo>ˉ</mo></mover></mrow><mi>σ</mi></mfrac></mrow><annotation encoding="application/x-tex">
+A_i = \frac{r_i - \bar r}{\sigma}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.9463em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.2603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.5678em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">ˉ</span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></eqn></section><p>最后再代入类似 PPO 的 clipped objective：</p>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mo>=</mo><mo>−</mo><mi mathvariant="double-struck">E</mi><mo stretchy="false">[</mo><mi>min</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>r</mi><mi>a</mi><mi>t</mi><mi>i</mi><mi>o</mi><mo>⋅</mo><mi>A</mi><mo separator="true">,</mo><mi>c</mi><mi>l</mi><mi>i</mi><mi>p</mi><mo stretchy="false">(</mo><mi>r</mi><mi>a</mi><mi>t</mi><mi>i</mi><mi>o</mi><mo stretchy="false">)</mo><mo>⋅</mo><mi>A</mi><mo stretchy="false">)</mo><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">
+L = -\mathbb{E}[\min(ratio \cdot A, clip(ratio) \cdot A)]
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord mathbb">E</span><span class="mopen">[</span><span class="mop">min</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">a</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">A</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">c</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">i</span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">a</span><span class="mord mathnormal">t</span><span class="mord mathnormal">i</span><span class="mord mathnormal">o</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">A</span><span class="mclose">)]</span></span></span></span></span></eqn></section><p>这一节的实现链路就是先做组内归一化，再构造 clipped surrogate，最后汇总成 GRPO loss。</p>
+<h3>Step 3: 代码实现框架与任务拆解</h3>
+<p>这一节的实现顺序很简单：先把同一组候选的奖励做组内归一化，再构造策略比率和 clipped surrogate，最后汇总成 GRPO loss。</p>
+<h4>实现顺序</h4>
+<ol>
+<li><code>advantages</code>：按 <code>group_ids</code> 分组，把 reward 做去均值和标准差归一化。</li>
+<li><code>ratio / surr1 / surr2</code>：再算策略比率，并构造两个 surrogate 目标。</li>
+<li><code>loss</code>：最后取更保守的一侧，得到最终的 GRPO loss。</li>
+</ol>
+<h4>实现节奏</h4>
+<ul>
+<li>如果 <code>advantages</code> 的组内中心化错了，后面的 loss 没有意义。</li>
+<li>如果 <code>ratio</code> 或 <code>clamp</code> 口径错了，GRPO 就会退化成错误的策略更新。</li>
+<li>如果 <code>loss</code> 没有取 <code>min(surr1, surr2)</code>，就失去了 clipped objective 的稳定性。</li>
+</ul>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def compute_grpo_loss(log_probs_new, log_probs_old, rewards, group_ids, clip_range=0.2, eps=1e-6):
+    &quot;&quot;&quot;
+    简化版 GRPO Loss。
+    rewards/group_ids 允许把同一 prompt 下的多个候选答案分到一组。
+    &quot;&quot;&quot;
+    # ==========================================
+    # TODO 1: 计算组内相对优势
+    # ==========================================
+    # advantages = ???
 
+    # ==========================================
+    # TODO 2: 计算策略比率与两个 surrogate 目标
+    # ==========================================
+    # ratio = ???
+    # surr1 = ???
+    # surr2 = ???
 
+    # ==========================================
+    # TODO 3: 计算最终 loss 并返回
+    # ==========================================
+    # loss = ???
+    return loss, advantages
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
+def test_grpo_loss():
+    try:
+        log_new = torch.tensor([-1.0, -0.5, -1.5, -0.2], requires_grad=True)
+        log_old = torch.tensor([-1.1, -0.4, -1.6, -0.3])
+        rewards = torch.tensor([1.0, 2.0, 0.5, 1.5])
+        group_ids = torch.tensor([0, 0, 1, 1])
+        loss, adv = compute_grpo_loss(log_new, log_old, rewards, group_ids)
+        assert loss.ndim == 0, &quot;Loss 应该是标量&quot;
+        assert torch.isfinite(loss), &quot;Loss 不能是 NaN/Inf&quot;
+        assert torch.allclose(adv[group_ids == 0].mean(), torch.tensor(0.0), atol=1e-6), &quot;组内优势均值应接近 0&quot;
+        loss.backward()
+        assert log_new.grad is not None, &quot;梯度没有回传到策略分数&quot;
+        print(&quot;✅ 测试通过！GRPO 简化版 Loss 可运行。&quot;)
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
 
+test_grpo_loss()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="grpo-group-advantages">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：按 group_ids 计算标准化 advantages</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先在每个 prompt 组内建立相对坐标</h2>
 
@@ -1121,26 +1302,14 @@ for class_id in class_ids.unique(sorted=True):
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="grpo-group-advantages-0">
-                <span>初始化 zeros_like(rewards)，逐 unique gid 取 mask、centered 和总体 std，并把结果写回 advantages[mask]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-advantages-1">
-                <span>确认 advantages.shape=[N]、dtype/device 与 rewards 一致；group_ids 只用于索引，不参与浮点计算。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-advantages-2">
-                <span>运行组 0 的均值断言；再用一组相同 rewards 检查 clamp_min(eps) 是否避免 NaN。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-group-advantages-3">
-                <span>错误诊断：组均值不为 0 时检查是否误用全局 mean；两元素组幅度异常时检查 unbiased 是否写成 True。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="grpo-clipped-objective">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：计算 ratio、surr1 与 surr2</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>把组内优势接入 PPO 式策略护栏</h2>
 
@@ -1232,26 +1401,14 @@ bounded = torch.clamp(ratio, 1-epsilon, 1+epsilon) * relative_quality</code></pr
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="grpo-clipped-objective-0">
-                <span>完成 ratio、surr1、surr2，确认三个 Tensor 都是 [N] 且 finite。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-clipped-objective-1">
-                <span>不要 detach log_probs_new；测试随后会调用 loss.backward 检查梯度。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-clipped-objective-2">
-                <span>用 ratio 超过 1.2 与低于 0.8 的例子手算 clamp 是否正确。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-clipped-objective-3">
-                <span>错误诊断：梯度为空时检查 detach/item；ratio 非正时检查是否漏 exp；shape 变标量时检查是否提前 mean。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="grpo-loss-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 3：返回标量 loss 与逐样本 advantages</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>保守聚合并读懂 GRPO 的四个测试信号</h2>
 
@@ -1340,19 +1497,7 @@ assert raw.grad is not None</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="grpo-loss-test-0">
-                <span>完成 loss=-torch.min(surr1,surr2).mean()，并返回 loss、advantages。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-loss-test-1">
-                <span>运行 test_grpo_loss，依次确认标量、finite、组均值与梯度四类条件。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-loss-test-2">
-                <span>错误诊断：NaN 时检查 std 的 clamp_min；grad None 时检查 detach；组均值失败时检查是否按 group_ids 分组。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="grpo-loss-test-3">
-                <span>用一句话比较 DPO 与 GRPO：前者比较 chosen/rejected 对，后者先比较同 prompt 的候选组。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1376,16 +1521,29 @@ assert raw.grad is not None</code></pre></div>
     const predictData = {"grpo-group-advantages":{"answer":0,"revealNote":"centered 全为 0；分母被 clamp 到 eps 后仍得到 0，避免 NaN。"},"grpo-clipped-objective":{"answer":0,"revealNote":"exp(0)=1；surr1=1×(-1)=-1。"},"grpo-loss-test":{"answer":0,"revealNote":"未聚合时 loss 仍是 [N]，不是标量。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "16";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-9055efa096bd";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

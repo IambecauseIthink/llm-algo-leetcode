@@ -1,152 +1,78 @@
-# 显存优化与性能调优正文
+# 显存优化判断手册
 
-## 页面目标
-这页把训练侧、推理侧和验证侧的显存问题统一起来看，重点不是“省显存”本身，而是“省显存的代价和收益是否划算”。
+> 这份判断手册按问题组织，不属于 Task0–6 的顺序学习内容。完成机制学习后，遇到实际显存问题时，用它选择排查方向和验证项目。
 
-## 适用人群
+显存优化不应从技巧名称开始，而应从现象开始判断：当前是哪类对象超过预算，发生在什么生命周期，应该优先减少驻留、重算、搬运还是压缩表示。
 
-- 正在处理训练显存爆炸、推理 cache 过大的问题的人。
-- 想把显存优化和时间代价一起评估的人。
-- 想把账本、实测和 benchmark 对齐的人。
+统一判断链是：
 
-## 不适用人群
+```text
+现象 → 显存对象 → 生命周期 → 策略代价 → 证据出口
+```
 
-- 只想机械地缩 batch，不关心副作用的人。
-- 还没分清 activation、optimizer state 和 KV cache 的人。
-- 不打算做收益验证的人。
+训练和推理共享这套判断方法，但对象账本和实验结论不能混用。训练主要观察 activation、梯度和 optimizer state；推理主要观察权重、KV Cache 和运行时 buffer。
 
-## 你应该如何开始读
+## 显存对象与问题入口
 
-- 先读 `2.5 -> 19 -> 32`，看训练侧显存是怎么被吃掉的。
-- 如果你关心推理，再接 `2.6 -> 22 -> 35`。
-- 如果你关心账本和实测差异，再看 `06 -> 13 -> 32`。
-- 最后用 `33 -> 35` 判断优化是不是值得。
+![显存账本：对象、生命周期与证据](../../docs/public/topic_discussion/memory_performance_tuning/memory_ledger.svg)
 
-## 故事线
+| 显存对象 | 主要生命周期 | 常见问题 | 主要学习入口 |
+|:---|:---|:---|:---|
+| 参数 | 模型加载到运行结束 | 模型或 checkpoint 装不下 | Task1、量化与分布式 |
+| 梯度 | backward 后产生 | 训练峰值升高 | Task0、Task2 |
+| optimizer state | optimizer step 后驻留 | 训练状态过大 | Task1、73 |
+| activation | forward 保存到 backward | 中后段 OOM | Task0、Task2、76 |
+| KV Cache | Prefill 到请求结束 | 长上下文、并发受限 | Task4、66、69、71 |
+| 通信 buffer | 多卡通信期间 | 多卡峰值和通信开销 | Task6、79–81 |
 
-一个典型的显存故事，往往从“batch 一大就炸”开始。最开始大家会以为只是 batch 设太大了，但真正把链路拆开以后，常常会发现是训练侧 activation、推理侧 KV cache 和验证侧 benchmark 口径同时在制造误判。
+## 按现象选择策略
 
-第一步先看 `2.5 -> 19 -> 32`，确认训练显存到底是被 activation 还是重算吃掉。
-第二步再看 `2.6 -> 22 -> 35`，确认推理 cache 是自然增长还是复用不足。
-第三步再看 `06 -> 13 -> 32`，把账本和实测对齐，避免只看理论峰值。
-最后用 `33 -> 35` 证明优化是否真的在时间和收益上划算。
+| 现象 | 先判断的对象 | 先测什么 | 候选策略 | 主要代价 | 验证出口 |
+|:---|:---|:---|:---|:---|:---|
+| 训练前几步正常，中后段 OOM | activation、临时张量 | forward / backward 峰值和 saved tensors | checkpoint、offload | 重算、搬运、同步 | [73](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) → [76](../../02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb) |
+| 单步显存可接受，但有效 batch 不够 | activation 与 micro-batch | 单步峰值和有效 batch | gradient accumulation、checkpoint | 微步数、重算时间 | [12](../../02_PyTorch_Algorithms/12_Gradient_Accumulation.ipynb) → [73](../../02_PyTorch_Algorithms/73_Training_Performance_Analysis.ipynb) |
+| 模型加载阶段就超过预算 | 权重、dtype、运行时 buffer | 参数账本和加载峰值 | 量化、分片、改变 dtype | 质量、kernel、通信 | [67](../../02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb) / [79](../../02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb) |
+| 上下文变长后显存持续上涨 | KV Cache | Cache 增长和并发边界 | paging、prefix reuse、cache quantization | 命中率、误差、backend 约束 | [66](../../02_PyTorch_Algorithms/66_Inference_Performance_Comparison.ipynb) → [69](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb) |
+| 并发增加后 Cache 无法容纳 | KV Cache、临时请求空间 | Cache 容量、命中和请求 workload | cache budget、复用、架构扩展 | 并发、质量、调度约束 | [69](../../02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark.ipynb) / [71](../../02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb) |
+| 峰值显存下降但速度变慢 | 重算、搬运或 kernel | forward / backward / 搬运时间 | 先做 profiling，再调策略 | 时间、带宽、通信 | [74](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) |
+| 理论账本与实测差距很大 | buffer、碎片、生命周期 | allocator 和 trace | 对齐账本与实测证据 | 分析成本 | [01 显存账本](./01_vram_ledger_and_metrics.md) → [74](../../02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb) |
 
-这个故事的重点不是“省得越多越好”，而是找到一个在显存、吞吐和调度之间都划算的点。
+## Profiling、Benchmark 与项目决策
 
-## 具体案例
+![显存优化：从分支证据到统一决策](../../docs/public/topic_discussion/memory_performance_tuning/benchmark_tradeoff_decision.svg)
 
-### 案例 1：训练一到中后段就 OOM
+Profiling 和 Benchmark 解决不同问题：Profiling 用来发现和解释瓶颈，Benchmark 用来比较候选策略；75 进一步检查预算变化后结论是否稳定，74 当前作为最终 trace 收口。实际项目顺序是 `73 baseline → 76 策略比较 → 75 预算敏感性 → 74 Profiling 收口`。
 
-现象是：前几个 step 都正常，但到了中后段显存突然顶满。  
-判断链路是：先看 `2.5 -> 19 -> 32`，确认是不是 activation 累积和重算代价一起在放大；再看 `06 -> 13 -> 32`，确认是不是理论账本和实际峰值之间有偏差。
+| 环节 | 主要问题 | 代表项目 | 可以形成的证据 |
+|:---|:---|:---|:---|
+| baseline | 当前配置的真实成本是多少 | 73 | step time、吞吐、峰值显存、loss、OOM |
+| profiling | 时间和显存花在哪里 | 74 | 重算、搬运、optimizer step、kernel 代价 |
+| strategy benchmark | 哪个候选策略更合适 | 76 | baseline / checkpoint / offload / hybrid 对比 |
+| budget analysis | 不同预算下是否仍然成立 | 75 | budget sensitivity、可行策略集合 |
+| final decision | 是否采用当前方案 | 74 + 75 | accept / tune / reject |
 
-常见结论是：
+| Task | 在 casebook 中承担的角色 |
+|:---|:---|
+| Task0 | 理解状态产生、驻留和释放 |
+| Task1 | 建立 dtype、参数、activation 和 optimizer state 账本 |
+| Task2 | 选择 accumulation、checkpoint、offload 等单机策略 |
+| Task3 | 用 73、76、75 完成训练侧测量和预算决策 |
+| Task4 | 处理 KV Cache、分页、复用和推理容量 |
+| Task5 | 通过量化改变权重或 Cache 的容量 |
+| Task6 | 用分布式切分和 Profiling 完成系统收口 |
 
-- 如果 activation 占比高，checkpointing 往往比直接缩 batch 更划算。
-- 如果账本和实测差得很大，说明不是单一参数问题，而是流程里有隐藏开销。
+形成结论时按以下顺序检查：
 
-这个案例的重点是：OOM 不一定出在第一步，很多时候是中后段的状态累积在把你拖垮。
+1. **先确认对象。** 不要把 activation、optimizer state 和 KV Cache 放在同一个账本条目里。
+2. **再确认阶段。** 训练看 forward / backward / optimizer step；推理看 prefill / decode / cache 增长。
+3. **再选择策略。** 说明策略减少了哪类 GPU 驻留，以及代价转移到了计算、带宽、通信、延迟还是质量。
+4. **最后选择证据。** CPU 只能验证公式、shape、梯度和决策逻辑；GPU、backend、多卡或 profiler 才能证明对应的系统结论。
 
-### 案例 2：推理 cache 一直涨，但延迟也上去了
+`accept / tune / reject` 只用于固定 workload 下的策略判断：显存收益、性能、质量和稳定性同时满足约束时才是 `accept`；证据不足或阈值敏感时保持 `tune`；副作用过大或质量不达标时 `reject`。
 
-现象是：服务跑着跑着，KV cache 占用越来越高，延迟也一起变差。  
-判断链路是：先看 `2.6 -> 22 -> 35`，确认 cache 增长是否来自长上下文和请求组织；再看 `33 -> 35`，确认量化部署是不是把时间代价也拉高了。
+## 阅读入口
 
-常见结论是：
-
-- 如果 cache 命中率低，前缀复用和分页策略要先调。
-- 如果量化后延迟变差，说明显存收益没有换到相同级别的吞吐收益。
-
-这个案例的重点是：推理显存问题不是只看“还能不能跑”，还要看“跑起来值不值”。
-
-### 案例 3：优化前后显存下降，但 benchmark 没改善
-
-现象是：优化后峰值显存明显降低，但最终 benchmark 没有同步提升。  
-判断链路是：先看 `33 -> 35`，确认优化是不是把时间也赔掉了；再回到 `2.5 -> 19 -> 32` 或 `2.6 -> 22 -> 35`，看问题到底是在训练侧还是推理侧。
-
-常见结论是：
-
-- 有些显存优化只是把资源从一个地方挪到另一个地方。
-- 如果 benchmark 没变好，说明优化没有真正落到最终目标上。
-
-这个案例的重点是：显存下降只是中间指标，最终要看吞吐、延迟和稳定性是否真的改善。
-
-## 资源对象
-
-显存优化本质上是在不同资源对象之间做取舍，而不是只看一个峰值数字。
-
-| 资源对象 | 主要问题 | 重点看什么 |
-|:---|:---|:---|
-| `activation` | 训练前向/反向保留的中间状态太多 | `2.5 -> 19 -> 32` |
-| `optimizer state` | 参数更新状态占用过高 | `06 -> 13 -> 32` |
-| `KV cache` | 推理阶段缓存增长和复用不足 | `2.6 -> 22 -> 35` |
-| `throughput / latency` | 省显存是否把时间也赔掉了 | `33 -> 35` |
-
-## 典型阅读链
-
-- 如果你先想看“训练显存为什么爆”，先读 `2.5 -> 19 -> 32`，把 activation 和重算代价先讲清楚。
-- 如果你先想看“推理 cache 为什么涨”，先读 `2.6 -> 22 -> 35`，把 KV cache 和量化部署先讲清楚。
-- 如果你先想看“账本和实测为什么不一致”，先读 `06 -> 13 -> 32`，把理论估算和实测瓶颈对齐。
-- 如果你先想看“优化值不值”，先读 `33 -> 35`，把占用、收益和代价放一起看。
-
-## 一页速记
-
-| 层级 | 你主要关心什么 | 在本专题里怎么看 |
-|:---|:---|:---|
-| 训练侧 | activation、optimizer state 和重算代价 | 先看 `2.5 -> 19 -> 32` |
-| 推理侧 | KV cache、前缀复用和量化部署 | 先看 `2.6 -> 22 -> 35` |
-| 验证侧 | 优化后到底是省了显存还是赔了时间 | 重点看 `33 -> 35` 和 `06 -> 13 -> 32` |
-| 调优层 | 显存和吞吐怎么一起平衡 | 把训练、推理和 benchmark 放在一起看 |
-
-## 建议阅读顺序
-
-1. 先看 `Part 1B -> 06 -> 13`，把显存账本和瓶颈定位立住。
-2. 再看 `2.5 -> 19 -> 32`，理解训练侧 activation 和 checkpointing。
-3. 再看 `2.6 -> 22 -> 35`，理解推理侧 KV cache 和量化部署。
-4. 最后看 `33 -> 35`，把收益验证收口。
-
-## 典型案例
-
-### 训练显存爆了
-训练显存爆了时，先别急着缩 batch。先看 `2.5 -> 19 -> 32`，确认是不是 activation 和重算代价能先把问题救下来。
-
-### 推理 cache 一直涨
-如果推理时 cache 一直涨，重点看 `2.6 -> 22 -> 35`，先确认 cache 增长是否和请求形态、前缀复用和部署策略有关。
-
-### 账本和实测不一致
-如果理论账本和实测差很多，优先看 `06 -> 13 -> 32`，先把假设、峰值和实际瓶颈对齐。
-
-## 对照表
-
-| 场景 | 先看什么 | 重点差异 |
-|:---|:---|:---|
-| 训练爆显存 | `2.5 -> 19 -> 32` | 看 activation 和 checkpointing |
-| 推理 cache 涨 | `2.6 -> 22 -> 35` | 看 KV cache 和部署策略 |
-| 账本不一致 | `06 -> 13 -> 32` | 看理论估算和实测峰值 |
-| 想提综合收益 | `33 -> 35` | 看省显存是否赔了时间 |
-
-## 简单规则
-
-- 先分清是训练还是推理。
-- 再分清是 activation、optimizer state 还是 KV cache。
-- 再看优化是不是把时间代价控制住了。
-
-## 常见错误
-
-- 只看峰值，不看代价。
-- 把 offload 当成无脑降显存。
-- 忽略请求分布和 batch 变化。
-
-## 深入阅读
-
-- 想看完整调优故事，去 [显存优化与性能调优深入阅读](./walkthrough.md)。
-- 想快速回顾摘要、资源对象和清单，继续留在本页即可。
-
-## 相关专题
-
-- [Profiling 专题](../profiling/intro.md)：当你先要确认瓶颈和收益时看这里。
-- [推理优化专题](../inference_optimization/intro.md)：当显存问题主要来自推理链路里的 cache、prefill 或 decode 时看这里。
-- [通信与并行专题](../communication_parallel/intro.md)：当显存问题和多卡切分、参数分摊一起出现时看这里。
-
-## 小结
-显存优化不是越省越好，而是要和训练、推理、调度和 benchmark 一起看，找到最划算的点。
+- 想按顺序学习机制：回到 [显存优化入口](./intro.md)，再读 [01–06 正文](./01_vram_ledger_and_metrics.md)。
+- 想沿一个问题完整走一遍：阅读[显存优化深入阅读](./walkthrough.md)。
+- 想采集真实数据：进入 73–76、66–71 或 79–81 对应的项目页，并遵守各自环境与报告要求。
+- 如果问题首先是请求速度、服务调度或版本治理，应转到[推理优化](../inference_optimization/intro.md)，而不是把所有问题都归入显存优化。

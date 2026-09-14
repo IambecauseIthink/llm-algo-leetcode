@@ -1,0 +1,64 @@
+{
+  "schema_version": "fine-tuning-project/v1",
+  "project": "60_lora_fine_tuning",
+  "stage": "project_decision",
+  "config": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "model_path": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/model_cache/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+    "dtype": "torch.bfloat16",
+    "batch_size": 4,
+    "seq_len": 256,
+    "steps": 3,
+    "seed": 42
+  },
+  "baseline": {
+    "status": "not_run",
+    "reason": "real smoke test does not run a matched full-parameter baseline"
+  },
+  "candidates": [
+    {
+      "name": "real_lora_smoke",
+      "status": "ok",
+      "losses": [
+        4.637197971343994,
+        4.478293418884277,
+        4.3105998039245605
+      ]
+    }
+  ],
+  "quality": {
+    "train_loss": 4.3105998039245605,
+    "val_loss": null,
+    "task_metrics": {},
+    "data_audit": {
+      "total_samples": 4,
+      "empty_response_count": 0,
+      "duplicate_count": 0,
+      "over_length_count": 0,
+      "avg_total_chars": 35.75
+    },
+    "quality_status": "smoke_only"
+  },
+  "resources": {
+    "trainable_params": 540672,
+    "peak_memory_mb": 1221.22,
+    "step_time_ms": 30.65,
+    "tokens_per_s": 2740.49
+  },
+  "artifacts": {
+    "adapter": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/60_real_lora/adapter",
+    "tokenizer": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/60_real_lora/tokenizer",
+    "report": "/data/llm-algo-leetcode-datawhale/llm-algo-leetcode/benchmarks/results/60_real_lora/60_real_lora.json"
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "真实 LoRA smoke test 已完成，但尚未与同口径 baseline 和验证集比较。",
+    "next_action": "run_matched_baseline_and_validation"
+  },
+  "environment": {
+    "python": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:42:22) [GCC 14.3.0]",
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU"
+  }
+}

@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 17 | Autograd Basics</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 17 | Attention Backward and Custom Autograd | Attention 反向传播与自定义 Autograd</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 17 | 零基础导学关卡</p>
-        <h1>Autograd Basics</h1>
+        <h1>Attention Backward and Custom Autograd | Attention 反向传播与自定义 Autograd</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">17_Autograd_Basics.ipynb</span>
-          <span class="pill">Autograd</span><span class="pill">Attention Backward</span><span class="pill">Chain Rule</span>
+          <span class="pill">显存优化</span><span class="pill">Autograd</span><span class="pill">反向传播</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,313 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="2dc08a2d56780891c4623bac5a30521ec16898a6cd8282c84a4df9507a6c3e19">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../17_Autograd_Basics.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/17_Autograd_Basics.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>17. Attention Backward and Custom Autograd | Attention 反向传播与自定义 Autograd</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>显存优化</code>, <code>Autograd</code>, <code>反向传播</code> | <strong>目标人群：</strong> 显存优化学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>Attention 的前向计算把 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span></eq>、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq>、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 组合成输出；反向传播则沿着相反的依赖关系，把输出梯度传回这三个输入。本节从这条梯度链出发，说明中间状态为什么会影响反向计算的显存占用，并把它与后续的分块计算联系起来。</p>
+<p>学习时可以先沿着 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>O</mi><mo>→</mo><mi>d</mi><mi>V</mi><mtext>、</mtext><mi>d</mi><mi>P</mi><mo>→</mo><mi>d</mi><mi>S</mi><mo>→</mo><mi>d</mi><mi>Q</mi><mtext>、</mtext><mi>d</mi><mi>K</mi></mrow><annotation encoding="application/x-tex">dO \rightarrow dV、dP \rightarrow dS \rightarrow dQ、dK</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">Q</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq> 的方向观察依赖关系，再把每个中间量的形状、保存状态和显存代价对应起来。</p>
+<p><strong>关键词：</strong> <code>Autograd</code>, <code>backward</code>, <code>gradcheck</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 求 dV</li><li>TODO 2: 求 dP</li><li>TODO 3: 穿过 Softmax 求 dS</li><li>TODO 4: 求 dQ 和 dK（注意 scale 会同时传回两条输入支路）</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先理解 PyTorch 如何记录计算图，并复习 Attention 的 Q/K/V 前向路径，再进入手写 Attention backward。训练循环属于辅助背景。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/07_PyTorch_Autograd_and_Backward.ipynb">P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播</a></li>
+<li><a href="04_attention_mha_gqa.html">04. Attention MHA/GQA | 多头注意力与 KV Cache</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">辅助阅读：P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+</ul>
+<hr>
+<h3>Step 1: Attention backward 的整体梯度链</h3>
+<p>把 Attention 看成一条依赖链：前向阶段由 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mtext>、</mtext><mi>K</mi><mtext>、</mtext><mi>V</mi></mrow><annotation encoding="application/x-tex">Q、K、V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 形成 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq>、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq> 和 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi></mrow><annotation encoding="application/x-tex">O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></eq>；反向阶段从输出梯度 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>O</mi></mrow><annotation encoding="application/x-tex">dO</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></eq> 出发，先分成 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">dV</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 与 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>P</mi></mrow><annotation encoding="application/x-tex">dP</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq>，再经过 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>S</mi></mrow><annotation encoding="application/x-tex">dS</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq> 回到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>Q</mi></mrow><annotation encoding="application/x-tex">dQ</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">Q</span></span></span></span></eq> 和 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>K</mi></mrow><annotation encoding="application/x-tex">dK</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq>。其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>O</mi></mrow><annotation encoding="application/x-tex">dO</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></eq> 是这条反向链的起点。</p>
+<p>先把每个量的形状和流向对齐，再把梯度依赖、保存状态和显存账本放到同一条链上观察。</p>
+<blockquote>
+<p><strong>张量形状说明：</strong></p>
+<ul>
+<li><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo separator="true">,</mo><mi>K</mi><mo separator="true">,</mo><mi>V</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>B</mi><mo>×</mo><mi>N</mi><mo>×</mo><mi>d</mi></mrow></msup></mrow><annotation encoding="application/x-tex">Q, K, V \in \mathbb{R}^{B \times N \times d}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></span></eq>（batch <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span></eq>、序列长度 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq>、特征维数 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span></eq>）</li>
+<li><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo separator="true">,</mo><mi>P</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>B</mi><mo>×</mo><mi>N</mi><mo>×</mo><mi>N</mi></mrow></msup></mrow><annotation encoding="application/x-tex">S, P \in \mathbb{R}^{B \times N \times N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span></span></span></span></span></span></span></span></eq></li>
+<li><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>B</mi><mo>×</mo><mi>N</mi><mo>×</mo><mi>d</mi></mrow></msup></mrow><annotation encoding="application/x-tex">O \in \mathbb{R}^{B \times N \times d}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></span></eq></li>
+</ul>
+</blockquote>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/17_autograd_attention_backward.svg" alt="Autograd：前向记录与反向梯度流"></p>
+<h3>Step 2: 链式法则</h3>
+<p>先把图中的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>O</mi></mrow><annotation encoding="application/x-tex">dO</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></eq> 理解成损失函数传给 Attention 输出 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi></mrow><annotation encoding="application/x-tex">O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></eq> 的梯度。因为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo>=</mo><mi>P</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">O = P V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq>，它会分成两条支路：一条直接求 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">dV</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq>；另一条先求 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>P</mi></mrow><annotation encoding="application/x-tex">dP</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq>，再穿过 Softmax 得到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>S</mi></mrow><annotation encoding="application/x-tex">dS</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq>，最后回传到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span></eq> 和 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq>。</p>
+<p>沿着图中的两条支路，依次推导下面四个结果。</p>
+<p><strong>1. 求 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">dV</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq></strong>
+因为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo>=</mo><mi>P</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">O = P V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq>，根据矩阵乘法求导法则：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>V</mi><mo>=</mo><msup><mi>P</mi><mi>T</mi></msup><mo>⋅</mo><mi>d</mi><mi>O</mi></mrow><annotation encoding="application/x-tex"> dV = P^T \cdot dO </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8913em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></span></eqn></section></p>
+<p><strong>2. 求 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>P</mi></mrow><annotation encoding="application/x-tex">dP</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq>（关键衔接）</strong>
+同样因为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo>=</mo><mi>P</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">O = P V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq>，对 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq> 求导可得：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>P</mi><mo>=</mo><mi>d</mi><mi>O</mi><mo>⋅</mo><msup><mi>V</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex"> dP = dO \cdot V^T </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8913em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span></span></eqn></section></p>
+<p><strong>3. 计算 Softmax 的梯度</strong>
+我们需要从 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>P</mi></mrow><annotation encoding="application/x-tex">dP</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq> 求得 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>S</mi></mrow><annotation encoding="application/x-tex">dS</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq>。Softmax 的雅可比矩阵非常特殊：
+已知 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>i</mi></msub><mo>=</mo><mfrac><msup><mi>e</mi><msub><mi>S</mi><mi>i</mi></msub></msup><mrow><mo>∑</mo><msup><mi>e</mi><msub><mi>S</mi><mi>j</mi></msub></msup></mrow></mfrac></mrow><annotation encoding="application/x-tex">P_i = \frac{e^{S_i}}{\sum e^{S_j}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.694em;vertical-align:-0.6567em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0374em;"><span style="top:-2.5183em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop op-symbol small-op mtight" style="position:relative;top:0em;">∑</span><span class="mspace mtight" style="margin-right:0.1952em;"></span><span class="mord mtight"><span class="mord mathnormal mtight">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9595em;"><span style="top:-2.9714em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:-0.0576em;margin-right:0.1em;"><span class="pstrut" style="height:2.6595em;"></span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5092em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9191em;"><span style="top:-2.931em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:-0.0576em;margin-right:0.1em;"><span class="pstrut" style="height:2.6595em;"></span><span class="mord mathnormal mtight">i</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3147em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6567em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq>，应用链式法则后，可以按行写成下面的形式：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>S</mi><mo>=</mo><mi>P</mi><mo>⊙</mo><mo stretchy="false">(</mo><mi>d</mi><mi>P</mi><mo>−</mo><mtext>row_sum</mtext><mo stretchy="false">(</mo><mi>P</mi><mo>⊙</mo><mi>d</mi><mi>P</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> dS = P \odot (dP - \text{row\_sum}(P \odot dP)) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⊙</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.06em;vertical-align:-0.31em;"></span><span class="mord text"><span class="mord">row_sum</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⊙</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mclose">))</span></span></span></span></span></eqn></section>
+(<em>注：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>⊙</mo></mrow><annotation encoding="application/x-tex">\odot</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord">⊙</span></span></span></span></eq> 表示 Element-wise 逐元素乘法。后面的加和项是通过广播机制实现的</em>)</p>
+<p><strong>4. 求 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>Q</mi></mrow><annotation encoding="application/x-tex">dQ</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">Q</span></span></span></span></eq> 和 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>K</mi></mrow><annotation encoding="application/x-tex">dK</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq></strong>
+此时我们已经拿到了 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>S</mi></mrow><annotation encoding="application/x-tex">dS</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></eq>。本节统一使用缩放点积定义 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo>=</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><msqrt><mi>d</mi></msqrt></mfrac></mrow><annotation encoding="application/x-tex">S = \frac{Q K^T}{\sqrt{d}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.6275em;vertical-align:-0.538em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0895em;"><span style="top:-2.5335em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord sqrt mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9378em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style="padding-left:0.833em;"><span class="mord mathnormal mtight">d</span></span></span><span style="top:-2.8978em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail mtight" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1022em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4461em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">Q</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9191em;"><span style="top:-2.931em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.538em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></eq>，因此：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>Q</mi><mo>=</mo><mi>d</mi><mi>S</mi><mo>⋅</mo><mi>K</mi><mo>⋅</mo><mfrac><mn>1</mn><msqrt><mi>d</mi></msqrt></mfrac></mrow><annotation encoding="application/x-tex"> dQ = dS \cdot K \cdot \frac{1}{\sqrt{d}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:2.2514em;vertical-align:-0.93em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.1778em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9322em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">d</span></span></span><span style="top:-2.8922em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1078em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></eqn></section>
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>K</mi><mo>=</mo><mi>d</mi><msup><mi>S</mi><mi>T</mi></msup><mo>⋅</mo><mi>Q</mi><mo>⋅</mo><mfrac><mn>1</mn><msqrt><mi>d</mi></msqrt></mfrac></mrow><annotation encoding="application/x-tex"> dK = dS^T \cdot Q \cdot \frac{1}{\sqrt{d}} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8913em;"></span><span class="mord mathnormal">d</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:2.2514em;vertical-align:-0.93em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.1778em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9322em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">d</span></span></span><span style="top:-2.8922em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1078em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></eqn></section></p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/17_autograd_gradient_chain.svg" alt="Attention backward：梯度沿计算依赖逆向传播"></p>
+<h3>Step 3: saved tensors 与反向显存代价</h3>
+<p>反向计算需要前向阶段留下部分中间状态。显式 Attention 路径通常要保留 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mtext>、</mtext><mi>K</mi><mtext>、</mtext><mi>V</mi></mrow><annotation encoding="application/x-tex">Q、K、V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mord cjk_fallback">、</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 以及归一化后的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq>，再用 <code>numel × element_size</code> 估算它们的理论容量；其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq> 含有两个序列维度，因此序列变长时，保存容量和 HBM 读写都会受到放大。这个账本用于解释压力来源，不等同于 CUDA 峰值。若反向仍需要归一化结果，就要思考能否不保存完整的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq>，而是在分块计算中保留足够的统计量。FlashAttention 通过分块计算、online softmax 和片上数据复用，改变了中间状态的保存与搬运方式；实际显存和速度收益仍需结合 GPU、序列长度、dtype 和 workload 测量。</p>
+<table>
+<thead>
+<tr>
+<th>前向状态或策略</th>
+<th>反向用途</th>
+<th>需要关注的代价</th>
+<th>后续机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mi mathvariant="normal">/</mi><mi>K</mi><mi mathvariant="normal">/</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">Q / K / V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">Q</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq></td>
+<td>回到输入投影的梯度</td>
+<td>保存量随 batch、序列长度和 head 维度变化</td>
+<td>checkpoint 可选择重算部分状态</td>
+</tr>
+<tr>
+<td><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq></td>
+<td>计算 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">dV</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq>、<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>P</mi></mrow><annotation encoding="application/x-tex">dP</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq> 并穿过 Softmax</td>
+<td>形状含 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">N×N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq>，可能增加激活显存和 HBM 读写</td>
+<td>FlashAttention 避免显式保存完整 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span></span></span></span></eq></td>
+</tr>
+<tr>
+<td>只保存边界或重算</td>
+<td>在反向阶段恢复中间结果</td>
+<td>用额外计算换保存空间</td>
+<td>activation checkpointing / online softmax</td>
+</tr>
+<tr>
+<td>理论账本</td>
+<td>统计各状态的 numel 与 dtype 字节数</td>
+<td>只能说明保存对象的容量下界</td>
+<td>真实峰值需由 profiler 或项目 benchmark 验证</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 4: 实现并验证 Attention backward</h3>
+<p>现在把前面三步的公式和状态关系写成 <code>torch.autograd.Function</code>，再用数值和自动求导结果检查实现。下面的表格把实现范围、关键机制和验证方式放在一起，代码单元中的 TODO 与这些行一一对应。</p>
+<table>
+<thead>
+<tr>
+<th>实现部分</th>
+<th>机制</th>
+<th>验证方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入范围</td>
+<td>无 mask、无 dropout、单头、等长 Q/K/V 的缩放点积 Attention</td>
+<td>确认输入形状与 dtype 满足测试条件</td>
+</tr>
+<tr>
+<td><code>forward</code></td>
+<td>计算 <code>S → P → O</code>，保存 backward 需要的状态</td>
+<td>检查输出形状和有限值</td>
+</tr>
+<tr>
+<td><code>backward</code></td>
+<td>依次计算 <code>dV → dP → dS → dQ/dK</code>；Softmax 按行计算修正项</td>
+<td>与 PyTorch 自动求导对照</td>
+</tr>
+<tr>
+<td><code>ctx.saved_tensors</code></td>
+<td>读取前向保存的 <code>Q/K/V/P</code></td>
+<td>检查状态与梯度形状对应</td>
+</tr>
+<tr>
+<td><code>gradcheck</code></td>
+<td>用数值梯度检验手写梯度</td>
+<td>通过容差检查</td>
+</tr>
+</tbody>
+</table>
+<h3>测试</h3>
+<p>运行下面的测试单元，确认手写 <code>backward</code> 和 PyTorch 自动求导保持一致。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class CustomAttention(torch.autograd.Function):
+    &quot;&quot;&quot;无 mask、无 dropout 的教学版缩放点积 Attention。
 
+    输入和输出均使用 [B, N, d]；本题只实现单头、等长 Q/K/V 的路径。
+    &quot;&quot;&quot;
+    @staticmethod
+    def forward(ctx, q, k, v):
+        &quot;&quot;&quot;计算缩放点积 Attention。
 
+        Args:
+            q, k, v: [B, N, d] 张量，device 和 dtype 必须一致。
 
+        Returns:
+            [B, N, d] 的 attention 输出。
+        &quot;&quot;&quot;
+        if q.ndim != 3 or k.ndim != 3 or v.ndim != 3:
+            raise ValueError('q、k、v 必须是 [batch, seq_len, head_dim] 三维张量')
+        if q.shape[:2] != k.shape[:2] or k.shape[:2] != v.shape[:2]:
+            raise ValueError('q、k、v 的 batch 和序列长度必须一致')
+        if q.size(-1) != k.size(-1) or v.size(-1) != q.size(-1):
+            raise ValueError('q、k、v 的 head_dim 必须一致')
+        if q.device != k.device or k.device != v.device:
+            raise ValueError('q、k、v 必须位于同一 device')
+        if q.dtype != k.dtype or k.dtype != v.dtype:
+            raise TypeError('q、k、v 必须使用相同 dtype')
+        # 1. 缩放点积
+        d_k = q.size(-1)
+        scale = 1.0 / math.sqrt(d_k)
+
+        scores = torch.matmul(q, k.transpose(-2, -1)) * scale
+
+        # 2. Softmax 获取概率 P
+        p = F.softmax(scores, dim=-1)
+
+        # 3. 乘上 V 得到输出
+        out = torch.matmul(p, v)
+
+        # 保存反向传播需要用到的张量
+        ctx.save_for_backward(q, k, v, p)
+        ctx.scale = scale
+
+        return out
+
+    @staticmethod
+    def backward(ctx, dout):
+        &quot;&quot;&quot;根据上游输出梯度返回 q、k、v 的梯度。
+
+        Args:
+            dout: 与 forward 输出同形状的上游梯度。
+
+        Returns:
+            dq、dk、dv，形状分别与 q、k、v 相同。
+        &quot;&quot;&quot;
+        # 这些张量在 forward 中由 ctx.save_for_backward 保存，backward 会重新读取它们。
+        q, k, v, p = ctx.saved_tensors
+        scale = ctx.scale
+        if dout.shape != q.shape:
+            raise ValueError('dout 必须与 Attention 输出具有相同形状')
+
+        # ==========================================
+        # TODO 1: 求 dV
+        # 提示：由 out = P @ V，使用 P.transpose(-2, -1) @ dout。
+        # ==========================================
+        # dv = ???
+
+        # ==========================================
+        # TODO 2: 求 dP
+        # 提示：由 out = P @ V，使用 dout @ V.transpose(-2, -1)。
+        # ==========================================
+        # dp = ???
+
+        # ==========================================
+        # TODO 3: 穿过 Softmax 求 dS
+        # 提示：对最后一维求 row_sum，避免显式构造 Softmax 雅可比矩阵。
+        # ==========================================
+        # dp_mul_p = ???
+        # row_sum = ???
+        # ds = ???
+
+        # ==========================================
+        # TODO 4: 求 dQ 和 dK（注意 scale 会同时传回两条输入支路）
+        # 提示：由 S = Q @ K.transpose(-2, -1) * scale 回传到 q / k。
+        # ==========================================
+        # dq = ???
+        # dk = ???
+
+        return dq, dk, dv
+</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
+def test_attention_backward():
+    &quot;&quot;&quot;验证前向数值、输入梯度形状、梯度数值和输入校验。&quot;&quot;&quot;
+    torch.manual_seed(42)
+    B, N, d = 2, 8, 16
+
+    # 使用 float64，便于 gradcheck 用有限差分检查手写 backward。
+    q = torch.randn(B, N, d, dtype=torch.float64, requires_grad=True)
+    k = torch.randn(B, N, d, dtype=torch.float64, requires_grad=True)
+    v = torch.randn(B, N, d, dtype=torch.float64, requires_grad=True)
+
+    print(&quot;1. 测试前向传播和输出形状...&quot;)
+    custom_out = CustomAttention.apply(q, k, v)
+    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d)
+    ref_out = torch.matmul(F.softmax(scores, dim=-1), v)
+    assert custom_out.shape == (B, N, d), &quot;Attention 输出形状不一致！&quot;
+    assert torch.isfinite(custom_out).all(), &quot;前向输出包含 NaN 或 Inf！&quot;
+    assert torch.allclose(custom_out, ref_out), &quot;前向传播结果不一致！&quot;
+
+    print(&quot;\n2. 进行梯度数值检验 (Gradcheck)...&quot;)
+    assert torch.autograd.gradcheck(CustomAttention.apply, (q, k, v), eps=1e-6, atol=1e-4)
+
+    # 用同一组输入分别回传，检查 q/k/v 的梯度形状、有限性和数值。
+    q_ref, k_ref, v_ref = [t.detach().clone().requires_grad_() for t in (q, k, v)]
+    ref_scores = torch.matmul(q_ref, k_ref.transpose(-2, -1)) / math.sqrt(d)
+    torch.matmul(F.softmax(ref_scores, dim=-1), v_ref).sum().backward()
+    q_custom, k_custom, v_custom = [t.detach().clone().requires_grad_() for t in (q, k, v)]
+    CustomAttention.apply(q_custom, k_custom, v_custom).sum().backward()
+    for custom_grad, reference_grad, tensor in zip((q_custom.grad, k_custom.grad, v_custom.grad), (q_ref.grad, k_ref.grad, v_ref.grad), (q_custom, k_custom, v_custom)):
+        assert custom_grad.shape == tensor.shape, &quot;梯度形状与输入不一致！&quot;
+        assert torch.isfinite(custom_grad).all(), &quot;梯度包含 NaN 或 Inf！&quot;
+        assert torch.allclose(custom_grad, reference_grad, atol=1e-5), &quot;手写梯度与 PyTorch 结果不一致！&quot;
+
+    # 输入校验应报告具体原因，而不是把错误伪装成 TODO 未完成。
+    bad_k = torch.randn(B, N + 1, d, dtype=torch.float64)
+    try:
+        CustomAttention.apply(q.detach(), bad_k, v.detach())
+    except ValueError as error:
+        assert &quot;batch 和序列长度&quot; in str(error)
+    else:
+        raise AssertionError(&quot;不匹配的序列长度应该触发 ValueError&quot;)
+
+    print(&quot;✅ All Tests Passed! Attention 反向传播实现通过测试。&quot;)
+
+test_attention_backward()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="attention-backward-output-branch">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 + TODO 2：计算 dV 与 dP</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>从 out=P@V 分出 dV 与 dP 两条梯度支路</h2>
 
@@ -1116,26 +1423,14 @@ print(grad_values.shape, grad_weights.shape)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-output-branch-0">
-                <span>完成 dv 与 dp，检查 dv.shape==v.shape、dp.shape==p.shape，且 dtype/device 与输入一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-output-branch-1">
-                <span>在纸上写出 [B,N,N]@[B,N,d] 和 [B,N,d]@[B,d,N] 的维度消去过程。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-output-branch-2">
-                <span>错误诊断：batch 维丢失时检查是否误用 .T；matmul 维度报错时检查转置对象和先后顺序。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-output-branch-3">
-                <span>先不要处理 scale；它来自 scores=QK^T×scale，只影响之后的 dQ/dK。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="attention-backward-softmax">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：计算 dp_mul_p、row_sum 与 dS</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>穿过 Softmax：用逐行修正替代完整雅可比</h2>
 
@@ -1226,26 +1521,14 @@ print(grad_score.shape)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-softmax-0">
-                <span>按顺序完成 dp_mul_p、row_sum 与 ds，并确认三个关键 shape 分别为 [B,N,N]、[B,N,1]、[B,N,N]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-softmax-1">
-                <span>不要显式构造 [N,N] 的 Softmax 雅可比；Notebook 要的是高效的雅可比向量积公式。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-softmax-2">
-                <span>错误诊断：广播报错时查 dim/keepdim；gradcheck 数值偏差时查 ds 公式括号和 p 是否乘了两次。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-softmax-3">
-                <span>可检查 ds 每行求和应接近 0，这是 Softmax shift-invariance 带来的有用自检。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="attention-backward-qk-gradcheck">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 4：计算 dQ、dK 并按输入顺序返回</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>回到 Q/K：补回 scale，并让 gradcheck 做最终裁判</h2>
 
@@ -1332,19 +1615,7 @@ grad_right = grad_score.transpose(-2, -1) @ left * factor</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="attention-backward-qk-gradcheck-0">
-                <span>完成 dq 与 dk，两者都乘一次 ctx.scale；确认 dq/dk/dv 分别与 q/k/v shape、dtype、device 一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-1">
-                <span>按 q、k、v 的前向输入顺序返回 dq、dk、dv。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-2">
-                <span>运行前向 allclose 和完整 gradcheck；不要通过放宽测试容差掩盖公式错误。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="attention-backward-qk-gradcheck-3">
-                <span>排错顺序：dV/dP 的转置 → Softmax 的 keepdim 与括号 → dQ/dK 的 scale → 返回顺序。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1368,16 +1639,29 @@ grad_right = grad_score.transpose(-2, -1) @ left * factor</code></pre></div>
     const predictData = {"attention-backward-output-branch":{"answer":0,"revealNote":"每个输入梯度必须与对应输入 shape 相同；batch 维也保留。"},"attention-backward-softmax":{"answer":0,"revealNote":"最后一维被压成长度 1，batch 与 query 行维保留。"},"attention-backward-qk-gradcheck":{"answer":0,"revealNote":"TODO 只影响 backward；解析梯度会比真实梯度大 sqrt(d) 倍。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "17";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-2dc08a2d5678";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 15 | DPO Loss Tutorial</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 15 | DPO Loss Tutorial | 直接偏好优化损失教程</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 15 | 零基础导学关卡</p>
-        <h1>DPO Loss Tutorial</h1>
+        <h1>DPO Loss Tutorial | 直接偏好优化损失教程</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">15_DPO_Loss_Tutorial.ipynb</span>
-          <span class="pill">DPO</span><span class="pill">Preference</span><span class="pill">Alignment</span>
+          <span class="pill">后训练对齐</span><span class="pill">DPO</span><span class="pill">偏好优化</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,220 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="2f922144907be37d28c406de2b1444f32147be38552b4b7cdee010c6202edc01">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../15_DPO_Loss_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/15_DPO_Loss_Tutorial.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>15. DPO Loss Tutorial | 直接偏好优化损失教程</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>DPO</code>, <code>偏好优化</code> | <strong>目标人群：</strong> 训练机制学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>RLHF 能把模型往人类偏好方向拉，但 PPO 训练链路很重：要维护策略模型、参考模型、奖励模型和价值模型，还要处理采样、打分和策略更新的稳定性问题。</p>
+<p>DPO 的切入点更直接：既然偏好数据本身已经告诉我们“哪个回答更好”，就把 chosen / rejected 的对比关系写成一个可优化的损失函数，让策略模型相对参考模型更偏向 chosen。本节只实现 DPO Loss 的核心计算。完成后，你应该能看懂它如何把偏好比较转成 log probability 的差值，并理解为什么 DPO 是从复杂 RLHF 训练闭环到轻量偏好优化的重要过渡。</p>
+<p><strong>关键词：</strong> <code>DPO</code>, <code>preference</code>, <code>loss</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 计算 chosen 样本的隐式奖励分数 (Logits 差值)</li><li>TODO 2: 计算 rejected 样本的隐式奖励分数</li><li>TODO 3: 计算 logits 差值并放入 sigmoid 交叉熵中</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先补齐训练接口、损失函数和 RLHF/PPO 的系统开销，再看 DPO 为什么要把偏好优化收敛成一个更轻的 loss。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失函数</a></li>
+<li><a href="../../../00_Prerequisites/12_PyTorch_Minimal_Training_Interface.ipynb">P0: 12. PyTorch Minimal Training Interface | PyTorch 最小训练接口</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
+<li><a href="14_rlhf_ppo_memory.html">14. RLHF PPO Memory | RLHF/PPO 显存拆解</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成 DPO 后，可以继续看组内相对优化、训练系统开销和分布式通信对对齐训练的影响。</p>
+<ul>
+<li><a href="../../../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb">P1: 06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb">P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位</a></li>
+<li><a href="../../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb">P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础</a></li>
+<li><a href="16_grpo_loss_tutorial.html">16. GRPO Loss Tutorial | 群体相对策略优化损失教程</a></li>
+</ul>
+<h3>Step 1: 核心思想与痛点</h3>
+<blockquote>
+<p><strong>RLHF 的问题：</strong>
+标准的 RLHF（如 PPO）需要训练 4 个模型：Actor（你要训练的模型）、Reference（参考模型，防止跑偏）、Reward Model（根据偏好训练的打分模型）和 Value Model（Critic）。训练非常不稳定，显存占用极大。
+<strong>DPO 的本质：</strong>
+作者通过数学推导证明了：Reward Model 的奖励得分 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><mi>y</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">r(x,y)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mclose">)</span></span></span></span></eq> 可以隐式地由语言模型的概率 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mi>h</mi></msub><mi>e</mi><mi>t</mi><mi>a</mi><mo stretchy="false">(</mo><mi>y</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P_	heta(y|x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">e</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">∣</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></eq> 表达出来。因此，我们只需要<strong>Actor 模型和 Reference 模型</strong>，直接在一对一比较的样本上（Chosen vs Rejected）最大化对数似然差值。</p>
+</blockquote>
+<h4>DPO 和 PPO 的差异</h4>
+<p>DPO 不是把 PPO 换个名字，而是把偏好对齐的训练对象、训练信号和工程复杂度都压缩掉一层。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">维度</th>
+<th style="text-align:left">PPO / RLHF</th>
+<th style="text-align:left">DPO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">需要的模型</td>
+<td style="text-align:left">Actor + Reference + Reward Model + Critic</td>
+<td style="text-align:left">主要是 Policy + Reference</td>
+</tr>
+<tr>
+<td style="text-align:left">训练信号</td>
+<td style="text-align:left">reward / advantage / rollout</td>
+<td style="text-align:left">chosen vs rejected 的偏好对比</td>
+</tr>
+<tr>
+<td style="text-align:left">工程复杂度</td>
+<td style="text-align:left">高，链路长，状态多</td>
+<td style="text-align:left">低，loss 直接、实现更轻</td>
+</tr>
+<tr>
+<td style="text-align:left">显存压力</td>
+<td style="text-align:left">大，多个模型和状态同时驻留</td>
+<td style="text-align:left">小很多，更适合工程落地</td>
+</tr>
+<tr>
+<td style="text-align:left">适合场景</td>
+<td style="text-align:left">需要完整 RLHF 语义时</td>
+<td style="text-align:left">已有偏好数据，希望快速做对齐时</td>
+</tr>
+</tbody>
+</table>
+<h4><code>beta</code> 和数据构造</h4>
+<ul>
+<li><code>beta</code> 控制 policy 相对 reference 偏移的力度；太小会学得慢，太大容易偏离参考分布。</li>
+<li>chosen / rejected 不是任意两条回复，而是同一个 prompt 下的偏好对。</li>
+<li>所以 DPO 的关键不是“算一个 loss”，而是先把偏好数据配成正确的 pair，再把 pair 变成稳定的 logprob 差值。</li>
+</ul>
+<h3>Step 2: DPO 损失代码框架</h3>
+<p>需要四组对齐的数据：选中的 Logprobs (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>w</mi></msub></mrow><annotation encoding="application/x-tex">y_w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>) 和拒绝的 Logprobs (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">y_l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>)，分别来自当前策略模型（Policy）和冻结的参考模型（Reference）。计算它们之间的隐式奖励差，并将其送入 <code>-F.logsigmoid()</code> 以获得最终梯度损失。
+这一节的实现链路就是先算 chosen / rejected 的隐式奖励，再组合成 DPO logits，最后得到损失。</p>
+<h3>Step 3: 核心公式</h3>
+<p>给定一段 Prompt <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></eq>，模型生成了两个回复：好的回复 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>w</mi></msub></mrow><annotation encoding="application/x-tex">y_w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> (Chosen/Win) 和差的回复 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">y_l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> (Rejected/Lose)。</p>
+<ol>
+<li>
+<p><strong>计算策略比率的对数差 (Log Prob Ratios)：</strong>
+$ \pi_{\theta}(y|x) $
+代表当前训练模型（Actor）对生成的 Token 的对数概率。
+$ \pi_{ref}(y|x) $
+代表冻结的参考模型（Reference）对生成的 Token 的对数概率。</p>
+<p>计算差距：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>r</mi><mo>^</mo></mover><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><mi>y</mi><mo stretchy="false">)</mo><mo>=</mo><mi>β</mi><mi>log</mi><mo>⁡</mo><mfrac><mrow><msub><mi>π</mi><mi>h</mi></msub><mi>e</mi><mi>t</mi><mi>a</mi><mo stretchy="false">(</mo><mi>y</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo stretchy="false">)</mo></mrow><mrow><msub><mi>π</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo stretchy="false">(</mo><mi>y</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac><mo>=</mo><mi>β</mi><mo stretchy="false">(</mo><mi>log</mi><mo>⁡</mo><msub><mi>π</mi><mi>h</mi></msub><mi>e</mi><mi>t</mi><mi>a</mi><mo stretchy="false">(</mo><mi>y</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo stretchy="false">)</mo><mo>−</mo><mi>log</mi><mo>⁡</mo><msub><mi>π</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo stretchy="false">(</mo><mi>y</mi><mi mathvariant="normal">∣</mi><mi>x</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \hat{r}(x,y) = \beta \log \frac{\pi_	heta(y|x)}{\pi_{ref}(y|x)} = \beta (\log \pi_	heta(y|x) - \log \pi_{ref}(y|x)) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3991em;vertical-align:-0.9721em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">re</span><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">∣</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">e</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">∣</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9721em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mopen">(</span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">e</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">∣</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">re</span><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">∣</span><span class="mord mathnormal">x</span><span class="mclose">))</span></span></span></span></span></eqn></section>
+<em>这实际上隐式地代表了该回复获得的 Reward 分数。</em></p>
+</li>
+<li>
+<p><strong>DPO Loss (二元交叉熵变体)：</strong>
+我们要最大化 Chosen 和 Rejected 之间的 Reward 差，即最小化其负对数 Sigmoid：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>L</mi><mrow><mi>D</mi><mi>P</mi><mi>O</mi></mrow></msub><mo>=</mo><mo>−</mo><mi>log</mi><mo>⁡</mo><mi>σ</mi><mrow><mo fence="true">(</mo><mover accent="true"><mi>r</mi><mo>^</mo></mover><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><msub><mi>y</mi><mi>w</mi></msub><mo stretchy="false">)</mo><mo>−</mo><mover accent="true"><mi>r</mi><mo>^</mo></mover><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><msub><mi>y</mi><mi>l</mi></msub><mo stretchy="false">)</mo><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex"> L_{DPO} = -\log \sigma \left( \hat{r}(x, y_w) - \hat{r}(x, y_l) \right) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">PO</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span></span></eqn></section></p>
+<p>其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span></eq> 是控制偏离 Reference Model 程度的温度参数（如 <code>0.1</code>）。</p>
+</li>
+</ol>
+<h3>Step 4: 动手实战</h3>
+<p><strong>要求</strong>：请补全下方 <code>dpo_loss</code> 函数。
+为了简化代码，我们假设你已经通过前向传播拿到了 Chosen 和 Rejected 样本的 <code>Log Probs</code>（对数概率和）。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def dpo_loss(
+    policy_chosen_logps: torch.Tensor,
+    policy_rejected_logps: torch.Tensor,
+    reference_chosen_logps: torch.Tensor,
+    reference_rejected_logps: torch.Tensor,
+    beta: float = 0.1,
+) -&gt; tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    &quot;&quot;&quot;
+    直接偏好优化 (DPO) 的损失函数实现
 
+    Args:
+        policy_chosen_logps: 当前模型在 chosen 样本上的对数概率和，形状 [batch_size]
+        policy_rejected_logps: 当前模型在 rejected 样本上的对数概率和，形状 [batch_size]
+        reference_chosen_logps: 参考模型在 chosen 样本上的对数概率和，形状 [batch_size]
+        reference_rejected_logps: 参考模型在 rejected 样本上的对数概率和，形状 [batch_size]
+        beta: 偏好系数 (温度超参)，控制偏离参考模型的程度
 
+    Returns:
+        losses: DPO 损失，形状 [batch_size]
+        chosen_rewards: 隐式的 chosen 奖励，形状 [batch_size]
+        rejected_rewards: 隐式的 rejected 奖励，形状 [batch_size]
+    &quot;&quot;&quot;
 
+    # ==========================================
+    # TODO 1: 计算 chosen 样本的隐式奖励分数 (Logits 差值)
+    # ==========================================
+    # pi_logratios_chosen = ???
+
+    # ==========================================
+    # TODO 2: 计算 rejected 样本的隐式奖励分数
+    # ==========================================
+    # pi_logratios_rejected = ???
+
+    # 乘以 beta (控制项)
+    chosen_rewards = beta * pi_logratios_chosen
+    rejected_rewards = beta * pi_logratios_rejected
+
+    # ==========================================
+    # TODO 3: 计算 logits 差值并放入 sigmoid 交叉熵中
+    # ==========================================
+    # logits = ???
+    # losses = ???
+
+    return losses, chosen_rewards, rejected_rewards
+</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
+def test_dpo_loss():
+    try:
+        batch_size = 4
+
+        # 模拟模型输出：假设我们想要 policy 表现更好，
+        # 所以它对 chosen 的概率更高，对 rejected 的概率更低
+        policy_chosen = torch.tensor([-1.0, -1.2, -0.8, -1.5])
+        policy_rejected = torch.tensor([-3.0, -2.5, -4.0, -2.8])
+
+        ref_chosen = torch.tensor([-2.0, -2.0, -2.0, -2.0])
+        ref_rejected = torch.tensor([-2.0, -2.0, -2.0, -2.0])
+
+        losses, c_rewards, r_rewards = dpo_loss(
+            policy_chosen, policy_rejected, ref_chosen, ref_rejected, beta=0.1
+        )
+
+        # 测试返回的形状
+        assert losses.shape == (batch_size,)
+        assert c_rewards.shape == (batch_size,)
+        assert r_rewards.shape == (batch_size,)
+
+        # 测试隐式奖励的计算 (policy - ref) * beta
+        assert torch.allclose(c_rewards[0], torch.tensor(0.1)), f&quot;Chosen Reward 错误: {c_rewards[0]}&quot;
+        assert torch.allclose(r_rewards[0], torch.tensor(-0.1)), f&quot;Rejected Reward 错误: {r_rewards[0]}&quot;
+
+        # 测试 DPO 损失数值
+        # log_sigmoid(0.1 - (-0.1)) = log_sigmoid(0.2)
+        expected_loss_0 = -F.logsigmoid(torch.tensor(0.2))
+        assert torch.allclose(losses[0], expected_loss_0), f&quot;Loss 计算错误: 期望 {expected_loss_0}, 实际 {losses[0]}&quot;
+
+        print(&quot;\n✅ All Tests Passed! DPO 损失函数实现通过测试。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
+        if isinstance(e, AttributeError):
+            print(&quot;代码未完成，无法找到必要的属性&quot;)
+        elif isinstance(e, NameError):
+            print(&quot;代码可能未完成，导致了变量未定义&quot;)
+        elif isinstance(e, TypeError):
+            print(&quot;代码可能未完成，导致了类型错误&quot;)
+        elif isinstance(e, ValueError):
+            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
+        else:
+            print(&quot;代码可能未完成，导致了断言失败&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;\n❌ 测试失败: {e}&quot;)
+        raise
+
+test_dpo_loss()</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="dpo-implicit-rewards">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1 + TODO 2：两组 policy-reference log-ratio</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先与参考模型比较：得到 chosen 与 rejected 的隐式奖励</h2>
 
@@ -1121,26 +1335,14 @@ bad_reward = temperature * (new_bad - old_bad)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-implicit-rewards-0">
-                <span>完成两个 pi_logratios，并确认 chosen/rejected 两条支路没有交叉配错。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-implicit-rewards-1">
-                <span>保留 Notebook 已写好的 beta 乘法；chosen_rewards、rejected_rewards 的 shape 都应为 [B]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-implicit-rewards-2">
-                <span>用测试第 0 项手算：chosen reward=0.1、rejected reward=-0.1。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-implicit-rewards-3">
-                <span>错误诊断：奖励符号相反时检查减法顺序；shape 变成标量时检查是否误加 mean/sum。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="dpo-pairwise-loss">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：chosen-rejected logits 与 -F.logsigmoid</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再比较好坏回答：逐样本得到稳定的 DPO loss</h2>
 
@@ -1225,19 +1427,7 @@ pair_losses = -F.logsigmoid(margin)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="dpo-pairwise-loss-0">
-                <span>完成 logits=chosen_rewards-rejected_rewards，以及 losses=-F.logsigmoid(logits)。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-pairwise-loss-1">
-                <span>按顺序返回 losses、chosen_rewards、rejected_rewards，并保持三个 shape 都为 [batch_size]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-pairwise-loss-2">
-                <span>运行 test_dpo_loss，核对第 0 项两个 reward 与 expected_loss_0。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="dpo-pairwise-loss-3">
-                <span>错误诊断：loss 数值相反时检查 margin 顺序；shape 为 [] 时删除误加的 mean；出现数值不稳时确认使用 F.logsigmoid。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1261,16 +1451,29 @@ pair_losses = -F.logsigmoid(margin)</code></pre></div>
     const predictData = {"dpo-implicit-rewards":{"answer":0,"revealNote":"policy-reference=(-1)-(-2)=1，再乘 0.1 得 0.1。"},"dpo-pairwise-loss":{"answer":0,"revealNote":"margin 变大，logsigmoid 更接近 0，负号后的损失下降。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 8;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "15";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-2f922144907b";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

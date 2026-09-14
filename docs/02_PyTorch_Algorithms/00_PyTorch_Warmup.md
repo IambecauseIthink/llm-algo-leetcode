@@ -1,6 +1,6 @@
 # 00. PyTorch Warmup | PyTorch 热身
 
-**难度：** Easy | **环境：** CPU-first | **标签：** `PyTorch`, `基础入门`, `反向传播` | **目标人群：** 通用基础 (算法/Infra)
+**难度：** Easy | **环境：** CPU-first | **标签：** `基础实现`, `PyTorch`, `入门热身` | **目标人群：** 基础实现学习者
 
 > 🚀 **云端运行环境**
 >
@@ -14,32 +14,27 @@
 
 ## 本节导读
 
-进入 Part 02 后，我们不再只讨论概念，而是要把大模型里的模块真正写成 PyTorch 代码。最先需要补齐的不是某个复杂算法，而是三类基本动作：张量维度能不能对上，token id 能不能查成向量，loss 的梯度能不能顺利传回参数。
+进入 Part 02，你会把大模型中的基础模块写成可运行的 PyTorch 代码。这里先处理三类后续实现都会反复用到的动作：对齐张量维度、把 token id 查成 embedding，以及确认 loss 的梯度能够回到参数。
 
-本节是这一部分的热身关卡，会用三个小练习重新建立 PyTorch 的实现手感：reshape、embedding lookup 和最小反向传播。完成后，你应该能更顺畅地进入 RMSNorm、SwiGLU、RoPE 和 Attention 这些核心组件实现，不会被基础张量操作打断主线。
+三个练习分别对应 `reshape`、embedding lookup 和最小反向传播。完成后，你可以带着这些实现经验继续学习 RMSNorm、SwiGLU、RoPE 和 Attention，而不必在基础张量操作上反复停顿。
 
 **关键词：** `reshape`, `Embedding`, `backpropagation`
 
 ---
 ## 前置阅读
 
-**导语：** 这一节先把后续章节要用到的基础张量、Autograd 和训练接口先补齐。
+**导语：** 先确认张量形状可以重排、token id 可以查到 embedding，并能用 Autograd 检查梯度是否回到参数。
 
 - [P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作](../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.md)
 - [P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播](../00_Prerequisites/07_PyTorch_Autograd_and_Backward.md)
 - [P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础](../00_Prerequisites/09_PyTorch_nn_Module_Basics.md)
 
-## 相关阅读
-
-**导语：** 本节先把 PyTorch 的热身算子讲清楚；如果想继续看张量数据类型和 GPU 架构，再顺着读下面这些页。
-
-- [P1: 01. Data Types and Precision | 大模型的数据格式与混合精度](../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.md)
-- [P1: 03. GPU Architecture and Memory | GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)
-
 ---
 ### Part 1: 张量维度变换与 `einops`
 
 无论是注意力里的多头合并，还是各种特征整理，都会反复用到张量形状重排同一类操作。
+
+![张量形状从基础操作连接到 Attention](../public/02_PyTorch_Algorithms/00_tensor_shape_flow.svg)
 
 > **为什么我们需要 `einops`？**
 > 在大模型开发中，张量形状不匹配（`RuntimeError: size mismatch`）是最高频的调试痛点之一。熟练掌握原生的 `view`, `reshape`, `transpose`, `permute` 是算法工程师的基础功底。
@@ -90,6 +85,8 @@ def tensor_warmup(x: torch.Tensor):
 ### Part 2: 嵌入层 (Embedding Layer) 的本质
 
 
+![Embedding 从 token id 连接到上下文表示](../public/02_PyTorch_Algorithms/00_embedding_flow.svg)
+
 大模型的第一步，是把离散的文本转化为连续的数学表示：
 原始文本经字节对编码(Byte Pair Encoding，BPE)分词后得到`token id`（即词典里的编号），再通过嵌入层（`Embedding`）查表，将该编号映射为固定长度的连续向量（其维度称为`hidden dim`或者`hidden size`）；随后注入旋转位置编码（主流方案如`RoPE`及其变体）以保留顺序信息。若一句话包含多个token，这些向量会按顺序拼接成完整的输入序列（`sequence`），供模型后续处理，从而让模型真正开始“阅读”和理解文本。
 
@@ -127,6 +124,8 @@ def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
 
 ### Part 3: 前向传播与反向传播 (Forward & Backward)
 
+
+![前向传播与反向传播的训练闭环](../public/02_PyTorch_Algorithms/00_forward_backward_flow.svg)
 
 > **为什么要理解前向和反向传播？**
 > 大模型的训练机制完全建立在**反向传播算法 (Backpropagation)** 与 **链式法则 (Chain Rule)** 之上。
@@ -442,3 +441,13 @@ class LinearReLUFunction(torch.autograd.Function):
 - **三个梯度分别对应什么：** `grad_x` 回到输入，`grad_weight` 回到参数矩阵，`grad_bias` 回到广播到 batch 维的偏置项。
 - **为什么要看转置和求和：** 矩阵求导里最容易出错的就是维度对齐，`grad_weight = grad_z.T @ x` 和 `grad_bias = grad_z.sum(dim=0)` 正是在处理这两件事。
 - **带走的直觉：** 会手推这一层，后面再看更复杂的自定义算子、融合算子和 CUDA 实现时，就更容易理解它们为什么要保存哪些状态。
+## 相关阅读
+
+本节的基础算子可以沿两个方向继续：先看 PyTorch 的官方张量与自动求导接口，再把这些操作放回 GPU 精度和内存层级。
+
+- [PyTorch 张量文档](https://pytorch.org/docs/stable/tensors.html)
+- [PyTorch 自动求导文档](https://pytorch.org/docs/stable/autograd.html)
+- [einops 开源仓库](https://github.com/arogozhnikov/einops)
+- [PyTorch 原论文：An Imperative Style, High-Performance Deep Learning Library](https://arxiv.org/abs/1912.01703)
+- [P1: 大模型的数据格式与混合精度](../01_Hardware_Math_and_Systems/01_Data_Types_and_Precision.md)
+- [P1: GPU 物理架构与内存层级](../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.md)

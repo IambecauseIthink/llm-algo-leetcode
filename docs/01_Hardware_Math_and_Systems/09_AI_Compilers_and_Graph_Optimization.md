@@ -1,6 +1,6 @@
 # 09. AI Compilers and Graph Optimization | AI 编译器与计算图优化
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `系统架构`, `AI Compiler` | **目标人群：** 编译优化入门者
+**难度：** Hard | **环境：** CPU-first | **标签：** `编译系统`, `AI Compiler`, `Graph Optimization` | **目标人群：** 编译与系统入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页把“图怎么被优化成更适合执行的形式”讲清楚，重点是理解编译器为什么会成为推理和部署链路里的关键一环。
+---
+
+## 本节导读
+
+模型从高层图走到真正可执行的后端代码，中间并不是简单翻译，而是一整条图变换、算子改写、布局调整和执行计划选择的链路。很多性能差距，并不是来自公式本身，而是来自这条链路有没有把计算改写成更适合目标硬件的形式。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的编译与执行基础页，优先服务后续 `编译与图优化` 这条基础支撑线，也给 `推理优化路线` 补一层 backend 视角。学完这里，后面再看 `19 / 30 / 32` 以及 `Part 03 / Part 04` 的 kernel 与系统优化页时，你会更容易把“模型能跑”与“模型能高效跑”区分开来；如果这里没学明白，后面通常会把 fusion、lowering、layout 和 backend 约束都当成部署黑盒，难以解释为什么同一模型在不同执行栈上表现差这么多。按专题归类，这一页主要属于 `编译与图优化专题`，并和 `推理优化专题` 共享一部分执行链路视角。
 
 **关键词：** `AI Compiler`, `Graph Optimization`, `fusion`
+
+---
 ## 前置阅读
 **导语：** 这一页先把图优化、fusion 和 lowering 的关系接上，再理解编译器为什么会成为推理和部署链路里的关键一环。
 - [Group 1D: Heterogeneous Scheduling and Operator Programming | 1D: 异构调度与算子编程](./1D.md)
@@ -23,6 +31,7 @@
 - [04. Triton 矩阵乘法 (GEMM) 与自动调优 (Autotune)](../03_Triton_Kernels/04_Triton_GEMM_Tutorial.md)
 - [05. Triton 性能调优与基准测试 (Autotune & Profiling)](../03_Triton_Kernels/05_Triton_Autotune_and_Profiling.md)
 - [18. CUDA Graph and JIT Compile | CUDA Graph 与 JIT 编译](../04_CUDA_and_System_Optimization/18_CUDA_Graph_and_JIT_Compile.md)
+---
 ## Q1：AI 编译器到底在压缩什么成本向量？
 
 <details><summary>点击展开查看解析</summary>

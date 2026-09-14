@@ -1,6 +1,6 @@
 # 07. CPU GPU Heterogeneous Scheduling | CPU 与 GPU 异构调度
 
-**难度：** Medium | **环境：** GPU optional | **标签：** `CUDA`, `Scheduling`, `Host-Device` | **目标人群：** 异构调度入门者
+**难度：** Medium | **环境：** GPU optional | **标签：** `系统工程`, `CPU/GPU`, `异构调度` | **目标人群：** 系统性能入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,9 +10,17 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页把 CPU / GPU 协同、通信延迟和调度重叠讲清楚，重点是知道什么时候该把任务留在 CPU，什么时候该把任务交给 GPU。
+---
+
+## 本节导读
+
+大模型系统里的很多等待，并不是 GPU 算得不够快，而是任务放错了地方：控制流留在 CPU 更合适，还是应该尽早下放到 GPU；数据该不该提前搬过去；通信和计算能不能并起来做。这些判断一旦错位，GPU 再强也会被 host-device 往返和同步点拖住。
+
+这一页在整个教程的纵向主线里属于 `Part 01` 的系统执行基础页，优先服务 `推理优化路线` 和后续的 kernel 下沉主线。学完这里，后面再看 `08 / 15 / 17 / 29` 以及 `66 / 67` 时，你会更容易把“任务放置 -> 数据搬运 -> 调度重叠”连成一条判断链；如果这里没学明白，后面常见的问题是看得懂异步、stream 和 overlap 这些词，却判断不清等待究竟来自 host-device 往返、同步点，还是任务本来就放错了位置。按专题归类，这一页主要属于 `推理优化路线` 的系统前置，也和 `Profiling 专题`、`编译与图优化专题` 共享执行视角。
 
 **关键词：** `host`, `device`, `PCIe`
+
+---
 ## 前置阅读
 **导语：** 这一页先把 CPU / GPU 协同、通信延迟和调度重叠讲清楚，再决定什么时候该把任务留在 CPU，什么时候该把任务交给 GPU。
 - [Group 1C: Distributed Communication and Memory Sharing | 1C: 多卡通信与显存共享](./1C.md)
@@ -23,6 +31,7 @@
 - [Part 03: Triton Kernel Development | 第三部分：Triton 算子开发](../03_Triton_Kernels/intro.md)
 - [05. Triton 性能调优与基准测试 (Autotune & Profiling)](../03_Triton_Kernels/05_Triton_Autotune_and_Profiling.md)
 - [18. CUDA Graph and JIT Compile | CUDA Graph 与 JIT 编译](../04_CUDA_and_System_Optimization/18_CUDA_Graph_and_JIT_Compile.md)
+---
 ## Q1：Host 和 Device 分别扮演什么角色？
 
 <details><summary>点击展开查看解析</summary>

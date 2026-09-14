@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="590" viewBox="0 0 1360 590">
+  <defs>
+    <style>.title{font:700 28px sans-serif;fill:#17324d}.h{font:700 19px sans-serif;fill:#17324d}.t{font:16px sans-serif;fill:#35526b}.s{font:15px sans-serif;fill:#526b7d}.line{stroke:#3978a8;stroke-width:3;fill:none;marker-end:url(#a)}.dash{stroke:#8b6bb1;stroke-width:2.5;stroke-dasharray:9 7;fill:none;marker-end:url(#p)}.b{fill:#e8f3fb;stroke:#3978a8;stroke-width:2}.g{fill:#eaf7ef;stroke:#4c9870;stroke-width:2}.o{fill:#fff1df;stroke:#c78335;stroke-width:2}.p{fill:#f1eafa;stroke:#8b6bb1;stroke-width:2}</style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#3978a8"/></marker>
+    <marker id="p" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#8b6bb1"/></marker>
+  </defs>
+  <rect width="1360" height="590" rx="24" fill="#f8fbfd"/>
+  <text x="680" y="48" text-anchor="middle" class="title">Serving benchmark：指标如何共同进入决策</text>
+  <rect x="70" y="100" width="250" height="125" rx="18" class="b"/>
+  <text x="195" y="138" text-anchor="middle" class="h">用户体验</text><text x="195" y="171" text-anchor="middle" class="t">TTFT、TPOT</text><text x="195" y="198" text-anchor="middle" class="t">queue wait、P99</text>
+  <rect x="70" y="285" width="250" height="125" rx="18" class="g"/>
+  <text x="195" y="323" text-anchor="middle" class="h">服务能力</text><text x="195" y="356" text-anchor="middle" class="t">throughput</text><text x="195" y="383" text-anchor="middle" class="t">worker utilization</text>
+  <rect x="70" y="470" width="250" height="75" rx="18" class="p"/>
+  <text x="195" y="515" text-anchor="middle" class="h">公平性</text>
+  <rect x="520" y="210" width="300" height="170" rx="18" class="o"/>
+  <text x="670" y="250" text-anchor="middle" class="h">对照比较</text><text x="670" y="285" text-anchor="middle" class="t">baseline vs candidate</text><text x="670" y="315" text-anchor="middle" class="t">固定 workload 与资源条件</text><text x="670" y="350" text-anchor="middle" class="t">收益、代价和稳定性</text>
+  <rect x="1010" y="230" width="250" height="130" rx="18" class="b"/>
+  <text x="1135" y="270" text-anchor="middle" class="h">项目决策</text><text x="1135" y="303" text-anchor="middle" class="t">accept / tune / reject</text><text x="1135" y="330" text-anchor="middle" class="t">选择下一轮实验</text>
+  <path d="M320 160C405 160 430 245 520 260M320 348H520M320 508C410 508 440 365 520 345M820 295H1010" class="line"/>
+  <text x="410" y="145" class="s">延迟</text><text x="410" y="335" class="s">吞吐与利用率</text><text x="412" y="492" class="s">公平性</text>
+  <path d="M1135 360C1060 470 900 505 700 390" class="dash"/>
+  <text x="900" y="495" class="s">反馈：调整 batch、队列规则或 workload</text>
+  <text x="680" y="565" text-anchor="middle" class="s">实线：指标进入对照　　虚线：决策反馈</text>
+</svg>

@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 08 | Architecture Tricks</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 08 | Architecture Tricks | 架构技巧</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 08 | 零基础导学关卡</p>
-        <h1>Architecture Tricks</h1>
+        <h1>Architecture Tricks | 架构技巧</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">08_Architecture_Tricks.ipynb</span>
-          <span class="pill">LLM</span><span class="pill">Tricks</span><span class="pill">Stability</span>
+          <span class="pill">模型结构</span><span class="pill">架构技巧</span><span class="pill">Transformer</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,378 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="11b7148e79d0fb4fc0f87f20427dea8f18e7e7c7ae0e1d5713d35b7203a4ae57">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../08_Architecture_Tricks.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/08_Architecture_Tricks.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>08. Architecture Tricks | 架构技巧</h1>
+<p><strong>难度：</strong> Easy | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>模型结构</code>, <code>架构技巧</code>, <code>Transformer</code> | <strong>目标人群：</strong> 模型结构学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>搭完 LLaMA 风格的 Decoder Layer 以后，你会发现不同开源模型的主干很像，但并不完全一样。很多差异不是重新设计整套架构，而是在参数共享、归一化缩放或初始化方式上做小改动；这些小改动会影响参数量、梯度流向和训练早期稳定性。</p>
+<p>本节选两个典型 architecture tricks 做最小实现：权重绑定，以及 Gemma 风格的 <code>1 + w</code> RMSNorm 缩放。完成后，你应该能看懂这些“看起来很小”的结构差异为什么值得单独讨论，并能在阅读不同模型代码时快速定位它们改变了哪条参数或梯度路径。</p>
+<p>本节还提供一张 Attention 结构变体地图：MHA / GQA / MQA 改变 KV 头的共享方式，Sparse Attention 改变 token 连接模式，Linear Attention 改变计算顺序和状态表示，FlashAttention 则主要优化 dense Attention 的执行与访存。你会用小规模 CPU 观察这些机制的输入、状态和输出差异，再把真实吞吐问题交给后续 GPU 实验。</p>
+<p><strong>关键词：</strong> <code>Qwen</code>, <code>Gemma</code>, <code>Tie Embeddings</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 3: 统计 MHA/GQA/MQA 类型和 Attention 连接规模。</li><li>TODO 1: 实现 Gemma 的 +1 缩放</li><li>TODO 2: 将 lm_head 的权重在内存级别绑定到 embed_tokens 上</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先能在 RMSNorm、Decoder Layer 和 <code>nn.Module</code> 中定位参数与计算路径，再把结构变体对应到具体代码位置。</p>
+<ul>
+<li><a href="01_rmsnorm_tutorial.html">01. RMSNorm Tutorial | RMSNorm 教程</a></li>
+<li><a href="05_llama3_block_tutorial.html">05. LLaMA3 Block Tutorial | LLaMA3 Block 教程</a></li>
+<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心差异与机制</h3>
+<p>本节对比 Qwen 和 Gemma 在架构设计上的两项关键改动及其设计动机。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/08_architecture_tricks.svg" alt="架构变体：从结构改动追踪系统影响"></p>
+<blockquote>
+<p><strong>Trick 1: Tie Word Embeddings (权重绑定) - Qwen 系列 / GPT-2</strong></p>
+<ul>
+<li><strong>做法</strong>：在绝大多数模型（如 LLaMA）中，最开始的 <code>Token Embedding</code> 矩阵（把 ID 变向量）和最后的 <code>LM Head</code> 矩阵（把向量变概率）是两个独立的权重矩阵。但在 Qwen 中，<strong>这两个矩阵共享同一份物理内存的参数！</strong></li>
+<li><strong>意义</strong>：极大减少了参数量（词表动辄 15 万，非常占参数），并且在训练时能让 Embedding 获得更直接的梯度更新。</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>Trick 2: RMSNorm 的 &quot;+1 缩放&quot; - Gemma 系列</strong></p>
+<ul>
+<li><strong>做法</strong>：标准的 RMSNorm 公式是 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>=</mo><mfrac><mi>x</mi><mrow><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">M</mi><mi mathvariant="normal">S</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac><mo>⋅</mo><mi>w</mi></mrow><annotation encoding="application/x-tex">y = \frac{x}{\mathrm{RMS}(x)} \cdot w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2154em;vertical-align:-0.52em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6954em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">RMS</span></span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.52em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span></span></span></span></eq>，其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">M</mi><mi mathvariant="normal">S</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><msqrt><mrow><mfrac><mn>1</mn><mi>d</mi></mfrac><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>d</mi></msubsup><msubsup><mi>x</mi><mi>i</mi><mn>2</mn></msubsup><mo>+</mo><mi>ϵ</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">\mathrm{RMS}(x) = \sqrt{\frac{1}{d} \sum_{i=1}^{d} x_i^2 + \epsilon}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">RMS</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.84em;vertical-align:-0.533em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.307em;"><span class="svg-align" style="top:-3.8em;"><span class="pstrut" style="height:3.8em;"></span><span class="mord" style="padding-left:1em;"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.989em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7959em;"><span style="top:-2.4231em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.0448em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2769em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">ϵ</span></span></span><span style="top:-3.267em;"><span class="pstrut" style="height:3.8em;"></span><span class="hide-tail" style="min-width:1.02em;height:1.88em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.88em" viewBox="0 0 400000 1944" preserveAspectRatio="xMinYMin slice"><path d="M983 90
+l0 -0
+c4,-6.7,10,-10,18,-10 H400000v40
+H1013.1s-83.4,268,-264.1,840c-180.7,572,-277,876.3,-289,913c-4.7,4.7,-12.7,7,-24,7
+s-12,0,-12,0c-1.3,-3.3,-3.7,-11.7,-7,-25c-35.3,-125.3,-106.7,-373.3,-214,-744
+c-10,12,-21,25,-33,39s-32,39,-32,39c-6,-5.3,-15,-14,-27,-26s25,-30,25,-30
+c26.7,-32.7,52,-63,76,-91s52,-60,52,-60s208,722,208,722
+c56,-175.3,126.3,-397.3,211,-666c84.7,-268.7,153.8,-488.2,207.5,-658.5
+c53.7,-170.3,84.5,-266.8,92.5,-289.5z
+M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.533em;"><span></span></span></span></span></span></span></span></span></eq>。而 Google 的 Gemma 把它改成了 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>=</mo><mfrac><mi>x</mi><mrow><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">M</mi><mi mathvariant="normal">S</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac><mo>⋅</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>w</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">y = \frac{x}{\mathrm{RMS}(x)} \cdot (1 + w)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2154em;vertical-align:-0.52em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6954em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">RMS</span></span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.52em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mclose">)</span></span></span></span></eq>。</li>
+<li><strong>意义</strong>：在 PyTorch 中，权重的默认初始化通常是 0（或者很小的值）。Gemma 加上 1，使得在训练的极早期（缩放参数 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">w \approx 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4831em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></eq> 时），RMSNorm 直接等价于一个不做任何缩放的纯归一化层，<strong>这带来了非常平滑的梯度和非常稳定的早期训练！</strong></li>
+</ul>
+</blockquote>
+<p><strong>快速对照：</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Embedding / LM Head</th>
+<th>Norm</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-2</td>
+<td>共享 <code>embed_tokens</code> 和 <code>lm_head</code> 的权重</td>
+<td>标准 LayerNorm / RMSNorm 变体</td>
+<td>经典的权重绑定 baseline，便于对照</td>
+</tr>
+<tr>
+<td>LLaMA3</td>
+<td>通常不绑定</td>
+<td>RMSNorm</td>
+<td>现代主流参考，结构较简洁</td>
+</tr>
+<tr>
+<td>Qwen</td>
+<td>共享 <code>embed_tokens</code> 和 <code>lm_head</code> 的权重</td>
+<td>RMSNorm</td>
+<td>减少参数量，输入输出监督更一致</td>
+</tr>
+<tr>
+<td>Gemma</td>
+<td>通常不绑定</td>
+<td><code>1 + w</code> 的 RMSNorm</td>
+<td>初始阶段更平滑，训练更稳</td>
+</tr>
+</tbody>
+</table>
+<p>一句话总结：Qwen 通过共享输入/输出权重压缩参数，Gemma 通过 <code>1 + w</code> 缩放提升早期训练稳定性。</p>
+<h3>Step 2: Weight Tying 与偏置项设计</h3>
+<p>Weight Tying 让 Embedding 层和输出层（LM Head）共享同一份参数；LM Head 通常不加 bias，是这类实现的常见配置。</p>
+<ul>
+<li><strong>收益</strong>：共享权重可以直接减少参数量，输入端和输出端也更容易保持表示一致。</li>
+<li><strong>取舍</strong>：绑定权重会牺牲一部分独立表达自由度，但通常能换来更好的参数效率。</li>
+<li><strong>工程动机</strong>：在大模型里，这类改动不是“省参数”这么简单，而是围绕训练稳定性、表达能力和内存布局做的取舍。</li>
+</ul>
+<p>设共享权重矩阵为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>V</mi><mo>×</mo><mi>d</mi></mrow></msup></mrow><annotation encoding="application/x-tex">W \in \mathbb{R}^{V \times d}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></span></eq>，其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></eq> 为词表大小，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span></eq> 为隐藏维度。Embedding 查表和 LM Head 投影都围绕同一份词表参数展开。</p>
+<p><strong>不要把模型名称当成结构结论：</strong> 是否绑定应以模型 config 和实际模块指针为准；同一模型家族的不同版本也可能采用不同配置。<code>data_ptr()</code> 能证明当前 Python 模块是否共享存储，但不能证明所有 checkpoint 或部署 backend 都保持相同布局。</p>
+<h3>Step 2.5: Attention 结构变体地图</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">变体</th>
+<th style="text-align:left">改变什么</th>
+<th style="text-align:left">CPU-first 可以观察什么</th>
+<th style="text-align:left">不能在本节直接断言什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">MHA</td>
+<td style="text-align:left">每个 Q head 对应独立 K/V head</td>
+<td style="text-align:left"><code>num_attention_heads == num_key_value_heads</code></td>
+<td style="text-align:left">实际 decode 一定更快</td>
+</tr>
+<tr>
+<td style="text-align:left">GQA / MQA</td>
+<td style="text-align:left">多个 Q head 共享 K/V head</td>
+<td style="text-align:left">KV 投影规模与 head 分组关系</td>
+<td style="text-align:left">KV Cache 一定按理论比例下降</td>
+</tr>
+<tr>
+<td style="text-align:left">Sparse Attention</td>
+<td style="text-align:left">只保留部分 token 连接</td>
+<td style="text-align:left">mask 非零率和连接数量</td>
+<td style="text-align:left">稀疏 mask 一定带来 kernel 加速</td>
+</tr>
+<tr>
+<td style="text-align:left">Linear Attention</td>
+<td style="text-align:left">改写注意力计算顺序并维护状态</td>
+<td style="text-align:left">toy recurrence 的 shape 和状态更新</td>
+<td style="text-align:left">所有任务都能保持 dense attention 的质量</td>
+</tr>
+<tr>
+<td style="text-align:left">FlashAttention</td>
+<td style="text-align:left">融合 dense attention 的执行和访存</td>
+<td style="text-align:left">与 dense 公式的数值对应关系</td>
+<td style="text-align:left">它本身是新的 attention 连接模式</td>
+</tr>
+</tbody>
+</table>
+<h4>图解：结构技巧放在模型哪里</h4>
+<p><code>08</code> 不是新增一个大模块，而是把真实模型里常见的小改动放回结构位置上看。</p>
+<pre><code class="language-text">input_ids
+   │
+   ▼
+Embedding  ◄──────────────┐
+   │                       │ weight tying
+   ▼                       │
+Transformer Blocks         │
+   │                       │
+   ├─ RMSNorm variants     │ Gemma-style RMSNorm changes scaling form
+   │                       │
+   ▼                       │
+LM Head ───────────────────┘
+</code></pre>
+<p>本节两个技巧的定位：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">技巧</th>
+<th style="text-align:left">改哪里</th>
+<th style="text-align:left">主要收益</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Gemma-style RMSNorm</td>
+<td style="text-align:left">block 内归一化层</td>
+<td style="text-align:left">改变缩放形式，贴近部分模型实现</td>
+</tr>
+<tr>
+<td style="text-align:left">Weight tying</td>
+<td style="text-align:left">embedding 与 LM head</td>
+<td style="text-align:left">参数共享，减少参数量并绑定输入/输出语义空间</td>
+</tr>
+</tbody>
+</table>
+<p>读这页时不要把 trick 当成孤立魔法；它们都是在已有 block 和输入输出层上的局部替换。</p>
+<h3>Step 3: 代码实现框架</h3>
+<blockquote>
+<p><strong>实现方式：Weight Tying 的内存级共享</strong></p>
+<ul>
+<li><strong>做法</strong>：在 <code>__init__</code> 里让 <code>lm_head.weight</code> 直接指向 <code>embed_tokens.weight</code>。</li>
+<li><strong>代码</strong>：<pre><code class="language-python">self.embed_tokens = nn.Embedding(vocab_size, hidden_size)
+self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
+self.lm_head.weight = self.embed_tokens.weight
+</code></pre>
+</li>
+<li><strong>补充</strong>：这里需要 <code>bias=False</code>，绑定后不要再调用 <code>reset_parameters()</code>。</li>
+</ul>
+</blockquote>
+<p>Step 2 已经解释了 Weight Tying 的意义，这里只保留代码落点：Embedding 和 LM Head 共享同一份参数。</p>
+<h3>Step 4: 动手实战</h3>
+<p>请补全下面两个模块的实现：</p>
+<ol>
+<li><code>GemmaRMSNorm</code>：完成 <code>y = x / RMS * (1 + w)</code> 的前向传播。</li>
+<li><code>QwenTieEmbeddings</code>：实现 <code>Embedding</code> 与 <code>LM Head</code> 的权重共享。</li>
+</ol>
+<p>再用 CPU 小张量完成三项观察：用 <code>data_ptr()</code> 验证共享存储，用参数量公式比较 tied / untied，用一个 toy mask 统计 Sparse Attention 的连接比例。最后说明这些观察为什么仍然不能替代 GPU kernel benchmark。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>
+def summarize_attention_variant(num_attention_heads, num_key_value_heads, seq_len, window_size=None):
+    &quot;&quot;&quot;TODO 3: 统计 MHA/GQA/MQA 类型和 Attention 连接规模。&quot;&quot;&quot;
+    # 提示：先判断 Q/KV head 关系；window_size=None 表示 dense，否则统计局部窗口连接数。
+    # attention_type = ???
+    # total_connections = ???
+    # connection_density = ???
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+
+# --- Trick 1: Gemma 风格的 RMSNorm ---
+class GemmaRMSNorm(nn.Module):
+    def __init__(self, hidden_size: int, eps: float = 1e-6):
+        super().__init__()
+        self.eps = eps
+        # weight 初始化为全 0
+        self.weight = nn.Parameter(torch.zeros(hidden_size))
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        &quot;&quot;&quot;
+        Gemma 风格的 RMSNorm
+        公式: output = x / RMS(x) * (1 + weight)
+        其中 weight 初始为 0，实现恒等映射
+        &quot;&quot;&quot;
+        # 计算均方根（使用 FP32 保证数值稳定性）
+        x_f32 = x.float()
+        variance = x_f32.pow(2).mean(-1, keepdim=True)
+        x_norm = x_f32 * torch.rsqrt(variance + self.eps)
+
+        # ==========================================
+        # TODO 1: 实现 Gemma 的 +1 缩放
+        # 注意类型转换回 x.dtype
+        # Gemma 公式: output = normalized * (1 + weight)
+        # 注意: weight 初始为 0，确保类型转换回 x.dtype
+        # ==========================================
+        # output = ？？
+        return output.type_as(x)
 
 
 
+
+# --- Trick 2: Qwen 风格的权重绑定 ---
+class QwenTieEmbeddings(nn.Module):
+    def __init__(self, vocab_size: int, hidden_size: int):
+        super().__init__()
+        # 1. 定义标准的 Embedding 层
+        self.embed_tokens = nn.Embedding(vocab_size, hidden_size)
+
+        # 2. 定义最后的 LM Head 预测层，注意不要 bias
+        self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
+
+        # ==========================================
+        # TODO 2: 将 lm_head 的权重在内存级别绑定到 embed_tokens 上
+        # 提示: 使用赋值让 lm_head.weight 指向 embed_tokens.weight
+        # 验证: 可用 .data_ptr() 检查内存地址是否一致
+        # ==========================================
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+    def forward_embed(self, input_ids):
+        return self.embed_tokens(input_ids)
+
+    def forward_lm_head(self, hidden_states):
+        return self.lm_head(hidden_states)
+</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 测试你的实现
+def test_tricks():
+    try:
+        hidden_size = 64
+        vocab_size = 1000
+        variant = summarize_attention_variant(8, 2, seq_len=8, window_size=1)
+        assert variant['attention_type'] == 'GQA'
+        assert variant['total_connections'] == 22
+        assert 0 &lt; variant['connection_density'] &lt; 1
+
+        # =====1. 测试 Gemma RMSNorm=====
+        print(&quot;\n[1/2] 测试 Gemma RMSNorm...&quot;)
+        gemma_norm = GemmaRMSNorm(hidden_size)
+        x = torch.randn(2, 10, hidden_size)
+        out = gemma_norm(x)
+
+        # 验证初始化时 (weight=0)，输出等价于无缩放的 norm
+        variance = x.float().pow(2).mean(-1, keepdim=True)
+        expected = (x.float() * torch.rsqrt(variance + gemma_norm.eps)).to(x.dtype)
+
+        # assert torch.allclose(out, expected, atol=1e-4, rtol=1e-3), &quot;Gemma 的 1+w 缩放机制实现错误！&quot;
+        # print(&quot;✅ Gemma RMSNorm (+1 trick) 测试通过！&quot;)
+        assert torch.allclose(out, expected, atol=1e-4, rtol=1e-3), \
+            &quot;Gemma RMSNorm: weight=0 时输出与预期不符&quot;
+
+        # 补充测试: weight 非零时缩放生效
+        with torch.no_grad():
+            gemma_norm.weight.data = torch.randn(hidden_size) * 0.1
+        out2 = gemma_norm(x)
+        assert not torch.allclose(out, out2, atol=1e-4), \
+            &quot;Gemma RMSNorm: weight 非零时应产生不同输出&quot;
+
+        # 补充测试: FP16 类型转换
+        x_fp16 = x.half()
+        out_fp16 = gemma_norm(x_fp16)
+        assert out_fp16.dtype == torch.float16, \
+            &quot;Gemma RMSNorm: FP16 输入应保持 FP16 输出&quot;
+
+        print(&quot;✅ Gemma RMSNorm 测试通过！&quot;)
+
+        # =====2. 测试 Qwen 权重绑定=====
+        print(&quot;\n[2/2] 测试 Qwen 权重绑定...&quot;)
+        qwen_model = QwenTieEmbeddings(vocab_size, hidden_size)
+
+        # 检查物理内存地址是否相同
+        ptr_embed = qwen_model.embed_tokens.weight.data_ptr()
+        ptr_head = qwen_model.lm_head.weight.data_ptr()
+        assert ptr_embed == ptr_head, &quot;权重未在物理内存级别绑定！&quot;
+
+        # 模拟训练更新一次 Embedding
+        qwen_model.embed_tokens.weight.data += 1.0
+
+        # 验证 LM Head 的权重也跟着变了 (因为它们是同一个指针)
+        assert torch.allclose(
+            qwen_model.lm_head.weight.data[0, 0],
+            qwen_model.embed_tokens.weight.data[0, 0]
+        ), &quot;权重更新未同步！&quot;
+
+        # 补充测试: 梯度共享
+        qwen_model.embed_tokens.weight.requires_grad_(True)
+        dummy_ids = torch.randint(0, vocab_size, (2, 5))
+        hidden = qwen_model.forward_embed(dummy_ids)
+        loss = qwen_model.forward_lm_head(hidden).sum()
+        loss.backward()
+
+        assert qwen_model.embed_tokens.weight.grad is not None, \
+            &quot;Embedding 应有梯度&quot;
+        assert qwen_model.lm_head.weight.grad is not None, \
+            &quot;LM Head 应有梯度&quot;
+
+        grad_embed_ptr = qwen_model.embed_tokens.weight.grad.data_ptr()
+        grad_head_ptr = qwen_model.lm_head.weight.grad.data_ptr()
+        assert grad_embed_ptr == grad_head_ptr, \
+            &quot;梯度应共享同一内存&quot;
+
+
+        print(&quot;✅ Qwen Tie Word Embeddings 权重绑定测试通过！&quot;)
+        print(&quot;\n架构变体技巧测试通过。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 代码！&quot;)
+        raise
+    except AttributeError as e:
+        print(f&quot;❌ 属性错误: {e}&quot;)
+        raise
+    except TypeError as e:
+        print(f&quot;❌ 类型错误: {e}&quot;)
+        raise
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise
+    except NameError as e:
+        print(&quot;代码可能未完成，导致变量未定义&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 发生未知异常: {e}&quot;)
+        raise
+
+test_tricks()
+
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="gemma-rmsnorm-one-plus-weight">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1：output = normalized × (1 + weight)</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Gemma RMSNorm：从纯归一化开始学习缩放</h2>
 
@@ -1149,26 +1521,14 @@ print(adjusted.shape)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-0">
-                <span>完成 TODO 1：把 x_norm 与 Gemma 的 (1 + self.weight) 缩放结合，赋给 output。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-1">
-                <span>shape/dtype 自检：output 与 x shape 相同；FP16 输入经过 return 后仍是 FP16。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-2">
-                <span>测试目标：weight=0 时等于测试手算的 expected；weight 改成非零后输出发生变化。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="gemma-rmsnorm-one-plus-weight-3">
-                <span>错误诊断：初始化测试差很多时检查是否漏加 1；FP16 测试失败时检查是否改坏了 type_as(x) 返回路径。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="qwen-tied-embedding-parameter">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 2：lm_head.weight 指向 embed_tokens.weight</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>Qwen 权重绑定：让两个模块持有同一个 Parameter</h2>
 
@@ -1286,19 +1646,7 @@ assert module.encoder_scale.data_ptr() == \
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="qwen-tied-embedding-parameter-0">
-                <span>完成 TODO 2：在 __init__ 中让 lm_head.weight 直接指向 embed_tokens.weight，并移除异常占位。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-1">
-                <span>shape 自检：两边权重都应为 [vocab_size, hidden_size]；LM Head 保持 bias=False。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-2">
-                <span>测试目标：权重 data_ptr 相同，修改任一入口时另一端同步，backward 后 grad data_ptr 也相同。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="qwen-tied-embedding-parameter-3">
-                <span>错误诊断：数值相同但指针不同，说明做了 copy/clone；构造对象直接失败，说明未删掉 NotImplementedError。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1322,16 +1670,29 @@ assert module.encoder_scale.data_ptr() == \
     const predictData = {"gemma-rmsnorm-one-plus-weight":{"answer":0,"revealNote":"1+0=1，所以缩放不改变 x_norm；RMS 归一化本身仍然存在。"},"qwen-tied-embedding-parameter":{"answer":0,"revealNote":"独立 Tensor 可以拥有相同数值。Notebook 特意检查 data_ptr，要求物理内存级共享。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 8;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 2;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "08";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-11b7148e79d0";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

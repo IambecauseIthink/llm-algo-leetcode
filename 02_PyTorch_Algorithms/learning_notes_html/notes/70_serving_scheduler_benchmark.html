@@ -1,0 +1,1432 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 70 | Serving Scheduler Benchmark | 推理服务调度基准</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+
+        <span class="pill" id="status">闯关题：0 / 1</span>
+        <span class="pill" id="xp">XP 0 / 100</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 70 | 零基础导学关卡</p>
+        <h1>Serving Scheduler Benchmark | 推理服务调度基准</h1>
+        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <div class="meta">
+          <span class="pill">70_Serving_Scheduler_Benchmark.ipynb</span>
+          <span class="pill">推理优化</span><span class="pill">推理服务</span><span class="pill">调度</span><span class="pill">基准对比</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
+        </div>
+        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="340a6a166eb70b8f97d23478fb340ac9de26a064f2d807e9252d99fb82b2cdd9">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../70_Serving_Scheduler_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>70. Serving Scheduler Benchmark | 推理服务调度基准</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>推理服务</code>, <code>调度</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。</li><li>TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；</li><li>TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、</li><li>TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>本节导读</h2>
+<p>本节要求你在固定请求流量和队列约束下比较两种 serving 调度策略。统一 workload 后，分别测量 TTFT、TPOT、吞吐、公平性和 worker 利用率，并观察不同请求之间的等待代价。最终输出调度方案的适用场景，而不是只按单一吞吐指标排序。
+<strong>层级定位：</strong> 本项目主落在 L4，研究服务实例内部的 batching、队列和请求调度；副本扩缩容、跨模型路由、灰度发布和 SLA 治理属于 L5，只有在扩展实验中才继续接入。
+<strong>主责与复用边界：</strong> 本项目主责是单实例内的请求调度和排队代价；66 复用其 TTFT、TPOT、吞吐口径，显存优化只观察调度造成的 batch / cache 容量变化，不在本项目内验证集群扩缩容或多模型治理。</p>
+<p><strong>关键词：</strong> <code>serving scheduler</code>, <code>TTFT</code>, <code>TPOT</code>, <code>throughput</code>, <code>fairness</code>, <code>utilization</code></p>
+<hr>
+<h2>前置阅读</h2>
+<p><strong>导语：</strong> 先把 decode 调度、KV cache 调度、PD 分离和前缀缓存 benchmark 理顺，再进入这个项目；本节默认你已经知道基本调度对象，重点转向调度策略是否值得保留。</p>
+<ul>
+<li><a href="36_decode_scheduling.html">36. Decode Scheduling | 解码调度</a></li>
+<li><a href="37_kv_cache_scheduling.html">37. KV Cache Scheduling | KV Cache 调度</a></li>
+<li><a href="38_prefill_decode_disaggregation.html">38. Prefill Decode Disaggregation | PD 分离</a></li>
+<li><a href="69_prefix_caching_benchmark.html">69. Prefix Caching Benchmark | 前缀缓存基准</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 完成 serving 调度 benchmark 后，可用 79 和 81 检查并行通信、分布式推理对请求延迟和资源组织的影响。</p>
+<ul>
+<li><a href="79_distributed_parallel_benchmark.html">79. Distributed Parallel Benchmark | 分布式并行基准项目</a></li>
+<li><a href="81_distributed_inference_project.html">81. Distributed Inference Logic Validation | 分布式推理逻辑验证</a></li>
+</ul>
+<hr>
+<h3>Step 1: 定义 serving 实例级调度目标</h3>
+<p>这里的调度对象是 serving 实例中的请求，不是模型参数或单个 KV Cache block。调度器主要决定三件事：请求何时进入执行队列、哪些请求组成一个 batch、资源有限时优先服务谁。</p>
+<p>本节关注单模型 serving 实例内部的队列和 batch 组织。FIFO、shortest 和 batch 调度是可解释的教学策略，不等同于 vLLM / SGLang 的完整 continuous batching；36、37、38 分别提供请求推进、KV Cache 和 PD 分离机制，本节把它们放回服务 workload 中比较。</p>
+<p>实验先固定请求到达模式、prompt/decode 长度和资源配置，再区分负载扫描与策略对照；统一记录 TTFT、TPOT、吞吐、公平性、队列等待和 worker 利用率。</p>
+<table>
+<thead>
+<tr>
+<th>本节问题</th>
+<th>观察对象</th>
+<th>不要混淆为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>请求如何排队</td>
+<td>到达时间、等待时间、batch 选择</td>
+<td>单个 decode token 的生成规则</td>
+</tr>
+<tr>
+<td>服务如何批处理</td>
+<td>batch size、batch speedup、worker busy time</td>
+<td>真实 GPU kernel 加速比例</td>
+</tr>
+<tr>
+<td>策略是否值得保留</td>
+<td>TTFT、TPOT、吞吐、公平性和尾延迟</td>
+<td>只看吞吐的单指标排序</td>
+</tr>
+<tr>
+<td><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_scheduler_scope.svg" alt="Serving 实例级调度：请求进入队列、组成 batch 并形成服务决策"></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3>Step 2: 固定 baseline 与请求分布</h3>
+<p>serving benchmark 不能脱离 workload 讨论。相同模型、请求流、生成长度、cache policy 和资源配置，才构成可比较的对照。先运行 G0，确认请求都完成，再决定后续是扫描负载还是比较策略。</p>
+<table>
+<thead>
+<tr>
+<th>实验组</th>
+<th>固定条件</th>
+<th>唯一变化</th>
+<th>结论类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G0 serving baseline</td>
+<td>模型、backend、dtype、请求流、cache policy、worker 配置</td>
+<td>无</td>
+<td>共同参照和成功率基线</td>
+</tr>
+<tr>
+<td>G1 负载扫描</td>
+<td>继承 G0 的模型和调度配置</td>
+<td>并发或请求到达率</td>
+<td>负载敏感性，不是策略收益</td>
+</tr>
+<tr>
+<td>G2 策略对照</td>
+<td>继承 G0 的请求流和资源配置</td>
+<td>明确可控的调度策略或 scheduler 参数</td>
+<td>单变量策略收益与代价</td>
+</tr>
+</tbody>
+</table>
+<p>只改变并发或到达率时，报告应写成“负载敏感性”；只有 G2 改变了可控调度规则，才可以讨论调度策略收益。</p>
+<h3>Step 3: 用统一指标比较收益与代价</h3>
+<p>这些指标要一起阅读：延迟类指标解释用户体验，吞吐和利用率解释整体服务能力，公平性和队列等待解释收益是否由少数请求承担。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>单位</th>
+<th>主要回答的问题</th>
+<th>趋势方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TTFT</td>
+<td>ms</td>
+<td>用户等待第一个 token 多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>TPOT</td>
+<td>ms/token</td>
+<td>decode 阶段每个 token 间隔多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>queue wait</td>
+<td>ms</td>
+<td>请求在执行前等待了多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>throughput</td>
+<td>token/s 或 request/s</td>
+<td>serving 实例整体处理能力是否提高</td>
+<td>越高越好</td>
+</tr>
+<tr>
+<td>fairness</td>
+<td>0–1</td>
+<td>是否牺牲部分请求换取整体吞吐</td>
+<td>越高越好</td>
+</tr>
+<tr>
+<td>utilization</td>
+<td>0–1</td>
+<td>worker 是否持续工作</td>
+<td>结合延迟和公平性判断</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 实验可以验证队列顺序、batch 选择和指标方向；GPU/backend 实验才能验证真实 continuous batching、KV Cache 约束、GPU 利用率和 P99。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_metrics_decision.svg" alt="Serving benchmark 指标关系：用户体验、服务能力与公平性共同进入决策"></p>
+<h3>Step 4: 根据门槛输出 benchmark 结论</h3>
+<p>只有在调度规则确实可控、workload 对齐、指标重复稳定时，才能比较策略收益。若只是并发扫描，应输出负载敏感性结论。决策时同时检查吞吐、延迟和公平性，不能用单一指标替代整体判断。</p>
+<table>
+<thead>
+<tr>
+<th>决策</th>
+<th>条件</th>
+<th>下一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>accept</code></td>
+<td>吞吐达到最低增益，TTFT / TPOT 没有超出可接受范围，公平性达到门槛</td>
+<td>进入真实 serving rollout 或更大 workload</td>
+</tr>
+<tr>
+<td><code>tune</code></td>
+<td>吞吐或利用率有改善，但延迟、公平性或重复稳定性仍有权衡</td>
+<td>调整队列规则、batch 或 worker 配置</td>
+</tr>
+<tr>
+<td><code>reject</code></td>
+<td>没有可信收益，或延迟、公平性明显恶化</td>
+<td>回到 baseline 或重新设计策略</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 题目区只验证决策逻辑；GPU/backend 报告还需要补充 P99、OOM、GPU 利用率和运行环境信息。</p>
+<h4>图解：36-37-38-69 如何收束到 70 推理服务调度基准</h4>
+<pre><code class="language-text">36 decode scheduling -&gt; 37 KV cache scheduling -&gt; 38 PD disaggregation -&gt; 69 prefix serving baseline
+                                          |
+                                          v
+                          70 serving scheduler benchmark + delivery decision
+</code></pre>
+<p>项目页最小产物：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">模块</th>
+<th style="text-align:left">必须记录</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">baseline</td>
+<td style="text-align:left">workload、TTFT、TPOT、throughput、公平性</td>
+<td style="text-align:left">保证比较合法</td>
+</tr>
+<tr>
+<td style="text-align:left">candidate</td>
+<td style="text-align:left">调度规则、worker 利用率、缓存/队列收益</td>
+<td style="text-align:left">解释 serving 收益来源</td>
+</tr>
+<tr>
+<td style="text-align:left">对比</td>
+<td style="text-align:left">延迟变化、吞吐增益、公平性变化、利用率变化</td>
+<td style="text-align:left">判断是否值得 adopt</td>
+</tr>
+<tr>
+<td style="text-align:left">决策</td>
+<td style="text-align:left">accept / tune / reject</td>
+<td style="text-align:left">输出 benchmark 结论</td>
+</tr>
+</tbody>
+</table>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 11</summary><pre><code># 4 个核心 TODO：请求调度模拟、workload 汇总、baseline 对比、项目判断
+# 目标：先用 CPU 验证排队/批处理状态，再把调度收益转成可比较的 benchmark 报告。
+# CPU 题目区验证单 worker 的队列状态转移；真实 serving 的 batch、P99、GPU 利用率和平台扩缩容属于 GPU/backend 扩展。
+
+def simulate_serving_scheduler(requests: List[Dict[str, float]], policy: str = 'fifo', batch_size: int = 1, batch_speedup: float = 1.0) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;模拟单 worker 的到达、排队、批处理和完成时间；不测真实 GPU serving。
+
+    arrival_ms、service_ms 和 output_tokens 分别表示请求到达时间、理想服务时长和输出 token 数；
+    batch_speedup 是教学模型中的批处理加速因子，不代表线性或硬件实测加速。
+    &quot;&quot;&quot;
+    if policy not in {'fifo', 'shortest'}:
+        raise ValueError('policy 只能是 fifo 或 shortest')
+    if batch_size &lt; 1 or batch_speedup &lt;= 0:
+        raise ValueError('batch_size 必须 &gt;= 1，batch_speedup 必须 &gt; 0')
+    # ==========================================
+    # TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。
+    # 提示：FIFO 按到达顺序（request_id 只作为稳定 tie-break）；shortest 按 service_ms 从小到大。
+    # 变量提示：使用 pending、queue、completed、now、busy、batch；
+    #       每个请求至少读取 request_id、arrival_ms、service_ms、output_tokens。
+    #       返回 request_count、completed_count、makespan_ms、throughput_tps、
+    #       utilization、fairness、avg_queue_wait_ms 和 requests 明细。
+    #       fairness 需基于请求等待/完成表现定义并保持可解释；不能用单一吞吐代替公平性。
+    # ==========================================
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def summarize_serving_scheduler_runs(runs: List[Dict[str, float]]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;汇总同一请求流和 batch 配置下的调度运行结果。
+
+    输入至少包含 name、ttft_ms 和 throughput_tps；空列表返回可解释的空摘要。
+    只汇总同一请求流、worker 和 batch 配置的运行；缺失指标不能补成真实的 0。&quot;&quot;&quot;
+    # TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；
+    # run_count = ???；avg_throughput_tps = ???；best_latency_run = ???。
+    #         缺失指标不能静默解释为真实的 0。
+    #         avg_throughput_tps 是报告均值，不等于单请求 latency。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def compare_scheduler_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
+    &quot;&quot;&quot;计算 candidate 相对 baseline 的延迟、吞吐、公平性和利用率变化。
+
+    TTFT/TPOT 差值越低越好，吞吐、公平性和利用率增益越高越好；两组结果
+    必须使用同一请求流和资源配置。&quot;&quot;&quot;
+    # TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、
+    # ttft_delta_ms = ???；tpot_delta_ms = ???；throughput_gain_tps = ???；fairness_delta = ???。
+    #         fairness_delta 和 utilization_delta。
+    #         延迟差使用 candidate - baseline；吞吐、公平性、利用率增益也使用 candidate - baseline。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+def recommend_serving_scheduler_run(
+    baseline: Dict[str, float], candidate: Dict[str, float], min_throughput_gain: float, min_fairness: float
+) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;按延迟、吞吐和公平性门槛给出教学决策。
+
+    min_throughput_gain、min_fairness 属于当前 workload 的配置；该函数是
+    可解释的筛选模板，不代表生产环境 SLA 或自动调参器。&quot;&quot;&quot;
+    # TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、
+    # throughput_ok = ???；fairness_ok = ???；decision = ???；next_action = ???。
+    #         next_action；允许的 decision 是 accept / tune / reject。
+    #         吞吐达标但公平性未达标时不能直接 accept；没有可接受候选时返回 reject。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card" data-lesson="current-core">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">新版课程导学</span>
+          </div>
+          <h2>从原理走到本课实现</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>本节要求你在固定请求流量和队列约束下比较两种 serving 调度策略。统一 workload 后，分别测量 TTFT、TPOT、吞吐、公平性和 worker 利用率，并观察不同请求之间的等待代价。最终输出调度方案的适用场景，而不是只按单一吞吐指标排序。
+层级定位： 本项目主落在 L4，研究服务实例内部的 batching、队列和请求调度；副本扩缩容、跨模型路由、灰度发布和 SLA 治理属于 L5，只有在扩展实验中才继续接入。
+主责与复用边界： 本项目主责是单实例内的请求调度和排队代价；66 复用其 TTFT、TPOT、吞吐口径，显存优化只观察调度造成的 batch / cache 容量变化，不在本项目内验证集群扩缩容或多模型治理。</p>
+            <div class="notebook-content"><h3>Step 1: 定义 serving 实例级调度目标</h3>
+<p>这里的调度对象是 serving 实例中的请求，不是模型参数或单个 KV Cache block。调度器主要决定三件事：请求何时进入执行队列、哪些请求组成一个 batch、资源有限时优先服务谁。</p>
+<p>本节关注单模型 serving 实例内部的队列和 batch 组织。FIFO、shortest 和 batch 调度是可解释的教学策略，不等同于 vLLM / SGLang 的完整 continuous batching；36、37、38 分别提供请求推进、KV Cache 和 PD 分离机制，本节把它们放回服务 workload 中比较。</p>
+<p>实验先固定请求到达模式、prompt/decode 长度和资源配置，再区分负载扫描与策略对照；统一记录 TTFT、TPOT、吞吐、公平性、队列等待和 worker 利用率。</p>
+<table>
+<thead>
+<tr>
+<th>本节问题</th>
+<th>观察对象</th>
+<th>不要混淆为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>请求如何排队</td>
+<td>到达时间、等待时间、batch 选择</td>
+<td>单个 decode token 的生成规则</td>
+</tr>
+<tr>
+<td>服务如何批处理</td>
+<td>batch size、batch speedup、worker busy time</td>
+<td>真实 GPU kernel 加速比例</td>
+</tr>
+<tr>
+<td>策略是否值得保留</td>
+<td>TTFT、TPOT、吞吐、公平性和尾延迟</td>
+<td>只看吞吐的单指标排序</td>
+</tr>
+<tr>
+<td><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_scheduler_scope.svg" alt="Serving 实例级调度：请求进入队列、组成 batch 并形成服务决策"></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3>Step 2: 固定 baseline 与请求分布</h3>
+<p>serving benchmark 不能脱离 workload 讨论。相同模型、请求流、生成长度、cache policy 和资源配置，才构成可比较的对照。先运行 G0，确认请求都完成，再决定后续是扫描负载还是比较策略。</p>
+<table>
+<thead>
+<tr>
+<th>实验组</th>
+<th>固定条件</th>
+<th>唯一变化</th>
+<th>结论类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G0 serving baseline</td>
+<td>模型、backend、dtype、请求流、cache policy、worker 配置</td>
+<td>无</td>
+<td>共同参照和成功率基线</td>
+</tr>
+<tr>
+<td>G1 负载扫描</td>
+<td>继承 G0 的模型和调度配置</td>
+<td>并发或请求到达率</td>
+<td>负载敏感性，不是策略收益</td>
+</tr>
+<tr>
+<td>G2 策略对照</td>
+<td>继承 G0 的请求流和资源配置</td>
+<td>明确可控的调度策略或 scheduler 参数</td>
+<td>单变量策略收益与代价</td>
+</tr>
+</tbody>
+</table>
+<p>只改变并发或到达率时，报告应写成“负载敏感性”；只有 G2 改变了可控调度规则，才可以讨论调度策略收益。</p>
+<h3>Step 3: 用统一指标比较收益与代价</h3>
+<p>这些指标要一起阅读：延迟类指标解释用户体验，吞吐和利用率解释整体服务能力，公平性和队列等待解释收益是否由少数请求承担。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>单位</th>
+<th>主要回答的问题</th>
+<th>趋势方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TTFT</td>
+<td>ms</td>
+<td>用户等待第一个 token 多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>TPOT</td>
+<td>ms/token</td>
+<td>decode 阶段每个 token 间隔多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>queue wait</td>
+<td>ms</td>
+<td>请求在执行前等待了多久</td>
+<td>越低越好</td>
+</tr>
+<tr>
+<td>throughput</td>
+<td>token/s 或 request/s</td>
+<td>serving 实例整体处理能力是否提高</td>
+<td>越高越好</td>
+</tr>
+<tr>
+<td>fairness</td>
+<td>0–1</td>
+<td>是否牺牲部分请求换取整体吞吐</td>
+<td>越高越好</td>
+</tr>
+<tr>
+<td>utilization</td>
+<td>0–1</td>
+<td>worker 是否持续工作</td>
+<td>结合延迟和公平性判断</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 实验可以验证队列顺序、batch 选择和指标方向；GPU/backend 实验才能验证真实 continuous batching、KV Cache 约束、GPU 利用率和 P99。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_metrics_decision.svg" alt="Serving benchmark 指标关系：用户体验、服务能力与公平性共同进入决策"></p>
+<h3>Step 4: 根据门槛输出 benchmark 结论</h3>
+<p>只有在调度规则确实可控、workload 对齐、指标重复稳定时，才能比较策略收益。若只是并发扫描，应输出负载敏感性结论。决策时同时检查吞吐、延迟和公平性，不能用单一指标替代整体判断。</p>
+<table>
+<thead>
+<tr>
+<th>决策</th>
+<th>条件</th>
+<th>下一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>accept</code></td>
+<td>吞吐达到最低增益，TTFT / TPOT 没有超出可接受范围，公平性达到门槛</td>
+<td>进入真实 serving rollout 或更大 workload</td>
+</tr>
+<tr>
+<td><code>tune</code></td>
+<td>吞吐或利用率有改善，但延迟、公平性或重复稳定性仍有权衡</td>
+<td>调整队列规则、batch 或 worker 配置</td>
+</tr>
+<tr>
+<td><code>reject</code></td>
+<td>没有可信收益，或延迟、公平性明显恶化</td>
+<td>回到 baseline 或重新设计策略</td>
+</tr>
+</tbody>
+</table>
+<p>CPU 题目区只验证决策逻辑；GPU/backend 报告还需要补充 P99、OOM、GPU 利用率和运行环境信息。</p>
+</div>
+            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>调度策略吞吐更高但尾延迟超限，能直接采用吗？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="0">
+                <span>能，平均值可以替代尾延迟</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="1">
+                <span>不能，需要同时满足延迟和其他预算门槛</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="2">
+                <span>能，只比较吞吐</span>
+              </label></div>
+            <div class="feedback" data-feedback="current-core"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-0">
+                <span>TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-1">
+                <span>TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-2">
+                <span>TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-3">
+                <span>TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="69_prefix_caching_benchmark.html">上一关：L69</a>
+        <a class="primary" href="71_mla_kv_cache_architecture_benchmark.html">下一关：L71</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "70";
+    const checkpointData = {"current-core":{"answer":1,"explain":"不能，需要同时满足延迟和其他预算门槛。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 1;
+    const homeworkTotal = 4;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = null;
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-340a6a166eb7";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

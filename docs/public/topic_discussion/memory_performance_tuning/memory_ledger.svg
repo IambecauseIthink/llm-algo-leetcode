@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="680" viewBox="0 0 1280 680">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker></defs>
+<style>
+  .title{font:700 29px sans-serif;fill:#172b4d}.sub{font:15px sans-serif;fill:#526581}
+  .label{font:700 18px sans-serif;fill:#172b4d}.txt{font:15px sans-serif;fill:#243b53}.small{font:14px sans-serif;fill:#526581}
+  .card{stroke-width:2;rx:18}.flow{stroke:#486581;stroke-width:2.4;fill:none;marker-end:url(#arrow)}
+</style>
+<rect width="1280" height="680" fill="#f7fafc"/>
+<text x="640" y="48" text-anchor="middle" class="title">显存账本：把一次运行拆成四类可检查信息</text>
+<text x="640" y="78" text-anchor="middle" class="sub">先确定显存里有什么、何时驻留、如何计算，再用运行证据核对峰值。</text>
+
+<rect x="440" y="115" width="400" height="105" rx="28" fill="#e6f0ff" stroke="#8fb3d8" stroke-width="2"/>
+<text x="640" y="158" text-anchor="middle" class="label">显存账本</text>
+<text x="640" y="191" text-anchor="middle" class="txt">对象 × 生命周期 × 口径 × 证据</text>
+
+<rect x="65" y="330" width="250" height="220" class="card" fill="#fff" stroke="#8fb3d8"/>
+<text x="190" y="373" text-anchor="middle" class="label">对象分类</text>
+<text x="190" y="412" text-anchor="middle" class="txt">参数 · 梯度 · 激活</text>
+<text x="190" y="442" text-anchor="middle" class="txt">optimizer state</text>
+<text x="190" y="472" text-anchor="middle" class="txt">KV Cache · workspace</text>
+<text x="190" y="515" text-anchor="middle" class="small">回答：显存被谁占用？</text>
+
+<rect x="345" y="330" width="250" height="220" class="card" fill="#fff" stroke="#e0b34f"/>
+<text x="470" y="373" text-anchor="middle" class="label">生命周期</text>
+<text x="470" y="412" text-anchor="middle" class="txt">常驻 · 阶段驻留</text>
+<text x="470" y="442" text-anchor="middle" class="txt">临时峰值</text>
+<text x="470" y="472" text-anchor="middle" class="small">forward / backward</text>
+<text x="470" y="515" text-anchor="middle" class="small">回答：什么时候占用？</text>
+
+<rect x="685" y="330" width="250" height="220" class="card" fill="#fff" stroke="#76b893"/>
+<text x="810" y="373" text-anchor="middle" class="label">理论口径</text>
+<text x="810" y="412" text-anchor="middle" class="txt">shape · dtype · bytes</text>
+<text x="810" y="442" text-anchor="middle" class="txt">副本与生命周期</text>
+<text x="810" y="472" text-anchor="middle" class="small">得到容量下界</text>
+<text x="810" y="515" text-anchor="middle" class="small">回答：理论需要多少？</text>
+
+<rect x="965" y="330" width="250" height="220" class="card" fill="#fff" stroke="#d98b87"/>
+<text x="1090" y="373" text-anchor="middle" class="label">运行证据</text>
+<text x="1090" y="412" text-anchor="middle" class="txt">allocated · reserved</text>
+<text x="1090" y="442" text-anchor="middle" class="txt">peak · trace · OOM</text>
+<text x="1090" y="472" text-anchor="middle" class="small">核对真实峰值</text>
+<text x="1090" y="515" text-anchor="middle" class="small">回答：实际发生了什么？</text>
+
+<path d="M640 220 V270 H190 V330" class="flow"/>
+<path d="M640 220 V270 H470 V330" class="flow"/>
+<path d="M640 220 V270 H810 V330" class="flow"/>
+<path d="M640 270 H1090 V330" class="flow"/>
+</svg>

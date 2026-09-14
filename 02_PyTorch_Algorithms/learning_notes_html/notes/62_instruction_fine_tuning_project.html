@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 62 | Instruction Fine-Tuning Project | 指令微调项目</title>
+  <style>
+    :root {
+      --bg: #f7f6f1;
+      --paper: #ffffff;
+      --ink: #182033;
+      --muted: #657184;
+      --line: #dce2e8;
+      --blue: #2563eb;
+      --green: #12805c;
+      --amber: #bd6516;
+      --rose: #be3f5b;
+      --soft-blue: #e8f0ff;
+      --soft-green: #e7f6ee;
+      --soft-amber: #fff1dd;
+      --soft-rose: #fff0f4;
+      --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
+    }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(18, 128, 92, 0.045) 1px, transparent 1px),
+        var(--bg);
+      background-size: 30px 30px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 44px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+    .hud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .ghost, .primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .primary { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); font-weight: 800; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card, .lesson-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-main {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232,240,255,0.78)),
+        var(--paper);
+      display: grid;
+      align-content: center;
+    }
+    .hero-map {
+      background:
+        linear-gradient(135deg, rgba(232,240,255,0.95), rgba(231,246,238,0.95)),
+        var(--paper);
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-weight: 900; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    p, li { color: var(--muted); line-height: 1.65; font-size: 15px; }
+    .lead { font-size: 18px; max-width: 760px; }
+    .pill, .level-pill, .todo-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .level-pill { border-color: #b9cdfb; background: var(--soft-blue); color: #1d4ed8; }
+    .todo-pill { border-color: #f0c483; background: var(--soft-amber); color: #7b430c; }
+    .meta, .lesson-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xp-wrap {
+      width: min(100%, 540px);
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      padding: 4px;
+    }
+    .xp-bar {
+      width: 0%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 220ms ease;
+    }
+    .map-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .map-step {
+      min-height: 86px;
+      border: 1px solid rgba(37,99,235,0.22);
+      background: rgba(255,255,255,0.78);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: #1e3f88;
+    }
+    .formula {
+      border: 1px solid rgba(24,32,51,0.13);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      padding: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .lessons { display: grid; gap: 16px; }
+    .lesson-card { display: grid; gap: 16px; }
+    .lesson-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .intuition { background: #fffdf8; border-color: #efd1a0; }
+    .checkpoint { background: #f8fbff; border-color: #bdd0ff; }
+    .homework { background: #f7fff9; border-color: #a9dbc7; }
+    .predict { background: #f4f1ff; border-color: #c9bdf0; }
+    .predict h3 { color: #6d4fc4; }
+    .predict-hook {
+      font-style: italic;
+      color: #4a3a7a;
+      border-left: 4px solid #b8a6ea;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      line-height: 1.6;
+    }
+    .predict-q { font-weight: 800; margin: 0 0 6px; }
+    .predict-options { display: grid; gap: 10px; margin-top: 4px; }
+    .predict-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #cabff0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .predict-option:hover { border-color: #8b6fe0; }
+    .predict-option.picked { border-color: #6d4fc4; background: #efeaff; box-shadow: inset 0 0 0 1px #b8a6ea; }
+    .predict-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-weight: 700;
+      color: #6d4fc4;
+      line-height: 1.55;
+    }
+    .predict-feedback.hit { color: var(--green); }
+    .predict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .predict-badge.hit { background: var(--soft-green); color: var(--green); border: 1px solid #99d6bf; }
+    .predict-badge.miss { background: var(--soft-blue); color: #1d4ed8; border: 1px solid #b9cdfb; }
+    .gated {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      border-radius: 12px;
+    }
+    .gated.locked { user-select: none; }
+    .gated.locked > * {
+      filter: blur(7px) grayscale(0.35);
+      opacity: 0.55;
+      pointer-events: none;
+      transition: filter .45s ease, opacity .45s ease;
+    }
+    .gated.locked::after {
+      content: "🔒 先在上方押一个假设，解锁讲解";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: #4a3a7a;
+      background: rgba(244,241,255,0.4);
+      border: 2px dashed #b8a6ea;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .think {
+      border: 1px solid #d9a15a;
+      border-left: 4px solid #d9a15a;
+      border-radius: 8px;
+      background: #fffaf2;
+      padding: 0;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .think > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #8a4d0a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .think > summary::-webkit-details-marker { display: none; }
+    .think > summary::before {
+      content: "🤔";
+      font-size: 16px;
+    }
+    .think > summary::after {
+      content: "点击看一种思路 ▸";
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b07a2e;
+      background: #fff1dd;
+      border: 1px solid #e8b66f;
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .think[open] > summary::after { content: "收起 ▾"; }
+    .think[open] > summary { border-bottom: 1px dashed #e8c79a; }
+    .think .think-body {
+      padding: 12px 14px 14px;
+      line-height: 1.7;
+      color: #4a3a2a;
+    }
+    .think .think-body p { margin: 0 0 8px; }
+    .think .think-body p:last-child { margin-bottom: 0; }
+    .field-note {
+      border: 1px solid #99c0e0;
+      border-left: 4px solid #2f7fc4;
+      border-radius: 8px;
+      background: #f1f8fe;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    .field-note .fn-title {
+      font-weight: 800;
+      color: #1f5f96;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .field-note .fn-title::before { content: "🏭"; }
+    .field-note p { margin: 0 0 8px; }
+    .field-note p:last-child { margin-bottom: 0; }
+    .shape-story {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .story-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .story-panel p {
+      margin: 0;
+    }
+    .story-arrow {
+      min-height: 40px;
+      border: 1px dashed #d9a15a;
+      border-radius: 8px;
+      background: var(--soft-amber);
+      color: #7b430c;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+    }
+    .channel-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .channel-plane,
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(54px, 1fr));
+      gap: 7px;
+    }
+    .channel-plane {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 34px 10px 10px;
+      position: relative;
+    }
+    .channel-plane span:not(.plane-title),
+    .pixel-grid span,
+    .token-rail span {
+      min-height: 44px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+    }
+    .channel-plane.warm {
+      background: #fff6e8;
+      border-color: #e8b66f;
+    }
+    .channel-plane.cool {
+      background: #eaf2ff;
+      border-color: #a9c2f6;
+    }
+    .channel-plane.warm span:not(.plane-title) {
+      background: #f8d8aa;
+      color: #73450d;
+    }
+    .channel-plane.cool span:not(.plane-title) {
+      background: #c8d9ff;
+      color: #1e3f88;
+    }
+    .plane-title {
+      position: absolute;
+      top: 9px;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+    .pixel-grid span {
+      background: linear-gradient(135deg, #f8d8aa 0 48%, #c8d9ff 52% 100%);
+      color: #182033;
+      border: 1px solid #d2b98f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(90px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .token-rail span {
+      background: var(--soft-green);
+      border: 1px solid #a9dbc7;
+      color: #123f31;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .token-rail b {
+      display: block;
+      color: var(--green);
+      margin-bottom: 3px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .syntax-card {
+      border: 1px solid #b8c8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .syntax-card h4 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+      color: #1e3f88;
+    }
+    .syntax-card p {
+      margin: 0;
+    }
+    .syntax-card pre {
+      margin: 0;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      background: #0b1220;
+      color: #e8f0ff;
+      padding: 14px;
+      overflow-x: auto;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .syntax-card pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    .syntax-tip {
+      border-left: 4px solid var(--blue);
+      background: #eef4ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .concept-badges,
+    .mini-pipeline,
+    .scale-demo,
+    .dtype-demo,
+    .gate-demo,
+    .param-demo,
+    .rotate-demo,
+    .attn-grid,
+    .gqa-demo,
+    .mlp-demo,
+    .residual-demo,
+    .mini-flow,
+    .mini-table,
+    .timeline,
+    .curve-legend,
+    .ratio-board,
+    .clip-box,
+    .pref-pair,
+    .reward-gap,
+    .matrix-flow,
+    .softmax-row,
+    .tile-grid,
+    .online-book,
+    .lookup,
+    .branches,
+    .gpu-grid,
+    .flow,
+    .rail,
+    .split,
+    .sum-flow,
+    .lesson-section .formula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .concept-badges span,
+    .mini-pipeline span,
+    .scale-demo span,
+    .scale-demo b,
+    .scale-demo strong,
+    .dtype-demo span,
+    .gate-demo span,
+    .gate-demo strong,
+    .param-demo span,
+    .param-demo strong,
+    .rotate-demo span,
+    .rotate-demo em,
+    .attn-grid span,
+    .attn-grid strong,
+    .gqa-demo span,
+    .mlp-demo span,
+    .mlp-demo strong,
+    .residual-demo span,
+    .mini-flow div,
+    .mini-flow span,
+    .mini-flow strong,
+    .mini-table div,
+    .timeline span,
+    .curve-legend span,
+    .ratio-board span,
+    .ratio-board strong,
+    .clip-box span,
+    .pref-pair span,
+    .pref-pair strong,
+    .reward-gap span,
+    .reward-gap strong,
+    .matrix-flow span,
+    .matrix-flow strong,
+    .softmax-row span,
+    .softmax-row strong,
+    .tile-grid span,
+    .tile-grid strong,
+    .online-book span,
+    .online-book strong,
+    .lookup span,
+    .lookup b,
+    .lookup em,
+    .branches span,
+    .branches b,
+    .branches strong,
+    .gpu-grid section,
+    .gpu-grid footer,
+    .flow span,
+    .flow b,
+    .flow strong,
+    .rail span,
+    .rail em,
+    .split span,
+    .split b,
+    .split strong,
+    .sum-flow b,
+    .sum-flow strong,
+    .sum-flow em,
+    .lesson-section .formula b,
+    .lesson-section .formula span {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+    .mini-flow b,
+    .mini-flow strong,
+    .gate-demo strong,
+    .param-demo strong,
+    .mlp-demo strong,
+    .pref-pair strong,
+    .reward-gap strong,
+    .tile-grid strong,
+    .online-book strong,
+    .branches strong,
+    .flow strong,
+    .split strong,
+    .sum-flow strong {
+      border-color: #99d6bf;
+      background: var(--soft-green);
+      color: #123f31;
+    }
+    .timeline span,
+    .curve-legend span,
+    .rail span {
+      border-color: #b9cdfb;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .freq-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 12px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .freq-table th,
+    .freq-table td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .freq-table th {
+      background: var(--soft-blue);
+      color: #1d4ed8;
+    }
+    .shape-lesson,
+    .grad-lesson {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      margin: 12px 0;
+    }
+    .shape-card,
+    .grad-lesson span {
+      min-height: 88px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .grad-lesson.compact span {
+      min-height: 58px;
+      font-size: 13px;
+    }
+    .shape-card strong,
+    .grad-lesson strong { font-size: 18px; color: var(--blue); }
+    .shape-card small { color: var(--muted); line-height: 1.35; }
+    .shape-op {
+      display: grid;
+      place-items: center;
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .lookup-board {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+    .ids,
+    .table {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .ids { display: grid; place-items: center; text-align: center; gap: 8px; }
+    .id-token {
+      min-width: 46px;
+      min-height: 38px;
+      border: 1px solid #b9cdfb;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #1d4ed8;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 6px;
+      align-content: center;
+    }
+    .table span {
+      border-radius: 7px;
+      background: #f5f7fa;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .table .hit {
+      background: var(--soft-green);
+      color: #123f31;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px #a9dbc7;
+    }
+    .checkpoint-option,
+    .homework-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .checkpoint-option.correct,
+    .homework-item.done { border-color: #99d6bf; background: var(--soft-green); }
+    .checkpoint-option.wrong { border-color: #e5a6b6; background: var(--soft-rose); }
+    .feedback { min-height: 26px; margin-top: 12px; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--rose); }
+    .complete {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #9bd6bf;
+      background: var(--soft-green);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+    .lesson-card :not(pre) > code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .lesson-card p,
+    .lesson-card li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .channel-stack,
+      .shape-lesson,
+      .grad-lesson,
+      .lookup-board { grid-template-columns: 1fr; }
+      .shape-op { min-height: 34px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .top { display: grid; }
+      .map-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <a class="ghost" href="../index.html">返回关卡地图</a>
+      <div class="hud">
+
+        <span class="pill" id="status">闯关题：0 / 1</span>
+        <span class="pill" id="xp">XP 0 / 100</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="card hero-main">
+        <p class="eyebrow">Level 62 | 零基础导学关卡</p>
+        <h1>Instruction Fine-Tuning Project | 指令微调项目</h1>
+        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <div class="meta">
+          <span class="pill">62_Instruction_Fine_Tuning_Project.ipynb</span>
+          <span class="pill">训练微调</span><span class="pill">指令微调</span><span class="pill">数据工程</span>
+        </div>
+        <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
+      </div>
+      <div class="card hero-map">
+        <div class="map-steps">
+          <div class="map-step">概念输入</div>
+          <div class="map-step">闯关检查</div>
+          <div class="map-step">Notebook 作业</div>
+        </div>
+        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
+      </div>
+    </section>
+
+<section class="card notebook-guide section" data-source-hash="550a597a127ad56955f70a6bdd2c037387af14bbfa51e4ecbea45821e02bfede">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../62_Instruction_Fine_Tuning_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/62_Instruction_Fine_Tuning_Project.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>62. Instruction Fine-Tuning Project | 指令微调项目</h1>
+<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>指令微调</code>, <code>数据工程</code> | <strong>目标人群：</strong> 项目决策练习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>本节承接第 13 节的端到端 SFT 小项目，把“训练结果是否可信”推进为“指令微调是否可以交付”。第 64 节先回答数据是否具备训练条件，本节进一步固定 instruction、input、response 的任务格式、评测集与资源预算，再结合 train / val 指标和生成样例检查结果是否满足要求。它与第 60 节的分工是：本节判断指令微调任务能否交付，第 60 节在任务口径稳定后比较全参数与 LoRA 的更新成本。本节的 Hard 主要来自数据、格式、任务质量、资源和产物等多类证据的整合与决策。</p>
+<p><strong>关键词：</strong> <code>instruction tuning</code>, <code>data audit</code>, <code>evaluation</code>, <code>delivery</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1：统计指令数据集摘要</li><li>TODO 2：检查格式是否合法</li><li>TODO 3：汇总训练后样例抽检结果</li><li>TODO 4：输出项目交付结论</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 进入本项目前，先能运行 SFT 训练闭环、LoRA 适配和学习率调度，再把注意力转向数据模板、格式稳定性和交付判断。</p>
+<ul>
+<li><a href="09_sft_training_loop.html">09. SFT Training Loop | SFT 训练循环</a></li>
+<li><a href="10_lora_tutorial.html">10. LoRA Tutorial | LoRA 教程</a></li>
+<li><a href="11_lr_schedulers_wsd_cosine.html">11. LR Schedulers WSD Cosine | WSD 余弦学习率调度器</a></li>
+<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
+</ul>
+<h3>Step 1：先把交付问题和对照组定下来</h3>
+<p>本步只回答一个问题：这批指令数据是否已经具备进入 SFT 训练和评测的条件。最小任务是把 <code>instruction / input</code> 组成 prompt，把 <code>output</code> 作为 response，再检查模型回答和项目报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目内容</th>
+<th style="text-align:left">本节设定</th>
+<th style="text-align:left">需要确认什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">任务与输入</td>
+<td style="text-align:left">使用 <code>instruction / input → output</code>；CPU 默认使用 Notebook 内置的最小样例</td>
+<td style="text-align:left">字段映射和 prompt 模板正确</td>
+</tr>
+<tr>
+<td style="text-align:left">数据与评测</td>
+<td style="text-align:left">固定训练 / 验证划分，并准备 <code>eval_cases</code> 评测样例；GPU 实验时再替换为明确的数据集和模型</td>
+<td style="text-align:left">训练和评测使用可复查的输入</td>
+</tr>
+<tr>
+<td style="text-align:left">CPU 检查</td>
+<td style="text-align:left">审计字段、模板、长度、评测输入和决策逻辑</td>
+<td style="text-align:left">数据能否进入训练</td>
+</tr>
+<tr>
+<td style="text-align:left">GPU SFT（可选）</td>
+<td style="text-align:left">在配置单元中填写模型、数据、dtype、batch、seq_len、steps 和 seed</td>
+<td style="text-align:left">比较基础模型与指令微调模型的 loss、生成质量和资源</td>
+</tr>
+<tr>
+<td style="text-align:left">输出</td>
+<td style="text-align:left">保存数据审计、模型回答、loss、资源记录和项目报告</td>
+<td style="text-align:left">判断结果是否具备交付条件</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/62_instruction_finetuning_flow.svg" alt="指令微调的交付判断链">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;指令微调项目实验流程：&lt;/strong&gt;先定义任务并固定条件，再建立模型对照，最后汇总数据、质量、资源和产物证据。&lt;/div&gt;</p>
+<h3>Step 2（CPU）：完成数据与格式准入实验</h3>
+<p>输入是 instruction、input、response 记录和最小评测集合。先把训练前风险转成可复查的指标，再决定数据是否可以进入 GPU 训练。实验动作：固定字段和阈值 → 审计原始数据 → 检查模板格式 → 检查评测集合 → 记录 blocker 与普通问题 → 生成 CPU 数据报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">检查对象</th>
+<th style="text-align:left">记录指标</th>
+<th style="text-align:left">实验目的</th>
+<th style="text-align:left">失败影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">数据字段</td>
+<td style="text-align:left">样本数、空字段、重复数</td>
+<td style="text-align:left">判断是否存在可用监督</td>
+<td style="text-align:left">可能形成 blocker</td>
+</tr>
+<tr>
+<td style="text-align:left">prompt 长度</td>
+<td style="text-align:left">超长样本数、长度分位数</td>
+<td style="text-align:left">判断是否可能被截断</td>
+<td style="text-align:left">可能丢失任务信息</td>
+</tr>
+<tr>
+<td style="text-align:left">模板格式</td>
+<td style="text-align:left">缺字段、拼接异常、role 错误</td>
+<td style="text-align:left">判断训练输入是否稳定</td>
+<td style="text-align:left">形成格式 blocker</td>
+</tr>
+<tr>
+<td style="text-align:left">评测集合</td>
+<td style="text-align:left">样例数、任务类型、输出格式</td>
+<td style="text-align:left">判断训练后是否可验证</td>
+<td style="text-align:left">形成评测缺口</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3（CPU）：实现并运行项目报告</h3>
+<p>在题目区实现数据摘要、格式检查、样例抽检和项目决策；四个函数依次形成 CPU 报告检查链。完成后先运行题目区测试，再对照参考答案与解析检查字段口径和决策分支。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/62_instruction_cpu_todo_flow.svg" alt="62 Step 3：CPU 题目区的最小实现">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;CPU 报告检查链：&lt;/strong&gt;数据摘要 → 格式检查 → 样例抽检 → 项目决策。&lt;/div&gt;</p>
+<p>需要保存 CPU 报告时，将 <code>RUN_PROJECT_EXPORT</code> 改为 <code>True</code>。需要进行真实模型验证时，再进入 Step 4。</p>
+<h3>Step 4（GPU，可选）：运行真实模型对照</h3>
+<p>GPU 实验验证微调后的模型是否满足任务和资源要求；数据审计结果作为实验准入依据。基础模型和指令微调模型使用相同的评测样例、模板和统计口径。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">实验对象</th>
+<th style="text-align:left">固定条件</th>
+<th style="text-align:left">主要指标</th>
+<th style="text-align:left">主要用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">基础模型</td>
+<td style="text-align:left">同一模型、评测样例和模板</td>
+<td style="text-align:left">格式稳定性、任务完成度</td>
+<td style="text-align:left">建立未微调基线</td>
+</tr>
+<tr>
+<td style="text-align:left">指令微调模型</td>
+<td style="text-align:left">同一数据 split、dtype、batch、seq_len、steps 和 seed</td>
+<td style="text-align:left">train / val loss、生成质量</td>
+<td style="text-align:left">判断微调是否有效</td>
+</tr>
+<tr>
+<td style="text-align:left">资源记录</td>
+<td style="text-align:left">与对照实验一致的 workload</td>
+<td style="text-align:left">step time、peak memory</td>
+<td style="text-align:left">判断训练代价是否可接受</td>
+</tr>
+<tr>
+<td style="text-align:left">项目验收</td>
+<td style="text-align:left">固定数据、格式和任务规则</td>
+<td style="text-align:left">数据、格式、任务指标</td>
+<td style="text-align:left">交给 Step 5 输出决策</td>
+</tr>
+</tbody>
+</table>
+<p>实验流程：固定数据和模板 → 评测基础模型 → 完成指令微调 → 在同一评测集生成结果 → 对比 loss、格式和任务完成度 → 记录资源 → 进入 Step 5。</p>
+<h3>Step 5：把证据合成交付决策</h3>
+<p>将 Step 2 的数据准入结果和 Step 4 的模型对照结果放在同一张报告中：先检查数据准入，再检查验证损失、格式/任务指标和资源是否达到预设门槛。项目决策综合数据准入、任务指标、资源记录和可复现产物；train loss 作为其中一项训练信号。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">决策</th>
+<th style="text-align:left">必须满足</th>
+<th style="text-align:left">下一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>accept</code></td>
+<td style="text-align:left">数据无 blocker，任务指标达标，资源可接受</td>
+<td style="text-align:left">保存配置、评测集和模型产物</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>tune</code></td>
+<td style="text-align:left">数据可用，但指标或资源仍需调整</td>
+<td style="text-align:left">回到数据模板、评测样例或训练配置</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>reject</code></td>
+<td style="text-align:left">数据、格式或任务质量无法满足当前目标</td>
+<td style="text-align:left">更换数据或任务定义后重新审计</td>
+</tr>
+</tbody>
+</table>
+<h4>09-13 如何收束到 62 指令微调项目</h4>
+<p><code>62</code> 把 SFT 数据工程和训练闭环组合成一个项目交付模板。</p>
+<p>项目页最小产物：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">模块</th>
+<th style="text-align:left">必须记录</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">数据</td>
+<td style="text-align:left">样本数、空 response、重复样本、超长样本</td>
+<td style="text-align:left">判断数据是否值得训</td>
+</tr>
+<tr>
+<td style="text-align:left">格式</td>
+<td style="text-align:left">缺字段、空字段、模板拼接问题</td>
+<td style="text-align:left">判断输入是否稳定</td>
+</tr>
+<tr>
+<td style="text-align:left">训练</td>
+<td style="text-align:left">train / val 指标、step time</td>
+<td style="text-align:left">判断训练是否可信</td>
+</tr>
+<tr>
+<td style="text-align:left">样例</td>
+<td style="text-align:left">训练后最小回答抽检</td>
+<td style="text-align:left">判断输出是否可交付</td>
+</tr>
+<tr>
+<td style="text-align:left">决策</td>
+<td style="text-align:left">accept / tune / reject</td>
+<td style="text-align:left">输出项目结论</td>
+</tr>
+</tbody>
+</table>
+<h3>参数口径说明</h3>
+<p>本节主要是数据与交付模板。<code>max_prompt_chars</code> 是 prompt 长度审计阈值，不是模型的 token 上限；<code>instruction / input / response</code> 是数据字段，必须固定字段映射；<code>eval_cases</code> 是训练后样例评测集合。真实训练时还要固定 model、dtype、batch、seq_len、steps 和验证集，不能只凭格式检查宣布项目完成。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 7</summary><pre><code># 4 个核心 TODO：数据审计、格式检查、样例抽检、项目总结
+# 目标：把 instruction / input / response 数据整理成统一项目报告，而不是只看训练指标。
+# CPU 题目区验证数据与格式口径；GPU 扩展才验证真实模型的 loss、生成质量和资源。
+
+# TODO 1：统计指令数据集摘要
+def summarize_instruction_dataset(records: List[Dict[str, str]], max_prompt_chars: int) -&gt; Dict[str, float]:
+    &quot;&quot;&quot;统计样本数、空 response、重复样本和 prompt 长度风险。
+
+    每条记录使用 instruction、input、response 字段；返回摘要字典，
+    不计算模型 loss，也不把字符数当成 tokenizer token 数。
+    &quot;&quot;&quot;
+    # 提示：重复键使用三字段组合；空 response 只按 response 判定。
+    # total_samples = ???；empty_response_count = ???；duplicate_count = ???；over_length_count = ???。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+# TODO 2：检查格式是否合法
+def check_instruction_format(batch: List[Dict[str, str]]) -&gt; Dict[str, int]:
+    &quot;&quot;&quot;检查 instruction / response 必填字段和非空约束。
+
+    返回 valid_count、missing_field_count 和 format_issue_count；
+    缺字段与字段存在但为空必须分开统计。
+    &quot;&quot;&quot;
+    # 提示：只有 instruction、response 都存在且非空时才计入 valid_count。
+    # missing_field_count = ???；format_issue_count = ???；valid_count = ???。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+# TODO 3：汇总训练后样例抽检结果
+def review_instruction_outputs(outputs: List[Dict[str, object]]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;汇总固定样例的格式通过率和任务通过率。
+
+    输入记录至少包含 format_ok、task_ok；空列表时通过率应为 0.0。
+    `format_ok` 检查输出格式，`task_ok` 检查最小任务目标；二者都是样例级诊断，
+    不等同于完整评测集的模型能力。GPU 生成结果可以沿用这些字段进入项目报告。
+    &quot;&quot;&quot;
+    # 提示：分别统计 format_pass_count / task_pass_count，并保留样例总数。
+    #       不要把 format_ok 当成 task_ok，也不要用一个总通过率掩盖两类失败。
+    # sample_count = ???；format_pass_count = ???；task_pass_count = ???；pass_rate = ???。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+
+# TODO 4：输出项目交付结论
+def build_instruction_project_report(summary: Dict[str, float], format_check: Dict[str, int], output_review: Dict[str, object]) -&gt; Dict[str, object]:
+    &quot;&quot;&quot;把数据摘要、格式检查和样例抽检收成项目决策。
+
+    存在字段/格式 blocker 时应 reject；输入合规但样例任务不稳定时可 tune；
+    仅凭 CPU 审计不能输出真实训练效果的 accept。
+    &quot;&quot;&quot;
+    # 提示：返回 decision、project_ready 和 next_action 三个核心字段。
+    #       先判断数据/格式 blocker，再判断样例格式和任务通过率；CPU 审计不能伪造 GPU accept。
+    # blockers = ???；project_ready = ???；decision = ???；next_action = ???。
+    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
+
+    <section class="lessons">
+
+        <article class="lesson-card" data-lesson="current-core">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 1</span>
+            <span class="todo-pill">新版课程导学</span>
+          </div>
+          <h2>从原理走到本课实现</h2>
+
+          <div class="lesson-section">
+            <h3>先补的知识</h3>
+            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
+          </div>
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>本节承接第 13 节的端到端 SFT 小项目，把“训练结果是否可信”推进为“指令微调是否可以交付”。第 64 节先回答数据是否具备训练条件，本节进一步固定 instruction、input、response 的任务格式、评测集与资源预算，再结合 train / val 指标和生成样例检查结果是否满足要求。它与第 60 节的分工是：本节判断指令微调任务能否交付，第 60 节在任务口径稳定后比较全参数与 LoRA 的更新成本。本节的 Hard 主要来自数据、格式、任务质量、资源和产物等多类证据的整合与决策。</p>
+            <div class="notebook-content"><h3>Step 1：先把交付问题和对照组定下来</h3>
+<p>本步只回答一个问题：这批指令数据是否已经具备进入 SFT 训练和评测的条件。最小任务是把 <code>instruction / input</code> 组成 prompt，把 <code>output</code> 作为 response，再检查模型回答和项目报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目内容</th>
+<th style="text-align:left">本节设定</th>
+<th style="text-align:left">需要确认什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">任务与输入</td>
+<td style="text-align:left">使用 <code>instruction / input → output</code>；CPU 默认使用 Notebook 内置的最小样例</td>
+<td style="text-align:left">字段映射和 prompt 模板正确</td>
+</tr>
+<tr>
+<td style="text-align:left">数据与评测</td>
+<td style="text-align:left">固定训练 / 验证划分，并准备 <code>eval_cases</code> 评测样例；GPU 实验时再替换为明确的数据集和模型</td>
+<td style="text-align:left">训练和评测使用可复查的输入</td>
+</tr>
+<tr>
+<td style="text-align:left">CPU 检查</td>
+<td style="text-align:left">审计字段、模板、长度、评测输入和决策逻辑</td>
+<td style="text-align:left">数据能否进入训练</td>
+</tr>
+<tr>
+<td style="text-align:left">GPU SFT（可选）</td>
+<td style="text-align:left">在配置单元中填写模型、数据、dtype、batch、seq_len、steps 和 seed</td>
+<td style="text-align:left">比较基础模型与指令微调模型的 loss、生成质量和资源</td>
+</tr>
+<tr>
+<td style="text-align:left">输出</td>
+<td style="text-align:left">保存数据审计、模型回答、loss、资源记录和项目报告</td>
+<td style="text-align:left">判断结果是否具备交付条件</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/62_instruction_finetuning_flow.svg" alt="指令微调的交付判断链">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;指令微调项目实验流程：&lt;/strong&gt;先定义任务并固定条件，再建立模型对照，最后汇总数据、质量、资源和产物证据。&lt;/div&gt;</p>
+<h3>Step 2（CPU）：完成数据与格式准入实验</h3>
+<p>输入是 instruction、input、response 记录和最小评测集合。先把训练前风险转成可复查的指标，再决定数据是否可以进入 GPU 训练。实验动作：固定字段和阈值 → 审计原始数据 → 检查模板格式 → 检查评测集合 → 记录 blocker 与普通问题 → 生成 CPU 数据报告。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">检查对象</th>
+<th style="text-align:left">记录指标</th>
+<th style="text-align:left">实验目的</th>
+<th style="text-align:left">失败影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">数据字段</td>
+<td style="text-align:left">样本数、空字段、重复数</td>
+<td style="text-align:left">判断是否存在可用监督</td>
+<td style="text-align:left">可能形成 blocker</td>
+</tr>
+<tr>
+<td style="text-align:left">prompt 长度</td>
+<td style="text-align:left">超长样本数、长度分位数</td>
+<td style="text-align:left">判断是否可能被截断</td>
+<td style="text-align:left">可能丢失任务信息</td>
+</tr>
+<tr>
+<td style="text-align:left">模板格式</td>
+<td style="text-align:left">缺字段、拼接异常、role 错误</td>
+<td style="text-align:left">判断训练输入是否稳定</td>
+<td style="text-align:left">形成格式 blocker</td>
+</tr>
+<tr>
+<td style="text-align:left">评测集合</td>
+<td style="text-align:left">样例数、任务类型、输出格式</td>
+<td style="text-align:left">判断训练后是否可验证</td>
+<td style="text-align:left">形成评测缺口</td>
+</tr>
+</tbody>
+</table>
+<h3>Step 3（CPU）：实现并运行项目报告</h3>
+<p>在题目区实现数据摘要、格式检查、样例抽检和项目决策；四个函数依次形成 CPU 报告检查链。完成后先运行题目区测试，再对照参考答案与解析检查字段口径和决策分支。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/62_instruction_cpu_todo_flow.svg" alt="62 Step 3：CPU 题目区的最小实现">
+&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;CPU 报告检查链：&lt;/strong&gt;数据摘要 → 格式检查 → 样例抽检 → 项目决策。&lt;/div&gt;</p>
+<p>需要保存 CPU 报告时，将 <code>RUN_PROJECT_EXPORT</code> 改为 <code>True</code>。需要进行真实模型验证时，再进入 Step 4。</p>
+<h3>Step 4（GPU，可选）：运行真实模型对照</h3>
+<p>GPU 实验验证微调后的模型是否满足任务和资源要求；数据审计结果作为实验准入依据。基础模型和指令微调模型使用相同的评测样例、模板和统计口径。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">实验对象</th>
+<th style="text-align:left">固定条件</th>
+<th style="text-align:left">主要指标</th>
+<th style="text-align:left">主要用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">基础模型</td>
+<td style="text-align:left">同一模型、评测样例和模板</td>
+<td style="text-align:left">格式稳定性、任务完成度</td>
+<td style="text-align:left">建立未微调基线</td>
+</tr>
+<tr>
+<td style="text-align:left">指令微调模型</td>
+<td style="text-align:left">同一数据 split、dtype、batch、seq_len、steps 和 seed</td>
+<td style="text-align:left">train / val loss、生成质量</td>
+<td style="text-align:left">判断微调是否有效</td>
+</tr>
+<tr>
+<td style="text-align:left">资源记录</td>
+<td style="text-align:left">与对照实验一致的 workload</td>
+<td style="text-align:left">step time、peak memory</td>
+<td style="text-align:left">判断训练代价是否可接受</td>
+</tr>
+<tr>
+<td style="text-align:left">项目验收</td>
+<td style="text-align:left">固定数据、格式和任务规则</td>
+<td style="text-align:left">数据、格式、任务指标</td>
+<td style="text-align:left">交给 Step 5 输出决策</td>
+</tr>
+</tbody>
+</table>
+<p>实验流程：固定数据和模板 → 评测基础模型 → 完成指令微调 → 在同一评测集生成结果 → 对比 loss、格式和任务完成度 → 记录资源 → 进入 Step 5。</p>
+<h3>Step 5：把证据合成交付决策</h3>
+<p>将 Step 2 的数据准入结果和 Step 4 的模型对照结果放在同一张报告中：先检查数据准入，再检查验证损失、格式/任务指标和资源是否达到预设门槛。项目决策综合数据准入、任务指标、资源记录和可复现产物；train loss 作为其中一项训练信号。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">决策</th>
+<th style="text-align:left">必须满足</th>
+<th style="text-align:left">下一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>accept</code></td>
+<td style="text-align:left">数据无 blocker，任务指标达标，资源可接受</td>
+<td style="text-align:left">保存配置、评测集和模型产物</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>tune</code></td>
+<td style="text-align:left">数据可用，但指标或资源仍需调整</td>
+<td style="text-align:left">回到数据模板、评测样例或训练配置</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>reject</code></td>
+<td style="text-align:left">数据、格式或任务质量无法满足当前目标</td>
+<td style="text-align:left">更换数据或任务定义后重新审计</td>
+</tr>
+</tbody>
+</table>
+</div>
+            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>指令微调的数据审计应该检查什么？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="0">
+                <span>仅检查样本总数</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="1">
+                <span>只检查训练集 loss</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-current-core" value="2">
+                <span>字段、格式和样例质量，再形成项目总结</span>
+              </label></div>
+            <div class="feedback" data-feedback="current-core"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>回到 notebook 的作业</h3>
+            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-0">
+                <span>TODO 1：统计指令数据集摘要</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-1">
+                <span>TODO 2：检查格式是否合法</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-2">
+                <span>TODO 3：汇总训练后样例抽检结果</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="current-core-3">
+                <span>TODO 4：输出项目交付结论</span>
+              </label>
+          </div>
+        </article>
+    </section>
+
+    <section class="complete">
+      <div>
+        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
+      </div>
+      <div>
+        <a class="ghost" href="61_model_architecture_exploration.html">上一关：L61</a>
+        <a class="primary" href="63_lora_variants_benchmark.html">下一关：L63</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const levelId = "62";
+    const checkpointData = {"current-core":{"answer":2,"explain":"字段、格式和样例质量，再形成项目总结。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 1;
+    const homeworkTotal = 4;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = null;
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
+    }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-550a597a127a";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+
+    function save() {
+      localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
+      localStorage.setItem(homeworkKey, JSON.stringify([...homeworkDone]));
+      localStorage.setItem(predictKey, JSON.stringify([...predictsMade]));
+    }
+
+    function renderPredict(lessonId) {
+      const picked = predictsMade.get(lessonId);
+      const gate = document.querySelector('[data-gated="' + lessonId + '"]');
+      const feedback = document.querySelector('[data-predict-feedback="' + lessonId + '"]');
+      if (picked === undefined) {
+        if (gate) gate.classList.add("locked");
+        return;
+      }
+      document.querySelectorAll('input[name="predict-' + lessonId + '"]').forEach((input) => {
+        input.closest(".predict-option").classList.toggle("picked", Number(input.value) === picked);
+        if (Number(input.value) === picked) input.checked = true;
+      });
+      if (gate) gate.classList.remove("locked");
+      if (feedback) {
+        const hit = picked === predictData[lessonId].answer;
+        const badge = hit
+          ? '<span class="predict-badge hit">🎯 预判命中</span>'
+          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+        const rawNote = predictData[lessonId].revealNote;
+        const note = hit
+          ? rawNote
+          : '正确思路：' + rawNote.replace(/^对[。！!，,:：]?\s*/, '');
+        feedback.innerHTML = badge + '<div style="margin-top:8px;font-weight:600;color:#4a3a7a">' + note + '</div>';
+        feedback.className = "predict-feedback" + (hit ? " hit" : "");
+      }
+    }
+
+    function refresh() {
+      document.querySelectorAll("[data-homework]").forEach((input) => {
+        const done = homeworkDone.has(input.dataset.homework);
+        input.checked = done;
+        input.closest(".homework-item").classList.toggle("done", done);
+      });
+
+      Object.keys(predictData).forEach(renderPredict);
+      if (predictTotal) {
+        const pc = document.querySelector("#predict-count");
+        if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+      }
+
+      for (const lessonId of checkpointsDone) {
+        const answer = checkpointData[lessonId].answer;
+        const input = document.querySelector('input[name="checkpoint-' + lessonId + '"][value="' + answer + '"]');
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        if (input) {
+          input.checked = true;
+          input.closest(".checkpoint-option").classList.add("correct");
+        }
+        if (feedback) {
+          feedback.textContent = "已通过：" + checkpointData[lessonId].explain;
+          feedback.className = "feedback ok";
+        }
+      }
+
+      const done = checkpointsDone.size;
+      document.querySelector("#status").textContent = "闯关题：" + done + " / " + checkpointTotal;
+      document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
+      document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
+
+      if (done === checkpointTotal) {
+        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
+        completed.add(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+      }
+    }
+
+    document.querySelector(".lessons").addEventListener("change", (event) => {
+      if (event.target.matches('input[name^="predict-"]')) {
+        const lessonId = event.target.name.replace("predict-", "");
+        predictsMade.set(lessonId, Number(event.target.value));
+        save();
+        renderPredict(lessonId);
+        if (predictTotal) {
+          const pc = document.querySelector("#predict-count");
+          if (pc) pc.textContent = "预判 " + predictsMade.size + " / " + predictTotal;
+        }
+        return;
+      }
+
+      if (event.target.matches('input[name^="checkpoint-"]')) {
+        const lessonId = event.target.name.replace("checkpoint-", "");
+        const selected = Number(event.target.value);
+        const data = checkpointData[lessonId];
+        const feedback = document.querySelector('[data-feedback="' + lessonId + '"]');
+        document.querySelectorAll('input[name="' + event.target.name + '"]').forEach((input) => {
+          input.closest(".checkpoint-option").classList.remove("correct", "wrong");
+        });
+        if (selected === data.answer) {
+          event.target.closest(".checkpoint-option").classList.add("correct");
+          feedback.textContent = "答对了：" + data.explain;
+          feedback.className = "feedback ok";
+          checkpointsDone.add(lessonId);
+        } else {
+          event.target.closest(".checkpoint-option").classList.add("wrong");
+          feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
+          feedback.className = "feedback warn";
+        }
+        save();
+        refresh();
+      }
+
+      if (event.target.matches("[data-homework]")) {
+        if (event.target.checked) {
+          homeworkDone.add(event.target.dataset.homework);
+        } else {
+          homeworkDone.delete(event.target.dataset.homework);
+        }
+        save();
+        refresh();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Level 10 | LoRA Tutorial</title>
+  <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
+  <title>Level 10 | LoRA Tutorial | LoRA 教程</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -21,6 +22,15 @@
       --soft-rose: #fff0f4;
       --shadow: 0 16px 40px rgba(24, 32, 51, 0.08);
     }
+    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
+    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
+    .notebook-content img { max-width: 100%; height: auto; }
+    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
+    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
+    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
+    pre, .katex-display { max-width: 100%; overflow-x: auto; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1001,11 +1011,11 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 10 | 零基础导学关卡</p>
-        <h1>LoRA Tutorial</h1>
+        <h1>LoRA Tutorial | LoRA 教程</h1>
         <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
         <div class="meta">
           <span class="pill">10_LoRA_Tutorial.ipynb</span>
-          <span class="pill">LoRA</span><span class="pill">PEFT</span><span class="pill">Low-rank</span>
+          <span class="pill">训练微调</span><span class="pill">LoRA</span><span class="pill">PEFT</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
@@ -1019,16 +1029,268 @@
       </div>
     </section>
 
+<section class="card notebook-guide section" data-source-hash="b7dd564e2bdcddf8568e8213b41969a318b9dd4e192eaebc2fa6d4e59bfadf36">
+    <h2>新版 Notebook 任务</h2>
+    <p><a class="ghost" href="../../10_LoRA_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/10_LoRA_Tutorial.ipynb">官方版本</a></p>
+    <div class="notebook-content"><h1>10. LoRA Tutorial | LoRA 教程</h1>
+<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>LoRA</code>, <code>PEFT</code> | <strong>目标人群：</strong> 训练机制学习者</p>
+<hr>
+<h2>本节导读</h2>
+<p>大模型微调最直接的做法是更新全部参数，但这会把显存压力迅速放大：除了模型权重，还要保存梯度和优化器状态。很多场景里，我们真正需要的不是重写整个模型，而是在已有能力上做小幅适配。</p>
+<p>LoRA 的思路就是冻结原始权重，只在旁边加一条低秩可训练旁路。SFT 描述的是监督训练范式，LoRA 描述的是参数更新方法，二者可以组合成 LoRA SFT。这一节在训练微调路线里承接 <code>09</code>：<code>09</code> 讲清 SFT 的样本、监督范围和 loss 对齐，<code>10</code> 再讲 LoRA 如何改变参数更新方式。学完这里，后面再看 <code>13</code> 和 <code>60</code> 时，你会更容易把 <code>target modules / r / alpha / dropout</code> 这些选择放回完整实验和项目交付里。</p>
+<p><strong>关键词：</strong> <code>LoRA</code>, <code>PEFT</code>, <code>adapter</code>, <code>target modules</code></p>
+<hr>
+</div>
+    <h3>当前题目检查清单</h3>
+    <ul><li>TODO 1: 初始化主权重和 LoRA 矩阵</li><li>TODO 2: 初始化权重</li><li>TODO 3: 实现前向传播</li><li>TODO 4: 合并权重</li></ul>
+    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
+<p><strong>导语：</strong> 先把模型封装、优化器和最小训练闭环补齐，再看 LoRA 如何只训练一小部分参数。</p>
+<ul>
+<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | nn.Module 基础</a></li>
+<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | 优化器与损失</a></li>
+<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练</a></li>
+</ul>
+<h2>相关阅读</h2>
+<p><strong>导语：</strong> 理解 LoRA 的低秩旁路后，下一步最自然的是看它怎样进入端到端微调、4-bit 微调和项目化验证。</p>
+<ul>
+<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
+<li><a href="26_qlora_and_4bit_quantization.html">26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化</a></li>
+<li><a href="60_lora_fine_tuning_project.html">60. LoRA Fine-Tuning Project | LoRA 微调项目</a></li>
+<li><a href="63_lora_variants_benchmark.html">63. LoRA Variants Benchmark | LoRA 变体基准对比</a></li>
+</ul>
+<hr>
+<h3>Step 1: 核心思想与痛点</h3>
+<p>全参微调会更新模型中的全部参数。训练时，GPU 不仅要保存模型权重，还要保存梯度、优化器状态和中间激活，因此模型越大，训练显存压力越高。</p>
+<p>LoRA 的基本做法是冻结原始模型，只在部分 <code>Linear</code>（线性层）旁边增加少量可训练参数。这里的重点不是立即计算低秩矩阵，而是先确定 LoRA 应该接入模型的哪条路径。</p>
+<p>在 Transformer 的一个重复计算单元（block）中，常见挂载位置包括：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">位置</th>
+<th style="text-align:left">常见 target modules（目标模块）</th>
+<th style="text-align:left">作用</th>
+<th style="text-align:left">选择建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Attention</td>
+<td style="text-align:left"><code>q_proj</code>, <code>v_proj</code></td>
+<td style="text-align:left">查询和值投影，调整注意力路径</td>
+<td style="text-align:left">适合作为入门起点</td>
+</tr>
+<tr>
+<td style="text-align:left">Attention</td>
+<td style="text-align:left"><code>q_proj</code>, <code>k_proj</code>, <code>v_proj</code>, <code>o_proj</code></td>
+<td style="text-align:left">查询、键、值和输出投影，更完整地适配注意力路径</td>
+<td style="text-align:left">任务需要更强适配时使用</td>
+</tr>
+<tr>
+<td style="text-align:left">MLP</td>
+<td style="text-align:left"><code>gate_proj</code>, <code>up_proj</code>, <code>down_proj</code></td>
+<td style="text-align:left">逐 token 的前馈表示变换</td>
+<td style="text-align:left">需要增加可学习参数时考虑</td>
+</tr>
+</tbody>
+</table>
+<p>下面的结构图先标出这些投影层在 Decoder Block 中的位置；低秩分支的矩阵形状和初始化规则放到 Step 2。</p>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/10_lora_target_modules.svg" alt="LoRA 挂载位置图"></p>
+<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;LoRA 挂载位置：&lt;/strong&gt; Attention 和 MLP 中的线性投影都可以作为适配入口，具体选择需要结合任务和预算。&lt;/div&gt;</p>
+<h3>Step 2: LoRA 结构、参数与初始化</h3>
+<p>先把 LoRA 看成一个普通的 PyTorch 模块：它保留冻结的线性层作为主分支，再并排放入两个很小的可训练矩阵 A 和 B。A 通常用 Kaiming 均匀分布或高斯分布初始化，而 B 严格初始化为零，以保证训练开始时 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>W</mi><mo>=</mo><mi>B</mi><mi>A</mi><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta W = B A \approx 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></eq>，模型输出基本等于冻结基座的输出。</p>
+<p>先从结构和参数状态确认 LoRA 是否正确接入，再理解几个控制适配规模的参数：</p>
+<ul>
+<li>base linear weight 已冻结。</li>
+<li>只有 <code>lora_A / lora_B</code> 参与训练。</li>
+<li><code>lora_A</code> 的形状为 <code>[r, in_features]</code>，<code>lora_B</code> 的形状为 <code>[out_features, r]</code>。</li>
+<li>可训练参数量等于 <code>r * (in_features + out_features)</code>。</li>
+<li><code>r</code> 是低秩维度，<code>alpha / r</code> 控制旁路更新的缩放；<code>dropout</code> 只作用在 LoRA 分支输入上。</li>
+</ul>
+<p><img src="../../../docs/public/02_PyTorch_Algorithms/10_lora_adapter.svg" alt="LoRA 旁路结构图"></p>
+<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;LoRA 旁路结构：&lt;/strong&gt; 主分支保留冻结权重，低秩分支负责学习增量。&lt;/div&gt;</p>
+<h3>Step 3: 前向计算与权重合并</h3>
+<p>LoRA 前向时有两条路径：输入 <code>x</code> 一条进入冻结的主线性层，另一条经过 LoRA 的低秩分支。代码中的行向量路径是：<code>x → x @ A.T → @ B.T → * (alpha / r)</code>，最后把这条增量加到主分支输出。</p>
+<p>这对应数学表达式：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>h</mi><mo>=</mo><msub><mi>W</mi><mn>0</mn></msub><mi>x</mi><mo>+</mo><mi mathvariant="normal">Δ</mi><mi>W</mi><mi>x</mi><mo>=</mo><msub><mi>W</mi><mn>0</mn></msub><mi>x</mi><mo>+</mo><mfrac><mi>α</mi><mi>r</mi></mfrac><mi>B</mi><mi>A</mi><mi>x</mi></mrow><annotation encoding="application/x-tex"> h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} B A x </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.7936em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">A</span><span class="mord mathnormal">x</span></span></span></span></span></eqn></section>
+其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 将输入维度压到 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span></span></span></eq>，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span></eq> 再将它恢复到输出维度；Step 2 已经说明了矩阵形状和缩放参数。</p>
+<p>部署时可以把低秩增量一次性合并到主权重：
+<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>W</mi><mtext>merged</mtext></msub><mo>=</mo><msub><mi>W</mi><mn>0</mn></msub><mo>+</mo><mfrac><mi>α</mi><mi>r</mi></mfrac><mi>B</mi><mi>A</mi></mrow><annotation encoding="application/x-tex"> W_{\text{merged}} = W_0 + \frac{\alpha}{r} B A </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">merged</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.7936em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">A</span></span></span></span></span></eqn></section>
+合并后，计算图不再执行 A、B 两个旁路矩阵乘法；实际延迟仍取决于权重合并、数值误差和框架实现。</p>
+<h3>Step 4: 动手实战</h3>
+<p><strong>要求</strong>：本节用单个 <code>LoRALinear</code> 讲清低秩旁路；后面的项目页再把它放回完整模型和训练报告里。请补全下方 <code>LoRALinear</code> 的初始化、前向传播和合并权重的 <code>TODO</code> 逻辑，并让 merge 操作可以安全地重复调用。</p>
+<p>额外检查点：实现后要能统计 LoRA 的可训练参数量，确认梯度只流向 A/B，验证 merge 前后的输出一致，并通过形状、参数边界和 dropout 状态检查。本 Step 验证的是 LoRA 线性层机制，完整任务训练和项目报告在 60 节展开。</p>
+</div></details>
+    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def count_trainable_parameters(module: nn.Module) -&gt; int:
+    &quot;&quot;&quot;统计模块中 requires_grad=True 的参数数量。&quot;&quot;&quot;
+    return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
 
+class LoRALinear(nn.Module):
+    &quot;&quot;&quot;在线性层旁路中加入可训练低秩增量的 LoRA 模块。&quot;&quot;&quot;
+    def __init__(self, in_features: int, out_features: int, r: int = 8, lora_alpha: int = 16, lora_dropout: float = 0.0):
+        &quot;&quot;&quot;冻结基础线性层，只训练低秩 LoRA 旁路。&quot;&quot;&quot;
+        super().__init__()
+        if in_features &lt;= 0 or out_features &lt;= 0:
+            raise ValueError('in_features 和 out_features 必须为正数')
+        if r &lt;= 0:
+            raise ValueError('r 必须为正数')
+        if lora_dropout &lt; 0.0 or lora_dropout &gt; 1.0:
+            raise ValueError('lora_dropout 必须位于 [0, 1]')
+        self.r = r
+        self.lora_alpha = lora_alpha
+        self.scaling = self.lora_alpha / self.r
+        self.lora_dropout = nn.Dropout(lora_dropout)
+        self.merged = False  # 记录 LoRA 增量是否已合并到主权重
 
+        # ==========================================
+        # 主权重冻结，只让低秩旁路参与训练。
+        # TODO 1: 初始化主权重和 LoRA 矩阵
+        # ==========================================
+        # self.linear = ???
+        # self.linear.weight.requires_grad = ???
+        # self.lora_A = ???
+        # self.lora_B = ???
+        # 提示：lora_A 形状为 [r, in_features]，lora_B 形状为 [out_features, r]
+        #pass
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        &quot;&quot;&quot;按基础层和 LoRA 旁路各自的规则初始化参数。&quot;&quot;&quot;
+        # ==========================================
+        # 主权重和 LoRA 旁路分别按各自规则初始化。
+        # TODO 2: 初始化权重
+        # ==========================================
+        # nn.init.kaiming_uniform_(???)
+        # nn.init.kaiming_uniform_(???)
+        # nn.init.zeros_(???)
+        pass
+
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        &quot;&quot;&quot;计算基础线性层输出，并在未 merge 时叠加 LoRA 增量。&quot;&quot;&quot;
+        # ==========================================
+        # 先走主分支，再叠加低秩旁路的增量。
+        # TODO 3: 实现前向传播
+        # 1. 计算主权重的输出
+        # 2. 对 LoRA 分支输入应用 dropout
+        # 3. 计算 LoRA 分支的输出（先降维再升维，最后乘以缩放因子）
+        # 4. 将两者相加；如果 self.merged 为 True，直接返回主线性层结果
+        # ==========================================
+        # result = ???
+        # dropped = ???
+        # lora_out = ???
+        # 如果 self.merged：直接 return self.linear(x)，不要再次计算 LoRA 分支
+        return result
+
+    def merge_weights(self):
+        &quot;&quot;&quot;将 LoRA 增量合并到基础权重，并保证重复调用安全。&quot;&quot;&quot;
+        # ==========================================
+        # TODO 4: 合并权重
+        # 提示：只在 self.merged=False 时，在 no_grad 环境下将
+        # (lora_B @ lora_A) * scaling 加到主权重，并更新状态；使用 no_grad 和 add_。
+        # ==========================================
+        # if not self.merged:
+        #     with torch.no_grad():
+        #         self.linear.weight.add_(???)
+        #     self.merged = True
+        pass
+</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
+def test_lora():
+    try:
+        in_dim, out_dim = 128, 256
+        batch_size, seq_len = 32, 10
+        layer = LoRALinear(in_dim, out_dim, r=8, lora_alpha=16, lora_dropout=0.0)
+
+        x = torch.randn(batch_size, seq_len, in_dim)
+
+        # 1. 验证初始化导致 B 全零，所以初始输出等于冻结权重的输出
+        with torch.no_grad():
+            out_lora = layer(x)
+            out_base = layer.linear(x)
+            assert torch.allclose(out_lora, out_base), &quot;初始化错误: lora_B 未被初始化为 0&quot;
+
+        # 2. 验证只训练 LoRA 参数
+        expected_trainable = 8 * (in_dim + out_dim)
+        assert not layer.linear.weight.requires_grad, &quot;主权重应该被冻结&quot;
+        assert count_trainable_parameters(layer) == expected_trainable, &quot;LoRA 可训练参数量统计错误&quot;
+        assert layer.lora_A.shape == (8, in_dim), &quot;lora_A 形状错误&quot;
+        assert layer.lora_B.shape == (out_dim, 8), &quot;lora_B 形状错误&quot;
+
+        # 2b. 反向传播只应为 LoRA 参数产生梯度。
+        layer(x).sum().backward()
+        assert layer.lora_A.grad is not None, &quot;lora_A 应该获得梯度&quot;
+        assert layer.lora_B.grad is not None, &quot;lora_B 应该获得梯度&quot;
+        assert layer.linear.weight.grad is None, &quot;冻结主权重不应该获得梯度&quot;
+
+        # 3. 模拟训练一步，改变 B 的值
+        with torch.no_grad():
+            layer.lora_B.normal_(0, 0.02)
+
+        out_trained = layer(x)
+        assert not torch.allclose(out_trained, out_base), &quot;前向传播错误: 旁路未能注入梯度值&quot;
+
+        # 3b. 用显式公式核对降维、升维和 alpha / r 缩放。
+        with torch.no_grad():
+            manual = layer.linear(x) + (x @ layer.lora_A.T) @ layer.lora_B.T * layer.scaling
+        assert torch.allclose(out_trained, manual, atol=1e-6), &quot;LoRA 前向公式或缩放实现错误&quot;
+
+        # 4. 验证合并权重的正确性
+        layer.eval()
+        out_trained = layer(x)
+        layer.merge_weights()
+        out_merged = layer(x)
+        assert layer.merged, &quot;merge 后应记录 merged 状态&quot;
+        assert torch.allclose(out_trained, out_merged, atol=1e-5), &quot;权重合并错误: 合并后的输出与分离时的输出不一致！&quot;
+
+        # 重复调用 merge 不应再次叠加同一个 LoRA 增量。
+        merged_weight = layer.linear.weight.detach().clone()
+        layer.merge_weights()
+        assert torch.allclose(layer.linear.weight, merged_weight), &quot;重复 merge 改变了主权重&quot;
+
+        # 5. 参数边界应给出明确错误，而不是在后续计算中失败。
+        for kwargs in ({'r': 0}, {'lora_dropout': 1.1}):
+            try:
+                LoRALinear(in_dim, out_dim, **kwargs)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(&quot;非法参数没有触发 ValueError&quot;)
+
+        # 6. dropout 只影响未 merge 的 LoRA 分支，eval 模式应保持确定性。
+        dropout_layer = LoRALinear(in_dim, out_dim, r=4, lora_dropout=0.5)
+        with torch.no_grad():
+            dropout_layer.lora_B.normal_(0, 0.02)
+        dropout_layer.eval()
+        assert torch.allclose(dropout_layer(x), dropout_layer(x)), &quot;eval 模式输出应保持稳定&quot;
+        dropout_layer.train()
+        assert not torch.allclose(dropout_layer(x), dropout_layer(x)), &quot;train 模式应启用 LoRA dropout&quot;
+
+        print(&quot;\n✅ All Tests Passed! LoRA 核心算子、参数统计和 merge 逻辑实现正确。&quot;)
+
+    except NotImplementedError:
+        print(&quot;请先完成 TODO 部分的代码！&quot;)
+        raise
+    except (AttributeError, NameError, TypeError, ValueError) as e:
+        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except AssertionError as e:
+        print(f&quot;❌ 测试失败: {e}&quot;)
+        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
+    except Exception as e:
+        print(f&quot;❌ 发生异常: {e}&quot;)
+        raise
+
+test_lora()
+</code></pre></details>
+    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  </section>
 
     <section class="lessons">
 
         <article class="lesson-card inquiry" data-lesson="lora-parameters-and-initialization">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">TODO 1–2：模块、参数 shape 与初始化</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>先搭两条路：冻结主权重，只训练低秩 A 与 B</h2>
 
@@ -1145,26 +1407,14 @@ nn.init.zeros_(up)</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-parameters-and-initialization-0">
-                <span>完成 TODO 1：创建 bias=False 的主 Linear 并冻结 weight，创建 shape 正确的 A/B Parameter。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-parameters-and-initialization-1">
-                <span>完成 TODO 2：主权重与 A 使用指定 Kaiming 初始化，B 初始化为全 0。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-parameters-and-initialization-2">
-                <span>合同自检：只有 lora_A、lora_B 可训练；linear.weight 不可训练；三者 shape 与 [out,in]、[r,in]、[out,r] 一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-parameters-and-initialization-3">
-                <span>错误诊断：初始输出不等于 base 时检查 B 是否全零；优化器看不到 A/B 时检查是否漏用 nn.Parameter。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="lora-forward-low-rank-path">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">TODO 3：result 与 lora_out</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>再写前向：先降维、再升维、最后乘缩放</h2>
 
@@ -1282,26 +1532,14 @@ print(update.shape)     # [4,6,20]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-forward-low-rank-path-0">
-                <span>完成 TODO 3：计算主分支 result，按 A.T、B.T 顺序计算低秩输出并乘 self.scaling，再相加返回。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-forward-low-rank-path-1">
-                <span>shape 自检：中间为 [...,r]，lora_out 与 result 都为 [...,out_features]。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-forward-low-rank-path-2">
-                <span>测试目标：B=0 时输出等于 base；B 改为非零后输出不再相同。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-forward-low-rank-path-3">
-                <span>错误诊断：matmul shape 报错时在纸上写出每个矩阵最后两维；输出不变时检查是否真正把 lora_out 加回 result。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
         <article class="lesson-card inquiry" data-lesson="lora-merge-for-inference">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">TODO 4：merge_weights</span>
+            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
           </div>
           <h2>最后合并：把 B@A 写回主权重</h2>
 
@@ -1412,19 +1650,7 @@ print(merged_weight.shape) # [20,12]</code></pre></div>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="lora-merge-for-inference-0">
-                <span>完成 TODO 4：按 B@A 顺序构造 [out,in] 增量，乘 scaling 后原地加到主权重。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-merge-for-inference-1">
-                <span>shape 自检：增量与 self.linear.weight 完全相同。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-merge-for-inference-2">
-                <span>测试目标：合并前完整 layer 输出与合并后 layer.linear 输出在 atol=1e-5 内一致。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="lora-merge-for-inference-3">
-                <span>错误诊断：合并输出差固定倍数时检查 scaling；矩阵维度错误时检查是否误写 A@B；重复调用造成漂移时重新初始化 layer 再测试。</span>
+                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
               </label>
           </div>
         </article>
@@ -1448,16 +1674,29 @@ print(merged_weight.shape) # [20,12]</code></pre></div>
     const predictData = {"lora-parameters-and-initialization":{"answer":0,"revealNote":"A 先把输入 128 降到 8，B 再把 8 升到输出 256。参数按 Linear 权重习惯存为 [输出,输入]。"},"lora-forward-low-rank-path":{"answer":0,"revealNote":"A.T 是 [128,8]，先把 128 接到 8；B.T 是 [8,256]，再把 8 接到 256。"},"lora-merge-for-inference":{"answer":0,"revealNote":"[256,8] @ [8,128] = [256,128]，与主权重 shape 完全一致。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 12;
-    const statePrefix = Number(levelId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
-    const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework";
-    const predictKey = statePrefix + levelId + "-predicts";
-    const completeKey = "pytorch-levels-complete-v2";
-    if (localStorage.getItem(completeKey) === null) {
-      const legacyCompleted = JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]");
-      localStorage.setItem(completeKey, JSON.stringify(legacyCompleted.filter((id) => Number(id) <= 11)));
+    const homeworkTotal = 3;
+    const statePrefix = "pytorch-v3-level-";
+    const oldId = "10";
+    if (oldId !== null) {
+      const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
+      for (const kind of ["checkpoints", "predicts"]) {
+        const key = statePrefix + levelId + "-" + kind;
+        const oldValue = localStorage.getItem(oldPrefix + oldId + "-" + kind);
+        if (localStorage.getItem(key) === null && oldValue !== null) localStorage.setItem(key, oldValue);
+      }
     }
+    const checkpointKey = statePrefix + levelId + "-checkpoints";
+    const homeworkKey = statePrefix + levelId + "-homework-b7dd564e2bdc";
+    const predictKey = statePrefix + levelId + "-predicts";
+
+    const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
+    const completeKey = "pytorch-levels-complete-v3";
+    if (localStorage.getItem(completeKey) === null) {
+      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+        || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
+      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+    }
+
     const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
     const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));

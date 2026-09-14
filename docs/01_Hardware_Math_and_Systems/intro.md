@@ -35,14 +35,15 @@ flowchart TB
 > 导航说明：侧边栏和组级入口默认收起，先看总览，再点开具体组页。
 > 组页是知识包，不需要把整组一次性读完；先抓主线，再按需要查看同组章节页。
 > Part 1 不只是知识目录，也是 Part 2-5 的共同前置底座。
+> 说明：下表按“组页实际收录范围”统计；少数桥接页会在多个组里重复出现，用来服务不同阅读路径，不视为挂错。
 
 | 学习组 | 核心职责 | 当前内容映射 | 每组多少节 |
 |:---|:---|:---|:---|
 | [1A](./1A.md) | 建立数量级与资源账本 | [01](./01_Data_Types_and_Precision.md)、[02](./02_LLM_Params_and_FLOPs.md)、[21](./21_Quantization_Theory_and_INT4_INT8.md)、[22](./22_MoE_Parameter_and_Compute.md) | 4 |
-| [1B](./1B.md) | 识别单卡瓶颈与访存路径 | [03](./03_GPU_Architecture_and_Memory.md)、[04](./04_Attention_Memory_Optimization.md)、[23](./23_TensorCore_Deep_Dive.md)、[24](./24_SRAM_Optimization_Techniques.md)、[25](./25_Sparse_Computation_and_Sparse_Attention.md) | 5 |
-| [1C](./1C.md) | 刻画多卡通信边界与切分代价 | [05](./05_Communication_Topologies.md)、[06](./06_VRAM_Calculation_and_ZeRO.md)、[26](./26_Parallel_Strategy_Decision_Framework.md)、[27](./27_Communication_Scheduling_Optimization.md)、[28](./28_Fault_Tolerance_and_Checkpointing.md) | 5 |
-| [1D](./1D.md) | 掌握运行时调度与算子映射 | [07](./07_CPU_GPU_Heterogeneous_Scheduling.md)、[08](./08_Programming_Models_CUDA_Triton.md)、[29](./29_CUDA_Stream_Advanced_Scheduling.md)、[30](./30_Dynamic_Shape_Handling.md)、[31](./31_GPU_Virtualization_and_MIG.md) | 5 |
-| [1E](./1E.md) | 建立编译优化与选型判断 | [09](./09_AI_Compilers_and_Graph_Optimization.md)、[10](./10_Domestic_AI_Chips_Overview.md)、[32](./32_TVM_MLIR_Deep_Practice.md)、[33](./33_TCO_and_Cost_Model.md) | 4 |
+| [1B](./1B.md) | 识别单卡瓶颈与访存路径 | [03](./03_GPU_Architecture_and_Memory.md)、[04](./04_Attention_Memory_Optimization.md)、[11](./11_KV_Cache_and_Memory_Growth.md)、[12](./12_TensorCore_and_Mixed_Precision.md)、[13](./13_Profiling_and_Bottleneck_Analysis.md)、[14](./14_FlashAttention_Memory_Model.md)、[23](./23_TensorCore_Deep_Dive.md)、[24](./24_SRAM_Optimization_Techniques.md)、[25](./25_Sparse_Computation_and_Sparse_Attention.md) | 9 |
+| [1C](./1C.md) | 刻画多卡通信边界与切分代价 | [05](./05_Communication_Topologies.md)、[06](./06_VRAM_Calculation_and_ZeRO.md)、[20](./20_NCCL_and_AllReduce_Basics.md)、[26](./26_Parallel_Strategy_Decision_Framework.md)、[27](./27_Communication_Scheduling_Optimization.md)、[28](./28_Fault_Tolerance_and_Checkpointing.md) | 6 |
+| [1D](./1D.md) | 掌握运行时调度与算子映射 | [07](./07_CPU_GPU_Heterogeneous_Scheduling.md)、[08](./08_Programming_Models_CUDA_Triton.md)、[15](./15_CUDA_Execution_Model.md)、[16](./16_Warp_Block_SharedMemory_Basics.md)、[17](./17_CUDA_Stream_and_Asynchrony.md)、[18](./18_Triton_Block_Model.md)、[19](./19_Operator_Fusion_Introduction.md)、[29](./29_CUDA_Stream_Advanced_Scheduling.md)、[30](./30_Dynamic_Shape_Handling.md)、[31](./31_GPU_Virtualization_and_MIG.md) | 10 |
+| [1E](./1E.md) | 建立编译优化与选型判断 | [09](./09_AI_Compilers_and_Graph_Optimization.md)、[10](./10_Domestic_AI_Chips_Overview.md)、[19](./19_Operator_Fusion_Introduction.md)、[32](./32_TVM_MLIR_Deep_Practice.md)、[33](./33_TCO_and_Cost_Model.md) | 5 |
 
 ## Learning Path | 学习路径
 

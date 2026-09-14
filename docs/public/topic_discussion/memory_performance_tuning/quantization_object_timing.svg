@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="540" viewBox="0 0 1200 540">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#486581"/></marker>
+    <style>
+      .title{font:700 29px sans-serif;fill:#17324d}.sub{font:16px sans-serif;fill:#486581}
+      .head{font:700 20px sans-serif;fill:#17324d}.txt{font:15px sans-serif;fill:#334e68}
+      .box{stroke:#829ab1;stroke-width:2;rx:16}.line{stroke:#486581;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="540" fill="#f7fafc"/>
+  <text x="600" y="45" text-anchor="middle" class="title">量化判断：对象、时机与部署证据</text>
+  <text x="600" y="73" text-anchor="middle" class="sub">先定位被压缩的对象，再把时机和 backend 放进同一条验证路径</text>
+
+  <rect x="55" y="125" width="260" height="315" fill="#e6f6f5" class="box"/>
+  <text x="185" y="170" text-anchor="middle" class="head">量化对象</text>
+  <text x="100" y="230" class="txt">权重</text>
+  <text x="100" y="285" class="txt">activation</text>
+  <text x="100" y="340" class="txt">KV Cache</text>
+  <text x="100" y="395" class="txt">对象决定主要压力</text>
+
+  <rect x="470" y="125" width="260" height="315" fill="#e0e7ff" class="box"/>
+  <text x="600" y="170" text-anchor="middle" class="head">处理时机</text>
+  <text x="515" y="230" class="txt">部署前 / 加载时</text>
+  <text x="515" y="285" class="txt">运行时计算</text>
+  <text x="515" y="340" class="txt">请求执行过程中</text>
+  <text x="515" y="395" class="txt">时机决定实现约束</text>
+
+  <rect x="885" y="125" width="260" height="315" fill="#fff4e6" class="box"/>
+  <text x="1015" y="170" text-anchor="middle" class="head">部署证据</text>
+  <text x="930" y="230" class="txt">格式与 backend</text>
+  <text x="930" y="285" class="txt">kernel 与硬件</text>
+  <text x="930" y="340" class="txt">显存、延迟、吞吐</text>
+  <text x="930" y="395" class="txt">质量与加载状态</text>
+
+  <path d="M315 230 H470" class="line"/>
+  <path d="M315 285 H470" class="line"/>
+  <path d="M315 340 H470" class="line"/>
+  <path d="M730 230 H885" class="line"/>
+  <path d="M730 285 H885" class="line"/>
+  <path d="M730 340 H885" class="line"/>
+</svg>

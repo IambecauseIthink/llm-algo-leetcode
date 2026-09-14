@@ -1,0 +1,89 @@
+{
+  "schema_version": "training-memory-benchmark/v1",
+  "project": "73",
+  "stage": "measurement_baseline",
+  "config": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "dtype": "torch.bfloat16",
+    "batch_size": 1,
+    "seq_len": 256,
+    "warmup": 3,
+    "iters": 10,
+    "workload": null
+  },
+  "budget": {},
+  "quality_floor": {},
+  "candidates": [
+    {
+      "name": "baseline",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 251.137,
+        "samples_per_s": 3.982,
+        "peak_memory_mb": 9474.12,
+        "peak_reserved_mb": 10674.0,
+        "memory_saving_mb": 0.0,
+        "throughput_ratio": 1.0,
+        "oom": null
+      },
+      "quality": {
+        "loss": 3.483021,
+        "eval_loss": null,
+        "val_loss": null,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "baseline",
+        "step_time_ms": 251.137,
+        "samples_per_s": 3.982,
+        "loss": 3.483021,
+        "peak_mem_mb": 9474.12,
+        "peak_reserved_mb": 10674.0
+      }
+    },
+    {
+      "name": "tuned",
+      "status": "ok",
+      "metrics": {
+        "step_time_ms": 193.89,
+        "samples_per_s": 5.158,
+        "peak_memory_mb": 9466.15,
+        "peak_reserved_mb": 10088.0,
+        "memory_saving_mb": 7.97,
+        "throughput_ratio": 1.295329,
+        "oom": null
+      },
+      "quality": {
+        "loss": 5.371336,
+        "eval_loss": null,
+        "val_loss": null,
+        "quality_status": null
+      },
+      "legacy_fields": {
+        "name": "tuned",
+        "step_time_ms": 193.89,
+        "samples_per_s": 5.158,
+        "loss": 5.371336,
+        "peak_mem_mb": 9466.15,
+        "peak_reserved_mb": 10088.0
+      }
+    }
+  ],
+  "summary": {
+    "step_time_delta_ms": 57.25,
+    "peak_mem_delta_mb": 7.97,
+    "time_improved": true,
+    "memory_improved": true,
+    "time_improvement_pct": 22.8,
+    "memory_improvement_pct": 0.08,
+    "meaningful_memory_improved": false
+  },
+  "decision": {
+    "decision": "tune",
+    "reason": "至少有一项收益成立，但还没形成稳定项目结论，先继续微调。"
+  },
+  "legacy_source": "benchmarks/results/73_real_gpu_training.json"
+}

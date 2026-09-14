@@ -1,6 +1,6 @@
 # 27. Communication Scheduling Optimization | 通信调度优化
 
-**难度：** Hard | **环境：** CPU-first | **标签：** `通信优化`, `Overlap`, `All-Reduce` | **目标人群：** 想把分布式训练通信和计算重叠做好的学习者
+**难度：** Hard | **环境：** CPU-first | **标签：** `并行通信`, `通信优化`, `Overlap` | **目标人群：** 通信机制入门者
 
 > 🚀 **云端运行环境**
 >
@@ -10,32 +10,34 @@
 > [![Open In Studio](https://img.shields.io/badge/Open%20In-ModelScope-blueviolet?logo=alibabacloud)](https://modelscope.cn/my/mynotebook) *(国内推荐：魔搭社区免费实例)*
 
 
-这一页关注的不是“通信协议是什么”，而是“通信怎么排，才能尽量不挡住计算”。它的核心问题是：如何把通信放进计算间隙里。
+---
+
+## 本节导读
+
+本节从通信量、带宽、延迟和同步点出发，理解消息组织与计算重叠如何影响 step time。
+
+你将把一次通信拆成数据量、带宽、启动延迟和同步次数，再观察消息组织、Collective 选择与计算重叠如何改变训练步的关键路径。
 
 **关键词：** `overlap`, `all-reduce`, `all-to-all`
 
+![本节概念关系](../public/01_Hardware_Math_and_Systems/27_communication_schedule_map.svg)
+
+
 ## 前置阅读
 
-**导语：** 这一页先接上通信拓扑、显存切分和并行策略判断，这样更容易理解为什么通信优化首先是调度问题。
+**导语：** 先把通信拓扑、并行策略和 NCCL 同步原语对应到一次训练 step，再分析通信放在什么位置、以什么粒度发送，以及哪些计算可以与它重叠。
 
 - [05. Communication Topologies | 通信拓扑与分布式基石](./05_Communication_Topologies.md)
-- [06. VRAM Calculation and ZeRO | 显存计算与 ZeRO 优化](./06_VRAM_Calculation_and_ZeRO.md)
+- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
 - [26. Parallel Strategy Decision Framework | 并行策略决策框架](./26_Parallel_Strategy_Decision_Framework.md)
 
-## 相关阅读
-
-**导语：** 如果还想把通信优化和实现细节连起来，可以接着看通信原语、异步调度和容错，把调度、同步和恢复放在一起理解。
-
-- [20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础](./20_NCCL_and_AllReduce_Basics.md)
-- [28. Fault Tolerance and Checkpointing | 容错与检查点](./28_Fault_Tolerance_and_Checkpointing.md)
-- [17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](./17_CUDA_Stream_and_Asynchrony.md)
-
-## Q1：为什么通信优化首先是调度问题？
+## Q1：通信成本如何由数据量、带宽、延迟和同步共同决定？
 
 <details>
 <summary>点击展开查看解析</summary>
 
 通信是否挡住计算，先由**位置**决定，再由**带宽**决定。
+估算时先拆开数据量、链路带宽、单次启动延迟和同步次数：数据量决定传输下限，带宽决定传输时间，延迟和同步决定小消息或高频通信的额外成本。
 
 如果通信点放在关键路径上，它就会直接暴露成停顿；如果通信能落在计算间隙里，同样的带宽条件下，体感就会完全不同。
 
@@ -47,6 +49,9 @@
 换句话说，调度决定了通信是否成为瓶颈的可见部分，带宽只是决定它有多重。
 </details>
 
+### Q1小验证
+
+拆开数据量、带宽、延迟和同步次数的影响。
 
 ```python
 def schedule_cost(comm_points, compute_blocks, overlap_ratio):
@@ -84,6 +89,9 @@ print('the lower the exposed communication points, the easier the schedule')
 这也是为什么通信优化经常不是先谈算法，而是先谈消息怎么排、在哪里合、合到什么粒度。
 </details>
 
+### Q2小验证
+
+比较合并消息后的启动开销与 overlap 空间。
 
 ```python
 def merge_tradeoff(num_small, merged_size_mb, bw_gbps, launch_cost=1.5):
@@ -122,6 +130,9 @@ print('merge helps only when fewer launches are worth more than the larger chunk
 如果把两者都当成“只是搬数据”，就会错过真正的优化点。
 </details>
 
+### Q3小验证
+
+区分 All-Reduce 的同步压力和 All-to-All 的路由压力。
 
 ```python
 def comm_goal(kind, sync_pressure, routing_pressure):
@@ -169,6 +180,9 @@ flowchart LR
 所以，真正有效的优化往往不是“单次通信更快”，而是“通信尽量不出现在关键路径上”。
 </details>
 
+### Q4小验证
+
+观察通信进入计算间隙后，关键路径成本如何变化。
 
 ```python
 def overlap_window(compute_ms, comm_ms, gap_ms):
@@ -189,3 +203,14 @@ for case in [(40, 12, 2), (40, 12, 8), (10, 16, 4)]:
 print('effective overlap depends on whether the gap can hide the communication')
 
 ```
+
+## 相关阅读
+
+**导语：** 如果还想把通信优化和实现细节连起来，可以接着看异步调度、容错和高级 stream 调度。
+
+- [17. CUDA Stream and Asynchrony | CUDA Stream 与异步执行](./17_CUDA_Stream_and_Asynchrony.md)
+- [28. Fault Tolerance and Checkpointing | 容错与检查点](./28_Fault_Tolerance_and_Checkpointing.md)
+- [29. CUDA Stream Advanced Scheduling | CUDA Stream 高级调度](./29_CUDA_Stream_Advanced_Scheduling.md)
+- [NCCL Documentation | NVIDIA Collective Communications Library](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/)
+- [nccl-tests | NCCL 性能测试工具](https://github.com/NVIDIA/nccl-tests)
+---

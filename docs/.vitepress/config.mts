@@ -69,7 +69,80 @@ export default defineConfig({
           { text: '维护与发布手册', link: '/maintenance' }
         ]
       },
-      { text: '专题讨论', link: '/topic_discussion/intro' },
+      {
+        text: '专题讨论',
+        items: [
+          { text: '专题总览', link: '/topic_discussion/intro' },
+          {
+            text: '主学习路线：训练微调',
+            collapsed: true,
+            items: [
+              { text: '专题导读', link: '/topic_discussion/fine_tuning_training/intro' },
+              { text: '01. SFT 数据与 Loss', link: '/topic_discussion/fine_tuning_training/01_sft_data_and_loss' },
+              { text: '02. LoRA / PEFT 设计', link: '/topic_discussion/fine_tuning_training/02_lora_peft_design' },
+              { text: '03. 训练控制', link: '/topic_discussion/fine_tuning_training/03_training_control' },
+              { text: '04. 端到端实验', link: '/topic_discussion/fine_tuning_training/04_end_to_end_experiment' },
+              { text: '05. 项目交付与决策', link: '/topic_discussion/fine_tuning_training/05_project_delivery_decision' },
+              { text: '06. 可视化资产', link: '/topic_discussion/fine_tuning_training/06_visual_assets' },
+              { text: '正文手册', link: '/topic_discussion/fine_tuning_training/casebook' },
+              { text: '深入阅读', link: '/topic_discussion/fine_tuning_training/walkthrough' },
+              { text: '训练工程附录', link: '/topic_discussion/fine_tuning_training/training_engineering_appendix' },
+              { text: '项目交付附录', link: '/topic_discussion/fine_tuning_training/project_delivery_appendix' }
+            ]
+          },
+          {
+            text: '主学习路线：推理优化',
+            collapsed: true,
+            items: [
+              { text: '专题导读', link: '/topic_discussion/inference_optimization/intro' },
+              { text: '01. 请求路径与指标', link: '/topic_discussion/inference_optimization/01_request_path_and_metrics' },
+              { text: '02. Prefill 与 Attention Kernel', link: '/topic_discussion/inference_optimization/02_prefill_and_attention_kernel' },
+              { text: '03. 解码策略', link: '/topic_discussion/inference_optimization/03_decoding_strategies' },
+              { text: '04. KV Cache 与调度', link: '/topic_discussion/inference_optimization/04_kv_cache_and_scheduling' },
+              { text: '05. 量化推理与部署', link: '/topic_discussion/inference_optimization/05_quantized_inference_and_deployment' },
+              { text: '06. Benchmark 与决策', link: '/topic_discussion/inference_optimization/06_benchmark_and_decision' },
+              { text: '07. 可视化资产', link: '/topic_discussion/inference_optimization/07_visual_assets' },
+              { text: '正文手册', link: '/topic_discussion/inference_optimization/casebook' },
+              { text: '深入阅读', link: '/topic_discussion/inference_optimization/walkthrough' }
+            ]
+          },
+          {
+            text: '主学习路线：显存优化',
+            collapsed: true,
+            items: [
+              { text: '专题导读', link: '/topic_discussion/memory_performance_tuning/intro' },
+              { text: '01. VRAM 账本与指标', link: '/topic_discussion/memory_performance_tuning/01_vram_ledger_and_metrics' },
+              { text: '02. 训练显存压力', link: '/topic_discussion/memory_performance_tuning/02_training_memory_pressure' },
+              { text: '03. Checkpointing 与 Offload', link: '/topic_discussion/memory_performance_tuning/03_checkpointing_and_offload' },
+              { text: '04. 推理缓存与显存预算', link: '/topic_discussion/memory_performance_tuning/04_inference_cache_and_memory_budget' },
+              { text: '05. 量化作为显存工具', link: '/topic_discussion/memory_performance_tuning/05_quantization_as_a_memory_tool' },
+              { text: '06. Benchmark 与 Trade-off 决策', link: '/topic_discussion/memory_performance_tuning/06_benchmark_and_tradeoff_decision' },
+              { text: '07. 可视化资产', link: '/topic_discussion/memory_performance_tuning/07_visual_assets' },
+              { text: '正文手册', link: '/topic_discussion/memory_performance_tuning/casebook' },
+              { text: '深入阅读', link: '/topic_discussion/memory_performance_tuning/walkthrough' }
+            ]
+          },
+          {
+            text: '横切支撑专题',
+            collapsed: true,
+            items: [
+              { text: '量化与压缩', link: '/topic_discussion/quantization/intro' },
+              { text: '通信与并行', link: '/topic_discussion/communication_parallel/intro' },
+              { text: 'Profiling', link: '/topic_discussion/profiling/intro' },
+              { text: '后训练与对齐', link: '/topic_discussion/post_training_alignment/intro' }
+            ]
+          },
+          {
+            text: '基础支撑专题',
+            collapsed: true,
+            items: [
+              { text: '反向传播与训练机制', link: '/topic_discussion/backpropagation_training_mechanism/intro' },
+              { text: '大模型架构', link: '/topic_discussion/model_architecture/intro' },
+              { text: '编译与图优化', link: '/topic_discussion/compiler_graph_optimization/intro' }
+            ]
+          }
+        ]
+      },
       { text: '组队学习', link: '/team_study/intro' },
       {
         text: '第零部分：前置知识',
@@ -242,7 +315,11 @@ export default defineConfig({
               { text: '10. LoRA 教程', link: '/02_PyTorch_Algorithms/10_LoRA_Tutorial' },
               { text: '11. WSD 余弦学习率调度器', link: '/02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine' },
               { text: '12. 梯度累积', link: '/02_PyTorch_Algorithms/12_Gradient_Accumulation' },
-              { text: '13. 端到端微调实验', link: '/02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment' }
+              { text: '13. 端到端微调实验', link: '/02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment' },
+              { text: '30. 长上下文微调', link: '/02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning' },
+              { text: '31. LoRA 变体原理', link: '/02_PyTorch_Algorithms/31_LoRA_Variants_Theory' },
+              { text: '32. SFT 数据工程', link: '/02_PyTorch_Algorithms/32_Data_Engineering_for_SFT' },
+              { text: '33. 微调 Readiness', link: '/02_PyTorch_Algorithms/33_Fine_Tuning_Readiness' }
             ]
           },
           {
@@ -252,7 +329,10 @@ export default defineConfig({
               { text: '组内导读', link: '/02_PyTorch_Algorithms/2_4' },
               { text: '14. RLHF 与 PPO 显存占用与流转', link: '/02_PyTorch_Algorithms/14_RLHF_PPO_Memory' },
               { text: '15. 直接偏好优化损失教程', link: '/02_PyTorch_Algorithms/15_DPO_Loss_Tutorial' },
-              { text: '16. 群体相对策略优化损失教程', link: '/02_PyTorch_Algorithms/16_GRPO_Loss_Tutorial' }
+              { text: '16. 群体相对策略优化损失教程', link: '/02_PyTorch_Algorithms/16_GRPO_Loss_Tutorial' },
+              { text: '50. 偏好数据与对齐评测', link: '/02_PyTorch_Algorithms/50_Preference_Data_and_Evaluation' },
+              { text: '51. 在线 DPO', link: '/02_PyTorch_Algorithms/51_Online_DPO' },
+              { text: '52. 对齐冲突与阈值', link: '/02_PyTorch_Algorithms/52_Alignment_Conflicts_and_Thresholds' }
             ]
           },
           {
@@ -262,7 +342,11 @@ export default defineConfig({
               { text: '组内导读', link: '/02_PyTorch_Algorithms/2_5' },
               { text: '17. 自动微分基础', link: '/02_PyTorch_Algorithms/17_Autograd_Basics' },
               { text: '18. 激活与损失反向', link: '/02_PyTorch_Algorithms/18_Activation_and_Loss_Backward' },
-              { text: '19. 激活检查点与激活卸载', link: '/02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload' }
+              { text: '19. 激活检查点与激活卸载', link: '/02_PyTorch_Algorithms/19_Activation_Checkpointing_and_Activation_Offload' },
+              { text: '42. 激活卸载', link: '/02_PyTorch_Algorithms/42_Activation_Offload' },
+              { text: '43. 统一内存管理', link: '/02_PyTorch_Algorithms/43_Unified_Memory_Management' },
+              { text: '44. 自动调优框架', link: '/02_PyTorch_Algorithms/44_Auto_Tuning_Framework' },
+              { text: '45. 显存裁剪规划', link: '/02_PyTorch_Algorithms/45_Memory_Cut_Planning' }
             ]
           },
           {
@@ -280,42 +364,67 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: '组内导读', link: '/02_PyTorch_Algorithms/2_7' },
-              { text: '2.7A 高级推理策略', link: '/02_PyTorch_Algorithms/2_7A' },
               { text: '23. 投机解码', link: '/02_PyTorch_Algorithms/23_Speculative_Decoding' },
               { text: '24. SGLang 基数注意力', link: '/02_PyTorch_Algorithms/24_SGLang_RadixAttention' },
-              { text: '36. Prefix Caching 与 Chunked Prefill', link: '/02_PyTorch_Algorithms/36_Prefix_Caching_and_Chunked_Prefill' },
-              { text: '37. Multi-Token Decoding', link: '/02_PyTorch_Algorithms/37_Multi_Token_Decoding' },
-              { text: '38. Decode Scheduling', link: '/02_PyTorch_Algorithms/38_Decode_Scheduling' },
-              { text: '41. KV Cache Scheduling', link: '/02_PyTorch_Algorithms/41_KV_Cache_Scheduling' },
-              { text: '2.7B 模型压缩与量化', link: '/02_PyTorch_Algorithms/2_7B' },
-              { text: '25. W8A16 量化', link: '/02_PyTorch_Algorithms/25_Quantization_W8A16' },
-              { text: '26. QLoRA 与 4-bit 量化', link: '/02_PyTorch_Algorithms/26_QLoRA_and_4bit_Quantization' },
-              { text: '39. GPTQ 与 AWQ 权重量化', link: '/02_PyTorch_Algorithms/39_GPTQ_and_AWQ_Weight_Quantization' },
-              { text: '40. FP8 与 KV Cache 量化', link: '/02_PyTorch_Algorithms/40_FP8_and_KV_Cache_Quantization' }
+              { text: '34. Prefix Caching 与 Chunked Prefill', link: '/02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill' },
+              { text: '35. Multi-Token Decoding', link: '/02_PyTorch_Algorithms/35_Multi_Token_Decoding' },
+              { text: '36. Decode Scheduling', link: '/02_PyTorch_Algorithms/36_Decode_Scheduling' },
+              { text: '37. KV Cache Scheduling', link: '/02_PyTorch_Algorithms/37_KV_Cache_Scheduling' },
+              { text: '38. Prefill-Decode Disaggregation', link: '/02_PyTorch_Algorithms/38_Prefill_Decode_Disaggregation' },
+              { text: '39. 推理分层与回退策略', link: '/02_PyTorch_Algorithms/39_Inference_Fallback_and_Tiers' }
             ]
           },
           {
-            text: '2.8 分布式与并行',
+            text: '2.8 模型压缩与量化',
             collapsed: true,
             items: [
               { text: '组内导读', link: '/02_PyTorch_Algorithms/2_8' },
-              { text: '27. ZeRO 优化器模拟', link: '/02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim' },
-              { text: '28. Pipeline 并行微批次', link: '/02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch' },
-              { text: '29. Tensor 并行模拟', link: '/02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim' },
-              { text: '42. NCCL 通信 profiling', link: '/02_PyTorch_Algorithms/42_Communication_Profiling_with_NCCL' }
+              { text: '25. W8A16 量化', link: '/02_PyTorch_Algorithms/25_Quantization_W8A16' },
+              { text: '26. QLoRA 与 4-bit 量化', link: '/02_PyTorch_Algorithms/26_QLoRA_and_4bit_Quantization' },
+              { text: '40. GPTQ 与 AWQ 权重量化', link: '/02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization' },
+              { text: '41. FP8 与 KV Cache 量化', link: '/02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization' }
             ]
           },
           {
-            text: '2.9 项目实战',
+            text: '2.9 分布式并行策略',
             collapsed: true,
             items: [
               { text: '组内导读', link: '/02_PyTorch_Algorithms/2_9' },
-              { text: '30. LoRA 微调项目', link: '/02_PyTorch_Algorithms/30_LoRA_Fine_Tuning_Project' },
-              { text: '31. 推理性能对比实验', link: '/02_PyTorch_Algorithms/31_Inference_Performance_Comparison' },
-              { text: '32. 训练性能分析', link: '/02_PyTorch_Algorithms/32_Training_Performance_Analysis' },
-              { text: '33. Profiling 驱动端到端优化', link: '/02_PyTorch_Algorithms/33_Profiling_Driven_End_to_End_Optimization' },
-              { text: '34. 分布式并行基准项目', link: '/02_PyTorch_Algorithms/34_Distributed_Parallel_Benchmark' },
-              { text: '35. 量化推理与部署项目', link: '/02_PyTorch_Algorithms/35_Quantized_Inference_and_Deployment' }
+              { text: '27. ZeRO 优化器模拟', link: '/02_PyTorch_Algorithms/27_ZeRO_Optimizer_Sim' },
+              { text: '28. Pipeline 并行微批次', link: '/02_PyTorch_Algorithms/28_Pipeline_Parallelism_MicroBatch' },
+              { text: '29. Tensor 并行模拟', link: '/02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim' },
+              { text: '46. NCCL 通信 profiling', link: '/02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL' },
+              { text: '47. MoE 专家并行', link: '/02_PyTorch_Algorithms/47_MoE_Expert_Parallel' },
+              { text: '48. 通信热点与缓解策略', link: '/02_PyTorch_Algorithms/48_Communication_Hotspots_and_Mitigation' },
+              { text: '49. 并行策略选型', link: '/02_PyTorch_Algorithms/49_Parallelism_Strategy_Selection' }
+            ]
+          },
+          {
+            text: '2.10 项目实战',
+            collapsed: true,
+            items: [
+              { text: '组内导读', link: '/02_PyTorch_Algorithms/2_10' },
+              { text: '60. LoRA 微调项目', link: '/02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project' },
+              { text: '61. 架构验证项目', link: '/02_PyTorch_Algorithms/61_Model_Architecture_Exploration' },
+              { text: '62. 指令微调项目', link: '/02_PyTorch_Algorithms/62_Instruction_Fine_Tuning_Project' },
+              { text: '63. LoRA 变体对比', link: '/02_PyTorch_Algorithms/63_LoRA_Variants_Benchmark' },
+              { text: '64. SFT 数据质量项目', link: '/02_PyTorch_Algorithms/64_SFT_Data_Quality_Project' },
+              { text: '65. QLoRA 选型项目', link: '/02_PyTorch_Algorithms/65_QLoRA_Selection_Project' },
+              { text: '66. 推理性能对比实验', link: '/02_PyTorch_Algorithms/66_Inference_Performance_Comparison' },
+              { text: '67. 量化推理与部署项目', link: '/02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment' },
+              { text: '68. 推测解码基准', link: '/02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark' },
+              { text: '69. 前缀缓存基准', link: '/02_PyTorch_Algorithms/69_Prefix_Caching_Benchmark' },
+              { text: '70. 推理服务调度基准', link: '/02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark' },
+              { text: '73. 训练性能分析', link: '/02_PyTorch_Algorithms/73_Training_Performance_Analysis' },
+              { text: '74. Profiling 驱动端到端优化', link: '/02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization' },
+              { text: '75. 显存预算压缩项目', link: '/02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project' },
+              { text: '76. Activation / Checkpoint / Offload 对比项目', link: '/02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark' },
+              { text: '79. 分布式并行基准', link: '/02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark' },
+              { text: '80. MoE 专家并行 benchmark', link: '/02_PyTorch_Algorithms/80_MoE_Expert_Parallel_Benchmark' },
+              { text: '81. 分布式推理逻辑验证', link: '/02_PyTorch_Algorithms/81_Distributed_Inference_Project' },
+              { text: '84. DPO 偏好优化项目', link: '/02_PyTorch_Algorithms/84_DPO_Preference_Project' },
+              { text: '85. GRPO 组内对齐项目', link: '/02_PyTorch_Algorithms/85_GRPO_Groupwise_Alignment_Project' },
+              { text: '86. DPO 在线基准', link: '/02_PyTorch_Algorithms/86_DPO_Online_Benchmark' }
             ]
           }
         ]
