@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,317 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 32 | 零基础导学关卡</p>
-        <h1>Data Engineering for SFT | SFT 数据工程</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>SFT 数据工程</h1>
+        <p class="course-subtitle">Data Engineering for SFT</p>
+        <p class="lead">先把数据当作食材：菜谱再好，也救不了空食材和重复配送。SFT 数据工程先统一字段，再检查内容，最后才把文本变成模型输入。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/32_Data_Engineering_for_SFT.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">32_Data_Engineering_for_SFT.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">SFT</span><span class="pill">数据清洗</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">四条看起来正常的数据，为什么只有两条适合训练？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="8d4d83f56d328c1785482de4e2928cc9dd6d6e3bb8c50ede405739e501eb2d92">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../32_Data_Engineering_for_SFT.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/32_Data_Engineering_for_SFT.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>32. Data Engineering for SFT | SFT 数据工程</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>SFT</code>, <code>数据清洗</code> | <strong>目标人群：</strong> 训练机制学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>SFT 训练经常不是输在优化器或学习率，而是输在数据没有被稳定组织成训练样本。字段缺失、空回答、模板不统一、超长样本混进来，这些问题都会直接污染 loss 和评测。<code>09</code> 先回答最小训练循环怎么跑，<code>30</code> 再把上下文长度拉长，而 <code>32</code> 往更上游退一步，先回答“在开始训练之前，数据本身是否已经整理到足够可靠”。</p>
-<p>这一节把 SFT 数据工程收敛成三个可执行动作：将原始记录清洗成稳定字段，审计空值、重复和长度异常，再把清洗结果落成训练样本。你会把这条“原始记录 → 数据审计 → 训练样本 → SFT 闭环”的链路接到 <code>09</code> 的 <code>input_ids / attention_mask / labels</code> 和 loss 对齐。</p>
-<p><strong>关键词：</strong> <code>dataset audit</code>, <code>prompt template</code>, <code>record cleaning</code>, <code>tokenizer</code>, <code>packing</code></p>
-<p>本节同时记录字符级长度，并把它作为后续 tokenizer 检查的输入；真正的 token 长度、chat template、截断、padding 和 labels mask 会在 <code>09</code>、<code>13</code> 和真实项目中继续展开。</p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 4: 用目标 tokenizer 统计文本 token 长度。</li><li>TODO 1: 统一字段并去掉首尾空白。</li><li>TODO 2: 统计空回答、重复和超长样本。</li><li>TODO 3: 把清洗后的记录转成训练样本。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能说出训练接口需要哪些字段，再检查原始指令数据如何整理成稳定的 <code>prompt / response</code> 样本。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/04_Python_Config_and_Data_Entry.ipynb">04. Python Config and Data Entry | Python 配置与数据组织</a></li>
-<li><a href="09_sft_training_loop.html">09. SFT Training Loop | SFT 训练循环</a></li>
-<li><a href="../../../00_Prerequisites/12_PyTorch_Minimal_Training_Interface.ipynb">12. PyTorch Minimal Training Interface | PyTorch 最小训练接口</a></li>
-</ul>
-<hr>
-<h3>Step 1: 先把原始记录清洗成稳定结构</h3>
-<ul>
-<li>统一保留 <code>instruction / input / response</code> 三个核心字段。</li>
-<li>去掉多余空格和无意义空串，避免相同样本因为格式差异被误判成不同记录。</li>
-<li>若字段缺失，要尽早补空值或剔除，而不是把异常留到训练阶段。</li>
-<li>这里的清洗只处理结构和明显异常，不自动判断事实正确性、答案质量或训练数据泄漏。</li>
-</ul>
-<h3>Step 2: 做最小数据审计</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/32_sft_data_engineering_flow.svg" alt="SFT Data Engineering Flow"></p>
-<ul>
-<li>统计总样本数、空回答数、重复样本数和超长样本数。</li>
-<li>长度问题要同时看 prompt 和 response，而不是只看单字段。</li>
-<li>如果异常比例已经很高，优先返工数据，而不是继续调训练超参。</li>
-</ul>
-<h3>Step 3: 把清洗结果变成训练样本</h3>
-<ul>
-<li>把 instruction 和 input 拼成 prompt。</li>
-<li>保留 response 作为监督目标。</li>
-<li>给后续训练保留 metadata，例如 prompt 长度和原始索引，方便排查异常样本。</li>
-<li>先输出 tokenizer-ready 文本；进入模型前还要用目标 tokenizer 重新统计 token 长度，并检查 chat template 是否匹配。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">阶段</th>
-<th style="text-align:center">本节是否负责</th>
-<th style="text-align:left">需要记录</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">字段清洗与格式统一</td>
-<td style="text-align:center">是</td>
-<td style="text-align:left">原始索引、字段缺失、空回答</td>
-</tr>
-<tr>
-<td style="text-align:left">tokenizer 与 chat template</td>
-<td style="text-align:center">部分</td>
-<td style="text-align:left">tokenizer 名称、模板版本、token 长度</td>
-</tr>
-<tr>
-<td style="text-align:left">labels mask 与 loss 对齐</td>
-<td style="text-align:center">否</td>
-<td style="text-align:left">转到 09 / 13</td>
-</tr>
-<tr>
-<td style="text-align:left">数据是否值得进入训练</td>
-<td style="text-align:center">否</td>
-<td style="text-align:left">转到 33 / 64</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>clean_sft_records</code>，统一字段并去掉首尾空白。</li>
-<li>补全 <code>audit_sft_dataset</code>，统计空回答、重复和超长样本。</li>
-<li>补全 <code>build_sft_training_examples</code>，把清洗后的记录转成训练样本。</li>
-<li>对生成的 <code>prompt / response</code> 调用目标 tokenizer，记录 token 长度分布；不要用字符数代替 token 数。</li>
-</ol>
-<h3>提示</h3>
-<ul>
-<li><code>TODO 1</code> 先把每条原始记录统一成 <code>instruction / input / response</code> 三个字段，并去掉首尾空白。</li>
-<li><code>TODO 2</code> 先统计总量，再依次统计空回答、重复样本、超长样本和平均长度。</li>
-<li><code>TODO 3</code> 先把 <code>instruction</code> 和可选 <code>input</code> 拼成 prompt，再补训练所需的 metadata。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def summarize_token_lengths(tokenizer, texts: List[str]) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;TODO 4: 用目标 tokenizer 统计文本 token 长度。&quot;&quot;&quot;
-    # 提示：调用 tokenizer(texts, add_special_tokens=True)，从 input_ids 计算每条长度。
-    # token_lengths = ???
-    # return min / max / average；空列表要返回 0。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+<section class="lessons">
 
-
-def clean_sft_records(records: List[Dict[str, str]]) -&gt; List[Dict[str, str]]:
-    &quot;&quot;&quot;
-    TODO 1: 统一字段并去掉首尾空白。
-    &quot;&quot;&quot;
-    # 提示：先创建 cleaned，再逐条把 instruction / input / response 转成字符串并 strip。
-    # cleaned = ???
-    raise NotImplementedError
-
-
-def audit_sft_dataset(records: List[Dict[str, str]], max_total_chars: int) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;
-    TODO 2: 统计空回答、重复和超长样本。
-    &quot;&quot;&quot;
-    # 提示：先建立 seen 和各项计数器，再逐条统计 total_chars、duplicate、empty_response 和 over_length。
-    # total_samples = ???
-    # duplicate_count = ???
-    # avg_total_chars = ???
-    raise NotImplementedError
-
-
-def build_sft_training_examples(records: List[Dict[str, str]], template_prefix: str) -&gt; List[Dict[str, object]]:
-    &quot;&quot;&quot;
-    TODO 3: 把清洗后的记录转成训练样本。
-    &quot;&quot;&quot;
-    # 提示：先创建 examples，再拼 prompt；如果有 input，再追加 Input 段。
-    # examples = ???
-    # prompt = ???
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code>def test_sft_data_engineering_template():
-    try:
-        records = [
-            {'instruction': ' 解释 LoRA ', 'input': '', 'response': ' 一种低秩适配方法。 '},
-            {'instruction': '解释 LoRA', 'input': '', 'response': '一种低秩适配方法。'},
-            {'instruction': '给出总结', 'input': '结合训练成本', 'response': ''},
-        ]
-        cleaned = clean_sft_records(records)
-        assert cleaned[0]['instruction'] == '解释 LoRA'
-        assert cleaned[0]['response'] == '一种低秩适配方法。'
-        audit = audit_sft_dataset(cleaned, max_total_chars=30)
-        assert audit['total_samples'] == 3
-        assert audit['empty_response_count'] == 1
-        assert audit['duplicate_count'] == 1
-        class MockTokenizer:
-            def __call__(self, texts, add_special_tokens=True):
-                return {'input_ids': [list(range(len(text.split()))) for text in texts]}
-        token_stats = summarize_token_lengths(MockTokenizer(), ['one two', 'one two three'])
-        assert token_stats['count'] == 2 and token_stats['max_tokens'] == 3
-        examples = build_sft_training_examples(cleaned[:1], template_prefix='### Instruction\n')
-        assert examples[0]['has_input'] is False
-        assert examples[0]['prompt'].startswith('### Instruction')
-        print('测试通过：SFT 数据工程模板可以工作。')
-    except NotImplementedError:
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError, IndexError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_sft_data_engineering_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>四条看起来正常的数据，为什么只有两条适合训练？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>SFT 训练经常不是输在优化器或学习率，而是输在数据没有被稳定组织成训练样本。字段缺失、空回答、模板不统一、超长样本混进来，这些问题都会直接污染 loss 和评测。09 先回答最小训练循环怎么跑，30 再把上下文长度拉长，而 32 往更上游退一步，先回答“在开始训练之前，数据本身是否已经整理到足够可靠”。</p>
-            <div class="notebook-content"><h3>Step 1: 先把原始记录清洗成稳定结构</h3>
-<ul>
-<li>统一保留 <code>instruction / input / response</code> 三个核心字段。</li>
-<li>去掉多余空格和无意义空串，避免相同样本因为格式差异被误判成不同记录。</li>
-<li>若字段缺失，要尽早补空值或剔除，而不是把异常留到训练阶段。</li>
-<li>这里的清洗只处理结构和明显异常，不自动判断事实正确性、答案质量或训练数据泄漏。</li>
-</ul>
-<h3>Step 2: 做最小数据审计</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/32_sft_data_engineering_flow.svg" alt="SFT Data Engineering Flow"></p>
-<ul>
-<li>统计总样本数、空回答数、重复样本数和超长样本数。</li>
-<li>长度问题要同时看 prompt 和 response，而不是只看单字段。</li>
-<li>如果异常比例已经很高，优先返工数据，而不是继续调训练超参。</li>
-</ul>
-<h3>Step 3: 把清洗结果变成训练样本</h3>
-<ul>
-<li>把 instruction 和 input 拼成 prompt。</li>
-<li>保留 response 作为监督目标。</li>
-<li>给后续训练保留 metadata，例如 prompt 长度和原始索引，方便排查异常样本。</li>
-<li>先输出 tokenizer-ready 文本；进入模型前还要用目标 tokenizer 重新统计 token 长度，并检查 chat template 是否匹配。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">阶段</th>
-<th style="text-align:center">本节是否负责</th>
-<th style="text-align:left">需要记录</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">字段清洗与格式统一</td>
-<td style="text-align:center">是</td>
-<td style="text-align:left">原始索引、字段缺失、空回答</td>
-</tr>
-<tr>
-<td style="text-align:left">tokenizer 与 chat template</td>
-<td style="text-align:center">部分</td>
-<td style="text-align:left">tokenizer 名称、模板版本、token 长度</td>
-</tr>
-<tr>
-<td style="text-align:left">labels mask 与 loss 对齐</td>
-<td style="text-align:center">否</td>
-<td style="text-align:left">转到 09 / 13</td>
-</tr>
-<tr>
-<td style="text-align:left">数据是否值得进入训练</td>
-<td style="text-align:center">否</td>
-<td style="text-align:left">转到 33 / 64</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>clean_sft_records</code>，统一字段并去掉首尾空白。</li>
-<li>补全 <code>audit_sft_dataset</code>，统计空回答、重复和超长样本。</li>
-<li>补全 <code>build_sft_training_examples</code>，把清洗后的记录转成训练样本。</li>
-<li>对生成的 <code>prompt / response</code> 调用目标 tokenizer，记录 token 长度分布；不要用字符数代替 token 数。</li>
-</ol>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>先把数据当作食材：菜谱再好，也救不了空食材和重复配送。SFT 数据工程先统一字段，再检查内容，最后才把文本变成模型输入。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>record</dt><dd>一条原始记录，字段名和内容可能不规范。</dd></div><div><dt>duplicate</dt><dd>重复样本；要先定义按哪个字段组合去重。</dd></div><div><dt>labels mask</dt><dd>不参与监督的位置设为忽略值，通常是 -100。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>字符长度审计完成后，可以直接当作 token 预算吗？</p>
+            <p>本课中的「record」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只要清除空白就可以</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>重复样本；要先定义按哪个字段组合去重。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>可以，一个字符总是一个 token</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>不参与监督的位置设为忽略值，通常是 -100。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>不可以，还要用目标 tokenizer 和模板检查</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>一条原始记录，字段名和内容可能不规范。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 4: 用目标 tokenizer 统计文本 token 长度。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>统一外形</h4><p>把 question/answer 映射到 prompt/response，并清掉首尾空白，避免同一含义出现多种字段。</p></li><li><h4>检查四条记录</h4><p>A 正常，B 的回答只有空格，C 与 A 完全重复，D 正常。按非空、精确去重规则，保留 A、D，共 2/4。</p></li><li><h4>再做 token 检查</h4><p>字符清洗不能代替 tokenizer。最终还要检查 chat template、截断位置以及 response 是否仍有监督 token。</p></li></ol><section class="learning-lab" data-lab="data" aria-label="把原始记录送过三道检查">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>把原始记录送过三道检查</h4><p>切换空白清理和去重，观察保留样本怎样变化。</p></header>
+    <div class="lab-controls"><label for="lab-32-trim"><span>清理首尾空格（0 关 / 1 开） <output data-value="trim" for="lab-32-trim">1</output> </span><input type="range" id="lab-32-trim" name="trim" min="0" max="1" step="1" value="1"></label><label for="lab-32-dedupe"><span>精确去重（0 关 / 1 开） <output data-value="dedupe" for="lab-32-dedupe">1</output> </span><input type="range" id="lab-32-dedupe" name="dedupe" min="0" max="1" step="1" value="1"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-32" data-challenge-label>算一算</label><div><input id="answer-32" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>四条数据中一条空回答、一条与正常记录重复，保留几条？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>2 条</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>3 条</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>4 条</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>pairs = [(&quot;问&quot;, &quot;答&quot;), (&quot;问2&quot;, &quot; &quot;), (&quot;问&quot;, &quot;答&quot;), (&quot;问3&quot;, &quot;答3&quot;)]
+clean = {(p.strip(), r.strip()) for p, r in pairs if p.strip() and r.strip()}
+print(len(clean))  # 2</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>先用原始字符串去重，再清理空格，会漏掉“内容相同但空格不同”的重复。还要避免训练与评测集合泄漏。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用原始字符串去重，再清理空格，会漏掉“内容相同但空格不同”的重复。还要避免训练与评测集合泄漏。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「record」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 1: 统一字段并去掉首尾空白。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 2: 统计空回答、重复和超长样本。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 3: 把清洗后的记录转成训练样本。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="8d4d83f56d328c1785482de4e2928cc9dd6d6e3bb8c50ede405739e501eb2d92">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/32_Data_Engineering_for_SFT.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_token_lengths</code> · <code>clean_sft_records</code> · <code>audit_sft_dataset</code> · <code>build_sft_training_examples</code> · <code>MockTokenizer</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1062,14 +940,14 @@ test_sft_data_engineering_template()
 
   <script>
     const levelId = "32";
-    const checkpointData = {"current-core":{"answer":2,"explain":"不可以，还要用目标 tokenizer 和模板检查。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：一条原始记录，字段名和内容可能不规范。。另外两个选项分别解释「duplicate」和「labels mask」，注意区分。"},"v4-experiment":{"answer":0,"explain":"空回答剔除，重复的第二份也剔除。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：先用原始字符串去重，再清理空格，会漏掉“内容相同但空格不同”的重复。还要避免训练与评测集合泄漏。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
+    const checkpointTotal = 3;
     const homeworkTotal = 4;
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1082,16 +960,18 @@ test_sft_data_engineering_template()
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1116,7 +996,7 @@ test_sft_data_engineering_template()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1158,11 +1038,15 @@ test_sft_data_engineering_template()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1193,6 +1077,7 @@ test_sft_data_engineering_template()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,230 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 45 | 零基础导学关卡</p>
-        <h1>Memory Cut Planning | 显存裁剪规划</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>显存裁剪规划</h1>
+        <p class="course-subtitle">Memory Cut Planning</p>
+        <p class="lead">显存裁剪要找到真正的峰值来源，再选可行策略。参数、激活和缓存分别适合不同手段，不能看到 OOM 就一律量化。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/45_Memory_Cut_Planning.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">45_Memory_Cut_Planning.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">预算规划</span><span class="pill">裁剪策略</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">箱子超重了，先拿出最重的物品就够了吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="0a338a7eabad1bfe890fe0017b49c39edd61a09daf3fc36066d0c79aa9a69edf">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../45_Memory_Cut_Planning.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/45_Memory_Cut_Planning.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>45. Memory Cut Planning | 显存裁剪规划</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>显存优化</code>, <code>预算规划</code>, <code>裁剪策略</code> | <strong>目标人群：</strong> 显存优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>显存优化里最容易被忽略的一步，不是再找一个新技巧，而是先决定预算不够时到底该先裁什么。很多训练任务不是因为完全没有优化手段而跑不通，而是因为峰值来源没分清、预算余量没留够、裁剪顺序写得不够明确，最后在 checkpoint、offload、batch size 和模型规模之间来回试错。</p>
-<p>本节把前面的显存账本、统一预算和候选评分收束成一份可执行的 <code>cut order</code>。学完后，你应该能判断峰值来自哪里、预算要留多少 <code>headroom</code>，以及资源不足时应按什么顺序调整 activation、临时 buffer、batch size 或模型规模。</p>
-<p><strong>关键词：</strong> <code>peak memory</code>, <code>buffer</code>, <code>headroom</code>, <code>cut order</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 找出峰值最大的显存来源。</li><li>TODO 2: 给出显存裁剪顺序并估计裁剪后的峰值。</li><li>TODO 3: 输出是否值得继续扩成独立显存页。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能从显存账本识别峰值来源，并能读出运行时预算，再决定哪一类对象应当优先调整。</p>
-<ul>
-<li><a href="../../../01_Hardware_Math_and_Systems/06_VRAM_Calculation_and_ZeRO.ipynb">06. VRAM Calculation and ZeRO | 显存计算与 ZeRO</a></li>
-<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载</a></li>
-<li><a href="43_unified_memory_management.html">43. Unified Memory Management | 统一内存管理</a></li>
-</ul>
-<hr>
-<h3>Step 1: 先识别峰值来自哪里</h3>
-<ul>
-<li>区分参数、激活、KV cache 和临时缓冲的峰值贡献。</li>
-<li>不要只看总显存，要看峰值是否集中在少数阶段。</li>
-<li>只有峰值来源清楚，裁剪顺序才可能合理。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/45_memory_cut_overview.svg" alt="显存裁剪规划总览"></p>
-<h3>Step 2: 明确预算留边和裁剪顺序</h3>
-<ul>
-<li>显存方案不能把预算用到 100%，要留出运行时 headroom。</li>
-<li>当预算不够时，先裁哪类对象，应该提前写清楚。</li>
-<li>这一步直接决定后续实验是“可运行”还是“频繁 OOM”。</li>
-</ul>
-<h3>Step 3: 输出是否值得继续单独展开</h3>
-<ul>
-<li>如果峰值来源和裁剪顺序已经复杂到影响多个页面，就值得升级成专门的显存专题补页。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/45_cut_decision_matrix.svg" alt="显存裁剪动作的选择"></p>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>summarize_peak_sources</code>，识别峰值来源。</li>
-<li>补全 <code>plan_memory_cuts</code>，给出裁剪顺序。</li>
-<li>补全 <code>recommend_memory_followup</code>，输出是否继续展开。</li>
-</ol>
-<h3>提示</h3>
-<ul>
-<li>这页不是让你做完整显存建模，而是先把“最大峰值来源”“可裁剪顺序”“是否值得单独扩页”这三步判断固定下来。</li>
-<li><code>TODO 1</code> 只需要找出 <code>peak_gb</code> 最大的组件，并返回它的名字和峰值。</li>
-<li><code>TODO 2</code> 先筛出 <code>cuttable=True</code> 的组件，再按 <code>peak_gb</code> 从大到小挑出真正需要执行的裁剪步骤，顺手计算裁剪后的估计峰值。</li>
-<li><code>TODO 3</code> 先判断是否真的存在裁剪动作，再结合 <code>estimated_peak_gb</code> 给出是否值得继续展开的结论。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def summarize_peak_sources(components: List[Dict[str, float]]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 1: 找出峰值最大的显存来源。
-    &quot;&quot;&quot;
-    # 提示：可以先用 max 找到 peak_gb 最大的组件，再返回它的 name 和 peak_gb。
-    # largest = ???
-    raise NotImplementedError
+<section class="lessons">
 
-
-def plan_memory_cuts(components: List[Dict[str, float]], target_peak_gb: float) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 2: 给出显存裁剪顺序并估计裁剪后的峰值。
-    &quot;&quot;&quot;
-    # 提示：先筛出 cuttable=True 的组件并按 peak_gb 降序排序，
-    # 再从 total_peak 开始依次扣减，把真正执行过的组件写进 cut_order，直到不高于 target_peak_gb。
-    # cut_candidates = ???
-    # total_peak = ???
-    # cut_order = ???
-    # reduced_peak = ???
-    raise NotImplementedError
-
-
-def recommend_memory_followup(summary: Dict[str, object], plan: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 3: 输出是否值得继续扩成独立显存页。
-    &quot;&quot;&quot;
-    # 提示：先判断 cut_order 是否非空，再结合 estimated_peak_gb 给出 needs_dedicated_page 和 reason。
-    # needs_dedicated_page = ???
-    # reason = ???
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code>def test_memory_cut_planning():
-    try:
-        components = [
-            {'name': 'weights', 'peak_gb': 10.0, 'cuttable': False},
-            {'name': 'activations', 'peak_gb': 8.0, 'cuttable': True},
-            {'name': 'temporary_buffers', 'peak_gb': 3.0, 'cuttable': True},
-        ]
-        summary = summarize_peak_sources(components)
-        assert summary['largest_source'] == 'weights'
-        assert summary['peak_gb'] == 10.0
-        plan = plan_memory_cuts(components, target_peak_gb=15.0)
-        assert plan['cut_order'] == ['activations']
-        assert plan['estimated_peak_gb'] == 13.0
-        decision = recommend_memory_followup(summary, plan)
-        assert decision['needs_dedicated_page'] is True
-        print('测试通过：显存裁剪规划页面模板可以工作。')
-    except NotImplementedError:
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_memory_cut_planning()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>箱子超重了，先拿出最重的物品就够了吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>显存优化里最容易被忽略的一步，不是再找一个新技巧，而是先决定预算不够时到底该先裁什么。很多训练任务不是因为完全没有优化手段而跑不通，而是因为峰值来源没分清、预算余量没留够、裁剪顺序写得不够明确，最后在 checkpoint、offload、batch size 和模型规模之间来回试错。</p>
-            <div class="notebook-content"><h3>Step 1: 先识别峰值来自哪里</h3>
-<ul>
-<li>区分参数、激活、KV cache 和临时缓冲的峰值贡献。</li>
-<li>不要只看总显存，要看峰值是否集中在少数阶段。</li>
-<li>只有峰值来源清楚，裁剪顺序才可能合理。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/45_memory_cut_overview.svg" alt="显存裁剪规划总览"></p>
-<h3>Step 2: 明确预算留边和裁剪顺序</h3>
-<ul>
-<li>显存方案不能把预算用到 100%，要留出运行时 headroom。</li>
-<li>当预算不够时，先裁哪类对象，应该提前写清楚。</li>
-<li>这一步直接决定后续实验是“可运行”还是“频繁 OOM”。</li>
-</ul>
-<h3>Step 3: 输出是否值得继续单独展开</h3>
-<ul>
-<li>如果峰值来源和裁剪顺序已经复杂到影响多个页面，就值得升级成专门的显存专题补页。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/45_cut_decision_matrix.svg" alt="显存裁剪动作的选择"></p>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>summarize_peak_sources</code>，识别峰值来源。</li>
-<li>补全 <code>plan_memory_cuts</code>，给出裁剪顺序。</li>
-<li>补全 <code>recommend_memory_followup</code>，输出是否继续展开。</li>
-</ol>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>显存裁剪要找到真正的峰值来源，再选可行策略。参数、激活和缓存分别适合不同手段，不能看到 OOM 就一律量化。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>bottleneck</dt><dd>当前约束中最先限制方案的部分。</dd></div><div><dt>saving</dt><dd>相对同口径 baseline 减少的占用。</dd></div><div><dt>trade-off</dt><dd>节省资源同时引入的时间、质量或复杂度代价。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>显存裁剪计划首先应该确认什么？</p>
+            <p>本课中的「bottleneck」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>峰值主要由哪些对象贡献</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>当前约束中最先限制方案的部分。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>日志里哪个名字最长</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>相对同口径 baseline 减少的占用。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>只检查最终权重文件</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>节省资源同时引入的时间、质量或复杂度代价。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1: 找出峰值最大的显存来源。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>定位峰值</h4><p>权重 4、激活 10、其他 2，总共 16 GiB，预算 12。</p></li><li><h4>尝试方案</h4><p>若仅权重减半，节省 2，还剩 14，不够；若激活降到 6，总计恰好 12。</p></li><li><h4>留安全余量</h4><p>恰好 12 只是课堂预算通过。真实分配器、动态输入和临时工作区会带来额外波动。</p></li></ol><section class="learning-lab" data-lab="memory" aria-label="搭一张不会漏项的显存账本">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>搭一张不会漏项的显存账本</h4><p>把同一时刻的状态加起来，观察何时跨过 12 GiB 预算。</p></header>
+    <div class="lab-controls"><label for="lab-45-activation"><span>激活占用 <output data-value="activation" for="lab-45-activation">6</output> GiB</span><input type="range" id="lab-45-activation" name="activation" min="1" max="12" step="1" value="6"></label><label for="lab-45-cache"><span>缓存/其他占用 <output data-value="cache" for="lab-45-cache">2</output> GiB</span><input type="range" id="lab-45-cache" name="cache" min="0" max="6" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-45" data-challenge-label>算一算</label><div><input id="answer-45" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>4+10+2 GiB 的账本，仅权重减半后总量是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>12 GiB</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>14 GiB</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>8 GiB</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>weights, activations, other = 4, 10, 2
+print(weights/2 + activations + other)  # 14
+print(weights + 6 + other)  # 12</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把削减比例最大的对象当作最有效方案。要比较绝对节省量，并检查是否真的跨过预算门槛。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「bottleneck」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>把削减比例最大的对象当作最有效方案。要比较绝对节省量，并检查是否真的跨过预算门槛。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2: 给出显存裁剪顺序并估计裁剪后的峰值。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3: 输出是否值得继续扩成独立显存页。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="7d90c00774de79f51950d12d5c3fe6773ac70aeea40463f6eba30d699cc2e4fa">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/45_Memory_Cut_Planning.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_peak_sources</code> · <code>plan_memory_cuts</code> · <code>recommend_memory_followup</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -975,14 +940,14 @@ test_memory_cut_planning()
 
   <script>
     const levelId = "45";
-    const checkpointData = {"current-core":{"answer":0,"explain":"峰值主要由哪些对象贡献。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：当前约束中最先限制方案的部分。。另外两个选项分别解释「saving」和「trade-off」，注意区分。"},"v4-experiment":{"answer":1,"explain":"只有权重从 4 降为 2，其他项不变。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：把削减比例最大的对象当作最有效方案。要比较绝对节省量，并检查是否真的跨过预算门槛。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -991,20 +956,22 @@ test_memory_cut_planning()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-0a338a7eabad";
+    const homeworkKey = statePrefix + levelId + "-homework-7d90c00774de";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1029,7 +996,7 @@ test_memory_cut_planning()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1071,11 +1038,15 @@ test_memory_cut_planning()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1106,6 +1077,7 @@ test_memory_cut_planning()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

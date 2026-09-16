@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,507 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 64 | 零基础导学关卡</p>
-        <h1>SFT Data Quality Project | SFT 数据质量项目</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>SFT 数据质量项目</h1>
+        <p class="course-subtitle">SFT Data Quality Project</p>
+        <p class="lead">数据质量项目先决定数据能否进训练。这里特别关注评测泄漏：模型见过测试答案，分数就不能说明面对新问题的能力。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/64_SFT_Data_Quality_Project.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">64_SFT_Data_Quality_Project.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">数据质量</span><span class="pill">评测</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">测试卷混进练习册，分数漂亮还可靠吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="60398b4691e6b048a59f59d09221970e2ab5fd4ec672cac6e0514ef8fe3d78fb">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../64_SFT_Data_Quality_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/64_SFT_Data_Quality_Project.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>64. SFT Data Quality Project | SFT 数据质量项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>数据质量</code>, <code>评测</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节先不训练模型，而是判断一批 SFT 数据是否具备进入正式训练的条件。它是第 62 节指令微调和第 60 节 LoRA 项目的数据准入环节：先检查空回答、字段缺失、模板一致性、重复样本和评测覆盖，再把发现的问题按风险和修复成本整理出来。最终给出数据可直接训练、需要回修，还是应当暂缓使用的结论。</p>
-<p><strong>关键词：</strong> <code>SFT</code>, <code>data quality</code>, <code>template</code>, <code>evaluation</code>, <code>project</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1：按 prompt/response 组合识别重复；分别统计空 prompt 与空 response。</li><li>TODO 2：required_keys 缺失计入 missing_key_count；最后一个 role 非 assistant</li><li>TODO 3：空 response、字段缺失、模板收尾错误等直接影响训练目标的问题，</li><li>TODO 4：使用 sample_count 与 issue_count；缺失字段不能静默当作 0。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本项目前，先能说明 SFT 样本如何进入 loss，并能识别字段、模板和长度问题，再判断一批数据是否值得进入正式训练。</p>
-<ul>
-<li><a href="09_sft_training_loop.html">09. SFT Training Loop | SFT 训练循环</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-<li><a href="30_long_context_fine_tuning.html">30. Long Context Fine-Tuning | 长上下文微调</a></li>
-<li><a href="32_data_engineering_for_sft.html">32. Data Engineering for SFT | SFT 数据工程</a></li>
-</ul>
-<h3>Step 1（项目设计）：明确数据准入问题</h3>
-<p>本节面向已经理解 SFT 样本、监督范围和基本训练闭环的学习者。你不需要先训练模型，但需要能看懂 <code>prompt / response</code>、<code>messages</code> 和评测样例。这里要回答的是：这批数据现在能不能交给训练项目？</p>
-<p>本节只负责数据质量准入，不负责证明某个模型训练得更快或效果更好。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验层级</th>
-<th style="text-align:left">输入</th>
-<th style="text-align:left">主要操作</th>
-<th style="text-align:left">主要产物</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">CPU 主实验</td>
-<td style="text-align:left">原始 SFT 样本</td>
-<td style="text-align:left">字段、模板、重复、长度和评测覆盖审计</td>
-<td style="text-align:left">清洗前后报告与 <code>accept / tune / reject</code></td>
-</tr>
-<tr>
-<td style="text-align:left">GPU 下游验证（可选）</td>
-<td style="text-align:left">通过闸门的数据</td>
-<td style="text-align:left">交给 60 / 62 做固定口径训练或推理验证</td>
-<td style="text-align:left">训练质量与资源报告，不归因给 64</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/64_sft_data_quality_flow.svg" alt="SFT 数据质量项目关系图"></p>
-<p>先固定任务目标、数据来源、模板格式、长度口径和最小评测集合；CPU 审计检查规则，GPU 训练或推理才检查模型效果和资源代价。
-数据质量实验的基本原则是：固定审计规则，用同一套指标比较清洗前后的数据，而不是凭少量样本的印象判断质量。</p>
-<h3>Step 2（项目设计）：固定数据基线与检查条件</h3>
-<p>输入是原始 SFT 样本、对话记录和最小评测集合。先对原始版本运行一次完整审计，再决定是否清洗；几条样本的直观印象不能替代数据集统计。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">检查对象</th>
-<th style="text-align:left">记录的指标</th>
-<th style="text-align:left">基线要回答的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本字段</td>
-<td style="text-align:left">样本数、空 prompt、空 response、重复数</td>
-<td style="text-align:left">样本是否有可用监督，是否存在重复放大</td>
-</tr>
-<tr>
-<td style="text-align:left">长度风险</td>
-<td style="text-align:left">超过字符阈值的数量、长度分位数</td>
-<td style="text-align:left">是否可能在 tokenizer 截断时丢失关键信息</td>
-</tr>
-<tr>
-<td style="text-align:left">对话模板</td>
-<td style="text-align:left">缺失字段、空 messages、assistant 收尾错误</td>
-<td style="text-align:left">数据能否按预期转换为训练模板</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:left">评测样例数、任务类型和输出格式</td>
-<td style="text-align:left">训练后是否有对应的验证入口</td>
-</tr>
-</tbody>
-</table>
-<p>实验动作：固定字段名和阈值 → 运行样本审计 → 运行模板审计 → 检查评测覆盖 → 保存原始 baseline。阈值是准入规则，不是模型质量指标。</p>
-<h3>Step 3（项目设计）：确定质量指标与清洗方案</h3>
-<p>清洗实验的对照组是原始数据，处理组是按明确规则修复或过滤后的数据。比较的是数据风险下降了多少，以及为此损失了多少样本；它不能单独证明训练质量提升。</p>
-<p>清洗前后必须使用相同的审计函数、阈值和统计口径。建议按这个顺序执行：保留原始报告 → 只执行已说明的清洗动作 → 重新运行同一套审计 → 对照两份报告 → 决定是否交给 60 / 62。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">对比项</th>
-<th style="text-align:center">清洗前</th>
-<th style="text-align:center">清洗后</th>
-<th style="text-align:left">解释</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本数</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">保留数量</td>
-<td style="text-align:left">计算删除成本</td>
-</tr>
-<tr>
-<td style="text-align:left">blocker</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">修复后数量</td>
-<td style="text-align:left">判断能否解除准入阻断</td>
-</tr>
-<tr>
-<td style="text-align:left">重复与长度问题</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">处理后数量</td>
-<td style="text-align:left">判断风险是否下降</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:center">原始覆盖</td>
-<td style="text-align:center">处理后覆盖</td>
-<td style="text-align:left">确认清洗没有丢掉验证入口</td>
-</tr>
-</tbody>
-</table>
-<p>字段缺失、空 response 或模板错位属于 blocker；轻微重复和长度异常可进入 <code>tune</code>。如果要验证 loss、任务指标、吞吐或显存，应把固定版本数据交给 60 / 62 的下游实验。</p>
-<h3>Step 4（项目设计）：确定报告字段与准入规则</h3>
-<p>把审计结果转成训练项目可以执行的决定，而不是只输出一张统计表。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">条件</th>
-<th style="text-align:left">决策</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">存在会破坏训练目标或评测解释力的 blocker</td>
-<td style="text-align:left"><code>reject</code></td>
-</tr>
-<tr>
-<td style="text-align:left">没有 blocker，但仍有重复、长度或评测缺口</td>
-<td style="text-align:left"><code>tune</code></td>
-</tr>
-<tr>
-<td style="text-align:left">必填字段、模板和评测覆盖满足当前规则</td>
-<td style="text-align:left"><code>accept</code></td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/64_sft_data_quality_decision.svg" alt="SFT 数据质量准入决策"></p>
-<ul>
-<li>报告至少包含审计结果、规则版本、清洗动作、保留样本数和下一轮动作。</li>
-</ul>
-<h3>Step 5（CPU）：实现并测试审计闭环</h3>
-<p>请把前面的规则实现为四个可复用函数：样本审计、模板审计、项目决策和清洗前后对比。不需要重复实现 60 / 62 的训练循环。</p>
-<p><code>64</code> 不重复实现训练循环，而是把前面几节的数据与训练口径收成一份训练前的质量审计报告。</p>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本审计</td>
-<td style="text-align:left">样本数、空 response、重复率、超长样本</td>
-<td style="text-align:left">判断数据是否可信</td>
-</tr>
-<tr>
-<td style="text-align:left">模板审计</td>
-<td style="text-align:left">必填字段、role 顺序、assistant 收束位置</td>
-<td style="text-align:left">判断模板是否可训练</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:left">核心任务样例数、格式覆盖、缺口</td>
-<td style="text-align:left">判断训练后是否可验证</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出训练前决策</td>
-</tr>
-</tbody>
-</table>
-<h3>参数口径说明</h3>
-<p><code>max_prompt_chars</code> 和 <code>max_response_chars</code> 是数据审计阈值，用于发现风险，不等于 tokenizer 的实际截断长度；<code>required_keys</code> 定义模板必须存在的字段；<code>eval_cases</code> 决定评测覆盖。正式数据准入还应记录清洗前后样本数、重复率、长度分位数和实际 token 截断数。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code># TODO: 完成 SFT 数据质量项目的样本审计、模板审计和项目结论
-# 目标：把训练前的数据检查收束成一份可用于 accept / tune / reject 的项目报告。
-# CPU 题目区只验证数据规则；它不能证明清洗后模型的训练效果或 GPU 资源收益。
+<section class="lessons">
 
-def audit_sft_samples(examples: List[Dict[str, str]], max_prompt_chars: int, max_response_chars: int) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;统计空字段、重复样本、字符长度风险和平均 response 长度。
-
-    max_prompt_chars / max_response_chars 是字符审计阈值，不是 tokenizer 截断长度；
-    返回摘要字段必须能支持清洗前后对比。
-    &quot;&quot;&quot;
-    # TODO 1：按 prompt/response 组合识别重复；分别统计空 prompt 与空 response。
-    # sample_count = ???；empty_prompt_count = ???；empty_response_count = ???；duplicate_count = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def audit_chat_template(records: List[Dict[str, object]], required_keys: List[str]) -&gt; Dict[str, int]:
-    &quot;&quot;&quot;检查必填字段、messages 是否为空以及 assistant 收尾是否正确。
-
-    records 中的 messages 应为 turn 列表；缺字段、空列表和错误收尾分别计数。
-    &quot;&quot;&quot;
-    # TODO 2：required_keys 缺失计入 missing_key_count；最后一个 role 非 assistant
-    # 时计入 assistant_tail_error_count，不要把空 messages 当作正确模板。
-    # missing_key_count = ???；empty_messages_count = ???；assistant_tail_error_count = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def review_sft_data_project(sample_audit: Dict[str, float], template_audit: Dict[str, int], eval_cases: List[Dict[str, str]]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;根据样本、模板和评测覆盖审计输出数据准入决策。
-
-    返回 decision、eval_case_count、blockers 和 next_action；blocker 优先于普通问题。
-    &quot;&quot;&quot;
-    # TODO 3：空 response、字段缺失、模板收尾错误等直接影响训练目标的问题，
-    # 应进入 blockers；不要仅按 issue 总数给出结论。
-    # blockers = ???；decision = ???；project_ready = ???；next_action = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[str, float]) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;比较清洗前后的样本保留量和审计问题变化。
-
-    返回 removed_samples、issue_delta 和 issue_reduction_ratio；问题减少不等于模型质量提升。
-    `issue_count` 应由空字段、重复样本和超长样本等审计问题组成，并在前后报告中使用同一口径。
-    &quot;&quot;&quot;
-    # TODO 4：使用 sample_count 与 issue_count；缺失字段不能静默当作 0。
-    # 提示：removed_samples = before.sample_count - after.sample_count；
-    #       issue_delta = before.issue_count - after.issue_count；
-    #       issue_reduction_ratio 以 before.issue_count 为分母，分母为 0 时按边界处理。
-    # removed_samples = ???；issue_delta = ???；issue_reduction_ratio = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>测试卷混进练习册，分数漂亮还可靠吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节先不训练模型，而是判断一批 SFT 数据是否具备进入正式训练的条件。它是第 62 节指令微调和第 60 节 LoRA 项目的数据准入环节：先检查空回答、字段缺失、模板一致性、重复样本和评测覆盖，再把发现的问题按风险和修复成本整理出来。最终给出数据可直接训练、需要回修，还是应当暂缓使用的结论。</p>
-            <div class="notebook-content"><h3>Step 1（项目设计）：明确数据准入问题</h3>
-<p>本节面向已经理解 SFT 样本、监督范围和基本训练闭环的学习者。你不需要先训练模型，但需要能看懂 <code>prompt / response</code>、<code>messages</code> 和评测样例。这里要回答的是：这批数据现在能不能交给训练项目？</p>
-<p>本节只负责数据质量准入，不负责证明某个模型训练得更快或效果更好。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验层级</th>
-<th style="text-align:left">输入</th>
-<th style="text-align:left">主要操作</th>
-<th style="text-align:left">主要产物</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">CPU 主实验</td>
-<td style="text-align:left">原始 SFT 样本</td>
-<td style="text-align:left">字段、模板、重复、长度和评测覆盖审计</td>
-<td style="text-align:left">清洗前后报告与 <code>accept / tune / reject</code></td>
-</tr>
-<tr>
-<td style="text-align:left">GPU 下游验证（可选）</td>
-<td style="text-align:left">通过闸门的数据</td>
-<td style="text-align:left">交给 60 / 62 做固定口径训练或推理验证</td>
-<td style="text-align:left">训练质量与资源报告，不归因给 64</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/64_sft_data_quality_flow.svg" alt="SFT 数据质量项目关系图"></p>
-<p>先固定任务目标、数据来源、模板格式、长度口径和最小评测集合；CPU 审计检查规则，GPU 训练或推理才检查模型效果和资源代价。
-数据质量实验的基本原则是：固定审计规则，用同一套指标比较清洗前后的数据，而不是凭少量样本的印象判断质量。</p>
-<h3>Step 2（项目设计）：固定数据基线与检查条件</h3>
-<p>输入是原始 SFT 样本、对话记录和最小评测集合。先对原始版本运行一次完整审计，再决定是否清洗；几条样本的直观印象不能替代数据集统计。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">检查对象</th>
-<th style="text-align:left">记录的指标</th>
-<th style="text-align:left">基线要回答的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本字段</td>
-<td style="text-align:left">样本数、空 prompt、空 response、重复数</td>
-<td style="text-align:left">样本是否有可用监督，是否存在重复放大</td>
-</tr>
-<tr>
-<td style="text-align:left">长度风险</td>
-<td style="text-align:left">超过字符阈值的数量、长度分位数</td>
-<td style="text-align:left">是否可能在 tokenizer 截断时丢失关键信息</td>
-</tr>
-<tr>
-<td style="text-align:left">对话模板</td>
-<td style="text-align:left">缺失字段、空 messages、assistant 收尾错误</td>
-<td style="text-align:left">数据能否按预期转换为训练模板</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:left">评测样例数、任务类型和输出格式</td>
-<td style="text-align:left">训练后是否有对应的验证入口</td>
-</tr>
-</tbody>
-</table>
-<p>实验动作：固定字段名和阈值 → 运行样本审计 → 运行模板审计 → 检查评测覆盖 → 保存原始 baseline。阈值是准入规则，不是模型质量指标。</p>
-<h3>Step 3（项目设计）：确定质量指标与清洗方案</h3>
-<p>清洗实验的对照组是原始数据，处理组是按明确规则修复或过滤后的数据。比较的是数据风险下降了多少，以及为此损失了多少样本；它不能单独证明训练质量提升。</p>
-<p>清洗前后必须使用相同的审计函数、阈值和统计口径。建议按这个顺序执行：保留原始报告 → 只执行已说明的清洗动作 → 重新运行同一套审计 → 对照两份报告 → 决定是否交给 60 / 62。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">对比项</th>
-<th style="text-align:center">清洗前</th>
-<th style="text-align:center">清洗后</th>
-<th style="text-align:left">解释</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本数</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">保留数量</td>
-<td style="text-align:left">计算删除成本</td>
-</tr>
-<tr>
-<td style="text-align:left">blocker</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">修复后数量</td>
-<td style="text-align:left">判断能否解除准入阻断</td>
-</tr>
-<tr>
-<td style="text-align:left">重复与长度问题</td>
-<td style="text-align:center">原始数量</td>
-<td style="text-align:center">处理后数量</td>
-<td style="text-align:left">判断风险是否下降</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:center">原始覆盖</td>
-<td style="text-align:center">处理后覆盖</td>
-<td style="text-align:left">确认清洗没有丢掉验证入口</td>
-</tr>
-</tbody>
-</table>
-<p>字段缺失、空 response 或模板错位属于 blocker；轻微重复和长度异常可进入 <code>tune</code>。如果要验证 loss、任务指标、吞吐或显存，应把固定版本数据交给 60 / 62 的下游实验。</p>
-<h3>Step 4（项目设计）：确定报告字段与准入规则</h3>
-<p>把审计结果转成训练项目可以执行的决定，而不是只输出一张统计表。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">条件</th>
-<th style="text-align:left">决策</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">存在会破坏训练目标或评测解释力的 blocker</td>
-<td style="text-align:left"><code>reject</code></td>
-</tr>
-<tr>
-<td style="text-align:left">没有 blocker，但仍有重复、长度或评测缺口</td>
-<td style="text-align:left"><code>tune</code></td>
-</tr>
-<tr>
-<td style="text-align:left">必填字段、模板和评测覆盖满足当前规则</td>
-<td style="text-align:left"><code>accept</code></td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/64_sft_data_quality_decision.svg" alt="SFT 数据质量准入决策"></p>
-<ul>
-<li>报告至少包含审计结果、规则版本、清洗动作、保留样本数和下一轮动作。</li>
-</ul>
-<h3>Step 5（CPU）：实现并测试审计闭环</h3>
-<p>请把前面的规则实现为四个可复用函数：样本审计、模板审计、项目决策和清洗前后对比。不需要重复实现 60 / 62 的训练循环。</p>
-<p><code>64</code> 不重复实现训练循环，而是把前面几节的数据与训练口径收成一份训练前的质量审计报告。</p>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">样本审计</td>
-<td style="text-align:left">样本数、空 response、重复率、超长样本</td>
-<td style="text-align:left">判断数据是否可信</td>
-</tr>
-<tr>
-<td style="text-align:left">模板审计</td>
-<td style="text-align:left">必填字段、role 顺序、assistant 收束位置</td>
-<td style="text-align:left">判断模板是否可训练</td>
-</tr>
-<tr>
-<td style="text-align:left">评测覆盖</td>
-<td style="text-align:left">核心任务样例数、格式覆盖、缺口</td>
-<td style="text-align:left">判断训练后是否可验证</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出训练前决策</td>
-</tr>
-</tbody>
-</table>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>数据质量项目先决定数据能否进训练。这里特别关注评测泄漏：模型见过测试答案，分数就不能说明面对新问题的能力。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>leakage</dt><dd>评测信息通过训练数据或处理流程提前泄漏。</dd></div><div><dt>split</dt><dd>训练、验证和测试数据的划分。</dd></div><div><dt>audit</dt><dd>按明确规则检查数据并记录问题比例。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>数据清洗让训练 loss 更低，能否直接证明数据更好？</p>
+            <p>本课中的「leakage」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>能，loss 是唯一标准</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>按明确规则检查数据并记录问题比例。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>还需检查数据审计与同口径评测结果</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>评测信息通过训练数据或处理流程提前泄漏。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>能，不必看有效样本</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>训练、验证和测试数据的划分。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1：按 prompt/response 组合识别重复；分别统计空 prompt 与空 response。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先统一格式</h4><p>去空白、规范字段，再检查重复，否则外形差异会掩盖重复内容。</p></li><li><h4>跨集合检查</h4><p>训练样本 A、B，评测样本 B、C；交集 B 提示泄漏风险，不能只在训练集内部去重。</p></li><li><h4>输出结论</h4><p>列明空回答、重复、模板问题和覆盖缺口，再判断修复后是否重新划分。</p></li></ol><section class="learning-lab" data-lab="data" aria-label="把原始记录送过三道检查">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>把原始记录送过三道检查</h4><p>切换空白清理和去重，观察保留样本怎样变化。</p></header>
+    <div class="lab-controls"><label for="lab-64-trim"><span>清理首尾空格（0 关 / 1 开） <output data-value="trim" for="lab-64-trim">1</output> </span><input type="range" id="lab-64-trim" name="trim" min="0" max="1" step="1" value="1"></label><label for="lab-64-dedupe"><span>精确去重（0 关 / 1 开） <output data-value="dedupe" for="lab-64-dedupe">1</output> </span><input type="range" id="lab-64-dedupe" name="dedupe" min="0" max="1" step="1" value="1"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-64" data-challenge-label>算一算</label><div><input id="answer-64" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>训练是 A、B，评测是 B、C，应首先检查哪条？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>只检查 C</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>都没有风险</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>B</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>train = {&quot;A&quot;, &quot;B&quot;}
+eval_set = {&quot;B&quot;, &quot;C&quot;}
+print(train &amp; eval_set)  # {B}</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>清洗时查看测试答案并据此设计训练特征，也属于泄漏风险，不只是字符串重复。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>清洗时查看测试答案并据此设计训练特征，也属于泄漏风险，不只是字符串重复。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「leakage」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2：required_keys 缺失计入 missing_key_count；最后一个 role 非 assistant</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3：空 response、字段缺失、模板收尾错误等直接影响训练目标的问题，</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 4：使用 sample_count 与 issue_count；缺失字段不能静默当作 0。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="5f7aa2bf65afde689f66d8e7b4ad54b10be1229e01e32551c255e9f0dfb46ce8">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/64_SFT_Data_Quality_Project.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>audit_sft_samples</code> · <code>audit_chat_template</code> · <code>review_sft_data_project</code> · <code>summarize_cleaning_effect</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1252,14 +940,14 @@ def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[
 
   <script>
     const levelId = "64";
-    const checkpointData = {"current-core":{"answer":1,"explain":"还需检查数据审计与同口径评测结果。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：评测信息通过训练数据或处理流程提前泄漏。。另外两个选项分别解释「split」和「audit」，注意区分。"},"v4-experiment":{"answer":2,"explain":"B 同时出现在训练和评测中，可能高估泛化表现。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：清洗时查看测试答案并据此设计训练特征，也属于泄漏风险，不只是字符串重复。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
+    const checkpointTotal = 3;
     const homeworkTotal = 4;
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1268,20 +956,22 @@ def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-60398b4691e6";
+    const homeworkKey = statePrefix + levelId + "-homework-5f7aa2bf65af";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1306,7 +996,7 @@ def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1348,11 +1038,15 @@ def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1383,6 +1077,7 @@ def summarize_cleaning_effect(before_audit: Dict[str, float], after_audit: Dict[
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

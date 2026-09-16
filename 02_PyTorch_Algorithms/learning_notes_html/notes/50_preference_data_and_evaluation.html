@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,227 +742,194 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 50 | 零基础导学关卡</p>
-        <h1>Preference Data and Evaluation | 偏好数据与对齐评测</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>偏好数据与对齐评测</h1>
+        <p class="course-subtitle">Preference Data and Evaluation</p>
+        <p class="lead">偏好评测像投票，先确定哪些票有效，平票怎么处理，再算胜率。分母含义不一致时，两个百分数不能直接比较。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/50_Preference_Data_and_Evaluation.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">50_Preference_Data_and_Evaluation.ipynb</span>
           <span class="pill">后训练对齐</span><span class="pill">偏好数据</span><span class="pill">评测</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">投票赢了 8 次，就代表胜率 80% 吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="1c888563275246ea7df03e876ce2f68ebcf1758c5948a83cf26531ca117f4a8a">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../50_Preference_Data_and_Evaluation.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/50_Preference_Data_and_Evaluation.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>50. Preference Data and Evaluation | 偏好数据与对齐评测</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>偏好数据</code>, <code>评测</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>很多人一提到对齐，就立刻想到 DPO、GRPO 或 reward model，但真正决定后续实验是否可信的，往往不是优化公式本身，而是前面那层更朴素的基础设施：偏好数据到底干不干净、评测口径到底稳不稳定、不同实验之间是不是在用同一套判断标准。</p>
-<p>这是一节<strong>机制原理节</strong>：它和 <code>15</code>、<code>16</code> 是前后承接关系。<code>15</code> 主讲 pairwise preference 下的 DPO 损失，<code>16</code> 主讲 group-wise 比较下的 GRPO 损失；而 <code>50</code> 先退回到更上游的一层，回答“这些对齐方法到底建立在什么样的数据口径和最小评测口径之上”。</p>
-<p>这一节不做完整 judge 系统或复杂评测平台，而是先用最小汇总器把“样本有没有空值、prompt 是否重复聚集、pair 长度是否离谱、win-rate 怎么统一计算”这条链路固定下来。一个实用判断可以先保持简单：如果偏好数据本身就脏，或者评测口径来回变动，那么后面就算 DPO / GRPO 指标看起来上涨，也很难说明优化真的有效。</p>
-<p><strong>关键词：</strong> <code>preference data</code>, <code>win-rate</code>, <code>pairwise evaluation</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 汇总偏好数据的最小统计信息。</li><li>TODO 2: 计算最小 win-rate。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把 pairwise 偏好、group-wise 比较和对齐组页的位置补齐，再进入这一节，会更容易把“优化目标”与“数据/评测口径”区分开。</p>
-<ul>
-<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | DPO 损失教程</a></li>
-<li><a href="16_grpo_loss_tutorial.html">16. GRPO Loss Tutorial | GRPO 损失教程</a></li>
-<li><a href="../../2_4.md">2.4</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 学完这页后，下一步重点不是继续背数据字段，而是看这些最小口径如何接到在线更新、偏好项目和 benchmark 验证里，确认“模型变好了”到底是不是建立在可复现的数据与评测标准上。</p>
-<ul>
-<li><a href="51_online_dpo.html">51. Online DPO | 在线 DPO</a></li>
-<li><a href="84_dpo_preference_project.html">84. DPO Preference Project | DPO 偏好项目</a></li>
-<li><a href="86_dpo_online_benchmark.html">86. DPO Online Benchmark | DPO 在线 Benchmark</a></li>
-</ul>
-<h3>Step 1: 偏好数据长什么样</h3>
-<p>典型偏好样本至少包含 <code>prompt</code>、<code>chosen</code>、<code>rejected</code>，有些任务还会带 <code>source</code>、<code>judge</code>、<code>score</code> 和 <code>group_id</code>。</p>
-<h3>Step 2: 对齐评测看什么</h3>
-<ul>
-<li><code>win-rate</code>：新模型胜出的比例。</li>
-<li><code>judge score</code>：打分器或人工判分。</li>
-<li><code>pairwise accuracy</code>：偏好对上选对的比例。</li>
-<li><code>safety / style</code>：额外的对齐约束。</li>
-</ul>
-<h3>Step 3: 从样本到指标</h3>
-<p>偏好对齐最怕两件事：数据本身不干净，以及评测口径不稳定。这里先把数据检查和最小指标汇总函数做出来。</p>
-<h3>Step 4: 动手实战</h3>
-<p>实现一个最小偏好数据汇总器，检查空样本、重复样本和 win-rate 口径。</p>
-<h3>提示</h3>
-<ul>
-<li>先把 <code>TODO 1</code> 当成一次最小数据质检：先确认样本总量，再看有没有空值、prompt 是否重复聚集、pair 长度是否异常。</li>
-<li><code>empty</code> 统计的是 <code>prompt / chosen / rejected</code> 中任意一项为空的样本数；这类样本如果不先清掉，后面的偏好训练和评测结论会很不稳。</li>
-<li><code>duplicate_prompt_groups</code> 统计的是 prompt 重复出现的组数，不是重复样本总数。这里想看的是“某些 prompt 是否被反复采样”，而不是简单数重复条目。</li>
-<li><code>TODO 2</code> 先统一 win-rate 口径：先校验长度，再统计 <code>chosen_score &gt; rejected_score</code> 的次数，最后返回胜出比例。先把评测口径固定，后面接 DPO / GRPO 才有可比性。</li>
-</ul>
-<h3>测试</h3>
-<p>运行下面的测试，检查你的偏好数据汇总和 win-rate 计算是否正确。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 10</summary><pre><code>@dataclass
-class PreferenceSample:
-    prompt: str
-    chosen: str
-    rejected: str
+<section class="lessons">
 
-
-def summarize_preference_dataset(samples):
-    &quot;&quot;&quot;
-    TODO 1: 汇总偏好数据的最小统计信息。
-
-    你需要返回：
-    - total: 样本总数
-    - empty: 空 prompt / chosen / rejected 的样本数
-    - duplicate_prompt_groups: prompt 重复的组数
-    - avg_pair_tokens: chosen + rejected 的平均 token 近似数（用 split 近似即可）
-    &quot;&quot;&quot;
-    # 提示：先算 total，再补 empty、duplicate_prompt_groups、avg_pair_tokens。
-    # total = ???
-    # empty = ???
-    # duplicate_prompt_groups = ???
-    # avg_pair_tokens = ???
-    raise NotImplementedError
-
-
-def compute_win_rate(chosen_scores, rejected_scores):
-    &quot;&quot;&quot;
-    TODO 2: 计算最小 win-rate。
-
-    规则：chosen_score &gt; rejected_score 记为一次胜出。
-    &quot;&quot;&quot;
-    # 提示：先校验长度，再统计 wins，最后返回比例。
-    # wins = ???
-    # return ???
-    raise NotImplementedError</code></pre></details><details><summary>题目与测试代码 · Cell 12</summary><pre><code>def test_preference_summary():
-    try:
-        samples = [
-            PreferenceSample(&quot;Explain LoRA&quot;, &quot;LoRA adds adapters.&quot;, &quot;LoRA changes all weights.&quot;),
-            PreferenceSample(&quot;Explain DPO&quot;, &quot;DPO uses preference pairs.&quot;, &quot;DPO needs no reward model at inference.&quot;),
-            PreferenceSample(&quot;Explain DPO&quot;, &quot;Short answer.&quot;, &quot;&quot;),
-            PreferenceSample(&quot;&quot;, &quot;missing prompt&quot;, &quot;missing rejected&quot;),
-        ]
-        stats = summarize_preference_dataset(samples)
-        assert stats[&quot;total&quot;] == 4
-        assert stats[&quot;empty&quot;] == 2
-        assert stats[&quot;duplicate_prompt_groups&quot;] == 1
-        assert stats[&quot;avg_pair_tokens&quot;] &gt; 0
-        print(&quot;preference summary passed&quot;)
-
-
-        win_rate = compute_win_rate([0.8, 0.7, 0.9], [0.2, 0.5, 0.95])
-        assert 0.6 &lt; win_rate &lt; 0.8
-        assert compute_win_rate([1.0, 0.9], [0.2, 0.1]) == 1.0
-        assert compute_win_rate([0.1, 0.2], [0.3, 0.4]) == 0.0
-        try:
-            compute_win_rate([0.5], [0.2, 0.1])
-        except ValueError:
-            pass
-        else:
-            raise AssertionError(&quot;length mismatch should raise ValueError&quot;)
-        print(&quot;win rate passed&quot;)
-    except NotImplementedError:
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-
-
-test_preference_summary()</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>投票赢了 8 次，就代表胜率 80% 吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>很多人一提到对齐，就立刻想到 DPO、GRPO 或 reward model，但真正决定后续实验是否可信的，往往不是优化公式本身，而是前面那层更朴素的基础设施：偏好数据到底干不干净、评测口径到底稳不稳定、不同实验之间是不是在用同一套判断标准。</p>
-            <div class="notebook-content"><h3>Step 1: 偏好数据长什么样</h3>
-<p>典型偏好样本至少包含 <code>prompt</code>、<code>chosen</code>、<code>rejected</code>，有些任务还会带 <code>source</code>、<code>judge</code>、<code>score</code> 和 <code>group_id</code>。</p>
-<h3>Step 2: 对齐评测看什么</h3>
-<ul>
-<li><code>win-rate</code>：新模型胜出的比例。</li>
-<li><code>judge score</code>：打分器或人工判分。</li>
-<li><code>pairwise accuracy</code>：偏好对上选对的比例。</li>
-<li><code>safety / style</code>：额外的对齐约束。</li>
-</ul>
-<h3>Step 3: 从样本到指标</h3>
-<p>偏好对齐最怕两件事：数据本身不干净，以及评测口径不稳定。这里先把数据检查和最小指标汇总函数做出来。</p>
-<h3>Step 4: 动手实战</h3>
-<p>实现一个最小偏好数据汇总器，检查空样本、重复样本和 win-rate 口径。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>偏好评测像投票，先确定哪些票有效，平票怎么处理，再算胜率。分母含义不一致时，两个百分数不能直接比较。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>preference pair</dt><dd>同一输入下 chosen 与 rejected 的配对。</dd></div><div><dt>win rate</dt><dd>按约定口径统计的胜利比例。</dd></div><div><dt>coverage</dt><dd>评测覆盖了多少有效样本或场景。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>最小偏好评测在计算 win rate 前需要什么？</p>
+            <p>本课中的「preference pair」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只统计 chosen 字符数</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>按约定口径统计的胜利比例。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>把所有缺失值当成胜利</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>评测覆盖了多少有效样本或场景。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>明确有效偏好样本和比较口径</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>同一输入下 chosen 与 rejected 的配对。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1: 汇总偏好数据的最小统计信息。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先查合法性</h4><p>同一条 pair 的两个回答相同，或者其中一个为空，会削弱偏好信号。</p></li><li><h4>固定口径</h4><p>12 条评测，8 胜、2 负、2 无效。若排除无效，胜率=8/10=80%；若除以全部，则是 66.7%。</p></li><li><h4>同时报告覆盖</h4><p>80% 应配上有效 10/12，让读者知道剩下两条没有被评到。</p></li></ol><section class="learning-lab" data-lab="preference" aria-label="胜率的分母由谁决定？">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>胜率的分母由谁决定？</h4><p>8 胜、2 负固定，增加无效记录，区分胜率与覆盖率。</p></header>
+    <div class="lab-controls"><label for="lab-50-invalid"><span>无效评测记录 <output data-value="invalid" for="lab-50-invalid">2</output> 条</span><input type="range" id="lab-50-invalid" name="invalid" min="0" max="10" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-50" data-challenge-label>算一算</label><div><input id="answer-50" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>8 胜、2 负、2 无效，按有效样本计算的胜率是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>80%</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>66.7%</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>100%</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>wins, losses, invalid = 8, 2, 2
+win_rate = wins / (wins + losses)
+coverage = (wins + losses) / (wins + losses + invalid)
+print(win_rate, coverage)</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>只报告胜率不报告分母；或在 baseline 与 candidate 中用不同规则处理无效样本。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「preference pair」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>只报告胜率不报告分母；或在 baseline 与 candidate 中用不同规则处理无效样本。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2: 计算最小 win-rate。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="1c888563275246ea7df03e876ce2f68ebcf1758c5948a83cf26531ca117f4a8a">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/50_Preference_Data_and_Evaluation.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>PreferenceSample</code> · <code>summarize_preference_dataset</code> · <code>compute_win_rate</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -972,14 +941,14 @@ test_preference_summary()</code></pre></details>
 
   <script>
     const levelId = "50";
-    const checkpointData = {"current-core":{"answer":2,"explain":"明确有效偏好样本和比较口径。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：同一输入下 chosen 与 rejected 的配对。。另外两个选项分别解释「win rate」和「coverage」，注意区分。"},"v4-experiment":{"answer":0,"explain":"有效样本数是 10，分母不包含那两条无效记录。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：只报告胜率不报告分母；或在 baseline 与 candidate 中用不同规则处理无效样本。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -992,16 +961,18 @@ test_preference_summary()</code></pre></details>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1026,7 +997,7 @@ test_preference_summary()</code></pre></details>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1068,11 +1039,15 @@ test_preference_summary()</code></pre></details>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1103,6 +1078,7 @@ test_preference_summary()</code></pre></details>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

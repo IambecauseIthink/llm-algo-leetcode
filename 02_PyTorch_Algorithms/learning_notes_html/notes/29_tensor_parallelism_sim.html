@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,252 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 29 | 零基础导学关卡</p>
-        <h1>Tensor Parallelism Sim | Tensor 并行模拟</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>Tensor 并行模拟</h1>
+        <p class="course-subtitle">Tensor Parallelism Sim</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">29_Tensor_Parallelism_Sim.ipynb</span>
           <span class="pill">并行通信</span><span class="pill">Tensor Parallelism</span><span class="pill">通信</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">column: concat(XW_i); row: sum(X_iW_i)</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">Column Parallel：切输出列，每张卡只产出一段特征</a></li><li><a href="#mission-2">Row Parallel：同步切输入维，每张卡算完整输出的部分和</a></li><li><a href="#mission-3">从两种通信回到测试：shape 对了，还要证明数值等价</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="fa07ba7c9b7a07b5c8c5dd98b653b6ede8491af468d37916d100cdfa3f0b3020">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../29_Tensor_Parallelism_Sim.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>29. Tensor Parallelism Sim | Tensor 并行模拟</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>Tensor Parallelism</code>, <code>通信</code> | <strong>目标人群：</strong> 并行通信学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>ZeRO 主要切训练状态，Pipeline 主要切模型层；但很多大模型里的单个 Linear 本身就很大，即使按层切完，某一层的矩阵乘法仍可能成为显存和计算瓶颈。这时需要把一个权重矩阵沿维度拆到多张卡上共同计算。</p>
-<p>Tensor Parallelism 的核心就是按张量维度切分 Linear：Column Parallel 切输出维度，通常需要 All-Gather；Row Parallel 切输入维度，通常需要 All-Reduce。本节用纯 PyTorch 模拟这两种切法，重点看清切分方向、局部输出和通信模式如何对应。完成后，你应该能区分 ZeRO、Pipeline 和 Tensor Parallelism 各自“切的对象”是什么。</p>
-<p><strong>关键词：</strong> <code>Tensor Parallelism</code>, <code>Column Parallel</code>, <code>Row Parallel</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 沿列方向 (dim=1) 对 A 进行切片</li><li>TODO 2: 每张卡使用自己本地的权重分片，对输入 X 进行矩阵乘法计算</li><li>TODO 3: 将各 GPU 计算的结果沿特征维度 (dim=1) 拼接起来</li><li>TODO 4: 沿行方向 (dim=0) 对 A 进行切片，并同步切分 X</li><li>TODO 5: 每张卡使用自己本地的输入/权重分片，进行矩阵乘法计算</li><li>TODO 6: 将各 GPU 的部分结果按元素相加，恢复完整输出</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能回答 ZeRO 切分训练状态、Pipeline 切分模型层分别解决什么问题，再观察 Tensor Parallelism 如何切分单个矩阵。</p>
-<ul>
-<li><a href="27_zero_optimizer_sim.html">27. ZeRO Optimizer Sim | ZeRO 优化器模拟</a></li>
-<li><a href="28_pipeline_parallelism_microbatch.html">28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/26_Parallel_Strategy_Decision_Framework.ipynb">P1: 26. Parallel Strategy Decision Framework | 并行策略决策框架</a></li>
-</ul>
-<hr>
-<h3>Step 1: TP 的两种切法</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/29_tensor_parallel_split.svg" alt="Tensor Parallelism：权重切分决定通信位置"></p>
-<p>假设输入 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span></eq> 形状为 <code>(batch, in_dim)</code>，权重 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 形状为 <code>(in_dim, out_dim)</code>，经过线性层变为 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mi>X</mi><mi>A</mi></mrow><annotation encoding="application/x-tex">Y = XA</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord mathnormal">A</span></span></span></span></eq>，形状 <code>(batch, out_dim)</code>。</p>
-<blockquote>
-<p><strong>Column Parallel (列切分)：切分 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 的列 (输出维度)</strong></p>
-<ol>
-<li><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 被竖着切成左右两块 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>A</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">A_1, A_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 分别放到 GPU 0 和 1。</li>
-<li>GPU 0 计算 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Y</mi><mn>1</mn></msub><mo>=</mo><mi>X</mi><msub><mi>A</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">Y_1 = X A_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>，GPU 1 计算 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Y</mi><mn>2</mn></msub><mo>=</mo><mi>X</mi><msub><mi>A</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Y_2 = X A_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>。</li>
-<li><strong>通信：</strong> 各自算完后，通过 <code>All-Gather</code>，把左右结果拼起来，得到完整的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mo stretchy="false">[</mo><msub><mi>Y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>Y</mi><mn>2</mn></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">Y = [Y_1, Y_2]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span></eq>。
-<em>适用场景：MLP 的第一个全连接层（扩大隐藏维度时）。</em></li>
-</ol>
-</blockquote>
-<blockquote>
-<p><strong>Row Parallel (行切分)：切分 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 的行 (输入维度)</strong></p>
-<ol>
-<li><eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span></eq> 被横着切成上下两块 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>A</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">A_1, A_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 分别放到 GPU 0 和 1。</li>
-<li>输入 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span></eq> 也要沿着特征维度切成左右两半 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>X</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">X_1, X_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 给不同的卡。</li>
-<li>GPU 0 计算 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Y</mi><mn>1</mn></msub><mo>=</mo><msub><mi>X</mi><mn>1</mn></msub><msub><mi>A</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">Y_1 = X_1 A_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>，GPU 1 计算 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Y</mi><mn>2</mn></msub><mo>=</mo><msub><mi>X</mi><mn>2</mn></msub><msub><mi>A</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Y_2 = X_2 A_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>。</li>
-<li><strong>通信：</strong> 完整的结果其实是两者的加和：<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><msub><mi>Y</mi><mn>1</mn></msub><mo>+</mo><msub><mi>Y</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Y = Y_1 + Y_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>。所以需要做一次 <code>All-Reduce (Sum)</code>。
-<em>适用场景：MLP 的第二个全连接层（缩回原始维度时）。</em></li>
-</ol>
-</blockquote>
-<p><strong>精妙之处</strong>：如果把 Column Parallel 放前面，Row Parallel 放后面，中间甚至可以省掉一次通信！</p>
-<h3>Step 2: Column 与 Row Parallelism 的通信路径</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/29_tensor_parallel_communication.svg" alt="Tensor Parallelism：切分方向决定通信算子">
-在一个两层的前馈网络 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mi>X</mi><mo>⋅</mo><msub><mi>W</mi><mn>1</mn></msub><mo>⋅</mo><msub><mi>W</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">Y = X \cdot W_1 \cdot W_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 中：</p>
-<ul>
-<li>我们将 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">W_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 按列切分（Column Parallel），得到两块。计算后各个 GPU 得到不完整的部分输出矩阵。</li>
-<li>紧接着，将 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">W_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 按行切分（Row Parallel），利用刚才的部分输出分别与之相乘。</li>
-<li>最后，所有 GPU 执行一次 <code>All-Reduce</code> 聚合结果。这样在两层神经网络中，只产生了一次通信开销！</li>
-</ul>
-<h3>Step 3: 代码实现框架</h3>
-<p>你需要实现张量切片操作（类似 <code>torch.chunk</code>），分别针对线性层的权重矩阵在维度 0 或维度 1 进行切割。然后在模拟多进程执行时，分别利用切好的局部权重完成前向传播，最终利用 <code>torch.sum</code> 模拟一次 All-Reduce 收集聚合数据。</p>
-<h3>Step 4: 动手实战</h3>
-<p><strong>要求</strong>：请补全下方代码，分别实现 Column Parallel 和 Row Parallel 两种张量并行切分方式，并验证它们与单卡全量计算一致。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def tensor_parallel_column_sim(X: torch.Tensor, A: torch.Tensor, num_gpus: int = 2):
-    &quot;&quot;&quot;
-    模拟 Column Parallel Linear: Y = X @ A
-    将权重 A 沿列 (输出特征维度) 切分，分布到不同的 GPU 上计算，最后拼接。
+<section class="lessons">
 
-    参数:
-    X: 形状 (batch, in_features)
-    A: 形状 (in_features, out_features)
-    &quot;&quot;&quot;
-    in_features, out_features = A.shape
-    assert out_features % num_gpus == 0, &quot;输出维度必须能被 GPU 数量整除&quot;
-
-    chunk_size = out_features // num_gpus
-
-    # 1. 模拟将权重加载到不同 GPU 的显存中
-    # a_chunks 是一个列表，代表各 GPU 本地保存的权重分片
-    a_chunks = []
-    for i in range(num_gpus):
-        start_idx = i * chunk_size
-        end_idx = start_idx + chunk_size
-        # ==========================================
-        # TODO 1: 沿列方向 (dim=1) 对 A 进行切片
-        # ==========================================
-        # a_chunk = ???
-        a_chunks.append(a_chunk)
-
-    # 2. 模拟各 GPU 并行前向计算
-    # 在真实环境中，X 会被广播到所有 GPU (因为是列切分，输入不需要切)
-    y_chunks = []
-    for i in range(num_gpus):
-        # ==========================================
-        # TODO 2: 每张卡使用自己本地的权重分片，对输入 X 进行矩阵乘法计算
-        # ==========================================
-        # y_local = ???
-        y_chunks.append(y_local)
-
-    # 3. 模拟 All-Gather 通信操作
-    # ==========================================
-    # TODO 3: 将各 GPU 计算的结果沿特征维度 (dim=1) 拼接起来
-    # ==========================================
-    # Y_tp = ???
-    return Y_tp
-
-
-def tensor_parallel_row_sim(X: torch.Tensor, A: torch.Tensor, num_gpus: int = 2):
-    &quot;&quot;&quot;
-    模拟 Row Parallel Linear: Y = X @ A
-    将权重 A 沿行 (输入特征维度) 切分，输入 X 也同步切分，最后将各卡输出求和。
-
-    参数:
-    X: 形状 (batch, in_features)
-    A: 形状 (in_features, out_features)
-    &quot;&quot;&quot;
-    in_features, out_features = A.shape
-    assert in_features % num_gpus == 0, &quot;输入维度必须能被 GPU 数量整除&quot;
-
-    chunk_size = in_features // num_gpus
-
-    # 1. 模拟将输入和权重切分给不同 GPU 的显存中
-    x_chunks = []
-    a_chunks = []
-    for i in range(num_gpus):
-        start_idx = i * chunk_size
-        end_idx = start_idx + chunk_size
-        # ==========================================
-        # TODO 4: 沿行方向 (dim=0) 对 A 进行切片，并同步切分 X
-        # ==========================================
-        # a_chunk = ???
-        # x_chunk = ???
-        a_chunks.append(a_chunk)
-        x_chunks.append(x_chunk)
-
-    # 2. 模拟各 GPU 并行前向计算
-    y_outputs = []
-    for i in range(num_gpus):
-        # ==========================================
-        # TODO 5: 每张卡使用自己本地的输入/权重分片，进行矩阵乘法计算
-        # ==========================================
-        # y_local = ???
-        y_outputs.append(y_local)
-
-    # 3. 模拟 All-Reduce (Sum)
-    # ==========================================
-    # TODO 6: 将各 GPU 的部分结果按元素相加，恢复完整输出
-    # ==========================================
-    # Y_tp = ???
-    return Y_tp
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
-def test_tensor_parallel():
-    try:
-        torch.manual_seed(42)
-        batch_size = 4
-        in_dim = 16
-        out_dim = 32
-
-        # 原始数据
-        X = torch.randn(batch_size, in_dim)
-        A = torch.randn(in_dim, out_dim)
-
-        # 1. 单卡全量计算作为 Ground Truth
-        Y_ref = X @ A
-
-        # 2. 模拟 2 张卡的 Column Parallel
-        Y_col = tensor_parallel_column_sim(X, A, num_gpus=2)
-        diff_col = torch.max(torch.abs(Y_ref - Y_col))
-        print(f&quot;Column Parallel 最大误差: {diff_col.item():.6e}&quot;)
-        assert Y_col.shape == Y_ref.shape, &quot;Column Parallel 输出形状错误！&quot;
-        assert diff_col &lt; 1e-5, &quot;Column Parallel 模拟结果与单卡全量计算不一致！&quot;
-
-        # 3. 模拟 2 张卡的 Row Parallel
-        Y_row = tensor_parallel_row_sim(X, A, num_gpus=2)
-        diff_row = torch.max(torch.abs(Y_ref - Y_row))
-        print(f&quot;Row Parallel 最大误差: {diff_row.item():.6e}&quot;)
-        assert Y_row.shape == Y_ref.shape, &quot;Row Parallel 输出形状错误！&quot;
-        assert diff_row &lt; 1e-5, &quot;Row Parallel 模拟结果与单卡全量计算不一致！&quot;
-
-        # 4. 维度约束检查
-        try:
-            tensor_parallel_column_sim(X, A[:, :30], num_gpus=2)
-            raise AssertionError(&quot;Column Parallel 应该要求输出维度可整除&quot;)
-        except AssertionError:
-            pass
-
-        try:
-            tensor_parallel_row_sim(X[:, :15], A[:15], num_gpus=2)
-            raise AssertionError(&quot;Row Parallel 应该要求输入维度可整除&quot;)
-        except AssertionError:
-            pass
-
-        print(&quot;✅ Column Parallel (列切分) 矩阵计算与拼接逻辑正确！&quot;)
-        print(&quot;✅ Row Parallel (行切分) 矩阵计算与求和逻辑正确！&quot;)
-        print(&quot;掌握了 Megatron-LM 的核心张量切分思路，单卡装不下的大规模参数量再也不是问题。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError, RuntimeError) as e:
-        if isinstance(e, AttributeError):
-            print(&quot;代码未完成，无法找到必要的属性&quot;)
-        elif isinstance(e, NameError):
-            print(&quot;代码可能未完成，导致了变量未定义&quot;)
-        elif isinstance(e, TypeError):
-            print(&quot;代码可能未完成，导致了类型错误&quot;)
-        elif isinstance(e, ValueError):
-            print(&quot;代码可能未完成，导致了张量维度错误&quot;)
-        elif isinstance(e, AssertionError):
-            print(&quot;代码可能未完成，导致了断言失败&quot;)
-        else:
-            print(&quot;代码可能未完成，导致了运行时错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except Exception as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise
-
-test_tensor_parallel()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="tp-column-slice-compute-gather">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="tp-column-slice-compute-gather">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Column Parallel：切输出列，每张卡只产出一段特征</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">设 X 是 [4,16]，A 是 [16,32]，两张卡平均切 A 的输出列。</p>
             <p class="predict-q">第 1 张卡完成局部矩阵乘法后，y_local 的 shape 应该是什么？</p>
             <div class="predict-options">
@@ -1272,14 +1052,11 @@ test_tensor_parallel()
                 <input type="radio" name="predict-tp-column-slice-compute-gather" value="2">
                 <span>[4,32]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="tp-column-slice-compute-gather">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="tp-column-slice-compute-gather">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="tp-column-slice-compute-gather">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>先给维度起名字：X 是 [batch, in_features]，A 是 [in_features, out_features]，完整结果 Y 是 [batch, out_features]。</li><li>Column Parallel 中的 column 指 A 的列，也就是输出特征。输入 X 不切，它会交给每张卡。</li><li>二维切片 A[:, start:end] 保留全部输入行，只取一段输出列；矩阵乘法的中间维必须同为 in_features。</li><li>torch.cat 是拼接，不做数值相加。沿 dim=1 拼接后，输出特征数才会恢复为 out_features。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>先给维度起名字：X 是 [batch, in_features]，A 是 [in_features, out_features]，完整结果 Y 是 [batch, out_features]。</li><li>Column Parallel 中的 column 指 A 的列，也就是输出特征。输入 X 不切，它会交给每张卡。</li><li>二维切片 A[:, start:end] 保留全部输入行，只取一段输出列；矩阵乘法的中间维必须同为 in_features。</li><li>torch.cat 是拼接，不做数值相加。沿 dim=1 拼接后，输出特征数才会恢复为 out_features。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1372,24 +1149,36 @@ joined = torch.cat(local_outputs, dim=1)       # [3, 12]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="tp-column-slice-compute-gather-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 1-3：先写出每行代码前后的 shape，再依次实现列切片、局部矩阵乘法和按特征维拼接。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-1">
+                <span>shape/dtype/device：a_chunk 应为 [in_features,out_features/num_gpus]，y_local 为 [batch,out_features/num_gpus]；切片和矩阵乘法会保持 X/A 原有 dtype 与 device，不要另造 CPU 张量。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-2">
+                <span>测试：运行 test_tensor_parallel，重点核对 Y_col.shape == Y_ref.shape 且最大绝对误差小于 1e-5。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-column-slice-compute-gather-3">
+                <span>常见错误排查：若 shape 少一半，检查是否漏了 cat；若乘法报错，检查是否切了 A 的 dim=0；若列顺序错，检查分片 append 顺序。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="tp-row-slice-compute-reduce">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="tp-row-slice-compute-reduce">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Row Parallel：同步切输入维，每张卡算完整输出的部分和</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">X 是 [4,16]，A 是 [16,32]，两张卡沿输入维切分。</p>
             <p class="predict-q">每张卡的 x_chunk、a_chunk、y_local shape 依次是什么？</p>
             <div class="predict-options">
@@ -1405,14 +1194,11 @@ joined = torch.cat(local_outputs, dim=1)       # [3, 12]</code></pre></div>
                 <input type="radio" name="predict-tp-row-slice-compute-reduce" value="2">
                 <span>[4,16]、[8,32]、[4,32]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="tp-row-slice-compute-reduce">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="tp-row-slice-compute-reduce">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="tp-row-slice-compute-reduce">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Row Parallel 中的 row 指 A 的行，也就是输入特征。A 按 dim=0 切时，X 必须按自己的 dim=1 切同一段特征。</li><li>局部 X 是 [batch, in_features/G]，局部 A 是 [in_features/G, out_features]，两者仍可做矩阵乘法。</li><li>每张卡的 y_local 都是 [batch, out_features]；它只包含一部分输入特征带来的贡献。</li><li>torch.stack 会新增 GPU 维得到 [G,batch,out_features]，再沿 dim=0 求和才模拟 All-Reduce Sum。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>Row Parallel 中的 row 指 A 的行，也就是输入特征。A 按 dim=0 切时，X 必须按自己的 dim=1 切同一段特征。</li><li>局部 X 是 [batch, in_features/G]，局部 A 是 [in_features/G, out_features]，两者仍可做矩阵乘法。</li><li>每张卡的 y_local 都是 [batch, out_features]；它只包含一部分输入特征带来的贡献。</li><li>torch.stack 会新增 GPU 维得到 [G,batch,out_features]，再沿 dim=0 求和才模拟 All-Reduce Sum。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1502,24 +1288,36 @@ merged = torch.stack(partial_sums, dim=0).sum(dim=0)</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="tp-row-slice-compute-reduce-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 4-6：用同一 start_idx:end_idx 同步切 X 的 dim=1 与 A 的 dim=0，再完成局部乘法和按卡维求和。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-1">
+                <span>shape/dtype/device：x_chunk 为 [batch,in_features/num_gpus]，a_chunk 为 [in_features/num_gpus,out_features]，每个 y_local 为 [batch,out_features]；切片保持原 dtype/device，stack 要求各结果一致。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-2">
+                <span>测试：运行 test_tensor_parallel，核对 Y_row.shape 与 Y_ref 相同，且 diff_row 小于 1e-5。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-row-slice-compute-reduce-3">
+                <span>常见错误排查：矩阵维不匹配时检查两处切片区间；输出宽度变大时检查是否误用 cat；数值偏差大时检查 sum 是否沿新加的 dim=0。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="tp-contract-tests-and-composition">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="tp-contract-tests-and-composition">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>从两种通信回到测试：shape 对了，还要证明数值等价</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">某个 Row Parallel 实现返回 [4,64]，而 Y_ref 是 [4,32]。</p>
             <p class="predict-q">最可能发生了什么？</p>
             <div class="predict-options">
@@ -1535,14 +1333,11 @@ merged = torch.stack(partial_sums, dim=0).sum(dim=0)</code></pre></div>
                 <input type="radio" name="predict-tp-contract-tests-and-composition" value="2">
                 <span>最大绝对误差恰好为 0</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="tp-contract-tests-and-composition">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="tp-contract-tests-and-composition">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="tp-contract-tests-and-composition">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Y_ref = X @ A 是单卡基准；并行模拟的目标不是得到相近 shape，而是得到同一个矩阵。</li><li>torch.max(torch.abs(Y_ref - Y_tp)) 给出最大绝对误差，测试要求 Column 和 Row 都小于 1e-5。</li><li>Column 的局部输出分占不同列，通信是拼接；Row 的局部输出重叠在同一 shape，通信是求和。</li><li>两种函数都要求被切维度能被 num_gpus 整除：Column 检查 out_features，Row 检查 in_features。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>Y_ref = X @ A 是单卡基准；并行模拟的目标不是得到相近 shape，而是得到同一个矩阵。</li><li>torch.max(torch.abs(Y_ref - Y_tp)) 给出最大绝对误差，测试要求 Column 和 Row 都小于 1e-5。</li><li>Column 的局部输出分占不同列，通信是拼接；Row 的局部输出重叠在同一 shape，通信是求和。</li><li>两种函数都要求被切维度能被 num_gpus 整除：Column 检查 out_features，Row 检查 in_features。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1630,16 +1425,36 @@ assert error &lt; 1e-5</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="tp-contract-tests-and-composition-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>收口 TODO 1-6：在每个 append 和最终 return 前打印一次 shape，确认 Column 是分列后拼接，Row 是同 shape 部分和后归约。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-1">
+                <span>shape/dtype/device：最终 Y_col/Y_row 都应与 Y_ref 的 [batch,out_features]、dtype、device 一致；本 CPU-first Notebook 不应主动迁移设备或改精度。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-2">
+                <span>测试：完整运行 test_tensor_parallel，记录 diff_col 与 diff_row；同时手工调用一次非法 Column 输出维度和非法 Row 输入维度，确认入口 assert 真正触发。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tp-contract-tests-and-composition-3">
+                <span>常见错误排查：shape 错先查切分/合并轴，shape 对但误差大再查分片顺序、X/A 区间配对和求和维度。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="fa07ba7c9b7a07b5c8c5dd98b653b6ede8491af468d37916d100cdfa3f0b3020">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/29_Tensor_Parallelism_Sim.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>tensor_parallel_column_sim</code> · <code>tensor_parallel_row_sim</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1659,10 +1474,10 @@ assert error &lt; 1e-5</code></pre></div>
     const predictData = {"tp-column-slice-compute-gather":{"answer":0,"revealNote":"每张卡保留全部 4 个样本，只负责 32/2=16 个输出特征，因此是 [4,16]。"},"tp-row-slice-compute-reduce":{"answer":0,"revealNote":"输入特征 16 被平分为 8；局部乘法的输出特征仍是完整的 32。"},"tp-contract-tests-and-composition":{"answer":0,"revealNote":"Row 的每个局部输出本来就是 [4,32]；cat 会把宽度错误地扩大到 64，正确动作是逐元素求和。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "29";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1675,16 +1490,18 @@ assert error &lt; 1e-5</code></pre></div>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1709,7 +1526,7 @@ assert error &lt; 1e-5</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1751,11 +1568,15 @@ assert error &lt; 1e-5</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1786,6 +1607,7 @@ assert error &lt; 1e-5</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

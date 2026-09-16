@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
-  <title>Level 38 | Prefill-Decode Disaggregation | PD 分离</title>
+  <title>Level 38 | Prefill / Decode Disaggregation | Prefill / Decode 分离</title>
   <style>
     :root {
       --bg: #f7f6f1;
@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,494 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 38 | 零基础导学关卡</p>
-        <h1>Prefill-Decode Disaggregation | PD 分离</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>Prefill / Decode 分离</h1>
+        <p class="course-subtitle">Prefill / Decode Disaggregation</p>
+        <p class="lead">Prefill 处理输入，Decode 逐步生成。拆成两个池像把备菜和出菜分工，但两边速度不匹配会产生新队列，状态交接也有成本。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/38_Prefill_Decode_Disaggregation.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">38_Prefill_Decode_Disaggregation.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">推理服务</span><span class="pill">PD Disaggregation</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">读菜单与做菜速度不同，分成两条生产线就一定更快吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="cd219df85273a3fba52172fc9268764b9839a7c376fe771e0accc8f2919303e2">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../38_Prefill_Decode_Disaggregation.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/38_Prefill_Decode_Disaggregation.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>38. Prefill-Decode Disaggregation | PD 分离</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>推理服务</code>, <code>PD Disaggregation</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>PD 分离不是为了把系统切得更复杂，而是为了把 <code>prefill</code> 和 <code>decode</code> 两种完全不同的压力拆开。前者更偏算力和带宽，后者更偏 KV cache 驻留和调度。如果把两者混在一个资源池里，系统常常会既吃不满算力，又挤爆缓存预算。<code>34</code>、<code>36</code>、<code>37</code> 分别把 prefix、decode 和 KV cache 的局部优化讲清了，而 <code>38</code> 进一步回答：当这些局部压力已经明显分化时，是否应该把系统级资源池也拆开。</p>
-<p>这一节不实现完整 serving 系统，而是先用一个最小教学模拟把三件事固定下来：请求流量如何分层、哪些请求适合进入独立 prefill 池、以及拆池带来的收益是否足以覆盖复杂度上升。学完后，你应该能看清“局部优化 -&gt; 流量分化 -&gt; 系统拆池”这条判断链，而不是把 PD 分离误解成纯架构口号。</p>
-<p><strong>关键词：</strong> <code>prefill</code>, <code>decode</code>, <code>queue</code>, <code>kv residency</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1：统计 prefill-heavy、decode-heavy 和 mixed 请求数量。</li><li>TODO 2：根据请求规模生成三个逻辑池的分配计划。</li><li>TODO 3：比较共享池和拆分方案，并输出 keep_split。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能比较 prefill 与 decode 的计算、带宽和 KV Cache 压力，再判断它们是否值得使用不同的资源池。</p>
-<ul>
-<li><a href="34_prefix_caching_and_chunked_prefill.html">34. Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充</a></li>
-<li><a href="36_decode_scheduling.html">36. Decode Scheduling | Decode 调度</a></li>
-<li><a href="37_kv_cache_scheduling.html">37. KV Cache Scheduling | KV Cache 调度</a></li>
-</ul>
-<hr>
-<h3>Step 1: 先分清 prefill 和 decode 的压力来源</h3>
-<p>一次请求先处理输入，再逐 token 生成输出。先按请求记录这两段的规模，才能判断拆分是否有依据。</p>
-<table>
-<thead>
-<tr>
-<th>请求形态</th>
-<th>主要压力</th>
-<th>先观察什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>长输入、短生成</td>
-<td>prefill 的 attention 计算与输入访存</td>
-<td>输入处理时间、prefill 吞吐、队列长度</td>
-</tr>
-<tr>
-<td>短输入、长生成</td>
-<td>decode 迭代、KV Cache 驻留与排队</td>
-<td>TPOT、KV Cache 占用、decode 队列</td>
-</tr>
-<tr>
-<td>输入和生成都长</td>
-<td>两段压力叠加</td>
-<td>端到端延迟、吞吐和两类队列</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/38_pd_disaggregation.svg" alt="Prefill 与 Decode 的拆分流程：分类、交接与指标比较"></p>
-<h3>Step 2: 把请求流量写成显式账本</h3>
-<p>先把每个请求的输入长度、生成长度和当前状态记录下来。这样可以从同一份账本识别流量构成，再比较共享池和拆分方案的资源需求。</p>
-<table>
-<thead>
-<tr>
-<th>字段类别</th>
-<th>记录内容</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>核心：请求标识</td>
-<td>请求名称或 ID</td>
-<td>在分类、分池和结果表之间追踪同一个请求</td>
-</tr>
-<tr>
-<td>核心：输入规模</td>
-<td><code>prompt_tokens</code></td>
-<td>估计 prefill 工作量和输入处理压力</td>
-</tr>
-<tr>
-<td>核心：生成规模</td>
-<td><code>decode_tokens</code></td>
-<td>估计 decode 迭代次数和 KV Cache 驻留时间</td>
-</tr>
-<tr>
-<td>状态：前缀复用</td>
-<td><code>cache_hit</code></td>
-<td>说明输入处理是否可能复用已有前缀</td>
-</tr>
-<tr>
-<td>状态：所在队列</td>
-<td><code>queue</code></td>
-<td>观察请求当前处于 prefill、decode 或共享队列</td>
-</tr>
-</tbody>
-</table>
-<p>一条请求账本可以写成“请求 a：输入 4000 token、生成 64 token、命中前缀、位于 prefill 队列”。前 3 个核心字段用于判断请求形态，后 2 个状态字段用于观察复用和排队变化；它们共同构成后续拆分判断的输入。</p>
-<h3>Step 3: 比较拆分收益与交接代价</h3>
-<p>PD 分离的核心不是“拆开就更快”，而是判断流量分化后，独立资源池带来的收益能否覆盖请求交接和资源组织成本。先从吞吐、延迟和资源使用观察收益，再把交接时间、缓存迁移和空闲容量纳入判断。</p>
-<table>
-<thead>
-<tr>
-<th>观察对象</th>
-<th>需要比较的指标</th>
-<th>读数代表什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>吞吐收益</td>
-<td><code>throughput_gain</code></td>
-<td>拆分后单位时间完成的请求或 token 是否增加</td>
-</tr>
-<tr>
-<td>交互延迟</td>
-<td><code>TTFT</code>、<code>TPOT</code>、<code>P95</code>、<code>latency_delta_ms</code></td>
-<td>输入等待、生成速度和长尾请求是否改善</td>
-</tr>
-<tr>
-<td>交接成本</td>
-<td><code>handoff_time</code>、KV Cache 迁移时间、通信量</td>
-<td>请求从 prefill 池进入 decode 池需要付出的代价</td>
-</tr>
-<tr>
-<td>资源代价</td>
-<td>两类 worker 的显存、算力和空闲容量</td>
-<td>分池后是否出现一侧拥塞、另一侧闲置</td>
-</tr>
-<tr>
-<td>最终判断</td>
-<td><code>accept / tune / reject</code></td>
-<td>收益是否足以覆盖交接与资源组织成本</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 机制实验可以比较吞吐和延迟方向；交接时间、KV Cache 迁移和 worker 空闲容量需要在真实 backend 中测量。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/38_pd_decision_mechanism.svg" alt="PD 分离的流量分类、资源交接与指标决策机制"></p>
-<h3>Step 4: 实现请求分类、分池与拆分决策</h3>
-<p>题目区把前面的账本和判断框架落成三个函数：先统计请求构成，再生成分池计划，最后根据吞吐、延迟和交接代价输出拆分结论。实现时保持输入字段与上面表格一致，便于把模拟结果替换成真实 backend 的记录。</p>
-<table>
-<thead>
-<tr>
-<th>实现位置</th>
-<th>输入</th>
-<th>输出</th>
-<th>测试时观察</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>summarize_request_mix</code></td>
-<td>请求的 <code>prompt_tokens</code>、<code>decode_tokens</code> 和分类阈值</td>
-<td>三类请求数量</td>
-<td>三类数量之和等于请求总数，边界请求分类稳定</td>
-</tr>
-<tr>
-<td><code>plan_pd_split</code></td>
-<td>请求名称、两类长度阈值</td>
-<td><code>prefill_pool</code>、<code>decode_pool</code>、<code>shared_pool</code></td>
-<td>每个请求只进入一个池，分池结果保留输入顺序</td>
-</tr>
-<tr>
-<td><code>evaluate_pd_decision</code></td>
-<td>baseline 与 split 的吞吐、P95</td>
-<td>增益、延迟变化和 <code>keep_split</code></td>
-<td>吞吐增加且 P95 不恶化时才保留拆分</td>
-</tr>
-</tbody>
-</table>
-<p>完成 CPU 测试后，再把同样的请求账本和指标字段带入 Step 5；Step 5 只负责说明真实 backend / 多 GPU 证据需要哪些条件。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def summarize_request_mix(requests: List[Dict[str, int]], long_prompt_threshold: int) -&gt; Dict[str, int]:
-    &quot;&quot;&quot;按输入长度和生成长度统计三类请求。
+<section class="lessons">
 
-    返回 prefill-heavy、decode-heavy 和 mixed 的请求数量；这里只做流量分类，
-    不代表真实 backend 已经完成了资源隔离。
-
-    你需要返回：
-    - prefill_heavy: 长 prompt、短 decode 的请求数
-    - decode_heavy: 短 prompt、长 decode 的请求数
-    - mixed: 其他请求数
-    &quot;&quot;&quot;
-    # TODO 1：统计 prefill-heavy、decode-heavy 和 mixed 请求数量。
-    # 提示：先创建结果字典，再逐个请求判断属于哪一类。
-    # result = ???
-    # if ???:
-    #     result['prefill_heavy'] += 1
-    # elif ???:
-    #     result['decode_heavy'] += 1
-    # else:
-    #     result['mixed'] += 1
-    raise NotImplementedError
-
-
-def plan_pd_split(requests: List[Dict[str, int]], long_prompt_threshold: int, long_decode_threshold: int) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;根据请求规模生成三个逻辑池的分配计划。
-
-    返回请求名称列表；它是调度账本，不会启动 worker 或搬运 KV Cache。
-    &quot;&quot;&quot;
-    # TODO 2：根据请求规模生成三个逻辑池的分配计划。
-    # 提示：先创建三个列表，再根据 prompt/decode 长度把 request name 放进去。
-    # prefill_pool = ???
-    # decode_pool = ???
-    # shared_pool = ???
-    raise NotImplementedError
-
-
-def evaluate_pd_decision(baseline: Dict[str, float], split_run: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;比较共享池与拆分方案的吞吐、P95 延迟，并输出保留建议。
-
-    throughput_gain 是绝对差值，latency_delta_ms 是拆分减基线。
-    &quot;&quot;&quot;
-    # TODO 3：比较共享池和拆分方案，并输出 keep_split。
-    # 提示：先算 throughput_gain 和 latency_delta_ms，再决定 keep_split。
-    # throughput_gain = ???
-    # latency_delta_ms = ???
-    # keep_split = ???
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code>def test_pd_disaggregation_template():
-    try:
-        requests = [
-            {'name': 'a', 'prompt_tokens': 4000, 'decode_tokens': 64},
-            {'name': 'b', 'prompt_tokens': 256, 'decode_tokens': 512},
-            {'name': 'c', 'prompt_tokens': 1500, 'decode_tokens': 128},
-        ]
-        summary = summarize_request_mix(requests, long_prompt_threshold=2048)
-        assert summary == {'prefill_heavy': 1, 'decode_heavy': 1, 'mixed': 1}
-        assert sum(summary.values()) == len(requests), '请求分类数量必须守恒！'
-        boundary = summarize_request_mix(
-            [{'name': 'boundary', 'prompt_tokens': 2048, 'decode_tokens': 256}],
-            long_prompt_threshold=2048,
-        )
-        assert boundary == {'prefill_heavy': 0, 'decode_heavy': 0, 'mixed': 1}, '阈值边界分类不明确！'
-        plan = plan_pd_split(requests, long_prompt_threshold=2048, long_decode_threshold=256)
-        assert plan['prefill_pool'] == ['a']
-        assert plan['decode_pool'] == ['b']
-        assert plan['shared_pool'] == ['c']
-        planned = plan['prefill_pool'] + plan['decode_pool'] + plan['shared_pool']
-        assert sorted(planned) == sorted(item['name'] for item in requests), '分池结果必须覆盖且只覆盖每个请求一次！'
-        decision = evaluate_pd_decision(
-            {'throughput': 100, 'p95_latency_ms': 180},
-            {'throughput': 126, 'p95_latency_ms': 150},
-        )
-        assert decision['throughput_gain'] == 26
-        assert decision['latency_delta_ms'] == -30
-        assert decision['keep_split'] is True
-        reject = evaluate_pd_decision(
-            {'throughput': 100, 'p95_latency_ms': 180},
-            {'throughput': 110, 'p95_latency_ms': 210},
-        )
-        assert reject['throughput_gain'] == 10
-        assert reject['latency_delta_ms'] == 30
-        assert reject['keep_split'] is False, '延迟恶化时不能只看吞吐收益！'
-        print('测试通过：PD 分离模板可以工作。')
-    except NotImplementedError:
-        raise
-    except (NameError, AttributeError) as e:
-        raise NotImplementedError('请先完成 TODO 代码或检查字段名！') from e
-
-
-test_pd_disaggregation_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>读菜单与做菜速度不同，分成两条生产线就一定更快吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>PD 分离不是为了把系统切得更复杂，而是为了把 prefill 和 decode 两种完全不同的压力拆开。前者更偏算力和带宽，后者更偏 KV cache 驻留和调度。如果把两者混在一个资源池里，系统常常会既吃不满算力，又挤爆缓存预算。34、36、37 分别把 prefix、decode 和 KV cache 的局部优化讲清了，而 38 进一步回答：当这些局部压力已经明显分化时，是否应该把系统级资源池也拆开。</p>
-            <div class="notebook-content"><h3>Step 1: 先分清 prefill 和 decode 的压力来源</h3>
-<p>一次请求先处理输入，再逐 token 生成输出。先按请求记录这两段的规模，才能判断拆分是否有依据。</p>
-<table>
-<thead>
-<tr>
-<th>请求形态</th>
-<th>主要压力</th>
-<th>先观察什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>长输入、短生成</td>
-<td>prefill 的 attention 计算与输入访存</td>
-<td>输入处理时间、prefill 吞吐、队列长度</td>
-</tr>
-<tr>
-<td>短输入、长生成</td>
-<td>decode 迭代、KV Cache 驻留与排队</td>
-<td>TPOT、KV Cache 占用、decode 队列</td>
-</tr>
-<tr>
-<td>输入和生成都长</td>
-<td>两段压力叠加</td>
-<td>端到端延迟、吞吐和两类队列</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/38_pd_disaggregation.svg" alt="Prefill 与 Decode 的拆分流程：分类、交接与指标比较"></p>
-<h3>Step 2: 把请求流量写成显式账本</h3>
-<p>先把每个请求的输入长度、生成长度和当前状态记录下来。这样可以从同一份账本识别流量构成，再比较共享池和拆分方案的资源需求。</p>
-<table>
-<thead>
-<tr>
-<th>字段类别</th>
-<th>记录内容</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>核心：请求标识</td>
-<td>请求名称或 ID</td>
-<td>在分类、分池和结果表之间追踪同一个请求</td>
-</tr>
-<tr>
-<td>核心：输入规模</td>
-<td><code>prompt_tokens</code></td>
-<td>估计 prefill 工作量和输入处理压力</td>
-</tr>
-<tr>
-<td>核心：生成规模</td>
-<td><code>decode_tokens</code></td>
-<td>估计 decode 迭代次数和 KV Cache 驻留时间</td>
-</tr>
-<tr>
-<td>状态：前缀复用</td>
-<td><code>cache_hit</code></td>
-<td>说明输入处理是否可能复用已有前缀</td>
-</tr>
-<tr>
-<td>状态：所在队列</td>
-<td><code>queue</code></td>
-<td>观察请求当前处于 prefill、decode 或共享队列</td>
-</tr>
-</tbody>
-</table>
-<p>一条请求账本可以写成“请求 a：输入 4000 token、生成 64 token、命中前缀、位于 prefill 队列”。前 3 个核心字段用于判断请求形态，后 2 个状态字段用于观察复用和排队变化；它们共同构成后续拆分判断的输入。</p>
-<h3>Step 3: 比较拆分收益与交接代价</h3>
-<p>PD 分离的核心不是“拆开就更快”，而是判断流量分化后，独立资源池带来的收益能否覆盖请求交接和资源组织成本。先从吞吐、延迟和资源使用观察收益，再把交接时间、缓存迁移和空闲容量纳入判断。</p>
-<table>
-<thead>
-<tr>
-<th>观察对象</th>
-<th>需要比较的指标</th>
-<th>读数代表什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>吞吐收益</td>
-<td><code>throughput_gain</code></td>
-<td>拆分后单位时间完成的请求或 token 是否增加</td>
-</tr>
-<tr>
-<td>交互延迟</td>
-<td><code>TTFT</code>、<code>TPOT</code>、<code>P95</code>、<code>latency_delta_ms</code></td>
-<td>输入等待、生成速度和长尾请求是否改善</td>
-</tr>
-<tr>
-<td>交接成本</td>
-<td><code>handoff_time</code>、KV Cache 迁移时间、通信量</td>
-<td>请求从 prefill 池进入 decode 池需要付出的代价</td>
-</tr>
-<tr>
-<td>资源代价</td>
-<td>两类 worker 的显存、算力和空闲容量</td>
-<td>分池后是否出现一侧拥塞、另一侧闲置</td>
-</tr>
-<tr>
-<td>最终判断</td>
-<td><code>accept / tune / reject</code></td>
-<td>收益是否足以覆盖交接与资源组织成本</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 机制实验可以比较吞吐和延迟方向；交接时间、KV Cache 迁移和 worker 空闲容量需要在真实 backend 中测量。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/38_pd_decision_mechanism.svg" alt="PD 分离的流量分类、资源交接与指标决策机制"></p>
-<h3>Step 4: 实现请求分类、分池与拆分决策</h3>
-<p>题目区把前面的账本和判断框架落成三个函数：先统计请求构成，再生成分池计划，最后根据吞吐、延迟和交接代价输出拆分结论。实现时保持输入字段与上面表格一致，便于把模拟结果替换成真实 backend 的记录。</p>
-<table>
-<thead>
-<tr>
-<th>实现位置</th>
-<th>输入</th>
-<th>输出</th>
-<th>测试时观察</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>summarize_request_mix</code></td>
-<td>请求的 <code>prompt_tokens</code>、<code>decode_tokens</code> 和分类阈值</td>
-<td>三类请求数量</td>
-<td>三类数量之和等于请求总数，边界请求分类稳定</td>
-</tr>
-<tr>
-<td><code>plan_pd_split</code></td>
-<td>请求名称、两类长度阈值</td>
-<td><code>prefill_pool</code>、<code>decode_pool</code>、<code>shared_pool</code></td>
-<td>每个请求只进入一个池，分池结果保留输入顺序</td>
-</tr>
-<tr>
-<td><code>evaluate_pd_decision</code></td>
-<td>baseline 与 split 的吞吐、P95</td>
-<td>增益、延迟变化和 <code>keep_split</code></td>
-<td>吞吐增加且 P95 不恶化时才保留拆分</td>
-</tr>
-</tbody>
-</table>
-<p>完成 CPU 测试后，再把同样的请求账本和指标字段带入 Step 5；Step 5 只负责说明真实 backend / 多 GPU 证据需要哪些条件。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>Prefill 处理输入，Decode 逐步生成。拆成两个池像把备菜和出菜分工，但两边速度不匹配会产生新队列，状态交接也有成本。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>prefill</dt><dd>处理输入 token 并建立缓存状态。</dd></div><div><dt>decode</dt><dd>利用历史缓存逐 token 生成。</dd></div><div><dt>disaggregation</dt><dd>把两个阶段安排到不同资源池。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>判断是否保留 PD 拆池方案，需要什么依据？</p>
+            <p>本课中的「prefill」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只要 prefill 存在就必须拆池</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>利用历史缓存逐 token 生成。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>只看架构图是否有两个池</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>把两个阶段安排到不同资源池。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>请求分布和共享池/拆池的同口径成本收益</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>处理输入 token 并建立缓存状态。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1：统计 prefill-heavy、decode-heavy 和 mixed 请求数量。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>看两段能力</h4><p>一个简化流水线每秒能 prefill 8 个请求、decode 4 个请求，稳定完成率最多是每秒 4 个。</p></li><li><h4>加错地方</h4><p>把 prefill 从 8 加到 16，decode 仍是 4，瓶颈没有移动。</p></li><li><h4>算交接成本</h4><p>还要搬运 KV 状态并排队。容量公式只给出理想上界，不等于真实延迟。</p></li></ol><section class="learning-lab" data-lab="pipeline" aria-label="两段生产线，谁限制了完成率？">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>两段生产线，谁限制了完成率？</h4><p>只改变一个池的处理能力，观察瓶颈何时转移。</p></header>
+    <div class="lab-controls"><label for="lab-38-prefill"><span>Prefill 池能力 <output data-value="prefill" for="lab-38-prefill">8</output> 请求/s</span><input type="range" id="lab-38-prefill" name="prefill" min="1" max="16" step="1" value="8"></label><label for="lab-38-decode"><span>Decode 池能力 <output data-value="decode" for="lab-38-decode">4</output> 请求/s</span><input type="range" id="lab-38-decode" name="decode" min="1" max="16" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-38" data-challenge-label>算一算</label><div><input id="answer-38" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>理想两段能力为 8 与 4 请求/秒，完成率上限是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>4 请求/秒</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>8 请求/秒</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>12 请求/秒</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>prefill_capacity, decode_capacity = 8, 4
+ideal_capacity = min(prefill_capacity, decode_capacity)
+print(ideal_capacity)  # 4 requests/s (ideal bound)</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>看到拆池后某一阶段更快就宣布端到端更快。要看瓶颈池、交接和同一请求分布。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>看到拆池后某一阶段更快就宣布端到端更快。要看瓶颈池、交接和同一请求分布。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「prefill」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2：根据请求规模生成三个逻辑池的分配计划。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3：比较共享池和拆分方案，并输出 keep_split。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="e7e7f15cd5a3efd1419279d08eed9a1e9260df20486f0c6371278a0c3480550b">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/38_Prefill_Decode_Disaggregation.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_request_mix</code> · <code>plan_pd_split</code> · <code>evaluate_pd_decision</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1239,14 +940,14 @@ test_pd_disaggregation_template()
 
   <script>
     const levelId = "38";
-    const checkpointData = {"current-core":{"answer":2,"explain":"请求分布和共享池/拆池的同口径成本收益。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：处理输入 token 并建立缓存状态。。另外两个选项分别解释「decode」和「disaggregation」，注意区分。"},"v4-experiment":{"answer":0,"explain":"每个请求都要过两段，较慢的一段限制整条流水线。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：看到拆池后某一阶段更快就宣布端到端更快。要看瓶颈池、交接和同一请求分布。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1255,20 +956,22 @@ test_pd_disaggregation_template()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-cd219df85273";
+    const homeworkKey = statePrefix + levelId + "-homework-e7e7f15cd5a3";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1293,7 +996,7 @@ test_pd_disaggregation_template()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1335,11 +1038,15 @@ test_pd_disaggregation_template()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1370,6 +1077,7 @@ test_pd_disaggregation_template()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,880 +733,205 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 36 | 零基础导学关卡</p>
-        <h1>Decode Scheduling | 解码调度</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>解码调度</h1>
+        <p class="course-subtitle">Decode Scheduling</p>
+        <p class="lead">调度器每天都在回答“下一步服务谁”。排队顺序影响等待；分批执行又影响资源利用。先理解简单 FIFO，再研究更复杂的 phase、cache 和 priority 规则。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/36_Decode_Scheduling.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">36_Decode_Scheduling.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">解码</span><span class="pill">Scheduling</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">queue -&gt; schedule key -&gt; prefill/decode step -&gt; timeline</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">一家只有一位厨师的店，应该先做哪份订单？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="04e51c620471201bad77abf82d0e2b5e4bc871d370b6f52859b146d3e7a724bb">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../36_Decode_Scheduling.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/36_Decode_Scheduling.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>36. Decode Scheduling | 解码调度</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>解码</code>, <code>Scheduling</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>前面几节已经看过投机解码和多 Token 生成。现在把视角从单个请求扩展到一组同时生成的请求：有的刚完成输入处理，有的正在逐 Token 生成，有的即将结束。调度器需要根据这些状态决定下一步推进谁。</p>
-<p>本节关注请求状态、选择依据和调度结果之间的关系：同一批请求采用不同的选择规则时，服务顺序、等待时间和生成进度会如何变化。</p>
-<p><strong>关键词：</strong> <code>decode scheduling</code>, <code>prefill</code>, <code>batch reordering</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 构造请求状态，并加入调度队列</li><li>TODO 2: 定义调度排序键</li><li>TODO 3: 从 active 请求中选择本轮要调度的请求</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能区分请求的 prefill、decode 和完成状态，再观察调度器如何依据状态选择下一步请求。</p>
-<ul>
-<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
-<li><a href="23_speculative_decoding.html">23. Speculative Decoding | 投机解码</a></li>
-<li><a href="35_multi_token_decoding.html">35. Multi-Token Decoding | 多 Token 解码</a></li>
-</ul>
-<hr>
-<h3>Step 1: 多请求为什么需要 Decode 调度</h3>
-<p>前面几节已经看过投机解码和多 token 解码，它们改变了单个请求的生成方式。本节把这些请求放到同一个等待队列中：请求可能处于不同阶段，拥有不同的生成进度、优先级和缓存状态。调度器需要从活动请求中选择下一步推进的对象，在生成进度、响应延迟和请求公平性之间做出安排。</p>
-<p>前置的解码策略和多 token 生成提供了请求所处阶段、缓存状态和生成进度等信息。本节先把这些信息组织成请求状态，再形成排序策略，决定下一步推进谁。下面从状态、选择依据和调度影响三个方面建立问题全貌。</p>
-<p>调度器选择的还包括一次推进多少工作：普通 decode 通常推进一个 token，而投机或多 Token 路径可能在一次验证后接受一段 token。推进量越大，单次服务时间可能越长；因此调度规则需要同时观察请求等待时间、预计推进量和公平性。</p>
-<table>
-<thead>
-<tr>
-<th>观察对象</th>
-<th>要回答的问题</th>
-<th>对调度的影响</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>请求状态</td>
-<td>请求当前处于哪个生成阶段？</td>
-<td>决定是否优先完成 <code>prefill</code> 或继续 <code>decode</code></td>
-</tr>
-<tr>
-<td>选择依据</td>
-<td>为什么这次选择了某个请求？</td>
-<td>受到 cache、优先级和总长度影响</td>
-</tr>
-<tr>
-<td>调度目标</td>
-<td>希望改善哪类服务表现？</td>
-<td>影响生成进度、响应延迟和公平性</td>
-</tr>
-</tbody>
-</table>
-<p>这里的<strong>请求</strong>不是一句输入文本，而是带有阶段、进度、生成上限和缓存状态的活动对象；这里的<strong>调度</strong>也不是简单排序，而是每一步从未完成请求中选择一个并推进。图中的<strong>草稿验证</strong>指投机解码对候选 token 做接受或拒绝，它会影响请求进入调度器时携带的生成进度。下图把“请求携带什么信息”和“调度如何使用这些信息”放在同一条流程中。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/36_decode_scheduling_board.svg" alt="Decode 调度概念图：请求状态进入调度器并循环推进"></p>
-<h3>Step 2: 请求状态与生命周期机制</h3>
-<p>调度前先把一个请求看成一个会变化的状态对象。它从 prefill（处理输入）进入 decode（逐步生成），每次被选中后前进一小步，达到生成上限后离开活动集合；调度器的工作就是反复读取这些状态并推进其中一个请求。</p>
-<table>
-<thead>
-<tr>
-<th>机制环节</th>
-<th>状态或动作</th>
-<th>机制含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>状态对象</td>
-<td>输入、阶段、生成进度、生成上限和缓存信息</td>
-<td>说明请求当前处于什么阶段，还需要生成多少内容</td>
-</tr>
-<tr>
-<td>状态转移</td>
-<td>prefill → decode</td>
-<td>请求完成输入处理，进入逐步生成阶段</td>
-</tr>
-<tr>
-<td>活动集合</td>
-<td>尚未完成的请求</td>
-<td>只保留仍需要推进的请求，已完成请求退出队列</td>
-</tr>
-<tr>
-<td>单步推进</td>
-<td>选中一个请求前进一轮</td>
-<td>每一轮只推进当前选中的请求，其他请求继续等待</td>
-</tr>
-<tr>
-<td>完成条件</td>
-<td>达到生成上限</td>
-<td>请求完成并从活动集合中退出</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: 调度策略与排序优先级</h3>
-<p>有了请求生命周期，还需要一条选择规则来比较多个活动请求。调度策略把请求阶段、缓存状态、业务优先级和序列长度组织成有先后顺序的排序键；字段越靠前，决策优先级越高，排序键越小的请求越早获得推进机会。</p>
-<p>下面的图展示排序字段的优先级，以及第一个不同字段如何决定两个请求的先后。具体字段如何写入 <code>_schedule_key</code>，留到 Step 4 的代码实现中完成。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/36_decode_sort_key.svg" alt="Decode 调度排序键：从左到右比较字段"></p>
-<h3>Step 4: 动手实现与结果观察</h3>
-<p><strong>动手任务</strong>：请补全下方 <code>DecodeSchedulerSim</code>，跑通“入队 → 排序 → 单步推进 → 持续调度”这条链路。需要完成三个位置：构造请求状态、定义排序键和选择本轮请求；执行步数的更新已经给出，作为 <code>max_steps</code> 的防护计数。代码中的检查负责保证输入长度和生成上限有效；这些约束属于调度器的输入契约，不是新的调度策略。</p>
-<p>完成代码后，按下面的表格逐项核对事件：先看触发条件，再看状态变化，最后结合排序键解释事件顺序。</p>
-<table>
-<thead>
-<tr>
-<th>事件</th>
-<th>发生条件</th>
-<th>状态变化</th>
-<th>观察重点</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>prefill_to_decode</code></td>
-<td>选中的请求仍处于 <code>prefill</code></td>
-<td><code>phase</code> 切换为 <code>decode</code></td>
-<td>请求完成输入处理，获得生成资格</td>
-</tr>
-<tr>
-<td><code>decode_one_step</code></td>
-<td>选中的请求处于 <code>decode</code>，尚未达到生成上限</td>
-<td><code>generated_len</code> 增加 1</td>
-<td>当前请求推进一步，其他请求继续等待</td>
-</tr>
-<tr>
-<td><code>finish</code></td>
-<td>生成后达到 <code>max_new_tokens</code></td>
-<td>请求从 active 集合中退出</td>
-<td>对照完成时间和 <code>wait_steps</code>，观察调度公平性</td>
-</tr>
-</tbody>
-</table>
-<p>本节的可选 GPU 实验只验证调度事件和 GPU 执行开销之间的关系，不替代真实 Serving benchmark：固定一组短输入和 <code>max_new_tokens</code>，在 GPU 上比较 FIFO 与本节排序规则的事件顺序、总耗时、生成吞吐、每个请求的完成步数、<code>wait_steps</code> 和峰值显存。真实的 TTFT、TPOT、P50/P99、连续批处理以及 vLLM / SGLang backend 对比，统一放到 70 节。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 5</summary><pre><code>Phase = Literal['prefill', 'decode']
+<section class="lessons">
 
-
-@dataclass
-class RequestState:
-    &quot;&quot;&quot;记录一个请求在 prefill/decode 调度过程中的最小状态。&quot;&quot;&quot;
-    request_id: int
-    prompt_len: int
-    max_new_tokens: int
-    generated_len: int = 0
-    phase: Phase = 'prefill'
-    priority: int = 0
-    cache_hit: bool = False
-    wait_steps: int = 0  # 仅用于观察等待，不参与当前排序键
-
-    @property
-    def total_len(self) -&gt; int:
-        return self.prompt_len + self.generated_len
-
-    @property
-    def done(self) -&gt; bool:
-        return self.generated_len &gt;= self.max_new_tokens
-
-
-class DecodeSchedulerSim:
-    &quot;&quot;&quot;用事件序列观察多个请求如何在 prefill 与 decode 之间推进。&quot;&quot;&quot;
-
-    def __init__(self):
-        self.queue: List[RequestState] = []
-        self.timeline: List[Dict[str, int | str]] = []
-
-    def enqueue(self, request_id: int, prompt_len: int, max_new_tokens: int = 2, priority: int = 0, cache_hit: bool = False) -&gt; None:
-        &quot;&quot;&quot;校验并登记请求；请求从 prefill 阶段开始。&quot;&quot;&quot;
-        if request_id in {item.request_id for item in self.queue}:
-            raise ValueError(f'重复的 request_id: {request_id}')
-        if prompt_len &lt;= 0 or max_new_tokens &lt;= 0:
-            raise ValueError('prompt_len 和 max_new_tokens 必须为正数')
-        # ==========================================
-        # TODO 1: 构造请求状态，并加入调度队列
-        # 提示: RequestState 默认处于 prefill 阶段；分别传入输入长度和生成上限
-        # ==========================================
-        # request = ???
-        self.queue.append(request)
-
-    def _schedule_key(self, req: RequestState) -&gt; tuple[int, int, int, int, int]:
-        &quot;&quot;&quot;返回当前示例策略的排序键；wait_steps 暂不参与排序。&quot;&quot;&quot;
-        # ==========================================
-        # TODO 2: 定义调度排序键
-        # 提示: prefill 优先于 decode，cache hit 优先于 cache miss，高 priority 更靠前；
-        #       tuple 会按从左到右的顺序比较字段
-        # ==========================================
-        phase_rank = 0 if req.phase == 'prefill' else 1
-        cache_rank = 0 if req.cache_hit else 1
-        # key = ???
-        return key
-
-    def step(self) -&gt; Dict[str, int | str] | None:
-        &quot;&quot;&quot;选择并推进一个活动请求，同时记录事件和等待步数。&quot;&quot;&quot;
-        active = [req for req in self.queue if not req.done]
-        if not active:
-            return None
-
-        # ==========================================
-        # TODO 3: 从 active 请求中选择本轮要调度的请求
-        # 提示: 使用 min(..., key=self._schedule_key) 选择排序最靠前的请求
-        # ==========================================
-        # chosen = ???
-
-        for req in active:
-            if req is not chosen:
-                req.wait_steps += 1
-
-        if chosen.phase == 'prefill':
-            chosen.phase = 'decode'
-            action = 'prefill_to_decode'
-        else:
-            chosen.generated_len += 1
-            action = 'finish' if chosen.done else 'decode_one_step'
-
-        event = {
-            'request_id': chosen.request_id,
-            'phase': 'prefill' if action == 'prefill_to_decode' else 'decode',
-            'action': action,
-            'prompt_len': chosen.prompt_len,
-            'generated_len': chosen.generated_len,
-            'max_new_tokens': chosen.max_new_tokens,
-            'wait_steps': chosen.wait_steps,
-        }
-        self.timeline.append(event)
-        return event
-
-    def run(self, max_steps: int = 100) -&gt; List[Dict[str, int | str]]:
-        &quot;&quot;&quot;持续推进请求，直到全部完成或达到步数上限。&quot;&quot;&quot;
-        if max_steps &lt; 0:
-            raise ValueError('max_steps 不能为负数')
-        steps = 0
-        while steps &lt; max_steps:
-            event = self.step()
-            if event is None:
-                break
-            # 每个成功事件消耗一个调度步；这是 max_steps 的防护计数，不是调度策略。
-            steps = steps + 1
-        return self.timeline
-</code></pre></details><details><summary>题目与测试代码 · Cell 6</summary><pre><code># 测试你的实现
-def test_decode_scheduler():
-    try:
-        sim = DecodeSchedulerSim()
-        sim.enqueue(request_id=1, prompt_len=2, max_new_tokens=2, priority=2, cache_hit=True)
-        sim.enqueue(request_id=2, prompt_len=3, max_new_tokens=3, priority=1, cache_hit=False)
-        sim.enqueue(request_id=3, prompt_len=1, max_new_tokens=1, priority=3, cache_hit=True)
-
-        assert len(sim.queue) == 3
-        assert sim.queue[0].phase == 'prefill'
-        assert sim.queue[0].prompt_len == 2
-        assert sim.queue[0].max_new_tokens == 2
-        assert sim._schedule_key(sim.queue[2]) &lt; sim._schedule_key(sim.queue[1])
-
-        # 其他字段相同时，request_id 提供稳定的最终排序
-        stable = DecodeSchedulerSim()
-        stable.enqueue(request_id=9, prompt_len=4, max_new_tokens=1)
-        stable.enqueue(request_id=3, prompt_len=4, max_new_tokens=1)
-        assert stable._schedule_key(stable.queue[1]) &lt; stable._schedule_key(stable.queue[0])
-        assert stable.step()['request_id'] == 3
-
-        first_event = sim.step()
-        assert first_event['request_id'] == 3
-        assert first_event['action'] == 'prefill_to_decode'
-        assert sim.queue[0].wait_steps == 1 and sim.queue[1].wait_steps == 1
-        events = sim.run(max_steps=20)
-        assert len(events) == 9
-        assert any(e['action'] == 'finish' for e in events)
-        assert all(req.done for req in sim.queue)
-        assert all(event['max_new_tokens'] &gt;= event['generated_len'] for event in events)
-        assert any(event['wait_steps'] &gt; 0 for event in events)
-
-        limited = DecodeSchedulerSim()
-        limited.enqueue(request_id=4, prompt_len=8, max_new_tokens=8)
-        assert len(limited.run(max_steps=2)) == 2
-
-        invalid = DecodeSchedulerSim()
-        try:
-            invalid.enqueue(request_id=5, prompt_len=0, max_new_tokens=1)
-            raise AssertionError('应拒绝非正 prompt_len')
-        except ValueError:
-            pass
-        invalid.enqueue(request_id=5, prompt_len=1, max_new_tokens=1)
-        try:
-            invalid.enqueue(request_id=5, prompt_len=1, max_new_tokens=1)
-            raise AssertionError('应拒绝重复 request_id')
-        except ValueError:
-            pass
-        try:
-            invalid.run(max_steps=-1)
-            raise AssertionError('应拒绝负数 max_steps')
-        except ValueError:
-            pass
-
-        assert sim.timeline is events
-
-        print('✅ DecodeSchedulerSim 测试通过')
-    except NotImplementedError as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except NameError as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_decode_scheduler()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="decode-request-state-and-schedule-key">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先把请求变成状态，再让 tuple 决定谁先运行</h2>
+          <h2>一家只有一位厨师的店，应该先做哪份订单？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">三个 active 请求分别是 A=(prefill, miss, priority=9)、B=(decode, hit, priority=99)、C=(prefill, hit, priority=2)。</p>
-            <p class="predict-q">按 Notebook 的 key，谁会最先被 min 选中？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-request-state-and-schedule-key" value="0">
-                <span>C</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-request-state-and-schedule-key" value="1">
-                <span>B</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-request-state-and-schedule-key" value="2">
-                <span>A</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="decode-request-state-and-schedule-key">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>调度器每天都在回答“下一步服务谁”。排队顺序影响等待；分批执行又影响资源利用。先理解简单 FIFO，再研究更复杂的 phase、cache 和 priority 规则。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>queue</dt><dd>已经到达但尚未执行的请求。</dd></div><div><dt>policy</dt><dd>决定从队列选谁的规则。</dd></div><div><dt>waiting time</dt><dd>开始服务时刻减去到达时刻。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="decode-request-state-and-schedule-key">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>dataclass 会根据字段定义自动生成构造函数；RequestState 没有显式传入 generated_len 和 phase 时，会使用 0 与 'prefill'。</li><li>Python 的 tuple 按从左到右逐项比较：第一项不同就不再看后面的项，因此排序规则也有明确的优先级层次。</li><li>min(items, key=fn) 比较的不是对象本身，而是 fn(item) 返回的键；键越小，对象越先被选中。</li><li>负号可以反转一个数字的排序方向：priority 越大，-priority 越小，所以高业务优先级会排在前面。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>调度器不能只保存 request_id，因为每次选择都依赖请求当前处于 prefill 还是 decode、是否命中 cache、优先级和长度。先把这些属性封装成 RequestState，再把业务规则翻译成一个从强到弱的 tuple，调度决策就从模糊描述变成了可检查的数据。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>enqueue</b>参数变成 RequestState</span>
-          <span><b>phase_rank</b>prefill=0，decode=1</span>
-          <span><b>cache_rank</b>hit=0，miss=1</span>
-          <span><b>tuple</b>从左到右决定先后</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 1 的对象契约</h4>
-            <div class="adv-contract">
-              <span><code>request_id</code></span><strong>请求的稳定标识</strong>
-              <span><code>prompt_len</code></span><strong>同时也是本模拟器的目标生成长度</strong>
-              <span><code>generated_len</code></span><strong>默认 0，decode 时逐步增加</strong>
-              <span><code>phase</code></span><strong>默认从 prefill 开始</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 2 的比较顺序</h4>
-            <div class="adv-steps">
-              <div><b>1</b><code>phase_rank</code><span>所有 prefill 都先于 decode</span></div>
-              <div><b>2</b><code>cache_rank</code><span>同阶段内 cache hit 优先</span></div>
-              <div><b>3</b><code>-req.priority</code><span>同条件下数值更大的优先级先跑</span></div>
-              <div><b>4</b><code>total_len, request_id</code><span>用长度与 id 稳定破平局</span></div>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>请求</th><th>状态</th><th>排序键前半段</th><th>为什么</th></tr></thead>
-          <tbody>
-            <tr><td>A</td><td>prefill, miss, priority=9</td><td><code>(0,1,-9,...)</code></td><td>阶段项是 0</td></tr>
-            <tr><td>B</td><td>decode, hit, priority=99</td><td><code>(1,0,-99,...)</code></td><td>阶段项是 1，仍排在 A 后</td></tr>
-            <tr><td>C</td><td>prefill, hit, priority=2</td><td><code>(0,0,-2,...)</code></td><td>同为 prefill，命中 cache 使它排在 A 前</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">排序键的第一项权力最大。不要看到 B 的 priority=99 就误判它先运行：Notebook 明确把 phase_rank 放在 tuple 最前面，因此任何 active prefill 都先于 decode。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用维修工单练习 dataclass 与多级排序</h4><pre><code>from dataclasses import dataclass
-
-@dataclass
-class Ticket:
-    ticket_id: int
-    urgent: bool = False
-    waiting_minutes: int = 0
-
-def ticket_key(ticket):
-    urgent_rank = 0 if ticket.urgent else 1
-    return (urgent_rank, -ticket.waiting_minutes, ticket.ticket_id)
-
-tickets = [Ticket(8), Ticket(3, True, 4), Ticket(5, True, 9)]
-chosen = min(tickets, key=ticket_key)  # ticket_id == 5</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>Ticket(...)</code> 的具名参数构造 -&gt; TODO 1 的 <code>RequestState(request_id=..., prompt_len=..., priority=..., cache_hit=...)</code>。</li>
-            <li><code>urgent_rank</code> -&gt; <code>phase_rank</code> 与 <code>cache_rank</code>：把布尔/类别规则变成可排序数字。</li>
-            <li><code>-waiting_minutes</code> -&gt; <code>-req.priority</code>：较大的原值获得较小的排序项。</li>
-            <li><code>ticket_id</code> -&gt; <code>req.request_id</code>：最后一个字段只负责稳定破平局。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么排序键里要写 -req.priority，而不是 req.priority？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「queue」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-request-state-and-schedule-key" value="0">
-                <span>因为 min 选择较小键，取负后高 priority 会变得更小</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>已经到达但尚未执行的请求。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-request-state-and-schedule-key" value="1">
-                <span>因为负号会把 priority 变成布尔值</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>决定从队列选谁的规则。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-request-state-and-schedule-key" value="2">
-                <span>因为 priority 必须是负数类型</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>开始服务时刻减去到达时刻。</span>
               </label></div>
-              <div class="feedback" data-feedback="decode-request-state-and-schedule-key"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="decode-request-state-and-schedule-key-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="decode-step-run-and-event-contract">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>一次只推进一个状态：从 step 事件走到 run 终止</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">一个请求初始 phase='prefill'、generated_len=0、prompt_len=1。</p>
-            <p class="predict-q">它完整结束需要产生几条事件？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-step-run-and-event-contract" value="0">
-                <span>2 条：一次切到 decode，一次 decode 后 finish</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-step-run-and-event-contract" value="1">
-                <span>1 条：prefill 时直接 finish</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-decode-step-run-and-event-contract" value="2">
-                <span>3 条：还要额外记录空队列事件</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="decode-step-run-and-event-contract">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>固定工作量</h4><p>三个请求同时到达，服务时长是 6、2、1。先暂时假设单服务台、不抢占。</p></li><li><h4>按先来顺序</h4><p>FIFO 等待分别为 0、6、8，平均 14/3≈4.67。</p></li><li><h4>按短任务优先</h4><p>顺序变成 1、2、6，等待 0、1、3，平均 4/3≈1.33；总服务量仍为 9，长请求公平性需要另外考虑。</p></li></ol><section class="learning-lab" data-lab="schedule" aria-label="重新排一次队，等待会怎样变？">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>重新排一次队，等待会怎样变？</h4><p>三个任务同时到达，比较 FIFO 与短任务优先。</p></header>
+    <div class="lab-controls"><label for="lab-36-long"><span>长任务时长 <output data-value="long" for="lab-36-long">6</output> 时间单位</span><input type="range" id="lab-36-long" name="long" min="3" max="12" step="1" value="6"></label><label for="lab-36-shortFirst"><span>短任务优先（0 关 / 1 开） <output data-value="shortFirst" for="lab-36-shortFirst">0</output> </span><input type="range" id="lab-36-shortFirst" name="shortFirst" min="0" max="1" step="1" value="0"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-36" data-challenge-label>算一算</label><div><input id="answer-36" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="decode-step-run-and-event-contract">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>列表推导式 [req for req in queue if not req.done] 会过滤完成请求；done 是 generated_len &gt;= prompt_len。</li><li>step 每次只做一个动作：prefill 请求切换到 decode，decode 请求才会把 generated_len 加 1。</li><li>None 是“没有 active 请求”的哨兵值；run 看到 None 必须 break，不能再增加 steps。</li><li>self.timeline 是同一个列表对象；run 返回 self.timeline，因此测试中的 sim.timeline is events 检查的是对象身份。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>把 step 想成调度器的一次时钟滴答。每滴答只选择一个请求并产生一条事件，run 只是反复调用 step。只要单步状态迁移正确、空队列能返回 None、计数器只在真实事件后增加，整个请求生命周期就能自然结束。</p>
-              <div class="adv-course">
-        <div class="adv-flow">
-          <span>active 过滤<br>排除 done</span>
-          <span>min + key<br>选 chosen</span>
-          <span>prefill<br>只改 phase</span>
-          <span>decode<br>generated_len + 1</span>
-          <strong>记录 event<br>append timeline</strong>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>单个 prompt_len=2 请求</h4>
-            <div class="adv-steps">
-              <div><b>1</b><code>prefill_to_decode</code><span>phase 变 decode，generated_len 仍为 0</span></div>
-              <div><b>2</b><code>decode_one_step</code><span>generated_len 变 1，尚未 done</span></div>
-              <div><b>3</b><code>finish</code><span>generated_len 变 2，达到 prompt_len</span></div>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>run 的循环不变量</h4>
-            <div class="adv-contract">
-              <span>有事件</span><strong>追加 timeline，然后 steps = steps + 1</strong>
-              <span>无事件</span><strong>step 返回 None，立即 break</strong>
-              <span>安全上限</span><strong>steps 永远不超过 max_steps</strong>
-              <span>返回对象</span><strong>直接返回 self.timeline，不复制</strong>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>测试输入</th><th>prefill 事件数</th><th>decode 事件数</th><th>总事件数</th></tr></thead>
-          <tbody>
-            <tr><td>prompt_len 2、3、1 的三个请求</td><td>3</td><td>2+3+1=6</td><td>9</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">本模拟器为了教学，把“目标生成长度”也设成 prompt_len，所以每个请求需要 1 次 prefill 转换加 prompt_len 次 decode。不要把真实服务里的 max_new_tokens 规则自行加进 Notebook。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用下载任务练习哨兵循环</h4><pre><code>jobs = [2, 1]
-events = []
-
-def advance_once():
-    active = [i for i, left in enumerate(jobs) if left &gt; 0]
-    if not active:
-        return None
-    chosen = min(active)
-    jobs[chosen] -= 1
-    event = {'job': chosen, 'left': jobs[chosen]}
-    events.append(event)
-    return event
-
-steps = 0
-while steps &lt; 10:
-    event = advance_once()
-    if event is None:
-        break
-    steps = steps + 1</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>active</code> 过滤未完成下载 -&gt; Notebook 已写好的未 done 请求列表。</li>
-            <li><code>min(active)</code> -&gt; TODO 3 的 <code>min(active, key=self._schedule_key)</code>。</li>
-            <li><code>event is None</code> -&gt; run 的终止条件；None 不代表一次成功调度。</li>
-            <li><code>steps = steps + 1</code> -&gt; TODO 4，必须放在 None 检查之后。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>steps 应该在什么时候加 1？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>三个请求同时到达，FIFO 服务时长 6、2、1，第三个等待多久？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-step-run-and-event-contract" value="0">
-                <span>step 返回 None 后</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>1 个时间单位</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-step-run-and-event-contract" value="1">
-                <span>step 返回真实 event 后</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>8 个时间单位</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-decode-step-run-and-event-contract" value="2">
-                <span>每次进入 while 的第一行</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>9 个时间单位</span>
               </label></div>
-              <div class="feedback" data-feedback="decode-step-run-and-event-contract"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="decode-step-run-and-event-contract-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>durations = [6, 2, 1]
+clock, waits = 0, []
+for duration in durations:
+    waits.append(clock)
+    clock += duration
+print(waits)  # [0, 6, 8]</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把教学例子的短任务优先当作所有在线系统的最佳策略。未来任务长度可能未知，还要处理饥饿和业务优先级。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「queue」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>把教学例子的短任务优先当作所有在线系统的最佳策略。未来任务长度可能未知，还要处理饥饿和业务优先级。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="02bb09650ed9c5dea125113c8f09959812de57991916f7e2f7c9eb9672e2fc01">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/36_Decode_Scheduling.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>RequestState</code> · <code>total_len</code> · <code>done</code> · <code>DecodeSchedulerSim</code> · <code>enqueue</code> · <code>step</code> · <code>run</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1618,14 +943,14 @@ while steps &lt; 10:
 
   <script>
     const levelId = "36";
-    const checkpointData = {"decode-request-state-and-schedule-key":{"answer":0,"explain":"调度器使用 min；若直接放正数，反而会让低 priority 先被选中。"},"decode-step-run-and-event-contract":{"answer":1,"explain":"这样 max_steps 统计的才是成功执行的调度动作，空队列只负责结束循环。"}};
-    const predictData = {"decode-request-state-and-schedule-key":{"answer":0,"revealNote":"先比 phase：A/C 胜过 B；再比 cache：C 的 hit 胜过 A 的 miss。"},"decode-step-run-and-event-contract":{"answer":0,"revealNote":"prefill 只切换阶段；下一次 step 才增加 generated_len 并产生 finish。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：已经到达但尚未执行的请求。。另外两个选项分别解释「policy」和「waiting time」，注意区分。"},"v4-experiment":{"answer":1,"explain":"等待是前两个的服务时间 6+2，不包括自己的执行。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：把教学例子的短任务优先当作所有在线系统的最佳策略。未来任务长度可能未知，还要处理饥饿和业务优先级。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "38";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1634,20 +959,22 @@ while steps &lt; 10:
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-04e51c620471";
+    const homeworkKey = statePrefix + levelId + "-homework-02bb09650ed9";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1672,7 +999,7 @@ while steps &lt; 10:
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1714,11 +1041,15 @@ while steps &lt; 10:
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1749,6 +1080,7 @@ while steps &lt; 10:
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

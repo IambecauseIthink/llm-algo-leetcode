@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,241 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 11 | 零基础导学关卡</p>
-        <h1>LR Schedulers WSD Cosine | WSD 余弦学习率调度器</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>WSD 余弦学习率调度器</h1>
+        <p class="course-subtitle">LR Schedulers WSD Cosine</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">11_LR_Schedulers_WSD_Cosine.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">学习率调度</span><span class="pill">WSD/Cosine</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">lr(t) = lr_min + 0.5 * (lr_max-lr_min) * (1 + cos(pi * t / T))</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">Warmup：先弄清 scheduler 眼中的 step</a></li><li><a href="#mission-2">Stable：用累计边界守住主要学习窗口</a></li><li><a href="#mission-3">Decay：把阶段进度映射到余弦退火</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="bb39c118e729a43250bf6d863cbff2dcfb74a9347150cc1dd6ae5b75249b150b">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../11_LR_Schedulers_WSD_Cosine.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>11. LR Schedulers WSD Cosine | WSD 余弦学习率调度器</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>学习率调度</code>, <code>WSD/Cosine</code> | <strong>目标人群：</strong> 训练机制学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>训练不是只选一个固定学习率然后一路跑到底。刚开始参数和优化器状态都不稳定，学习率太大容易把 loss 冲飞；中期如果过早衰减，模型又会失去继续吸收数据的能力；到了末期，还需要把更新幅度收下来帮助收敛。</p>
-<p>WSD 把这个训练节奏拆成三段：先 warmup 把学习率抬起来，中间 stable 保持学习能力，最后 decay 做收敛退火。这一节在训练微调路线里和 <code>12</code> 一起组成 <code>13</code> 的直接前置：<code>11</code> 负责更新幅度怎么变，<code>12</code> 负责一次有效更新怎样凑出来。学完这里，后面再看 <code>13</code> 和 <code>60</code> 时，你会更容易把学习率曲线和训练稳定性、收敛速度、项目报告里的调参结论连起来；如果这里没学明白，后面很容易只把 scheduler 当现成配置项，而说不清训练为什么在 warmup、stable 和 decay 三段表现不同。</p>
-<p><strong>关键词：</strong> <code>warmup</code>, <code>stable</code>, <code>decay</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: Warmup 阶段</li><li>TODO 2: Stable 阶段</li><li>TODO 3: Cosine Decay 阶段</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先补齐优化器、最小训练接口和训练循环，再看学习率如何按阶段控制更新幅度。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | 优化器与损失</a></li>
-<li><a href="../../../00_Prerequisites/12_PyTorch_Minimal_Training_Interface.ipynb">P0: 12. PyTorch Minimal Training Interface | 最小训练接口</a></li>
-<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 理解学习率调度后，下一步最自然的是把它放进梯度累积、端到端实验和微调项目里，观察收敛节奏与训练稳定性。</p>
-<ul>
-<li><a href="12_gradient_accumulation.html">12. Gradient Accumulation | 梯度累积</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-<li><a href="60_lora_fine_tuning_project.html">60. LoRA Fine-Tuning Project | LoRA 微调项目</a></li>
-<li><a href="62_instruction_fine_tuning_project.html">62. Instruction Fine-Tuning Project | 指令微调项目</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心机制剖析</h3>
-<p>WSD 调度器把训练过程拆成 Warmup、Stable 和 Decay 三段，每一段对应一种不同的训练需求。</p>
-<blockquote>
-<p><strong>为什么一定要有 Warmup (预热)？</strong></p>
-<ol>
-<li><strong>模型随机初始化</strong>时，梯度非常大规模且方向混乱。如果直接给最大的学习率（如 3e-4），大规模的梯度更新会瞬间把模型权重冲飞 (Loss 直接 NaN)。</li>
-<li><strong>AdamW 优化器</strong>在刚开始时，其用于分母的“二阶动量 (方差的移动平均)”还没收集够数据，非常小。除以一个极小的数会导致实际更新步长不可控。Warmup 给了优化器几千步的“收集方差”的时间。</li>
-</ol>
-</blockquote>
-<blockquote>
-<p><strong>Cosine Decay 的痛点与 WSD 的崛起 (LLaMA-3 的选择)：</strong></p>
-<ul>
-<li><strong>传统的 Cosine Decay</strong> 需要在训练<strong>一开始就定死总步数 (Total Steps)</strong>，慢慢按照余弦曲线下降到 0。这导致一个致命问题：如果你发现数据还没训完，想加数据继续训 (Continued Pre-training)，此时学习率已经降到底了，模型失去了学习新知识的能力。</li>
-<li><strong>WSD (Warmup-Stable-Decay) 调度器</strong> 准确解决了这个问题。它把训练分为三段：
-<ol>
-<li><strong>Warmup (预热)</strong>：线性增长到最大学习率。</li>
-<li><strong>Stable (稳定期)</strong>：保持最大学习率不变，吃尽海量数据。如果想加数据，无限延长这个阶段即可。</li>
-<li><strong>Decay (高效退火)</strong>：只在训练的最后 10% 或 5% 阶段，用一个陡峭的函数（如线性或余弦）快速降到 0，让模型迅速收敛收拢。</li>
-</ol>
-</li>
-</ul>
-</blockquote>
-<h3>Step 2: WSD 调度器的数学曲线</h3>
-<p>先看清三段学习率曲线分别长什么样，再把它们翻译成代码判断。
-Warmup-Stable-Decay (WSD) 是现代大模型训练里常见的三段式节奏：</p>
-<ol>
-<li><strong>Warmup</strong>: 学习率从接近 0 线性增长到基础学习率 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>η</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\eta_{max}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">ma</span><span class="mord mathnormal mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>，避免训练初期更新过猛。</li>
-<li><strong>Stable</strong>: 保持 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>η</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\eta_{max}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">ma</span><span class="mord mathnormal mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> 训练主要数据，让模型在稳定更新幅度下继续吸收样本。</li>
-<li><strong>Cosine Decay</strong>: 在最后阶段使用余弦退火，将学习率平滑降至 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>η</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\eta_{min}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">min</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq>，帮助收敛。</li>
-</ol>
-<p>后面的 <code>TODO 1-3</code> 会把这三段翻译成 <code>get_lr()</code> 里的分支。这里实现的是 <strong>WSD + cosine decay</strong>，不是线性 decay。</p>
-<h3>Step 3: 代码实现框架</h3>
-<p>代码实现的核心，是把数学曲线翻译成 <code>get_lr()</code> 里的阶段判断。
-继承自 <code>torch.optim.lr_scheduler.LRScheduler</code>，你需要实现核心的 <code>get_lr()</code> 方法。在其中利用 <code>self.last_epoch</code> 判断当前步数处于哪一个阶段，然后根据上述数学公式计算并返回此时的学习率数组。</p>
-<p>在真实训练循环里，通常先执行 <code>optimizer.step()</code> 完成当前参数更新，再执行 <code>scheduler.step()</code> 推进下一步学习率。接到后面的端到端微调实验时，你可以把 <code>num_warmup_steps / num_stable_steps / num_decay_steps</code> 理解成按 optimizer update 计数，而不是按 micro-batch 计数。</p>
-<h4>图解：WSD 按 optimizer update 推进</h4>
-<p>WSD 的横轴应该按 <code>optimizer.step()</code> 后的有效更新计数，而不是按 micro-batch 计数。</p>
-<pre><code class="language-text">lr
-│                 stable: base_lr
-│                 ┌─────────────────────────────┐
-│                /                               \
-│               /                                 \  cosine decay
-│              /                                   \
-│_____________/                                     \____ min_lr
-│   warmup
-└────────────────────────────────────────────────────────► update step
-     0          warmup_end             decay_start     total_steps
-</code></pre>
-<p>典型训练循环：</p>
-<pre><code class="language-python">loss.backward()
-optimizer.step()
-scheduler.step()
-optimizer.zero_grad()
-</code></pre>
-<p>如果用了梯度累积，多个 micro-batch 合成一次有效更新；scheduler 只在这次有效更新后前进一步。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/11_wsd_curve.svg" alt="WSD 学习率曲线图"></p>
-<h3>Step 4: 动手实战</h3>
-<p>接下来把三段曲线写成可运行的调度器。</p>
-<p><strong>要求</strong>：请补全下方 <code>WSD_Scheduler</code> 类。我们需要继承 PyTorch 原生的 <code>torch.optim.lr_scheduler.LRScheduler</code>，实现它的 <code>get_lr()</code> 方法。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>class WSD_Scheduler(LRScheduler):
-    &quot;&quot;&quot;
-    手动实现 LLaMA-3 风格的 Warmup-Stable-Decay (WSD) 学习率调度器。
-    &quot;&quot;&quot;
-    def __init__(self, optimizer, num_warmup_steps, num_stable_steps, num_decay_steps, min_lr_ratio=0.1, last_epoch=-1):
-        self.num_warmup_steps = num_warmup_steps
-        self.num_stable_steps = num_stable_steps
-        self.num_decay_steps = num_decay_steps
-        self.min_lr_ratio = min_lr_ratio
-        self.total_steps = num_warmup_steps + num_stable_steps + num_decay_steps
-        super().__init__(optimizer, last_epoch)
+<section class="lessons">
 
-    def get_lr(self):
-        step = self._step_count - 1
-
-        lrs = []
-        for base_lr in self.base_lrs:
-            min_lr = base_lr * self.min_lr_ratio
-
-            # ==========================================
-            # TODO 1: Warmup 阶段
-            # 规则: 当 step &lt; num_warmup_steps 时，学习率从 0 线性增长到 base_lr
-            # ==========================================
-            if step &lt; self.num_warmup_steps:
-                # current_lr = ???
-                pass
-
-            # ==========================================
-            # TODO 2: Stable 阶段
-            # 规则: 学习率保持在 base_lr
-            # ==========================================
-            elif step &lt; (self.num_warmup_steps + self.num_stable_steps):
-                # current_lr = ???
-                pass
-
-            # ==========================================
-            # 退火期按进度把学习率从 base_lr 拉到 min_lr。
-            # TODO 3: Cosine Decay 阶段
-            # 规则: 学习率从 base_lr 余弦衰减到 min_lr
-            # 提示: 计算 decay 阶段的进度比例，使用余弦函数
-            # ==========================================
-            else:
-                # current_lr = ???
-                pass
-
-            lrs.append(current_lr)
-
-        return lrs</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 测试并可视化你的实现
-def test_and_plot_wsd():
-    try:
-        # 1. 初始化一个假的优化器 (用来承载学习率)
-        dummy_model = torch.nn.Linear(2, 2)
-        max_lr = 3e-4
-        optimizer = torch.optim.AdamW(dummy_model.parameters(), lr=max_lr)
-
-        # 2. 设定 WSD 的三个阶段步数
-        warmup = 1000   # 10%
-        stable = 7000   # 70%
-        decay = 2000    # 20%
-        total = warmup + stable + decay
-
-        # 3. 初始化我们实现的 Scheduler
-        scheduler = WSD_Scheduler(
-            optimizer,
-            num_warmup_steps=warmup,
-            num_stable_steps=stable,
-            num_decay_steps=decay,
-            min_lr_ratio=0.1
-        )
-
-        # 4. 模拟训练过程，收集学习率
-        lrs = []
-        for _ in range(total):
-            lrs.append(optimizer.param_groups[0]['lr'])
-            optimizer.step()
-            scheduler.step()
-
-        # 5. 断言关键点的正确性
-        assert lrs[0] == 0.0, &quot;第一步应该是 0 (或者极小值)&quot;
-        assert abs(lrs[warmup] - max_lr) &lt; 1e-8, &quot;Warmup 结束时应该是最大学习率&quot;
-        assert abs(lrs[warmup + stable - 1] - max_lr) &lt; 1e-8, &quot;Stable 阶段应该维持最大学习率&quot;
-        assert abs(lrs[-1] - (max_lr * 0.1)) &lt; 1e-8, &quot;Decay 结束时应该是最小学习率 (max_lr * 0.1)&quot;
-
-        print(&quot;✅ 数学逻辑断言通过！&quot;)
-
-        # 6. 画出学习率曲线
-        plt.figure(figsize=(10, 5))
-        plt.plot(lrs, label=&quot;Learning Rate&quot;, color='blue', linewidth=2)
-        plt.axvline(x=warmup, color='r', linestyle='--', alpha=0.5, label='End Warmup')
-        plt.axvline(x=warmup + stable, color='g', linestyle='--', alpha=0.5, label='Start Decay')
-        plt.title(&quot;LLaMA-3 Style WSD (Warmup-Stable-Decay) Scheduler&quot;)
-        plt.xlabel(&quot;Training Steps&quot;)
-        plt.ylabel(&quot;Learning Rate&quot;)
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-        plt.close()
-
-        print(&quot; 你成功实现并可视化了目前最先进的大模型学习率调度器。现在你不怕被面试官问到 LLaMA-3 的退火策略了！&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except Exception as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise
-
-test_and_plot_wsd()</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="wsd-warmup-step-semantics">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="wsd-warmup-step-semantics">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Warmup：先弄清 scheduler 眼中的 step</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">base_lr=3e-4，warmup_steps=1000，step=500。</p>
             <p class="predict-q">Warmup 线性公式得到的 current_lr 是多少？</p>
             <div class="predict-options">
@@ -1261,14 +1052,11 @@ test_and_plot_wsd()</code></pre></details>
                 <input type="radio" name="predict-wsd-warmup-step-semantics" value="2">
                 <span>0</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="wsd-warmup-step-semantics">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="wsd-warmup-step-semantics">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="wsd-warmup-step-semantics">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>WSD_Scheduler 继承 LRScheduler，base_lrs 来自 optimizer 初始化时每个参数组的学习率。</li><li>当前实现使用 step = self._step_count - 1；构造 scheduler 时父类会初始化一次，因此测试收集到的第一个 optimizer lr 必须是 0。</li><li>Warmup 条件是 step &lt; num_warmup_steps，当前学习率按 step/num_warmup_steps 线性增长。</li><li>get_lr() 必须为每个 base_lr 计算一个 current_lr，追加到 lrs 列表后返回。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>WSD_Scheduler 继承 LRScheduler，base_lrs 来自 optimizer 初始化时每个参数组的学习率。</li><li>当前实现使用 step = self._step_count - 1；构造 scheduler 时父类会初始化一次，因此测试收集到的第一个 optimizer lr 必须是 0。</li><li>Warmup 条件是 step &lt; num_warmup_steps，当前学习率按 step/num_warmup_steps 线性增长。</li><li>get_lr() 必须为每个 base_lr 计算一个 current_lr，追加到 lrs 列表后返回。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1347,24 +1135,36 @@ for step in range(warmup_steps):
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="wsd-warmup-step-semantics-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 1：在 warmup 分支中按当前 step 比例计算 current_lr，确保 step=0 时为 0。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-1">
+                <span>边界自检：step=0、500、999、1000 分别应为 0、半程、接近最大、最大值。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-2">
+                <span>多参数组自检：代码必须使用 for 循环里的 base_lr，而不是硬编码测试 max_lr。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-warmup-step-semantics-3">
+                <span>错误诊断：lrs[0] 非 0 时检查是否误加 1；warmup 边界不等于 max_lr 时检查分支条件与 Stable 赋值。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="wsd-stable-window">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="wsd-stable-window">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Stable：用累计边界守住主要学习窗口</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">warmup=1000、stable=7000，当前 step=7500。</p>
             <p class="predict-q">当前属于哪个阶段，current_lr 应是多少？</p>
             <div class="predict-options">
@@ -1380,14 +1180,11 @@ for step in range(warmup_steps):
                 <input type="radio" name="predict-wsd-stable-window" value="2">
                 <span>Warmup，等于 0.75×base_lr</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="wsd-stable-window">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="wsd-stable-window">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="wsd-stable-window">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Stable 从 num_warmup_steps 开始，到 num_warmup_steps + num_stable_steps 之前结束。</li><li>elif 分支只有在 warmup 条件已失败时进入，因此不需要重复写下界。</li><li>稳定期 current_lr 就是当前参数组的 base_lr，不做比例、余弦或 min_lr 限制。</li><li>Notebook 测试检查 lrs[warmup] 与 lrs[warmup+stable-1] 都等于 max_lr。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>Stable 从 num_warmup_steps 开始，到 num_warmup_steps + num_stable_steps 之前结束。</li><li>elif 分支只有在 warmup 条件已失败时进入，因此不需要重复写下界。</li><li>稳定期 current_lr 就是当前参数组的 base_lr，不做比例、余弦或 min_lr 限制。</li><li>Notebook 测试检查 lrs[warmup] 与 lrs[warmup+stable-1] 都等于 max_lr。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1468,24 +1265,36 @@ for step in range(10):
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="wsd-stable-window-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 2：Stable 分支直接令 current_lr 等于当前 base_lr。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-stable-window-1">
+                <span>边界自检：测试配置下 step=1000 与 step=7999 都是最大值，step=8000 才进入 Decay。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-stable-window-2">
+                <span>检查分支使用累计边界 warmup+stable，不要把 stable 当作从训练开头计数的终点。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-stable-window-3">
+                <span>错误诊断：平台期提前结束时检查是否漏加 warmup；平台期值变化时检查是否误用了 Warmup/Decay 的比例。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="wsd-cosine-decay-and-test">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="wsd-cosine-decay-and-test">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Decay：把阶段进度映射到余弦退火</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">Decay 刚开始时 decay_step=0。</p>
             <p class="predict-q">此时 cosine_decay 与 current_lr 分别应是什么？</p>
             <div class="predict-options">
@@ -1501,14 +1310,11 @@ for step in range(10):
                 <input type="radio" name="predict-wsd-cosine-decay-and-test" value="2">
                 <span>0.5 与两者中点</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="wsd-cosine-decay-and-test">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="wsd-cosine-decay-and-test">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="wsd-cosine-decay-and-test">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Decay 的局部步数是全局 step 减去 warmup 与 stable 两段长度；这样进入 Decay 的第一步局部进度为 0。</li><li>decay_ratio=decay_step/num_decay_steps，把当前局部步数映射到 0 到接近 1。</li><li>0.5*(1+cos(pi*ratio)) 会从 1 平滑降到 0；再用 min_lr + (base_lr-min_lr)*cosine_decay 映射到实际学习率区间。</li><li>min_lr=base_lr*min_lr_ratio。Notebook 的当前参考实现和测试都是余弦衰减；末尾文字中的线性公式与代码不一致，不作为本 TODO 合同。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>Decay 的局部步数是全局 step 减去 warmup 与 stable 两段长度；这样进入 Decay 的第一步局部进度为 0。</li><li>decay_ratio=decay_step/num_decay_steps，把当前局部步数映射到 0 到接近 1。</li><li>0.5*(1+cos(pi*ratio)) 会从 1 平滑降到 0；再用 min_lr + (base_lr-min_lr)*cosine_decay 映射到实际学习率区间。</li><li>min_lr=base_lr*min_lr_ratio。Notebook 的当前参考实现和测试都是余弦衰减；末尾文字中的线性公式与代码不一致，不作为本 TODO 合同。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1597,16 +1403,36 @@ print(cosine_factor) # 0.5</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="wsd-cosine-decay-and-test-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 3：计算 Decay 局部步数、0–1 进度、余弦系数，再把它映射到 [min_lr,base_lr]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-1">
+                <span>手算自检：ratio=0、0.5、1 时，current_lr 分别是 base_lr、区间中点、min_lr。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-2">
+                <span>运行完整测试：首项、Warmup 边界、Stable 末端和最后 min_lr 四个断言都要通过；绘图单元会创建后关闭图像。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="wsd-cosine-decay-and-test-3">
+                <span>错误诊断：末值到 0 时检查是否漏加 min_lr；一进入 Decay 就骤降时检查是否忘减前两段；曲线方向相反时检查余弦系数公式。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="bb39c118e729a43250bf6d863cbff2dcfb74a9347150cc1dd6ae5b75249b150b">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/11_LR_Schedulers_WSD_Cosine.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>WSD_Scheduler</code> · <code>get_lr</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1626,10 +1452,10 @@ print(cosine_factor) # 0.5</code></pre></div>
     const predictData = {"wsd-warmup-step-semantics":{"answer":0,"revealNote":"完成比例 500/1000=0.5，因此学习率是 base_lr 的一半。"},"wsd-stable-window":{"answer":0,"revealNote":"Stable 的绝对区间是 [1000,8000)，7500 仍在其中。"},"wsd-cosine-decay-and-test":{"answer":0,"revealNote":"ratio=0，cos(0)=1，所以余弦系数为 1，区间映射回 base_lr。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "11";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1642,16 +1468,18 @@ print(cosine_factor) # 0.5</code></pre></div>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1676,7 +1504,7 @@ print(cosine_factor) # 0.5</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1718,11 +1546,15 @@ print(cosine_factor) # 0.5</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1753,6 +1585,7 @@ print(cosine_factor) # 0.5</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

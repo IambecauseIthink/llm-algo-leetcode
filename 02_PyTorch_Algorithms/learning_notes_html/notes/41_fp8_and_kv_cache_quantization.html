@@ -733,807 +733,202 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 41 | 零基础导学关卡</p>
-        <h1>FP8 and KV Cache Quantization | FP8 与 KV Cache 量化</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>FP8 与 KV Cache 量化</h1>
+        <p class="course-subtitle">FP8 and KV Cache Quantization</p>
+        <p class="lead">模型权重是固定书本，KV Cache 是每轮增加的笔记。压缩书本与压缩笔记解决不同的问题；越长的对话越要看缓存账本。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">41_FP8_and_KV_Cache_Quantization.ipynb</span>
           <span class="pill">量化压缩</span><span class="pill">FP8</span><span class="pill">KV Cache</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">float tensor &lt;-&gt; int8 values + scale</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">书变薄了，为什么随着对话变长，书包还是越来越重？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="d46edde6d60e974ee5d0e013a0f6d4cd01c8e00e7f88f3b76ecd3e78b5f9b7df">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../41_FP8_and_KV_Cache_Quantization.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>41. FP8 and KV Cache Quantization | FP8 与 KV Cache 量化</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>FP8</code>, <code>KV Cache</code> | <strong>目标人群：</strong> 量化压缩学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>第 40 节关注的是权重量化：把模型参数压得更小，降低加载和访存成本。但推理阶段的压力不只来自权重。长上下文生成时，KV Cache 会随着序列长度和并发请求持续增长；同时，部分激活或中间张量也会带来带宽压力。只压权重，不能完全解决长上下文推理的显存和带宽瓶颈。</p>
-<p>本节用一个极简 <code>FP8KVCacheSim</code> 模拟两类推理量化：用对称低精度量化近似 FP8 张量，用分组 scale 量化 KV Cache。学完后，你应该能看清“量化值、scale、反量化、误差检查”这条闭环，以及为什么 KV Cache 通常需要按最后一维分组处理。</p>
-<p>本节关注运行时张量和 KV Cache：CPU 模拟解释 scale、分组和误差，<code>40</code> 继续处理 GPTQ/AWQ 权重量化，<code>67</code> 负责 GGUF、真实 FP8 kernel 和 backend 验证。</p>
-<p><strong>关键词：</strong> <code>FP8</code>, <code>KV cache quantization</code>, <code>deployment</code></p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/41_fp8_kv_quant_flow_cn.svg" alt="FP8 与 KV Cache 量化路径"></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 补完对称量化闭环</li><li>TODO 2a: 记录 FP8 近似张量的原始 shape</li><li>TODO 2b: 记录 KV Cache 的分组状态</li><li>TODO 3a: 恢复当前 KV Cache 分组</li><li>TODO 3b: 计算恢复误差</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能区分权重量化与运行时张量量化，再观察 FP8 和 KV Cache 量化如何改变存储、带宽与误差。</p>
-<ul>
-<li><a href="22_vllm_pagedattention.html">22. vLLM PagedAttention | vLLM 分页注意力</a></li>
-<li><a href="25_quantization_w8a16.html">25. Quantization W8A16 | W8A16 量化</a></li>
-<li><a href="40_gptq_and_awq_weight_quantization.html">40. GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</a></li>
-</ul>
-<hr>
-<h3>Step 1: 为什么运行时还要量化 KV Cache</h3>
-<p>生成式推理会持续追加 KV Cache；上下文越长、并发越高，缓存越容易成为显存容量和带宽压力。本节关注两个运行时对象：普通推理张量的低精度表示，以及 KV Cache 的分组量化。</p>
-<p>先记住一条主线：量化值、scale、原始形状和恢复误差必须一起保存，才能形成可检查的运行时状态。</p>
-<h3>Step 2: FP8 近似量化的状态闭环</h3>
-<p>本节用 INT8 容器模拟低精度张量的保存路径：先根据 <code>absmax</code> 得到 scale，再把浮点值映射为整数，恢复时用同一个 scale 还原近似值。这里验证的是量化闭环，不是硬件 FP8 的 E4M3 / E5M2 编码或 Tensor Core kernel。</p>
-<h3>Step 3: KV Cache 的分组量化</h3>
-<p>KV Cache 沿最后一维分组，每组保存一套 scale。<code>kv_group_size</code> 越小，scale 对局部数值范围的适应性通常越强，但元数据和量化处理次数也会增加。需要同时观察缓存字节数、恢复误差和量化/恢复耗时。</p>
-<table>
-<thead>
-<tr>
-<th>变量</th>
-<th>影响对象</th>
-<th>主要观察</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>seq_len</code></td>
-<td>缓存总量</td>
-<td>长上下文压力</td>
-</tr>
-<tr>
-<td><code>kv_group_size</code></td>
-<td>scale 数量与局部误差</td>
-<td>压缩比、MSE、耗时</td>
-</tr>
-<tr>
-<td><code>dtype</code> / 容器位宽</td>
-<td>单元素存储</td>
-<td>原始字节与量化字节</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 实现提示</h3>
-<ul>
-<li>先完成 <code>_sym_quantize</code>：<code>absmax → scale → q</code>。</li>
-<li><code>quantize_fp8</code> 记录低精度值、scale 和原始 shape。</li>
-<li><code>quantize_kv_cache</code> 沿最后一维分组，并为每组保存 scale。</li>
-<li>最后用恢复结果计算 MSE，并检查 shape 是否保持一致。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class FP8KVCacheSim(nn.Module):
-    &quot;&quot;&quot;极简版 FP8 与 KV Cache 量化模拟器。&quot;&quot;&quot;
+<section class="lessons">
 
-    def __init__(self, fp8_qmax: int = 127, kv_group_size: int = 64, eps: float = 1e-8):
-        super().__init__()
-        if kv_group_size &lt;= 0:
-            raise ValueError(&quot;kv_group_size must be positive&quot;)
-        self.fp8_qmax = fp8_qmax
-        self.kv_group_size = kv_group_size
-        self.eps = eps
-
-        self.register_buffer(&quot;fp8_q&quot;, torch.empty(0, dtype=torch.int8), persistent=False)
-        self.register_buffer(&quot;fp8_scale&quot;, torch.tensor(1.0), persistent=False)
-        self.register_buffer(&quot;kv_q&quot;, torch.empty(0, dtype=torch.int8), persistent=False)
-        self.register_buffer(&quot;kv_scale&quot;, torch.empty(0), persistent=False)
-        self.fp8_shape = None
-        self.kv_shape = None
-
-    def _sym_quantize(self, x: torch.Tensor, qmax: int):
-        x = x.detach().float()
-        # ==========================================
-        # TODO 1: 补完对称量化闭环
-        # 提示: 先算 absmax，再算 scale = qmax / absmax.clamp_min(self.eps)，
-        # 最后做 round + clamp + int8 转换得到 q。
-        # ==========================================
-        # absmax = ???
-        # scale = ???
-        # q = ???
-        return q, scale
-
-    def _sym_dequantize(self, q: torch.Tensor, scale: torch.Tensor):
-        return q.to(scale.dtype) / scale.clamp_min(self.eps)
-
-    def quantize_fp8(self, x: torch.Tensor):
-        q, scale = self._sym_quantize(x, self.fp8_qmax)
-        self.fp8_q = q
-        self.fp8_scale = scale
-        # ==========================================
-        # TODO 2a: 记录 FP8 近似张量的原始 shape
-        # 提示: 这里先记录 self.fp8_shape = tuple(x.shape)。
-        # 后面 quantize_kv_cache 里再补 n_groups，用它初始化 scales。
-        # ==========================================
-        # self.fp8_shape = ???
-        return q, scale
-
-    def dequantize_fp8(self):
-        if self.fp8_shape is None:
-            raise RuntimeError(&quot;Call quantize_fp8() before dequantize_fp8().&quot;)
-        return self._sym_dequantize(self.fp8_q, self.fp8_scale)
-
-    def quantize_kv_cache(self, kv_cache: torch.Tensor):
-        kv = kv_cache.detach().float()
-        if kv.ndim &lt; 2:
-            raise ValueError(&quot;KV cache should have at least 2 dimensions.&quot;)
-
-        last_dim = kv.size(-1)
-        # ==========================================
-        # TODO 2b: 记录 KV Cache 的分组状态
-        # 提示: n_groups 用向上取整计算，最后一组可以不足 kv_group_size。
-        # ==========================================
-        # n_groups = ???
-        qkv = torch.zeros_like(kv, dtype=torch.int8)
-        scales = torch.zeros(kv.shape[:-1] + (n_groups,), dtype=kv.dtype, device=kv.device)
-
-        flat = kv.reshape(-1, last_dim)
-        flat_q = qkv.reshape(-1, last_dim)
-        flat_scale = scales.reshape(-1, n_groups)
-
-        for row in range(flat.size(0)):
-            for g in range(n_groups):
-                start = g * self.kv_group_size
-                end = min(start + self.kv_group_size, last_dim)
-                chunk = flat[row, start:end]
-                if chunk.numel() == 0:
-                    continue
-                q, scale = self._sym_quantize(chunk, self.fp8_qmax)
-                flat_q[row, start:end] = q
-                flat_scale[row, g] = scale
-
-        self.kv_q = qkv
-        self.kv_scale = scales
-        self.kv_shape = tuple(kv.shape)
-        return qkv, scales
-
-    def dequantize_kv_cache(self):
-        if self.kv_shape is None:
-            raise RuntimeError(&quot;Call quantize_kv_cache() before dequantize_kv_cache().&quot;)
-
-        kv = self.kv_q.to(self.kv_scale.dtype)
-        last_dim = kv.size(-1)
-        n_groups = self.kv_scale.size(-1)
-        flat = kv.reshape(-1, last_dim)
-        flat_out = torch.zeros_like(flat, dtype=self.kv_scale.dtype)
-        flat_scale = self.kv_scale.reshape(-1, n_groups)
-
-        for row in range(flat.size(0)):
-            for g in range(n_groups):
-                start = g * self.kv_group_size
-                end = min(start + self.kv_group_size, last_dim)
-                scale = flat_scale[row, g]
-                # ==========================================
-                # TODO 3a: 恢复当前 KV Cache 分组
-                # 提示: 先用当前 group 的 scale 恢复 flat[row, start:end]，
-                # 再把 restored_chunk 写回 flat_out 的同一区间。
-                # ==========================================
-                # restored_chunk = ???
-                flat_out[row, start:end] = restored_chunk
-
-        return flat_out.reshape(self.kv_shape)
-
-    def fit(self, hidden_states: torch.Tensor, kv_cache: torch.Tensor | None = None):
-        self.quantize_fp8(hidden_states)
-        if kv_cache is not None:
-            self.quantize_kv_cache(kv_cache)
-        return self
-
-    def forward(self, hidden_states: torch.Tensor, kv_cache: torch.Tensor | None = None):
-        fp8_q, fp8_scale = self._sym_quantize(hidden_states, self.fp8_qmax)
-        fp8_restored = self._sym_dequantize(fp8_q, fp8_scale)
-
-        if kv_cache is None:
-            return fp8_restored
-
-        self.quantize_kv_cache(kv_cache)
-        kv_restored = self.dequantize_kv_cache()
-        return fp8_restored, kv_restored
-
-    def mse(self, original: torch.Tensor, restored: torch.Tensor) -&gt; torch.Tensor:
-        # ==========================================
-        # TODO 3b: 计算恢复误差
-        # 提示: 把 original / restored 转成 float 后，相减平方再求平均。
-        # ==========================================
-        # error = ???
-        return error
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
-def test_fp8_kv_cache_quantization():
-    try:
-        torch.manual_seed(0)
-        sim = FP8KVCacheSim(fp8_qmax=127, kv_group_size=4)
-        hidden = torch.randn(2, 8)
-        kv = torch.randn(2, 3, 8)
-
-        sim.fit(hidden, kv)
-        hidden_restore = sim.dequantize_fp8()
-        kv_restore = sim.dequantize_kv_cache()
-        out_hidden, out_kv = sim.forward(hidden, kv)
-
-        assert sim.fp8_q.dtype == torch.int8
-        assert sim.kv_q.dtype == torch.int8
-        assert sim.fp8_shape == tuple(hidden.shape)
-        assert sim.kv_shape == tuple(kv.shape)
-        assert sim.kv_scale.shape == (2, 3, 2)
-        assert hidden_restore.shape == hidden.shape
-        assert kv_restore.shape == kv.shape
-        assert out_hidden.shape == hidden.shape
-        assert out_kv.shape == kv.shape
-        assert float(sim.mse(hidden, hidden_restore)) &gt;= 0.0
-
-        zero = torch.zeros(2, 7)
-        zero_kv = torch.zeros(1, 2, 7)
-        sim.fit(zero, zero_kv)
-        assert torch.isfinite(sim.dequantize_fp8()).all()
-        assert torch.isfinite(sim.dequantize_kv_cache()).all()
-        assert sim.kv_scale.shape[-1] == 2, '非整除的最后一维应向上取整分组'
-
-        print('✅ FP8KVCacheSim 测试通过')
-    except NotImplementedError as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except (AttributeError, NameError, TypeError, ValueError, RuntimeError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_fp8_kv_cache_quantization()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="fp8-sim-symmetric-quantization-state">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先读 scale 的定义：全局量化、反量化与 shape 状态</h2>
+          <h2>书变薄了，为什么随着对话变长，书包还是越来越重？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">输入 absmax=2，qmax=100。</p>
-            <p class="predict-q">scale 是多少？数值 x=1 会量化到约多少？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-fp8-sim-symmetric-quantization-state" value="0">
-                <span>scale=50，q=50</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-fp8-sim-symmetric-quantization-state" value="1">
-                <span>scale=0.02，q=0</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-fp8-sim-symmetric-quantization-state" value="2">
-                <span>scale=200，q=200</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="fp8-sim-symmetric-quantization-state">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>模型权重是固定书本，KV Cache 是每轮增加的笔记。压缩书本与压缩笔记解决不同的问题；越长的对话越要看缓存账本。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>FP8</dt><dd>8 位浮点格式族，不是简单的 INT8 改名。</dd></div><div><dt>KV Cache</dt><dd>为后续生成保留的 Key/Value 状态。</dd></div><div><dt>dtype bytes</dt><dd>每个元素占用字节数，例如 FP16 通常为 2。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="fp8-sim-symmetric-quantization-state">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Notebook 明确说明这是用 int8 容器做的 FP8 思想模拟，不是 E4M3 或 E5M2 的真实硬件编码。</li><li>这里 scale 定义为 qmax / absmax，所以量化使用 x * scale，反量化使用 q / scale。</li><li>torch.round 只负责取最近整数，torch.clamp 负责限制范围，to(torch.int8) 才改变存储 dtype。</li><li>tuple(x.shape) 把 torch.Size 转成普通 tuple，测试用它检查量化状态是否记住原始结构。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>低精度状态不只有整数值。要想恢复数据，至少要一起保存 q、scale 和 shape。本任务先做最小全局量化：整个 hidden tensor 共用一个标量 scale，让初学者先跑通可逆方向，再进入 KV Cache 的分组 scale。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>absmax</b>找到输入动态范围</span>
-          <span><b>scale</b>qmax / clamp(absmax)</span>
-          <span><b>quantize</b>round + clamp + int8</span>
-          <span><b>state</b>保存 q、scale、shape</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>本课的乘除方向</h4>
-            <div class="adv-contract">
-              <span>scale</span><strong><code>qmax / absmax</code></strong>
-              <span>量化</span><strong><code>q = round(x * scale)</code></strong>
-              <span>反量化</span><strong><code>x_hat = q / scale</code></strong>
-              <span>防零</span><strong><code>absmax.clamp_min(eps)</code></strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>fit 后保存的状态</h4>
-            <div class="adv-contract">
-              <span><code>fp8_q</code></span><strong>与 hidden 同 shape，dtype int8</strong>
-              <span><code>fp8_scale</code></span><strong>全局标量 Tensor</strong>
-              <span><code>fp8_shape</code></span><strong>tuple(hidden.shape)</strong>
-              <span>恢复 dtype</span><strong>跟随 scale.dtype，本测试中为 float32</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>hidden<br>[2,8] float</span>
-          <span>全局 absmax<br>标量</span>
-          <span>fp8_q<br>[2,8] int8</span>
-          <strong>dequantize_fp8<br>[2,8] float</strong>
-        </div>
-
-        <div class="adv-callout">名称里有 FP8，不代表 q 的 dtype 会是 torch.float8。测试明确要求 int8；课程只保留“低精度编码 + scale 恢复”的教学闭环。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用音频幅度练习乘 scale 的对称量化</h4><pre><code>audio = torch.tensor([-0.8, -0.1, 0.3, 1.0])
-limit = 127
-eps = 1e-8
-
-peak = torch.max(torch.abs(audio))
-multiplier = limit / peak.clamp_min(eps)
-packed = torch.clamp(
-    torch.round(audio * multiplier), -limit, limit
-).to(torch.int8)
-restored = packed.to(multiplier.dtype) / multiplier.clamp_min(eps)
-original_shape = tuple(audio.shape)</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>peak</code> -&gt; TODO 1 的 <code>absmax</code>。</li>
-            <li><code>multiplier</code> -&gt; TODO 2 的 <code>scale</code>；此处含义是“浮点值要乘多少”。</li>
-            <li><code>packed</code> -&gt; TODO 3 的 <code>q</code>，操作顺序不能漏掉 clamp 或 int8 转换。</li>
-            <li><code>original_shape</code> -&gt; TODO 4 的 <code>self.fp8_shape</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>本 Notebook 的 _sym_dequantize 为什么是 q / scale？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「FP8」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-fp8-sim-symmetric-quantization-state" value="0">
-                <span>因为 int8 只能做除法</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>为后续生成保留的 Key/Value 状态。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-fp8-sim-symmetric-quantization-state" value="1">
-                <span>因为 scale 等于 absmax / qmax</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>每个元素占用字节数，例如 FP16 通常为 2。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-fp8-sim-symmetric-quantization-state" value="2">
-                <span>因为量化阶段使用了 x * scale</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>8 位浮点格式族，不是简单的 INT8 改名。</span>
               </label></div>
-              <div class="feedback" data-feedback="fp8-sim-symmetric-quantization-state"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="fp8-sim-symmetric-quantization-state-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="kv-group-quantization-restore-and-mse">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>沿最后一维分组：每个 KV chunk 必须找回自己的 scale</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">kv.shape=[2,3,10]，kv_group_size=4。</p>
-            <p class="predict-q">kv_scale 的 shape 应该是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-group-quantization-restore-and-mse" value="0">
-                <span>[2,3,3]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-group-quantization-restore-and-mse" value="1">
-                <span>[2,3,4]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-group-quantization-restore-and-mse" value="2">
-                <span>[6,10]</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="kv-group-quantization-restore-and-mse">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>数元素</h4><p>单层、1 个 KV head、维度 4、序列长 8：K 和 V 合计 2×1×4×8=64 个元素。</p></li><li><h4>换存储精度</h4><p>每元素 2 字节时占 128 字节，1 字节时理论数据占 64 字节，暂不计 scale 和元数据。</p></li><li><h4>检查误差</h4><p>低精度引入舍入/范围限制，不能只算字节数，还要比较恢复误差和生成质量。</p></li></ol><section class="learning-lab" data-lab="kv" aria-label="让 KV 缓存的账本动起来">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>让 KV 缓存的账本动起来</h4><p>固定一层，改变 token 数和 KV heads，对照三种表示。</p></header>
+    <div class="lab-controls"><label for="lab-41-tokens"><span>序列长度 <output data-value="tokens" for="lab-41-tokens">8</output> token</span><input type="range" id="lab-41-tokens" name="tokens" min="4" max="32" step="1" value="8"></label><label for="lab-41-heads"><span>GQA 的 KV heads <output data-value="heads" for="lab-41-heads">2</output> </span><input type="range" id="lab-41-heads" name="heads" min="1" max="4" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-41" data-challenge-label>算一算</label><div><input id="answer-41" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="kv-group-quantization-restore-and-mse">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>KV Cache 可以有多个前导维；Notebook 只要求 ndim &gt;= 2，并始终沿最后一维分组。</li><li>kv.shape[:-1] 保留所有前导维，再拼上 n_groups，得到每个逻辑 row 对应的 scale 表。</li><li>reshape(-1,last_dim) 把所有前导维合并为 row，量化完成后必须 reshape(self.kv_shape) 恢复原结构。</li><li>每个 group 都由 _sym_quantize 得到自己的 scale；恢复时不能使用全局 fp8_scale。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>长 KV 向量里的不同区域可能有不同数值范围。分组就像给每个小箱子单独配一把尺子：整数数据放在 kv_q，尺子放在 kv_scale。恢复时按 row 和 group 找回配对的尺子，才能把扁平处理后的数据拼回原 shape。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>测试 shape 展开</h4>
-            <table class="adv-shapes">
-              <thead><tr><th>对象</th><th>shape</th><th>含义</th></tr></thead>
-              <tbody>
-                <tr><td><code>kv</code></td><td>[2,3,8]</td><td>6 条长度为 8 的逻辑 row</td></tr>
-                <tr><td><code>flat</code></td><td>[6,8]</td><td>只为循环方便，数据次序不变</td></tr>
-                <tr><td><code>kv_scale</code></td><td>[2,3,2]</td><td>group_size=4，每条 row 有 2 个 scale</td></tr>
-                <tr><td><code>flat_scale</code></td><td>[6,2]</td><td>与 flat 的 row 一一对应</td></tr>
-              </tbody>
-            </table>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 6 的配对规则</h4>
-            <div class="adv-steps">
-              <div><b>1</b><code>start=g*group_size</code><span>定位当前最后一维区间</span></div>
-              <div><b>2</b><code>scale=flat_scale[row,g]</code><span>取同一 row、同一 group 的尺子</span></div>
-              <div><b>3</b><code>_sym_dequantize(chunk,scale)</code><span>复用已有的除法恢复</span></div>
-              <div><b>4</b><code>reshape(self.kv_shape)</code><span>恢复所有前导维</span></div>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-contract">
-          <span>TODO 5</span><strong><code>(last_dim + kv_group_size - 1) // kv_group_size</code></strong>
-          <span>TODO 6</span><strong>当前 q chunk 与 <code>flat_scale[row,g]</code> 配对</strong>
-          <span>TODO 7</span><strong><code>mean((original.float()-restored.float())**2)</code></strong>
-          <span>forward 返回</span><strong>有 kv 时返回 (fp8_restored, kv_restored)，无 kv 时只返回 hidden</strong>
-        </div>
-
-        <div class="adv-callout">MSE 前显式转 float，避免低精度或整数运算改变误差语义；MSE 非负只是测试底线，真实部署还要评估生成质量。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用分段成绩数据练习 flatten、分组与还原</h4><pre><code>scores = torch.arange(24, dtype=torch.float32).reshape(2, 3, 4)
-last_dim = scores.size(-1)
-group_size = 3
-groups = (last_dim + group_size - 1) // group_size
-
-flat = scores.reshape(-1, last_dim)  # [6, 4]
-restored = torch.zeros_like(flat)
-for row in range(flat.size(0)):
-    for group in range(groups):
-        start = group * group_size
-        end = min(start + group_size, last_dim)
-        restored[row, start:end] = flat[row, start:end]
-
-restored = restored.reshape(scores.shape)
-mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>groups</code> -&gt; TODO 5 的 <code>n_groups</code>，尾部长度 1 仍有独立 group。</li>
-            <li><code>row/group/start/end</code> -&gt; quantize 与 dequantize 两个循环的相同索引契约。</li>
-            <li>例子中的直接复制 -&gt; TODO 6 要替换为 <code>self._sym_dequantize(flat[row,start:end], scale)</code>。</li>
-            <li><code>mse</code> -&gt; TODO 7，必须比较原始与恢复后的同 shape tensor。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>恢复 row=2、group=1 的 KV chunk 时应该使用哪个 scale？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同样 64 个缓存元素，从 2 字节改成 1 字节，纯数据区节省多少？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-group-quantization-restore-and-mse" value="0">
-                <span>flat_scale[2,1]</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>64 字节</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-group-quantization-restore-and-mse" value="1">
-                <span>fp8_scale</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>32 字节</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-group-quantization-restore-and-mse" value="2">
-                <span>flat_scale[1,2]</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>128 字节</span>
               </label></div>
-              <div class="feedback" data-feedback="kv-group-quantization-restore-and-mse"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="kv-group-quantization-restore-and-mse-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>tokens, kv_heads, dim = 8, 1, 4
+elements = 2 * tokens * kv_heads * dim
+print(elements * 2, elements * 1)  # 128, 64 bytes</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把对称整数玩具量化当作硬件 FP8 实现，或以为 KV 字节减半就让整个服务快两倍。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>把对称整数玩具量化当作硬件 FP8 实现，或以为 KV 字节减半就让整个服务快两倍。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「FP8」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="4fb20fa0f8319cf69623f64e308ef181bf790eacf6b3b8c5bd3422f13113c8fa">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/41_FP8_and_KV_Cache_Quantization.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>FP8KVCacheSim</code> · <code>quantize_fp8</code> · <code>dequantize_fp8</code> · <code>quantize_kv_cache</code> · <code>dequantize_kv_cache</code> · <code>fit</code> · <code>forward</code> · <code>mse</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1545,14 +940,14 @@ mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
 
   <script>
     const levelId = "41";
-    const checkpointData = {"fp8-sim-symmetric-quantization-state":{"answer":2,"explain":"恢复操作要撤销量化时的乘法；注意第 39 课采用的是另一种 scale 定义。"},"kv-group-quantization-restore-and-mse":{"answer":0,"explain":"量化时 scale 按逻辑 row 和最后一维 group 保存，恢复必须使用完全相同的索引。"}};
-    const predictData = {"fp8-sim-symmetric-quantization-state":{"answer":0,"revealNote":"scale=qmax/absmax=50，量化是 round(x*scale)，所以 1 映射到 50。"},"kv-group-quantization-restore-and-mse":{"answer":0,"revealNote":"最后一维 10 向上分成 3 组，前导维 [2,3] 保持不变。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：8 位浮点格式族，不是简单的 INT8 改名。。另外两个选项分别解释「KV Cache」和「dtype bytes」，注意区分。"},"v4-experiment":{"answer":0,"explain":"128−64=64，尚未算 scale/元数据。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：把对称整数玩具量化当作硬件 FP8 实现，或以为 KV 字节减半就让整个服务快两倍。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "40";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1561,20 +956,22 @@ mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-d46edde6d60e";
+    const homeworkKey = statePrefix + levelId + "-homework-4fb20fa0f831";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1599,7 +996,7 @@ mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1641,11 +1038,15 @@ mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1676,6 +1077,7 @@ mse = ((scores.float() - restored.float()) ** 2).mean()</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

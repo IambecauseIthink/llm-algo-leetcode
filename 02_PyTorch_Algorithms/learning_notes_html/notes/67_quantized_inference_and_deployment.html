@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,816 +750,182 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 67 | 零基础导学关卡</p>
-        <h1>Quantized Inference and Deployment | 量化推理与部署</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>量化推理与部署</h1>
+        <p class="course-subtitle">Quantized Inference and Deployment</p>
+        <p class="lead">量化部署要验证储存格式、执行内核和输出质量。像压缩行李：体积变小有用，但每次取东西都要额外解包，就可能拖慢旅程。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">67_Quantized_Inference_and_Deployment.ipynb</span>
           <span class="pill">量化压缩</span><span class="pill">量化推理</span><span class="pill">部署</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">deploy when efficiency improves and error &lt;= budget</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">压缩包很小，为什么解压后运行未必更快？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="681c6188310482d23bb80a5f77c03348e0fd83c6ee532c33409854678a8ba6c8">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../67_Quantized_Inference_and_Deployment.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>67. Quantized Inference and Deployment | 量化推理与部署</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>量化推理</code>, <code>部署</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节要求你验证一个量化推理方案是否满足部署条件。先固定 workload、运行后端和误差阈值，再比较 baseline 与量化方案的延迟、吞吐、显存和输出误差，同时记录 kernel 支持与反量化开销。最终输出一份部署建议，并明确方案适用的模型和服务条件。
-<strong>层级定位：</strong> 本项目主落在 L4，关注量化模型如何被加载、执行和服务；低比特 kernel 属于 L2，模型版本、灰度发布和集群资源治理属于 L5，不在本项目内混为同一个结论。
-<strong>主责与复用边界：</strong> 本项目主责是量化 artifact 的加载、执行和部署判断；显存优化路线只复用权重 / KV Cache 的容量证据，推理性能路线复用 TTFT、TPOT 和吞吐口径，训练侧 QLoRA 不在本项目重复验证。</p>
-<p><strong>关键词：</strong> <code>quantization</code>, <code>inference</code>, <code>deployment</code></p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/67_quantized_deployment_flow.svg" alt="量化推理部署决策流程"></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 0：实现 per-group 量化、反量化，并统计存储与误差</li><li>TODO 1: 先做 warmup，再测量平均耗时</li><li>TODO 2: 汇总 baseline / quantized 的核心指标差异</li><li>TODO 3: 生成量化部署报告</li><li>TODO 4: 输出部署决策</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把 W8A16、QLoRA、量化理论和基础推理对比看过，再进入量化部署项目会更容易判断压缩收益是否值得保留。</p>
-<ul>
-<li><a href="25_quantization_w8a16.html">25. Quantization W8A16 | W8A16 量化</a></li>
-<li><a href="26_qlora_and_4bit_quantization.html">26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化</a></li>
-<li><a href="66_inference_performance_comparison.html">66. Inference Performance Comparison | 推理性能对比实验</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.ipynb">P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成量化部署选型后，用 74 检查收益是否有 profiler 证据；如果需要观察请求级行为，再进入 70 的 serving 调度基准。</p>
-<ul>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling-Driven End-to-End Optimization | profiling 驱动的端到端优化</a></li>
-<li><a href="70_serving_scheduler_benchmark.html">70. Serving Scheduler Benchmark | 推理服务调度基准</a></li>
-</ul>
-<h3>Step 1: 定义量化部署项目目标</h3>
-<p>先固定模型、tokenizer、workload、硬件和 backend，再只改变量化 artifact 或量化格式。实验目标由显存、速度、质量和兼容性四类指标共同决定；低 bit 本身不是部署结论。</p>
-<p>先按 66 的 G0/G1/G2 方式划分实验组：</p>
-<table>
-<thead>
-<tr>
-<th>组别</th>
-<th>环境</th>
-<th>实验内容</th>
-<th>主要回答的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>C0 量化机制</td>
-<td>CPU</td>
-<td>改变 bits、group size 和权重分布</td>
-<td>存储量、元数据和误差如何变化？</td>
-</tr>
-<tr>
-<td>C1 决策模拟</td>
-<td>CPU</td>
-<td>输入 baseline / candidate 指标和误差预算</td>
-<td>什么条件下值得继续部署？</td>
-</tr>
-<tr>
-<td>G0 浮点 baseline</td>
-<td>GPU/backend</td>
-<td>固定模型和 workload，运行 FP16/BF16</td>
-<td>当前硬件和 backend 的基线是什么？</td>
-</tr>
-<tr>
-<td>G1 真实量化</td>
-<td>GPU/backend</td>
-<td>只改变一种量化格式或 artifact</td>
-<td>量化是否真的降低显存或延迟？</td>
-</tr>
-<tr>
-<td>G2 格式/backend 对照</td>
-<td>GPU/backend</td>
-<td>比较多个已确认支持的格式或 backend</td>
-<td>收益是否来自量化本身且值得迁移？</td>
-</tr>
-</tbody>
-</table>
-<p>C0/C1 是 CPU-first 主线；G0/G1 需要真实 GPU 和量化 artifact；G2 是可选扩展。没有真实 artifact 时，G1 只能报告链路检查，不能填写量化收益。量化 bit、dtype 和 backend 必须作为不同变量记录。</p>
-<table>
-<thead>
-<tr>
-<th>候选</th>
-<th>本项目要验证的机制</th>
-<th>最小真实证据</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GPTQ</td>
-<td>校准后的权重量化与误差补偿</td>
-<td>GPTQ artifact 被目标 backend 加载，并确认量化执行路径</td>
-</tr>
-<tr>
-<td>AWQ</td>
-<td>激活感知与敏感权重保护</td>
-<td>AWQ artifact 被目标 backend 加载，并记录校准与 kernel 信息</td>
-</tr>
-<tr>
-<td>GGUF</td>
-<td>文件封装、格式兼容与部署加载</td>
-<td>GGUF artifact 被对应 GGUF backend 加载；不能沿用 GPTQ/AWQ 的启动参数</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 2: 先确认 baseline 与量化口径合法</h3>
-<p>先跑通 FP16/BF16 baseline，再只替换量化 artifact 或量化格式。下面的表格用于检查两组实验是否真的同口径：</p>
-<table>
-<thead>
-<tr>
-<th>条件</th>
-<th>G0 baseline</th>
-<th>G1/G2 candidate</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>模型与 tokenizer</td>
-<td>固定版本</td>
-<td>与 G0 相同</td>
-</tr>
-<tr>
-<td>workload</td>
-<td>prompt、生成长度、batch、并发、cache policy</td>
-<td>与 G0 相同</td>
-</tr>
-<tr>
-<td>运行环境</td>
-<td>GPU、driver、PyTorch/CUDA、backend 版本</td>
-<td>尽量相同</td>
-</tr>
-<tr>
-<td>唯一变量</td>
-<td>FP16/BF16 浮点权重</td>
-<td>量化 artifact、格式或明确 backend</td>
-</tr>
-<tr>
-<td>校准记录</td>
-<td>不适用</td>
-<td>split、样本数、最大长度、版本</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<p>同时比较性能、显存、数值误差和任务质量；每个指标都要能追溯到同一组 workload 和结果文件。</p>
-<table>
-<thead>
-<tr>
-<th>指标组</th>
-<th>记录字段</th>
-<th>用来回答什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>性能</td>
-<td>latency / TTFT / TPOT / throughput</td>
-<td>是否更快，是否适合当前请求负载</td>
-</tr>
-<tr>
-<td>容量</td>
-<td>peak VRAM / load status</td>
-<td>是否装得下，是否提高并发或上下文上限</td>
-</tr>
-<tr>
-<td>质量</td>
-<td>error / task metric</td>
-<td>量化误差是否超过预算</td>
-</tr>
-<tr>
-<td>兼容性</td>
-<td>format / kernel evidence / backend version</td>
-<td>收益是否来自可复核的执行路径</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 输出部署选型结论</h3>
-<p>按质量门槛、兼容性和性能收益输出 accept / tune / reject：</p>
-<table>
-<thead>
-<tr>
-<th>决策</th>
-<th>条件</th>
-<th>下一步</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>accept</td>
-<td>真实 artifact 加载成功、kernel/格式已确认、质量达标且性能或容量有收益</td>
-<td>保留配置并扩大 workload 回归</td>
-</tr>
-<tr>
-<td>tune</td>
-<td>质量达标但收益不稳定，或校准、粒度、backend 仍需调整</td>
-<td>补采数据或调整单一变量</td>
-</tr>
-<tr>
-<td>reject</td>
-<td>质量超预算、无法加载、kernel 不支持或没有可接受收益</td>
-<td>更换格式、backend 或回到 baseline</td>
-</tr>
-</tbody>
-</table>
-<p>报告必须保留量化格式、粒度、校准信息、backend、硬件和完整 workload；没有真实加载和 kernel 证据时，只能报告链路检查。</p>
-<h3>Step 5：CPU 实验——量化账本与误差机制</h3>
-<p>上面的 Step 1-4 定义项目口径；下面用 CPU 代码实现量化账本、模拟耗时、指标比较和部署决策。真实量化、校准、任务评估与压测放在 Step 6。</p>
-<h3>测试</h3>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code># TODO 0：实现 per-group 量化、反量化，并统计存储与误差
-def simulate_weight_quantization(weights: List[float], bits: int = 8, group_size: int = 2) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;用对称 per-group 量化模拟存储压缩和反量化误差。
+<section class="lessons">
 
-    bits 决定有符号量化范围，group_size 决定每个 scale 覆盖的权重数；
-    返回的是权重重构误差和存储估算，不是模型任务质量或真实 artifact 大小。
-    &quot;&quot;&quot;
-    # 提示：每组 scale 使用该组最大绝对值；全零组要避免除零。
-    #       量化误差按 reconstructed - original 计算，元数据也要计入 quantized_bytes。
-    if bits &lt; 2 or bits &gt; 8 or group_size &lt; 1 or not weights:
-        raise ValueError('bits 应在 2-8 之间，group_size &gt;= 1，weights 不能为空')
-    qmax = (1 &lt;&lt; (bits - 1)) - 1
-    reconstructed, group_count = [], 0
-    for start in range(0, len(weights), group_size):
-        group = [float(value) for value in weights[start:start + group_size]]
-        scale = max(abs(value) for value in group) / qmax
-        scale = scale if scale &gt; 0 else 1.0
-        reconstructed.extend(max(-qmax, min(qmax, round(value / scale))) * scale for value in group)
-        group_count += 1
-    errors = [estimate - actual for estimate, actual in zip(reconstructed, weights)]
-    max_abs_error = max(abs(error) for error in errors)
-    mse = sum(error * error for error in errors) / len(errors)
-    original_bytes = len(weights) * 4
-    scale_dtype_bits = 16  # 本模拟按 FP16 scale 估算元数据；真实格式需按 artifact 记录。
-    quantized_bytes = math.ceil((len(weights) * bits + group_count * scale_dtype_bits) / 8)
-    return {
-        'parameter_count': len(weights), 'bits': bits, 'group_size': group_size,
-        'groups': group_count, 'original_bytes': original_bytes,
-        'quantized_bytes': quantized_bytes, 'scale_dtype_bits': scale_dtype_bits,
-        'compression_ratio': round(original_bytes / quantized_bytes, 4),
-        'max_abs_error': round(max_abs_error, 8), 'mse': round(mse, 8),
-    }
-
-
-def benchmark_fn(fn, warmup=2, iters=5):
-    &quot;&quot;&quot;测量一个候选函数的 CPU 平均耗时，返回毫秒。
-
-    该函数不执行 CUDA synchronize，也不代表量化 kernel 或 backend 延迟。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 1: 先做 warmup，再测量平均耗时
-    # 提示：用 time.perf_counter() 记录起止时间；warmup 不计入平均值。
-    #       iters 必须为正，返回单位统一为 ms，方便和 latency 对齐。
-    # ==========================================
-    for _ in range(warmup):
-        fn()
-
-    # start = ???
-    for _ in range(iters):
-        fn()
-    # total = ???
-    # avg_latency_ms = ???
-    return avg_latency_ms
-
-
-def summarize_quantized_result(base_metrics, quant_metrics):
-    &quot;&quot;&quot;统一比较 baseline 与量化候选的收益、资源和重构误差。
-
-    两个输入必须来自同一 workload；error_delta 表示候选误差相对 baseline 的变化，
-    不能把 max_abs_error / mse 直接解释成任务质量下降。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 汇总 baseline / quantized 的核心指标差异
-    # 提示：latency / vram / error 越低越好，throughput 越高越好。
-    #       latency_delta、vram_delta 使用 baseline - quantized；throughput_delta 使用 quantized - baseline。
-    # 正数表示 quantized 相比 baseline 有改善，error_delta 除外
-    # ==========================================
-    # latency_delta = ???
-    # throughput_delta = ???
-    # vram_delta = ???
-    # error_delta = ???
-
-    summary = {
-        'latency_delta_ms': round(latency_delta, 2),
-        'throughput_delta': round(throughput_delta, 2),
-        'vram_delta_mb': round(vram_delta, 2),
-        'error_delta': round(error_delta, 4),
-        'latency_improved': latency_delta &gt; 0,
-        'throughput_improved': throughput_delta &gt; 0,
-        'vram_improved': vram_delta &gt; 0,
-        'error_within_budget': error_delta &lt;= quant_metrics['error_budget'],
-    }
-    return summary
-
-
-def format_deployment_report(quant_name, summary, recommendation):
-    &quot;&quot;&quot;把量化候选的收益、误差和部署建议整理成可读报告。
-
-    报告必须同时展示四类指标和 decision；不能只保留压缩率或延迟。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 3: 生成量化部署报告
-    # 提示：把 latency、throughput、VRAM、error 的变化和 recommendation 放在一起。
-    #       量化报告中的 error 仍是模拟/重构指标，真实任务质量要另行评测。
-    # ==========================================
-    header = &quot;| 指标 | 变化 | 判断 |&quot;
-    sep = &quot;| --- | --- | --- |&quot;
-    rows = [
-        # f&quot;| latency | {summary['latency_delta_ms']} ms | {'改善' if summary['latency_improved'] else '未改善'} |&quot;,
-        # f&quot;| throughput | {summary['throughput_delta']} | {'改善' if summary['throughput_improved'] else '未改善'} |&quot;,
-        # f&quot;| VRAM | {summary['vram_delta_mb']} MB | {'改善' if summary['vram_improved'] else '未改善'} |&quot;,
-        # f&quot;| error | {summary['error_delta']} | {'满足预算' if summary['error_within_budget'] else '超出预算'} |&quot;,
-    ]
-    # conclusion = ???
-    return &quot;\n&quot;.join([f&quot;量化方案：{quant_name}&quot;, header, sep] + rows + [conclusion])
-
-
-def recommend_quantized_deployment(summary, min_latency_delta_ms=5.0, min_throughput_delta=5.0, min_vram_delta_mb=256.0):
-    &quot;&quot;&quot;根据收益、误差和预算约束输出量化部署建议。
-
-    返回 decision、reason、next_action；阈值属于当前 workload，不是所有 backend 的 SLA。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 4: 输出部署决策
-    # 规则：
-    # - 延迟或吞吐有明显收益，VRAM 也改善，且误差在预算内：accept
-    # - 误差在预算内，但收益还不够稳：tune
-    # - 误差超预算，或收益不足：reject
-    # 提示：先计算四个布尔变量，再按质量门槛优先的顺序返回决策。
-    # ==========================================
-    # strong_latency_gain = ???
-    # strong_throughput_gain = ???
-    # strong_vram_gain = ???
-    # error_ok = ???
-    # if ???:
-    #     decision = ???
-    #     reason = ???
-    #     next_action = ???
-    # elif ???:
-    #     decision = ???
-    #     reason = ???
-    #     next_action = ???
-    # else:
-    #     decision = ???
-    #     reason = ???
-    #     next_action = ???
-    # return {'decision': decision, 'reason': reason, 'next_action': next_action}
-</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code>def test_quantized_project_template():
-    try:
-        weights = [0.0, 1.0, -2.0, 3.0, 0.5]
-        quant_report = simulate_weight_quantization(weights, bits=4, group_size=2)
-        assert quant_report['parameter_count'] == 5
-        assert quant_report['groups'] == 3
-        assert quant_report['quantized_bytes'] &lt; quant_report['original_bytes']
-        assert quant_report['max_abs_error'] &gt;= 0.0 and quant_report['mse'] &gt;= 0.0
-        try:
-            simulate_weight_quantization(weights, bits=16)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError('不支持的 bit 数应明确拒绝！')
-        counter = {'n': 0}
-
-        def fn():
-            counter['n'] += 1
-
-        avg = benchmark_fn(fn, warmup=0, iters=2)
-        assert counter['n'] == 2, &quot;benchmark 应该运行 iters 次&quot;
-        assert avg &gt;= 0.0, &quot;平均耗时应该非负&quot;
-
-        baseline = {
-            'latency_ms': 100.0,
-            'throughput': 80.0,
-            'vram_mb': 12000.0,
-            'error': 0.0,
-        }
-        quantized = {
-            'latency_ms': 72.0,
-            'throughput': 120.0,
-            'vram_mb': 7000.0,
-            'error': 0.012,
-            'error_budget': 0.02,
-        }
-        summary = summarize_quantized_result(baseline, quantized)
-
-        assert summary['latency_delta_ms'] == 28.0
-        assert summary['throughput_delta'] == 40.0
-        assert summary['vram_delta_mb'] == 5000.0
-        assert summary['error_delta'] == 0.012
-        assert summary['latency_improved'] is True
-        assert summary['throughput_improved'] is True
-        assert summary['vram_improved'] is True
-        assert summary['error_within_budget'] is True
-
-        decision = recommend_quantized_deployment(summary, min_latency_delta_ms=5.0, min_throughput_delta=5.0, min_vram_delta_mb=256.0)
-        assert decision['decision'] == 'accept'
-        assert decision['next_action'] == 'promote_to_extended_regression'
-
-        weak_summary = dict(summary)
-        weak_summary['latency_delta_ms'] = 1.0
-        weak_summary['throughput_delta'] = 2.0
-        weak_summary['vram_delta_mb'] = 128.0
-        weak_summary['latency_improved'] = True
-        weak_summary['throughput_improved'] = True
-        weak_summary['vram_improved'] = True
-        weak_decision = recommend_quantized_deployment(weak_summary, min_latency_delta_ms=5.0, min_throughput_delta=5.0, min_vram_delta_mb=256.0)
-        assert weak_decision['decision'] == 'tune'
-
-        bad_summary = dict(summary)
-        bad_summary['error_within_budget'] = False
-        bad_decision = recommend_quantized_deployment(bad_summary, min_latency_delta_ms=5.0, min_throughput_delta=5.0, min_vram_delta_mb=256.0)
-        assert bad_decision['decision'] == 'reject'
-
-        report = format_deployment_report('W8A16', summary, decision['reason'])
-        assert 'W8A16' in report
-        assert '| 指标 | 变化 | 判断 |' in report
-        assert '值得推进到更大样本部署回归' in report
-
-        print(&quot;✅ 量化推理与部署项目模板代码通过基础校验。&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-
-
-test_quantized_project_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="quantized-benchmark-latency">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>量化先测端到端延迟：低 bit 不自动等于更快</h2>
+          <h2>压缩包很小，为什么解压后运行未必更快？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">正式 5 次推理总共耗时 0.36 秒。</p>
-            <p class="predict-q">平均 latency 是多少？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benchmark-latency" value="0">
-                <span>72 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benchmark-latency" value="1">
-                <span>360 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benchmark-latency" value="2">
-                <span>1800 ms</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="quantized-benchmark-latency">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>量化部署要验证储存格式、执行内核和输出质量。像压缩行李：体积变小有用，但每次取东西都要额外解包，就可能拖慢旅程。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>artifact</dt><dd>保存的量化权重及必要的配置/scale。</dd></div><div><dt>dequantization</dt><dd>把量化表示恢复成可参与计算的近似值。</dd></div><div><dt>kernel support</dt><dd>后端是否真的有适配该低比特表示的执行路径。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="quantized-benchmark-latency">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>baseline 与 quantized 必须使用相同输入、batch、seq len、解码策略、硬件和后端。</li><li>warmup 在秒表外，iters 循环在秒表内。</li><li>perf_counter 的差值是总秒数；除以 iters 后乘 1000 得单次平均毫秒。</li><li>量化只改变数值表示或存储，并不保证 kernel 生效，也不保证瓶颈一定在权重读取。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>模型变小只是部署候选的起点。反量化、kernel 支持和数据搬运都可能抵消收益，所以必须让 baseline 与量化方案跑过同一把秒表，再讨论 latency 是否真的下降。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>函数契约</h4>
-            <div class="adv-contract">
-              <span>输入</span><strong>fn、warmup=2、iters=5</strong>
-              <span>预热</span><strong>执行但不计入 latency</strong>
-              <span>正式测量</span><strong>只包住 iters 次 fn()</strong>
-              <span>返回</span><strong>avg_latency_ms，非负</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>同口径比较</h4>
-            <div class="adv-checks">
-              <span>相同 prompt</span>
-              <span>相同 batch / seq len</span>
-              <span>相同解码策略</span>
-              <span>相同后端与硬件</span>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>baseline<br>同一 benchmark</span>
-          <span>quantized<br>同一 benchmark</span>
-          <strong>比较 latency<br>而非只看 bit 数</strong>
-        </div>
-
-        <div class="adv-callout">当前 Notebook 不执行真实模型量化，也不要求 CUDA 同步。TODO 1 只实现可复用的 CPU-first 计时模板。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用图片压缩器练习平均延迟</h4><pre><code>import time
-
-def latency_ms(compress_one, warmup=2, runs=5):
-    for _ in range(warmup):
-        compress_one()
-
-    start = time.perf_counter()
-    for _ in range(runs):
-        compress_one()
-    total = time.perf_counter() - start
-    return total / runs * 1000</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>compress_one</code> 对应 <code>fn</code>，<code>runs</code> 对应 <code>iters</code>。</li>
-            <li>start、total 的写法可直接迁移；返回变量名换成 <code>avg_latency_ms</code>。</li>
-            <li>Notebook 已经写好两个循环，你只补计时与公式，不要重写函数接口。</li>
-            <li>测试的 counter 用于确认 warmup=0 时只调用两次正式轮次。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>模型权重从 16 bit 变成 8 bit 后，能否不测就断言 latency 减半？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「artifact」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="0">
-                <span>能，bit 数和 latency 永远成正比</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>后端是否真的有适配该低比特表示的执行路径。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="1">
-                <span>不能，kernel、反量化和真实瓶颈都会影响端到端 latency</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>保存的量化权重及必要的配置/scale。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benchmark-latency" value="2">
-                <span>能，只要 VRAM 下降</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>把量化表示恢复成可参与计算的近似值。</span>
               </label></div>
-              <div class="feedback" data-feedback="quantized-benchmark-latency"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="quantized-benchmark-latency-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="quantized-benefit-error-budget">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>性能收益和误差约束分开算：error 不是越大越好的收益</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">量化新增误差 0.025，error_budget=0.02，三项性能都改善。</p>
-            <p class="predict-q">error_within_budget 应是什么，能否仅凭性能进入部署？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benefit-error-budget" value="0">
-                <span>False，不能</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benefit-error-budget" value="1">
-                <span>True，可以</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-benefit-error-budget" value="2">
-                <span>False，但仍可忽略</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="quantized-benefit-error-budget">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先跑量化闭环</h4><p>浮点→整数→恢复浮点，比较恢复误差和理论字节数。</p></li><li><h4>分清两种路径</h4><p>低比特 kernel 直接使用压缩表示，与先完整反量化再普通矩阵乘，访存和开销可能不同。</p></li><li><h4>形成部署证据</h4><p>同一 workload 测质量、TTFT、TPOT、吞吐和峰值显存；记录实际加载的格式与后端。</p></li></ol><section class="learning-lab" data-lab="quant" aria-label="用更粗的尺子记录四个权重">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>用更粗的尺子记录四个权重</h4><p>改变位宽，观察整数刻度、恢复误差和存储量。</p></header>
+    <div class="lab-controls"><label for="lab-67-bits"><span>对称有符号位宽 <output data-value="bits" for="lab-67-bits">4</output> bit</span><input type="range" id="lab-67-bits" name="bits" min="2" max="8" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-67" data-challenge-label>算一算</label><div><input id="answer-67" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="quantized-benefit-error-budget">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>latency 与 VRAM 越低越好，差值使用 baseline - quantized。</li><li>throughput 越高越好，差值使用 quantized - baseline。</li><li>error_delta 使用 quantized error - baseline error，它描述新增误差，不是性能改善。</li><li>error_within_budget 要比较 error_delta 与 quant_metrics['error_budget']。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>量化部署同时有两条线：性能线希望更快、更省、更高吞吐；质量线希望新增误差不超过预算。把 error_delta 也套进“正数越好”会得到危险结论，所以它必须作为约束单独判断。</p>
-              <div class="adv-course">
-        <table class="adv-shapes">
-          <thead><tr><th>指标</th><th>公式</th><th>测试结果</th><th>如何判断</th></tr></thead>
-          <tbody>
-            <tr><td>latency</td><td><code>base - quant</code></td><td>28 ms</td><td>大于 0 为改善</td></tr>
-            <tr><td>throughput</td><td><code>quant - base</code></td><td>40</td><td>大于 0 为改善</td></tr>
-            <tr><td>VRAM</td><td><code>base - quant</code></td><td>5000 MB</td><td>大于 0 为改善</td></tr>
-            <tr><td>error</td><td><code>quant - base</code></td><td>0.012</td><td>不超过 0.02 预算</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>性能收益</h4>
-            <div class="adv-checks">
-              <span>latency 降低</span>
-              <span>throughput 提高</span>
-              <span>VRAM 降低</span>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>质量闸门</h4>
-            <div class="adv-contract">
-              <span><code>error_delta</code></span><strong>量化方案新增的误差</strong>
-              <span><code>error_budget</code></span><strong>部署允许的最大新增误差</strong>
-              <span>通过条件</span><strong>error_delta 不超过预算</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-callout">即使 latency、throughput、VRAM 全部改善，只要 error_within_budget 为 False，就不能直接得出“可部署”。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用图片编码方案练习收益与质量预算</h4><pre><code>original = {'size_mb': 20.0, 'quality_loss': 0.0}
-compressed = {
-    'size_mb': 8.0,
-    'quality_loss': 0.03,
-    'loss_budget': 0.02,
-}
-
-size_gain = original['size_mb'] - compressed['size_mb']
-loss_delta = compressed['quality_loss'] - original['quality_loss']
-within_budget = loss_delta &lt;= compressed['loss_budget']</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>size_gain</code> 对应 VRAM 节省，沿用低指标的减法方向。</li>
-            <li><code>loss_delta</code> 对应 <code>error_delta</code>，表示新增质量代价。</li>
-            <li><code>loss_budget</code> 对应 <code>error_budget</code>，使用小于或等于比较。</li>
-            <li>再分别按高低偏好补上 latency_delta 与 throughput_delta，并写入 summary 的固定键名。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 error_delta 不设置 error_improved = error_delta &gt; 0？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>原来 10ms，低比特计算 6ms、额外解包 5ms，总体是否更快？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="0">
-                <span>因为 baseline 永远没有 error 键</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>更快，因为计算只要 6ms</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="1">
-                <span>因为浮点数不能比较大小</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>快一倍</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-benefit-error-budget" value="2">
-                <span>新增误差通常是代价，应与预算比较，而不是把变大解释为改善</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>没有，总计 11ms</span>
               </label></div>
-              <div class="feedback" data-feedback="quantized-benefit-error-budget"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="quantized-benefit-error-budget-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="quantized-deployment-report">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>部署结论要过双闸门：性能可观，误差也要合格</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">error_within_budget=False，recommendation 是“重新校准后再测”。</p>
-            <p class="predict-q">error 行与结论应怎样写？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-deployment-report" value="0">
-                <span>超出预算；重新校准后再测</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-deployment-report" value="1">
-                <span>改善；直接上线</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-quantized-deployment-report" value="2">
-                <span>删除 error 行；只保留性能</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="quantized-deployment-report">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>baseline_ms = 10
+lowbit_compute_ms, unpack_ms = 6, 5
+candidate_ms = lowbit_compute_ms + unpack_ms
+print(candidate_ms &lt; baseline_ms)  # False</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>文件小就声明推理快，或者用模拟整数舍入证明硬件 INT4 kernel 已生效。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="quantized-deployment-report">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>quant_name 是 W8A16、INT8、4-bit 等方案名，必须来自函数参数。</li><li>rows 需要 latency、throughput、VRAM、error 四行。</li><li>前三行读取 improved 布尔键；error 行读取 error_within_budget，显示满足预算或超出预算。</li><li>recommendation 是最终部署动作，例如扩大回归、重新校准或暂缓部署。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>部署报告不是压缩率海报。它要让读者一眼看出方案、性能收益、质量闸门和下一步。只有性能与误差同时达标，才适合进入更大样本回归或线上验证。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>方案名</b>量化对象与 bit 配置</span>
-          <span><b>性能三行</b>latency / throughput / VRAM</span>
-          <span><b>质量一行</b>error 是否满足预算</span>
-          <span><b>部署建议</b>扩大测试、校准或停止</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>测试样例的报告信号</h4>
-            <div class="adv-checks">
-              <span>W8A16</span>
-              <span>表格 header</span>
-              <span>error 满足预算</span>
-              <span>更大样本回归测试</span>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>不可部署也要如实输出</h4>
-            <p>若 error_within_budget 为 False，error 行必须写“超出预算”。recommendation 应指向重新校准、调整粒度或暂缓，而不是隐藏失败。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">测试只检查几个关键片段，但四项 rows 是函数契约的一部分。不要省略 error 行，也不要把 W8A16 写死。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用音频压缩方案练习双闸门报告</h4><pre><code>codec = 'Codec-X'
-speed_gain = 15
-quality_ok = False
-rows = [
-    f"| speed | {speed_gain} | {'改善' if speed_gain &gt; 0 else '未改善'} |",
-    f"| quality | 0.08 | {'满足预算' if quality_ok else '超出预算'} |",
-]
-advice = '重新调整压缩等级后再测试'
-report = "\n".join(
-    [f"方案：{codec}", '| 指标 | 变化 | 判断 |', '| --- | --- | --- |']
-    + rows + [f"部署建议：{advice}。"]
-)</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>codec</code> 对应 <code>quant_name</code>。</li>
-            <li>speed 行扩展为 latency、throughput、VRAM 三个性能行。</li>
-            <li><code>quality_ok</code> 对应 <code>summary['error_within_budget']</code>。</li>
-            <li><code>advice</code> 对应 <code>recommendation</code>，返回前缀按 Notebook 改为“量化方案”和“部署建议”。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>量化报告为什么必须包含 quant_name？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-deployment-report" value="0">
-                <span>不同量化方案的 bit 数、粒度与后端条件不同，指标必须可追溯</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>文件小就声明推理快，或者用模拟整数舍入证明硬件 INT4 kernel 已生效。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-deployment-report" value="1">
-                <span>因为字典不能保存方案名</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「artifact」的定义和计算。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-quantized-deployment-report" value="2">
-                <span>因为 error_budget 会自动从名字推导</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label></div>
-              <div class="feedback" data-feedback="quantized-deployment-report"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="quantized-deployment-report-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="5eca09986fc7097514f86beba0d935accf014b035f0f156293dc59fce6aaf5ca">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/67_Quantized_Inference_and_Deployment.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>simulate_weight_quantization</code> · <code>benchmark_fn</code> · <code>summarize_quantized_result</code> · <code>format_deployment_report</code> · <code>recommend_quantized_deployment</code> · <code>fn</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1836,14 +941,14 @@ report = "\n".join(
 
   <script>
     const levelId = "67";
-    const checkpointData = {"quantized-benchmark-latency":{"answer":1,"explain":"量化收益必须通过同口径 benchmark 验证。"},"quantized-benefit-error-budget":{"answer":2,"explain":"性能差值和质量约束的语义不同，必须分开处理。"},"quantized-deployment-report":{"answer":0,"explain":"没有方案上下文的数字无法支持部署复现和选型。"}};
-    const predictData = {"quantized-benchmark-latency":{"answer":0,"revealNote":"0.36 / 5 * 1000 = 72 ms。"},"quantized-benefit-error-budget":{"answer":0,"revealNote":"0.025 超过 0.02；质量闸门失败，性能收益不能覆盖明确的误差约束。"},"quantized-deployment-report":{"answer":0,"revealNote":"报告必须保留质量失败，并让下一步动作回应这个阻塞原因。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：保存的量化权重及必要的配置/scale。。另外两个选项分别解释「dequantization」和「kernel support」，注意区分。"},"v4-experiment":{"answer":2,"explain":"端到端要把新增开销也加进去。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：文件小就声明推理快，或者用模拟整数舍入证明硬件 INT4 kernel 已生效。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "35";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1852,20 +957,22 @@ report = "\n".join(
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-681c61883104";
+    const homeworkKey = statePrefix + levelId + "-homework-5eca09986fc7";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1890,7 +997,7 @@ report = "\n".join(
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1932,11 +1039,15 @@ report = "\n".join(
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1967,6 +1078,7 @@ report = "\n".join(
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -748,303 +750,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 03 | 零基础导学关卡</p>
-        <h1>RoPE Tutorial | 旋转位置编码教程</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>旋转位置编码教程</h1>
+        <p class="course-subtitle">RoPE Tutorial</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/03_RoPE_Tutorial.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">03_RoPE_Tutorial.ipynb</span>
           <span class="pill">基础实现</span><span class="pill">位置编码</span><span class="pill">RoPE</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">q_rot = q * cos(pos) + rotate_half(q) * sin(pos)</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">位置变转角：为什么‘旋转’能编码相对距离</a></li><li><a href="#mission-2">把数字两两配成小箭头，用复数乘法转一下</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="44b6126f7a66ae1049d66e8ed6a961edce697e53f40c155d411df1aaa9bbd5c5">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../03_RoPE_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/03_RoPE_Tutorial.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>03. RoPE Tutorial | 旋转位置编码教程</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>基础实现</code>, <code>位置编码</code>, <code>RoPE</code> | <strong>目标人群：</strong> 基础实现学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>Attention 本身只看 token 之间的相似度，并不知道谁在前、谁在后。没有位置编码，模型看到的更像一袋 token；但如果位置处理得太死，模型又很难泛化到更长的上下文。</p>
-<p>RoPE 的做法不是给 token 额外加一个位置向量，而是把位置信息写进 Query 和 Key 的旋转里，让注意力点积天然感知相对距离。本节会用纯 PyTorch 实现 RoPE，重点看清成对维度旋转、位置频率和 attention 内积之间的关系。完成后，你应该能把它接到后面的 MHA / GQA 和 KV Cache 实现里。</p>
-<p><strong>关键词：</strong> <code>RoPE</code>, <code>positional encoding</code>, <code>complex tensor</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 用极坐标生成复数张量 (提示: torch.polar)</li><li>TODO 2: 将 xq, xk 从实数张量转为复数张量</li><li>TODO 3: 进行复数乘法，并转回实数张量</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先确认 Query / Key 的形状和注意力点积如何计算，再观察旋转角度和位置频率如何改变相对位置信息。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.ipynb">P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作</a></li>
-<li><a href="../../../00_Prerequisites/16_Attention_Mechanism_Intro.ipynb">P0: 16. Attention Mechanism Intro | 注意力机制导论</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心思想与痛点</h3>
-<p>本节说明 RoPE 的设计动机与核心思想。</p>
-<blockquote>
-<p><strong>为什么需要 RoPE？</strong>
-原生的 Transformer 使用绝对位置编码（如正弦波或可学习参数），导致模型很难泛化到比训练集更长的序列。我们希望模型能在计算 Attention 时感知到 Token 之间的<strong>相对距离</strong>。
-<strong>RoPE 的本质：</strong>
-“借用复数的旋转”。通过将 Query 和 Key 的向量映射到复数空间并旋转特定角度，在计算内积（Dot-product）时，结果自然就带有了相对位置信息 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>m</mi><mo>−</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(m-n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span></eq>。其中，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></eq> 是 Query 的位置，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></eq> 是 Key 的位置，两者之差 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>−</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">m−n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></eq> 就是它们之间的相对距离——RoPE 通过复数旋转让 Attention 内积的结果只依赖于这个差值，从而让 Attention 内积的结果依赖于 Token 间的相对位置。</p>
-</blockquote>
-<h3>Step 2: 代码实现框架</h3>
-<p>在 PyTorch 中，最高效的 RoPE 实现方式之一是利用复数乘法。我们将最后一维切分为两半并组合成复数形式，再乘以预先计算好的复数旋转矩阵 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mi>i</mi><mi>m</mi><msub><mi>θ</mi><mi>j</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">e^{im\theta_{j}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">im</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:-0.0278em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2819em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></eq>。完成旋转后，再使用 <code>torch.view_as_real</code> 恢复为实数表示。</p>
-<p>因此实现时的主线其实很固定：先算出 freqs_cis （即预计算的复数旋转因子），再把它和 xq / xk（即 Attention 中的 Query 和 Key 投影张量）做广播对齐，最后完成复数旋转并回到原始实数形状。这样学习者在写 TODO 1/2/3 时，就能清楚地知道每段代码对应实现流程中的哪个环节。</p>
-<h4>可视化：RoPE 在 Attention 里站哪</h4>
-<p>RoPE 不直接改 value，也不是额外加到 embedding 上；它作用在 Query / Key 上，让 attention score 带上相对位置信息。</p>
-<pre><code class="language-text">token hidden states
-      │
-      ├── q_proj ─► Q ─► RoPE rotate ─┐
-      │                                │
-      ├── k_proj ─► K ─► RoPE rotate ─┼─► QK^T / sqrt(d) ─► attention weights
-      │                                │
-      └── v_proj ─► V ─────────────────┘                    │
-                                                              ▼
-                                                        weighted sum V
-</code></pre>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/03_rope_rotation.svg" alt="RoPE 在 Attention 里的位置"></p>
-<p>张量形状可以按这条线记：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">阶段</th>
-<th style="text-align:left">典型形状</th>
-<th style="text-align:left">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">hidden states</td>
-<td style="text-align:left"><code>[B, T, D]</code></td>
-<td style="text-align:left">block 的输入表示</td>
-</tr>
-<tr>
-<td style="text-align:left">Q / K</td>
-<td style="text-align:left"><code>[B, T, H, Dh]</code></td>
-<td style="text-align:left">每个 head 的 query/key</td>
-</tr>
-<tr>
-<td style="text-align:left">RoPE 后 Q / K</td>
-<td style="text-align:left"><code>[B, T, H, Dh]</code></td>
-<td style="text-align:left">形状不变，只旋转偶/奇维</td>
-</tr>
-<tr>
-<td style="text-align:left">attention scores</td>
-<td style="text-align:left"><code>[B, H, T, T]</code></td>
-<td style="text-align:left">位置关系进入打分</td>
-</tr>
-</tbody>
-</table>
-<p>读代码时只要抓住一点：RoPE 改的是 Q/K 的方向关系，不改 V 的内容存储。</p>
-<h3>Step 3: 核心公式与张量维度</h3>
-<p>这一节把频率、位置和维度对齐关系摆清楚，方便把数学公式和代码里的广播一步一步对上。</p>
-<ol>
-<li>
-<p><strong>预计算旋转角 (Precompute Frequencies)</strong></p>
-<p>频率计算公式：
-<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>θ</mi><mi>j</mi></msub><mo>=</mo><msup><mn>10000</mn><mrow><mo>−</mo><mn>2</mn><mi>j</mi><mi mathvariant="normal">/</mi><mi>d</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\theta_{j} = 10000^{-2j/d}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.888em;"></span><span class="mord">1000</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">2</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="mord mtight">/</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></span></eq>。其中，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo separator="true">,</mo><mn>2</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>d</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">j=0,1,2,…,d/2−1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord">/2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq> ，是维度索引，用于遍历每一组维度对（最后一维两两一组）。<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span></eq> 是 Head Dimension，即每个注意力头的维度。</p>
-<p><strong>关于基数 10000 的选择说明</strong>：基数 10000 直接继承自 Transformer 原始论文（Vaswani et al., 2017）中的正弦位置编码设计。其数学意义在于：当 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">j=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></eq> 时，频率<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>θ</mi><mn>0</mn></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\theta_{0}=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">0</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq> 对应最快的旋转速度（<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></eq> 每增加 1，角度旋转 1 弧度），用于捕获相邻 Token 间的细微相对位置。当 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mi>d</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">j=d/2−1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mord">/2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq> 时，频率 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>θ</mi><mrow><mi>d</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>−</mo><mn>1</mn></mrow></msub><mo>≈</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>10000</mn></mrow><annotation encoding="application/x-tex">\theta_{d/2-1}≈1/10000</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0496em;vertical-align:-0.3552em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.5198em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mtight">/2</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3552em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/10000</span></span></span></span></eq>，对应最慢的旋转速度，负责感知长距离的绝对位置。</p>
-<p>这一设计使得不同维度拥有指数级分布的频率，让模型像多波段接收器一样，同时兼顾局部和全局的位置感知。10000是原论文作者通过实验验证的有效平衡点——过大（如 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>10</mn><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">10^{6}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span></eq>）会导致高维度信号变化过缓，浪费编码能力；过小（如 100）则会限制模型的长程依赖能力。</p>
-<p>生成复数形式的极坐标：
-<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mi>i</mi><mi>m</mi><msub><mi>θ</mi><mi>j</mi></msub></mrow></msup><mo>=</mo><mi>cos</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>m</mi><msub><mi>θ</mi><mi>j</mi></msub><mo stretchy="false">)</mo><mo>+</mo><mi>i</mi><mi>sin</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>m</mi><msub><mi>θ</mi><mi>j</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">e^{i m \theta_{j}} = \cos(m \theta_{j}) + i \sin(m \theta_{j})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">im</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:-0.0278em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2819em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">sin</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></eq>。其中，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></eq>指的是Token 在序列中的绝对位置索引，<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo separator="true">,</mo><mn>2</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>L</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m=0,1,2,…,L−1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></eq>（<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span></eq>为序列长度）</p>
-</li>
-<li>
-<p><strong>应用旋转 (Apply Rotary Embedding)</strong></p>
-<p>将输入的 Query 或 Key 视为复数，具体做法是将最后一维切分为等长的两半，前一半作为实部，后一半作为虚部：
-<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>=</mo><msub><mi>x</mi><mrow><mi>r</mi><mi>e</mi><mi>a</mi><mi>l</mi></mrow></msub><mo>+</mo><mi>i</mi><mo>⋅</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>m</mi><mi>a</mi><mi>g</mi></mrow></msub></mrow><annotation encoding="application/x-tex">x = x_{real} + i \cdot x_{imag}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">re</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7167em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">ima</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></eq></p>
-<p>利用复数乘法直接完成旋转矩阵的运算：
-<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>r</mi><mi>o</mi><mi>t</mi><mi>a</mi><mi>t</mi><mi>e</mi><mi>d</mi></mrow></msub><mo>=</mo><mi>x</mi><mo>×</mo><msup><mi>e</mi><mrow><mi>i</mi><mi>m</mi><msub><mi>θ</mi><mi>j</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">x_{rotated} = x \times e^{i m \theta_{j}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">ro</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">im</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:-0.0278em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2819em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></eq></p>
-</li>
-<li>
-<p><strong>实现提示</strong></p>
-<p><code>reshape_for_broadcast</code> 的作用是将 freqs_cis（形状为 [seq_len, d/2]）变形为 [1, seq_len, 1, d/2]，使其与 xq/xk（形状为[batch, seq_len, heads, d]）在 batch 和 head 维度上广播对齐（其中，batch	批次大小，seq_len指序列长度）。先对齐维度，再做复数乘法，旋转位置编码才会同时正确作用到 batch 和 head 维度。</p>
-</li>
-</ol>
-<h3>Step 4: 动手实战</h3>
-<p>这里开始把频率预计算、复数转换和旋转还原落到最小可运行代码里，重点看每一步张量形状怎么变。</p>
-<p><strong>要求</strong>：请补全下方 <code>precompute_freqs_cis</code> 和 <code>apply_rotary_emb</code> 函数。
-提示：可以使用 <code>torch.view_as_complex</code> 和 <code>torch.view_as_real</code> 这两个核心函数！</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
-    &quot;&quot;&quot;
-    预计算复数旋转因子 freqs_cis。
+<section class="lessons">
 
-    Args:
-        dim: head_dim，必须为偶数
-        end: 序列长度
-        theta: 基数，默认 10000
-
-    Returns:
-        freqs_cis: 形状为 [end, dim//2] 的复数张量
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 1: 用极坐标生成复数张量 (提示: torch.polar)
-    # 1. 计算逆频率向量 inv_freq = 1/(theta ** (2j/d))
-    #   torch.arange(0, dim, 2) 步长为 2，对应公式中的 2j
-    # 2. 生成位置索引 t = [0, 1, ..., end-1]
-    # 3. 计算角度矩阵 angles = outer(t, inv_freq)
-    # 4. 用 torch.polar 生成复数 e^{i * angles}
-    # ==========================================
-    #inv_freq = ??
-    #t = ??
-    #angles = ??
-    #freqs_cis = ??
-    return freqs_cis
-
-# 将频率张量扩展到可广播形状，供 Step 3 的复数乘法使用
-def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
-    &quot;&quot;&quot;
-    将 freqs_cis 变形为与 x 广播对齐的形状。
-
-    假设 x 的形状为 [batch, seq_len, heads, head_dim//2]（复数形式），
-    将 freqs_cis 从 [seq_len, head_dim//2] 变形为 [1, seq_len, 1, head_dim//2]。
-    &quot;&quot;&quot;
-    ndim = x.ndim
-    shape = [d if i == 1 or i == ndim - 1 else 1 for i, d in enumerate(x.shape)]
-    return freqs_cis.view(*shape)
-
-def apply_rotary_emb(
-    xq: torch.Tensor,
-    xk: torch.Tensor,
-    freqs_cis: torch.Tensor,
-) -&gt; tuple[torch.Tensor, torch.Tensor]:
-    &quot;&quot;&quot;
-    将旋转位置编码应用到 Query 和 Key 上
-
-    Args:
-        xq: [batch, seq_len, heads, head_dim]
-        xk: [batch, seq_len, heads, head_dim]
-        freqs_cis: [seq_len, head_dim//2]，预计算的旋转因子
-    Returns:
-        旋转后的 xq, xk，形状与输入一致
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 将 xq, xk 从实数张量转为复数张量
-    # 提示: 先把最后一维拆成两个一组，再转成复数
-    #   1. 提升精度到 FP32: .float()
-    #   2. 将最后一维 head_dim 拆分为 (-1, 2)，其中 2 对应实部和虚部
-    #   3. 用 torch.view_as_complex 转为复数
-    # 提示：reshape(*xq.shape[:-1], -1, 2) 保留前面所有维度，最后变为 (..., -1, 2)
-    # ==========================================
-    # xq_complex = ???
-    # xk_complex = ???
-
-    freqs_cis = reshape_for_broadcast(freqs_cis, xq_complex)
-    # 确保类型一致
-    freqs_cis = freqs_cis.to(xq_complex.dtype)
-
-
-    # ==========================================
-    # TODO 3: 进行复数乘法，并转回实数张量
-    # 步骤：
-    #   1. 复数乘法: xq_complex * freqs_cis（自动广播）
-    #   2. 用 torch.view_as_real 转回实数，形状变为 (..., 2)
-    #   3. 用 .flatten(-2) 将最后两维合并回 head_dim
-    #   4. 用 .type_as(xq) 恢复为输入的数据类型
-    # ==========================================
-    # xq_out = ??
-    # xk_out = ??
-    return xq_out.type_as(xq), xk_out.type_as(xk)
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
-def test_rope():
-    try:
-        print(&quot;=&quot; * 60)
-        print(&quot;开始测试 RoPE 旋转位置编码&quot;)
-        print(&quot;=&quot; * 60)
-
-        batch_size, seq_len, num_heads, head_dim = 2, 16, 4, 64
-
-        # Test 1: 形状测试
-        print(&quot;\n【Test 1】形状测试&quot;)
-        xq = torch.randn(batch_size, seq_len, num_heads, head_dim)
-        xk = torch.randn(batch_size, seq_len, num_heads, head_dim)
-
-        freqs_cis = precompute_freqs_cis(head_dim, seq_len)
-        xq_out, xk_out = apply_rotary_emb(xq, xk, freqs_cis)
-
-        assert xq_out.shape == xq.shape, f&quot;Query 输出形状错误: 期望 {xq.shape}, 实际 {xq_out.shape}&quot;
-        assert xk_out.shape == xk.shape, f&quot;Key 输出形状错误: 期望 {xk.shape}, 实际 {xk_out.shape}&quot;
-        assert freqs_cis.shape == (seq_len, head_dim // 2), f&quot;频率张量形状错误&quot;
-
-        # 核心修复：防止占位符作弊，输出绝不能等于输入
-        assert not torch.allclose(xq, xq_out, atol=1e-5), &quot;TODO 3 未完成: 输出与输入完全相同，RoPE 旋转未生效！&quot;
-
-        print(&quot;  ✅ 输出形状测试通过&quot;)
-        print(&quot;  ✅ 频率张量形状测试通过&quot;)
-
-        # Test 2: 数值范围测试
-        print(&quot;\n【Test 2】数值范围测试&quot;)
-        norm_before = torch.norm(xq, dim=-1)
-        norm_after = torch.norm(xq_out, dim=-1)
-        assert torch.allclose(norm_before, norm_after, rtol=1e-4, atol=1e-5), &quot;RoPE 改变了向量模长！&quot;
-        print(&quot;  ✅ 向量模长保持不变（旋转不变性）&quot;)
-
-        assert not torch.isnan(xq_out).any(), &quot;输出包含 NaN！&quot;
-        assert not torch.isinf(xq_out).any(), &quot;输出包含 Inf！&quot;
-        print(&quot;  ✅ 无 NaN/Inf 数值异常&quot;)
-
-        # Test 3: 相对位置编码验证
-        print(&quot;\n【Test 3】相对位置编码验证&quot;)
-        pos0 = xq_out[:, 0, :, :]
-        pos1 = xq_out[:, 1, :, :]
-        assert not torch.allclose(pos0, pos1, rtol=1e-3), &quot;不同位置的输出相同，位置编码失败！&quot;
-        print(&quot;  ✅ 位置编码生效（不同位置输出不同）&quot;)
-
-        # Test 4: 精度稳定性测试
-        print(&quot;\n【Test 4】精度稳定性测试&quot;)
-        xq_fp16 = torch.randn(1, 8, 2, head_dim, dtype=torch.float16)
-        xk_fp16 = torch.randn(1, 8, 2, head_dim, dtype=torch.float16)
-        freqs_fp16 = precompute_freqs_cis(head_dim, 8)
-
-        xq_out_fp16, xk_out_fp16 = apply_rotary_emb(xq_fp16, xk_fp16, freqs_fp16)
-
-        assert xq_out_fp16.dtype == torch.float16, &quot;输出类型错误！&quot;
-        assert not torch.isnan(xq_out_fp16).any(), &quot;FP16 输入导致 NaN！&quot;
-        print(&quot;  ✅ FP16 输入处理正确&quot;)
-        print(&quot;  ✅ 精度提升机制工作正常&quot;)
-
-        print(&quot;\n&quot; + &quot;=&quot; * 60)
-        print(&quot; RoPE 算子实现通过测试。&quot;)
-        print(&quot;   所有测试用例均已通过&quot;)
-        print(&quot;=&quot; * 60)
-
-    except NotImplementedError:
-        print(&quot;\n❌ 测试失败: 请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError) as e:
-        print(f&quot;\n❌ 测试失败: 代码可能未完成&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;\n❌ 测试失败: {e}&quot;)
-        raise
-    except Exception as e:
-        print(f&quot;\n❌ 发生未知异常: {type(e).__name__}: {e}&quot;)
-        raise
-
-test_rope()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="rope-frequency-table">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="rope-frequency-table">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>位置变转角：为什么‘旋转’能编码相对距离</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">老办法是给每个位置发一个固定向量、加到 token 上。RoPE 偏不加，而是按位置把向量“转”一个角度。多此一举？还是另有玄机？</p>
             <p class="predict-q">先押一个假设：用“旋转”代替“相加”，最关键的好处是？</p>
             <div class="predict-options">
@@ -1060,14 +789,11 @@ test_rope()
                 <input type="radio" name="predict-rope-frequency-table" value="2">
                 <span>旋转能让向量变长，从而携带更多信息</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="rope-frequency-table">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="rope-frequency-table">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="rope-frequency-table">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>一个 token 在序列里的位置就是它的序号 m（0,1,2,…）。</li><li>二维平面上的一个向量可以画成从原点出发的“小箭头”，旋转角度 θ 只改方向、不改长度。</li><li>两个向量的点积 = |a||b|·cos(夹角)；夹角只取决于两者各自转了多少。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>一个 token 在序列里的位置就是它的序号 m（0,1,2,…）。</li><li>二维平面上的一个向量可以画成从原点出发的“小箭头”，旋转角度 θ 只改方向、不改长度。</li><li>两个向量的点积 = |a||b|·cos(夹角)；夹角只取决于两者各自转了多少。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1163,24 +889,32 @@ cis = torch.polar(torch.ones_like(angle), angle)  # complex [3,2]</code></pre><p
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="rope-frequency-table-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>TODO 1：用 arange(0, dim, 2) 配 θ_i = 10000^(−2i/d) 算出每组频率。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rope-frequency-table-1">
+                <span>TODO 1：用 torch.outer(位置, 频率) 得到 [seq_len, dim/2] 的角度表。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rope-frequency-table-2">
+                <span>TODO 1：用 torch.polar(ones, 角度) 生成复数旋转表 freqs_cis，确认 shape 是 [seq_len, head_dim/2]。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="rope-complex-pairs">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="rope-complex-pairs">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>把数字两两配成小箭头，用复数乘法转一下</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">head_dim=64，意味着要把 32 对维度各转一个角度。如果写循环一对一对转，又慢又丑。有没有一行代码全转完的办法？</p>
             <p class="predict-q">先押一个假设：RoPE 用什么技巧一次性旋转所有维度对？</p>
             <div class="predict-options">
@@ -1196,14 +930,11 @@ cis = torch.polar(torch.ones_like(angle), angle)  # complex [3,2]</code></pre><p
                 <input type="radio" name="predict-rope-complex-pairs" value="2">
                 <span>先 softmax 归一化，再按概率旋转</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="rope-complex-pairs">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="rope-complex-pairs">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="rope-complex-pairs">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>head_dim 是偶数，可以把相邻两个数配成一对 (x, y) 当作平面坐标。</li><li>复数乘法 = 旋转：(a+bi)·(cosθ+i·sinθ) 就是把箭头 (a,b) 转 θ 度。</li><li>旋转只改方向不改长度，所以旋转前后向量模长不变（测试会查这一点）。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>head_dim 是偶数，可以把相邻两个数配成一对 (x, y) 当作平面坐标。</li><li>复数乘法 = 旋转：(a+bi)·(cosθ+i·sinθ) 就是把箭头 (a,b) 转 θ 度。</li><li>旋转只改方向不改长度，所以旋转前后向量模长不变（测试会查这一点）。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1287,16 +1018,32 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="rope-complex-pairs-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>TODO 2：把 xq/xk 先 .float()，reshape 成 [.., head_dim/2, 2]，再 view_as_complex。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rope-complex-pairs-1">
+                <span>TODO 3：乘以广播后的 freqs_cis 完成旋转，view_as_real 后 flatten 回 head_dim。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rope-complex-pairs-2">
+                <span>TODO 3：用 type_as(xq) 转回原精度；跑测试确认 shape 一致、旋转前后模长不变。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="44b6126f7a66ae1049d66e8ed6a961edce697e53f40c155d411df1aaa9bbd5c5">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/03_RoPE_Tutorial.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>precompute_freqs_cis</code> · <code>reshape_for_broadcast</code> · <code>apply_rotary_emb</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1316,10 +1063,10 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
     const predictData = {"rope-frequency-table":{"answer":0,"revealNote":"押好了。下面就来验证：q 转 mθ、k 转 nθ，点积里 m、n 会发生什么？"},"rope-complex-pairs":{"answer":1,"revealNote":"押好了。关键就是“两个实数 → 一个复数 → 乘 e^{iθ}”。往下看它怎么配对、怎么乘、怎么拆回来。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 6;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "03";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1332,16 +1079,18 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1366,7 +1115,7 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1408,11 +1157,15 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1443,6 +1196,7 @@ print(out, out.norm())                  # 长度仍是 1（旋转不变性）</c
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,420 +742,194 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 61 | 零基础导学关卡</p>
-        <h1>Model Architecture Exploration | 架构验证</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>架构验证</h1>
+        <p class="course-subtitle">Model Architecture Exploration</p>
+        <p class="lead">模型 config 像图纸。层数、头数、维度帮助你计算理论规模；真实吞吐还取决于 kernel、硬件和调度。先看懂图纸，再提出值得测试的结构变化。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/61_Model_Architecture_Exploration.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">61_Model_Architecture_Exploration.ipynb</span>
           <span class="pill">模型结构</span><span class="pill">架构验证</span><span class="pill">项目评估</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">看一份建筑图纸，能知道多少，又有哪些必须实地测？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="803e5b8d4c4e4b4da2e4e8844dcbe8840b3ecad563ae589a63c19052aebbdec1">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../61_Model_Architecture_Exploration.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/61_Model_Architecture_Exploration.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>61. Model Architecture Exploration | 架构验证</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>模型结构</code>, <code>架构验证</code>, <code>项目评估</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节承接第 05 节的 Decoder Layer 组合小项目，把“一个结构能否正确实现”推进为“候选结构是否值得继续投入”。先固定 baseline、训练预算和部署边界，再比较候选结构的参数量、吞吐、loss、显存和实现复杂度。最终输出一份结构差异表，并说明候选方案应接受、调整还是淘汰。</p>
-<p>实验先在 CPU 上完成结构解析、参数账本和候选决策，再用可选 GPU 扩展读取真实模型 config、检查模块，并在固定 workload 下记录资源。</p>
-<p>重点覆盖结构字段、MHA/GQA/MQA、Attention/FFN/Norm/Embedding 参数组成，以及 LoRA target modules 与结构的关系；Sparse / Linear Attention 在这里作为候选结构登记，完整训练交付、数据质量和 QLoRA 选型可继续连接到 60、64 和 65。</p>
-<p><strong>关键词：</strong> <code>baseline</code>, <code>candidate</code>, <code>architecture</code>, <code>trade-off</code>, <code>delivery</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1：从模型 config 提取结构字段</li><li>TODO 2：检查结构字段和 Attention 头数是否合法</li><li>TODO 3：建立组件级参数与理论权重账本</li><li>TODO 4：检查 baseline 口径是否合法</li><li>TODO 5：汇总候选摘要</li><li>TODO 6：计算 baseline 和 candidate 的差分</li><li>TODO 7：输出项目推荐结论</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本项目前，先能读出 Decoder Layer 的模块组成和参数来源，再比较结构改动是否值得继续训练或部署。</p>
-<ul>
-<li><a href="05_llama3_block_tutorial.html">05. LLaMA3 Block Tutorial | LLaMA3 Block 教程</a></li>
-<li><a href="08_architecture_tricks.html">08. Architecture Tricks | 架构技巧</a></li>
-<li><a href="09_sft_training_loop.html">09. SFT Training Loop | SFT 训练循环</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-</ul>
-<h3>Step 1（项目设计）：明确问题与实验目的</h3>
-<p>本节默认你已经看过 Block、Attention 和最小训练循环；现在不要求你发明新模型，而是练习判断一个结构改动是否值得进入下一轮实验。先写一条可检验的问题，例如“把 MHA 改成 GQA，能否在不超过参数预算的前提下减少 KV 投影规模”。</p>
-<p>建立一份实验卡：baseline 结构、候选改动、训练数据、batch、seq_len、优化器、步数和评测指标。CPU 阶段只比较结构账本和预先给出的指标，不把示例数字当作真实训练结果。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验要素</th>
-<th style="text-align:left">本节怎么填写</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">研究变量</td>
-<td style="text-align:left">MHA/GQA/MQA、<code>intermediate_size</code>、层数或 <code>tie_word_embeddings</code> 之一</td>
-<td style="text-align:left">说明这轮只研究什么变化</td>
-</tr>
-<tr>
-<td style="text-align:left">固定条件</td>
-<td style="text-align:left">模型、数据、dtype、batch、seq_len、训练步数和评测口径</td>
-<td style="text-align:left">防止把多个变化混成一个结论</td>
-</tr>
-<tr>
-<td style="text-align:left">观察指标</td>
-<td style="text-align:left">参数量、理论权重字节数；GPU 扩展再记录步时、峰值显存和任务质量</td>
-<td style="text-align:left">连接结构变化与资源/效果</td>
-</tr>
-<tr>
-<td style="text-align:left">产物</td>
-<td style="text-align:left">结构 profile、组件账本、baseline/candidate 差分和下一步动作</td>
-<td style="text-align:left">让别人能复查选择</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/61_architecture_experiment_flow.svg" alt="架构候选的受控比较">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;架构候选的受控比较：&lt;/strong&gt;先固定条件并建立账本，再用差分结果决定是否进入 GPU 验证。&lt;/div&gt;</p>
-<h3>Step 2（项目设计）：固定 baseline 与比较条件</h3>
-<p>读取 hidden size、layer 数、Attention heads、KV heads、intermediate size 和 vocab size，并把参数拆成 embedding、attention、MLP、norm、lm_head。对每个组件记录公式、参数量和 dtype 字节数；这样候选结构改变时，能指出变化来自哪一部分。账本是容量下界，不包含 activation、workspace 或 allocator reserved。</p>
-<h3>Step 3（项目设计）：确定机制、指标与候选方案</h3>
-<p>用小字典模拟一个模型 config，检查正数约束、hidden size 与 head 数的整除关系，以及 KV heads 是否能被 Attention heads 整除。随后把 <code>q_proj</code>、<code>k_proj</code>、<code>v_proj</code>、<code>o_proj</code> 或 FFN 投影登记为候选 target modules，并报告缺失名称；这里只检查结构接口，不加载权重，也不实现新的 kernel。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">结构字段</th>
-<th style="text-align:left">影响的组件</th>
-<th style="text-align:left">账本中观察什么</th>
-<th style="text-align:left">仍需真实验证什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left"><code>num_attention_heads</code> / <code>num_key_value_heads</code></td>
-<td style="text-align:left">Q/K/V 投影与每层 Attention</td>
-<td style="text-align:left">Q 投影、KV 投影规模及 MHA/GQA/MQA 类型</td>
-<td style="text-align:left">Attention kernel、decode 带宽、实际 KV Cache 占用</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>intermediate_size</code></td>
-<td style="text-align:left">FFN / SwiGLU</td>
-<td style="text-align:left">MLP 参数量与权重下界</td>
-<td style="text-align:left">FFN kernel 吞吐、激活峰值</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>num_hidden_layers</code></td>
-<td style="text-align:left">Attention、FFN、Norm 的层数</td>
-<td style="text-align:left">组件参数随层数的变化</td>
-<td style="text-align:left">端到端步时、workspace 和峰值显存</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>tie_word_embeddings</code></td>
-<td style="text-align:left">Embedding 与 LM Head</td>
-<td style="text-align:left">是否重复计算输出头参数</td>
-<td style="text-align:left">真实 checkpoint 是否共享权重</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4（项目设计）：确定报告字段与证据来源</h3>
-<p>把 baseline 当作参照物，而不是一行示例数字。检查它是否同时有 <code>params</code>、<code>memory_mb</code>、<code>step_time_ms</code>、<code>score</code> 和 <code>deploy_cost</code>，并确认每个字段的单位和方向已经约定。缺字段时报告问题，不替它补一个看似合理的 GPU 数字。</p>
-<p>只有 baseline 口径完整，candidate 的差分才有意义；真实 GPU 的峰值显存、吞吐和 kernel 行为留给可选扩展。</p>
-<h3>Step 5（CPU）：实现架构账本与候选比较</h3>
-<p>对每个 candidate 统一计算 <code>candidate - baseline</code>：参数、显存、步时、得分和部署成本分别记录正负方向。再用参数预算、显存上限、步时增量和部署成本上限过滤候选。</p>
-<p>这里的 <code>score</code> 只是可比较的项目输入，不等于模型能力结论。候选若只提高分数却超出资源或部署约束，应进入 <code>tune</code>；没有候选满足全部约束时，应保留失败原因。</p>
-<h3>Step 6（项目决策）：给出下一步动作</h3>
-<p>把候选表、差分表和约束检查合成一条决策：<code>accept</code> 表示可以进入扩展评测，<code>tune</code> 表示要调整结构范围或预算，<code>reject</code> 表示当前证据下不值得继续。</p>
-<p>CPU 结论只能说明结构假设和账本是否自洽；若要声称真实吞吐、峰值显存或 kernel 收益，必须在同一模型、数据、dtype 和硬件上运行 GPU 对照。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/61_architecture_decision_flow.svg" alt="架构项目的证据分流">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;架构项目的证据分流：&lt;/strong&gt;Step 6 根据约束和证据等级决定进入扩展评测、调整变量，还是停止当前方案。&lt;/div&gt;</p>
-<p><code>61</code> 不重复实现基础模块，而是把前面几节已经讲过的组件收成一份可比较的结构验证报告。</p>
-<p>前面的 04、05、08、09、13 分别提供 Attention、Block、架构约束、训练输入和评测口径；Step 6 将这些信息收成 baseline/candidate 对照和交付决策。</p>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">模块</th>
-<th style="text-align:left">必须记录</th>
-<th style="text-align:left">用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">参数量、显存、step time、核心 score</td>
-<td style="text-align:left">保证比较合法</td>
-</tr>
-<tr>
-<td style="text-align:left">candidate</td>
-<td style="text-align:left">改动模块、参数变化、资源变化</td>
-<td style="text-align:left">解释结构收益来源</td>
-</tr>
-<tr>
-<td style="text-align:left">对比</td>
-<td style="text-align:left">score delta、memory delta、部署影响</td>
-<td style="text-align:left">判断是否值得 adopt</td>
-</tr>
-<tr>
-<td style="text-align:left">决策</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出项目结论</td>
-</tr>
-</tbody>
-</table>
-<h3>参数口径说明</h3>
-<p>本节主要是 CPU-first 决策模板，没有真实模型运行配置。<code>baseline</code> 固定为参照结构；candidate 的 <code>changed_modules</code> 只描述改动位置，<code>params</code>、<code>memory_mb</code>、<code>step_time_ms</code> 和 <code>score</code> 分别表示参数量、显存、步时和任务得分；<code>deploy_cost</code> 表示实现或部署额外成本。比较 candidate 时一次只改变结构变量，不能同时改变数据、训练步数和评测口径。</p>
-<p><strong>LoRA 插入点的边界：</strong> <code>q_proj</code>、<code>k_proj</code>、<code>v_proj</code>、<code>o_proj</code> 属于 Attention 投影，<code>gate_proj</code>、<code>up_proj</code>、<code>down_proj</code> 属于 FFN 投影；它们用于描述候选改动范围，不代表本节已经完成 LoRA 训练。需要训练和适配器产物时转到 60，需要比较不同 target modules 时转到 63，需要低比特基座时转到 65。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 7</summary><pre><code># 7 个连续的核心 TODO：从结构读取走到项目决策
-# 目标：把结构变体转成可检查、可比较的项目报告；CPU 数字是估算，不是 GPU 实测。
-# 这些 TODO 只改变结构字段或决策输入，不实现新的 Attention kernel，也不模拟真实 GPU 吞吐。
-# TODO 1：从模型 config 提取结构字段
-def extract_architecture_profile(config: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;提取结构字段，并根据 Attention/KV heads 判断 MHA、GQA 或 MQA。
+<section class="lessons">
 
-    返回值至少包含 head_dim、attention_type 和 tie_word_embeddings。
-    &quot;&quot;&quot;
-    # 提示：num_key_value_heads 缺省时按 num_attention_heads 处理。
-    # num_attention_heads = ???；num_key_value_heads = ???；head_dim = ???；attention_type = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-# TODO 2：检查结构字段和 Attention 头数是否合法
-def validate_architecture_profile(profile: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;检查字段完整性、正数约束和两组 head 的整除关系。
-
-    返回 {'ready': bool, 'issues': list[str]}，不能只返回一个布尔值。
-    &quot;&quot;&quot;
-    # 提示：hidden_size % num_attention_heads == 0；
-    #       num_attention_heads % num_key_value_heads == 0。
-    # required_keys = ???；issues = ???；ready = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-# TODO 3：建立组件级参数与理论权重账本
-def build_architecture_parameter_ledger(profile: Dict[str, object], dtype_bytes: int = 2) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;拆分 Embedding、Attention、MLP、Norm 和 lm_head 的理论账本。
-
-    tie_word_embeddings=True 时不重复计算 lm_head；结果是 CPU 理论估算。
-    &quot;&quot;&quot;
-    # 提示：KV 投影使用 num_key_value_heads；不包含 activation、workspace 或 allocator。
-    # component_params = ???；weight_bytes = ???；total_bytes = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-# TODO 4：检查 baseline 口径是否合法
-
-def validate_architecture_baseline(baseline: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;检查 baseline 的参数、资源、得分和部署成本字段。
-
-    缺失字段进入 issues；不要替候选补默认分数或虚构 GPU 指标。
-    &quot;&quot;&quot;
-    # 提示：至少检查 name、params、memory_mb、step_time_ms、score 和 deploy_cost。
-    # required_keys = ???；missing_keys = ???；issues = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-# TODO 5：汇总候选摘要
-def summarize_architecture_candidates(candidates: List[Dict[str, object]], baseline_params: int) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;汇总候选数量、参数变化和可比较的候选名称。
-
-    参数变化相对 baseline_params 计算；score 只是输入字段，不等于真实任务质量。
-    &quot;&quot;&quot;
-    # 提示：至少输出 candidate_count、valid_count、invalid_names 和 summaries。
-    # valid_candidates = ???；invalid_names = ???；summaries = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-# TODO 6：计算 baseline 和 candidate 的差分
-def compare_architecture_pair(baseline: Dict[str, object], candidate: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;计算 candidate 相对 baseline 的参数、资源、得分和部署成本差分。
-
-    统一使用 candidate - baseline，并保留字段名让调用方能解释正负方向。
-    &quot;&quot;&quot;
-    # 提示：不要把负的 memory_delta 写成显存增加。
-    # params_delta = ???；memory_delta = ???；score_delta = ???；deploy_delta = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-# TODO 7：输出项目推荐结论
-def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, object]], param_budget: int, max_deploy_delta: float, max_memory_delta_mb: int = 0, max_step_time_delta_ms: float = 0.0) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;按参数、部署成本、显存和步时约束输出 accept/tune/reject。
-
-    没有满足全部约束的候选时返回 recommended_name=None，并给出下一步动作。
-    &quot;&quot;&quot;
-    # 提示：先校验 baseline 和候选，再过滤；GPU 指标缺失时不能伪造。
-    # feasible = ???；recommended_name = ???；decision = ???；next_action = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>看一份建筑图纸，能知道多少，又有哪些必须实地测？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节承接第 05 节的 Decoder Layer 组合小项目，把“一个结构能否正确实现”推进为“候选结构是否值得继续投入”。先固定 baseline、训练预算和部署边界，再比较候选结构的参数量、吞吐、loss、显存和实现复杂度。最终输出一份结构差异表，并说明候选方案应接受、调整还是淘汰。</p>
-            <div class="notebook-content"><h3>Step 1（项目设计）：明确问题与实验目的</h3>
-<p>本节默认你已经看过 Block、Attention 和最小训练循环；现在不要求你发明新模型，而是练习判断一个结构改动是否值得进入下一轮实验。先写一条可检验的问题，例如“把 MHA 改成 GQA，能否在不超过参数预算的前提下减少 KV 投影规模”。</p>
-<p>建立一份实验卡：baseline 结构、候选改动、训练数据、batch、seq_len、优化器、步数和评测指标。CPU 阶段只比较结构账本和预先给出的指标，不把示例数字当作真实训练结果。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验要素</th>
-<th style="text-align:left">本节怎么填写</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">研究变量</td>
-<td style="text-align:left">MHA/GQA/MQA、<code>intermediate_size</code>、层数或 <code>tie_word_embeddings</code> 之一</td>
-<td style="text-align:left">说明这轮只研究什么变化</td>
-</tr>
-<tr>
-<td style="text-align:left">固定条件</td>
-<td style="text-align:left">模型、数据、dtype、batch、seq_len、训练步数和评测口径</td>
-<td style="text-align:left">防止把多个变化混成一个结论</td>
-</tr>
-<tr>
-<td style="text-align:left">观察指标</td>
-<td style="text-align:left">参数量、理论权重字节数；GPU 扩展再记录步时、峰值显存和任务质量</td>
-<td style="text-align:left">连接结构变化与资源/效果</td>
-</tr>
-<tr>
-<td style="text-align:left">产物</td>
-<td style="text-align:left">结构 profile、组件账本、baseline/candidate 差分和下一步动作</td>
-<td style="text-align:left">让别人能复查选择</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/61_architecture_experiment_flow.svg" alt="架构候选的受控比较">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;架构候选的受控比较：&lt;/strong&gt;先固定条件并建立账本，再用差分结果决定是否进入 GPU 验证。&lt;/div&gt;</p>
-<h3>Step 2（项目设计）：固定 baseline 与比较条件</h3>
-<p>读取 hidden size、layer 数、Attention heads、KV heads、intermediate size 和 vocab size，并把参数拆成 embedding、attention、MLP、norm、lm_head。对每个组件记录公式、参数量和 dtype 字节数；这样候选结构改变时，能指出变化来自哪一部分。账本是容量下界，不包含 activation、workspace 或 allocator reserved。</p>
-<h3>Step 3（项目设计）：确定机制、指标与候选方案</h3>
-<p>用小字典模拟一个模型 config，检查正数约束、hidden size 与 head 数的整除关系，以及 KV heads 是否能被 Attention heads 整除。随后把 <code>q_proj</code>、<code>k_proj</code>、<code>v_proj</code>、<code>o_proj</code> 或 FFN 投影登记为候选 target modules，并报告缺失名称；这里只检查结构接口，不加载权重，也不实现新的 kernel。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">结构字段</th>
-<th style="text-align:left">影响的组件</th>
-<th style="text-align:left">账本中观察什么</th>
-<th style="text-align:left">仍需真实验证什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left"><code>num_attention_heads</code> / <code>num_key_value_heads</code></td>
-<td style="text-align:left">Q/K/V 投影与每层 Attention</td>
-<td style="text-align:left">Q 投影、KV 投影规模及 MHA/GQA/MQA 类型</td>
-<td style="text-align:left">Attention kernel、decode 带宽、实际 KV Cache 占用</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>intermediate_size</code></td>
-<td style="text-align:left">FFN / SwiGLU</td>
-<td style="text-align:left">MLP 参数量与权重下界</td>
-<td style="text-align:left">FFN kernel 吞吐、激活峰值</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>num_hidden_layers</code></td>
-<td style="text-align:left">Attention、FFN、Norm 的层数</td>
-<td style="text-align:left">组件参数随层数的变化</td>
-<td style="text-align:left">端到端步时、workspace 和峰值显存</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>tie_word_embeddings</code></td>
-<td style="text-align:left">Embedding 与 LM Head</td>
-<td style="text-align:left">是否重复计算输出头参数</td>
-<td style="text-align:left">真实 checkpoint 是否共享权重</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4（项目设计）：确定报告字段与证据来源</h3>
-<p>把 baseline 当作参照物，而不是一行示例数字。检查它是否同时有 <code>params</code>、<code>memory_mb</code>、<code>step_time_ms</code>、<code>score</code> 和 <code>deploy_cost</code>，并确认每个字段的单位和方向已经约定。缺字段时报告问题，不替它补一个看似合理的 GPU 数字。</p>
-<p>只有 baseline 口径完整，candidate 的差分才有意义；真实 GPU 的峰值显存、吞吐和 kernel 行为留给可选扩展。</p>
-<h3>Step 5（CPU）：实现架构账本与候选比较</h3>
-<p>对每个 candidate 统一计算 <code>candidate - baseline</code>：参数、显存、步时、得分和部署成本分别记录正负方向。再用参数预算、显存上限、步时增量和部署成本上限过滤候选。</p>
-<p>这里的 <code>score</code> 只是可比较的项目输入，不等于模型能力结论。候选若只提高分数却超出资源或部署约束，应进入 <code>tune</code>；没有候选满足全部约束时，应保留失败原因。</p>
-<h3>Step 6（项目决策）：给出下一步动作</h3>
-<p>把候选表、差分表和约束检查合成一条决策：<code>accept</code> 表示可以进入扩展评测，<code>tune</code> 表示要调整结构范围或预算，<code>reject</code> 表示当前证据下不值得继续。</p>
-<p>CPU 结论只能说明结构假设和账本是否自洽；若要声称真实吞吐、峰值显存或 kernel 收益，必须在同一模型、数据、dtype 和硬件上运行 GPU 对照。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>模型 config 像图纸。层数、头数、维度帮助你计算理论规模；真实吞吐还取决于 kernel、硬件和调度。先看懂图纸，再提出值得测试的结构变化。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>hidden size</dt><dd>每个 token 表示向量的宽度。</dd></div><div><dt>head dimension</dt><dd>每个 Attention 头处理的维度。</dd></div><div><dt>KV heads</dt><dd>保存 Key/Value 的头数；GQA 允许少于 query 头数。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>模型配置的理论账本可以证明什么？</p>
+            <p>本课中的「hidden size」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>直接证明线上速度</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>保存 Key/Value 的头数；GQA 允许少于 query 头数。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>结构和理论参数/缓存成本，不能证明真实 GPU 吞吐</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>每个 token 表示向量的宽度。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>直接证明任务质量</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>每个 Attention 头处理的维度。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1：从模型 config 提取结构字段</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>核对维度</h4><p>hidden=16、query heads=4，那么每头维度=4。不能把不整除的配置悄悄向下取整。</p></li><li><h4>比较缓存</h4><p>固定其他条件，KV heads 从 4 减到 2，普通 KV 理论元素数减半。</p></li><li><h4>识别边界</h4><p>修改 config 字段并不自动得到训练好的兼容模型；权重形状、训练和 backend 都需要对应。</p></li></ol><section class="learning-lab" data-lab="kv" aria-label="让 KV 缓存的账本动起来">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>让 KV 缓存的账本动起来</h4><p>固定一层，改变 token 数和 KV heads，对照三种表示。</p></header>
+    <div class="lab-controls"><label for="lab-61-tokens"><span>序列长度 <output data-value="tokens" for="lab-61-tokens">8</output> token</span><input type="range" id="lab-61-tokens" name="tokens" min="4" max="32" step="1" value="8"></label><label for="lab-61-heads"><span>GQA 的 KV heads <output data-value="heads" for="lab-61-heads">2</output> </span><input type="range" id="lab-61-heads" name="heads" min="1" max="4" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-61" data-challenge-label>算一算</label><div><input id="answer-61" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>hidden=16、query heads=4，每头维度是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>64</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>16</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>4</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>hidden, heads = 16, 4
+assert hidden % heads == 0
+head_dim = hidden // heads
+print(head_dim)  # 4</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把理论缓存节省直接写成“模型加速两倍”，或给缺失的结构字段填任意默认值。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>把理论缓存节省直接写成“模型加速两倍”，或给缺失的结构字段填任意默认值。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「hidden size」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2：检查结构字段和 Attention 头数是否合法</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3：建立组件级参数与理论权重账本</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 4：检查 baseline 口径是否合法</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-4">
-                <span>TODO 5：汇总候选摘要</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-5">
-                <span>TODO 6：计算 baseline 和 candidate 的差分</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-6">
-                <span>TODO 7：输出项目推荐结论</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="a400503c595e508ae96c5e6851244be0e7d8e9c4a85ea440a7f878c3d311fd5e">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/61_Model_Architecture_Exploration.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>extract_architecture_profile</code> · <code>validate_architecture_profile</code> · <code>build_architecture_parameter_ledger</code> · <code>validate_architecture_baseline</code> · <code>summarize_architecture_candidates</code> · <code>compare_architecture_pair</code> · <code>recommend_candidate</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1165,14 +941,14 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
 
   <script>
     const levelId = "61";
-    const checkpointData = {"current-core":{"answer":1,"explain":"结构和理论参数/缓存成本，不能证明真实 GPU 吞吐。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：每个 token 表示向量的宽度。。另外两个选项分别解释「head dimension」和「KV heads」，注意区分。"},"v4-experiment":{"answer":2,"explain":"把表示宽度均分给 4 个头：16/4。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：把理论缓存节省直接写成“模型加速两倍”，或给缺失的结构字段填任意默认值。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 7;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1181,20 +957,22 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-803e5b8d4c4e";
+    const homeworkKey = statePrefix + levelId + "-homework-a400503c595e";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1219,7 +997,7 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1261,11 +1039,15 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1296,6 +1078,7 @@ def recommend_candidate(baseline: Dict[str, object], candidates: List[Dict[str, 
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const lessonOverrides = require("./lesson_overrides");
 const currentCurriculum = require("./curriculum_current");
-const currentQuizzes = require("./current_quizzes");
+const {makeAdvanced, plans} = require("./advanced_course");
 const MarkdownIt = require("markdown-it");
 const texmath = require("markdown-it-texmath");
 const katex = require("katex");
@@ -894,7 +894,8 @@ y = SquareFunction.apply(x)</code></pre>
 
 const {levels: currentLevels, reserved, moves} = currentCurriculum.build(levels.slice(0, 12));
 levels.splice(0, levels.length, ...currentLevels);
-const upstream = {commit: "4fa62623ae7f2f207871b43c3f254a765765bf2e", date: "2026-09-14"};
+const upstream = require("./upstream_source.json");
+const officialUrl = file => `${upstream.repository}/blob/${upstream.commit}/${file}`;
 const moveByOldId = Object.fromEntries(moves.map(m => [m.oldId, m.id]));
 const legacyLinks = new Map(moves.map(m => [m.oldFile.replace(/\.ipynb$/, "").toLowerCase() + ".html", m.file.replace(/\.ipynb$/, "").toLowerCase() + ".html"]));
 function updateLessonLinks(value) {
@@ -909,15 +910,16 @@ function updateLessonLinks(value) {
 function migrateProgressScript() {
   return `
     const courseMoves = ${JSON.stringify(moveByOldId)};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
   `;
 }
-
 
 const categoryLabel = {
   foundation: "基础",
@@ -1016,7 +1018,8 @@ function resolveNotebookUrl(url, level) {
     ? path.resolve(root, "../../docs/public", file.slice(1))
     : path.resolve(root, "..", file);
   const linkedLevel = levels.find(l => path.resolve(root, "..", l.file) === absolute);
-  if (linkedLevel) return slug(linkedLevel) + suffix;
+  if (linkedLevel && !file.endsWith(".ipynb")) return slug(linkedLevel) + suffix;
+  if (/\.(ipynb|md)$/.test(file)) return officialUrl(path.relative(path.resolve(root, "../.."), absolute)) + suffix;
   return path.relative(notesDir, absolute) + suffix;
 }
 function renderNotebookMarkdown(text, level) {
@@ -1036,20 +1039,15 @@ function renderNotebookMarkdown(text, level) {
   return md.render(text.replace(/\u200b/g, ""));
 }
 function notebookGuideHtml(level) {
-  const cells = level.cells;
-  const intro = currentCurriculum.source(cells.find(c => c.cell_type === "markdown"));
-  const markdown = cells.filter(c => c.cell_type === "markdown").slice(1).map(currentCurriculum.source).join("\n\n");
-  const code = cells.map((c, i) => c.cell_type === "code" && /TODO/.test(currentCurriculum.source(c))
-    ? `<details><summary>题目与测试代码 · Cell ${i + 1}</summary><pre><code>${esc(currentCurriculum.source(c))}</code></pre></details>` : "").join("");
-  return `<section class="card notebook-guide section" data-source-hash="${level.sourceHash}">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../${esc(level.file)}">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/${upstream.commit}/02_PyTorch_Algorithms/${esc(level.file)}">官方版本</a></p>
-    <div class="notebook-content">${renderNotebookMarkdown(intro, level)}</div>
-    <h3>当前题目检查清单</h3>
-    <ul>${level.handsOn.map(t => `<li>${esc(t)}</li>`).join("") || "<li>按下方题目代码中的函数说明和测试完成实现。</li>"}</ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content">${renderNotebookMarkdown(markdown, level)}</div></details>
-    ${code}
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
+  const names = [...new Set(level.cells.filter(c => c.cell_type === "code" && /TODO/.test(currentCurriculum.source(c)))
+    .flatMap(c => [...currentCurriculum.source(c).matchAll(/(?:def|class)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*[(\:]/g)].map(m => m[1]))
+    .filter(name => !name.startsWith("test_")))].slice(0, 10);
+  return `<section class="card notebook-guide section" id="official-practice" data-source-hash="${level.sourceHash}">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="${officialUrl('02_PyTorch_Algorithms/' + level.file)}" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    ${names.length ? `<details><summary>这节课会遇到的代码对象</summary><p>${names.map(name => `<code>${esc(name)}</code>`).join(' · ')}</p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>` : ""}
+    <p class="source-note">练习来源：Datawhale 官方仓库 · ${upstream.commit.slice(0,7)}。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
   </section>`;
 }
 
@@ -1062,7 +1060,7 @@ function genericExampleHtml(level) {
           <div class="shape-story">
             <div class="story-panel">
               <strong>1. 先认出本关的核心对象</strong>
-              <p>${esc(level.summary)}</p>
+              <p>${esc(level.summary.replace(/\$([^$]+)\$/g, "$1"))}</p>
               <div class="concept-badges">
                 ${level.tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}
               </div>
@@ -1189,7 +1187,7 @@ function lessonLevelPage(level, prev, next) {
               </label>`).join("");
 
       return `
-        <article class="lesson-card inquiry" data-lesson="${lesson.id}">
+        <article class="lesson-card inquiry" id="mission-${index + 1}" data-lesson="${lesson.id}">
           <div class="lesson-top">
             <span class="level-pill">Mission ${index + 1}</span>
             <span class="todo-pill">${esc(lesson.todo)}</span>
@@ -1197,18 +1195,15 @@ function lessonLevelPage(level, prev, next) {
           <h2>${esc(lesson.title)}</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">${esc(lesson.predict.hook)}</p>
             <p class="predict-q">${esc(lesson.predict.question)}</p>
             <div class="predict-options">${predictOptions}</div>
-            <div class="predict-feedback" data-predict-feedback="${lesson.id}">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="${lesson.id}">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="${lesson.id}">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul>${prerequisite}</ul>
-            </div>
+            ${prerequisite ? `<div class="lesson-section"><h3>先补的知识</h3><ul>${prerequisite}</ul></div>` : ""}
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1226,25 +1221,22 @@ function lessonLevelPage(level, prev, next) {
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
             ${homework}
           </div>
         </article>`;
     }
 
     return `
-        <article class="lesson-card" data-lesson="${lesson.id}">
+        <article class="lesson-card" id="mission-${index + 1}" data-lesson="${lesson.id}">
           <div class="lesson-top">
             <span class="level-pill">Mission ${index + 1}</span>
             <span class="todo-pill">${esc(lesson.todo)}</span>
           </div>
           <h2>${esc(lesson.title)}</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul>${prerequisite}</ul>
-          </div>
+          ${prerequisite ? `<div class="lesson-section"><h3>先补的知识</h3><ul>${prerequisite}</ul></div>` : ""}
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
@@ -1261,8 +1253,8 @@ function lessonLevelPage(level, prev, next) {
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
             ${homework}
           </div>
         </article>`;
@@ -2079,6 +2071,8 @@ function lessonLevelPage(level, prev, next) {
   <style>
 ${lessonStyles}
   </style>` : ""}
+  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/learning_ui.css">
+  ${typeof level !== "undefined" ? '<script defer src="../assets/learning_lab.js"></script>' : ''}
 </head>
 <body>
   <main class="shell">
@@ -2094,35 +2088,24 @@ ${lessonStyles}
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level ${level.id} | 零基础导学关卡</p>
-        <h1>${esc(level.title)}</h1>
-        <p class="lead">${predictTotal
-          ? `每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。`
-          : `先用小例子把必要知识学会，再用 ${checkpointLabel}闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。`}</p>
+        <h1>${esc(level.title.split("|").slice(1).join("|").trim() || level.title)}</h1>
+        <p class="course-subtitle">${esc(level.title.split("|")[0].trim())}</p>
+        <p class="lead">${Number(level.id) >= 30 ? esc(plans[Number(level.id)].analogy) : "先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。"}</p>
+        <a class="official-notebook" href="${officialUrl('02_PyTorch_Algorithms/' + level.file)}" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">${esc(level.file)}</span>
           ${level.tags.map((tag) => `<span class="pill">${esc(tag)}</span>`).join("")}
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          ${predictTotal
-            ? `<div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>`
-            : `<div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>`}
-        </div>
-        <div class="formula">${esc(level.formula)}</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol>${level.lessons.map((lesson,index)=>`<li><a href="#mission-${index+1}">${esc(lesson.title)}</a></li>`).join('')}<li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>${factoryEntryHtml}
 
-${level.notebookGuide || ""}
-
-    <section class="lessons">
+<section class="lessons">
       ${lessons}
     </section>
+
+    ${level.notebookGuide || ""}
 
     <section class="complete">
       <div>
@@ -2143,9 +2126,9 @@ ${level.notebookGuide || ""}
     const predictTotal = ${predictTotal};
     const checkpointTotal = ${level.lessons.length};
     const homeworkTotal = ${homeworkCount};
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = ${JSON.stringify(level.oldId || null)};
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -2157,9 +2140,9 @@ ${level.notebookGuide || ""}
     const homeworkKey = statePrefix + levelId + "-homework-${level.sourceHash.slice(0, 12)}";
     const predictKey = statePrefix + levelId + "-predicts";
     ${migrateProgressScript()}
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -2184,7 +2167,7 @@ ${level.notebookGuide || ""}
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -2226,11 +2209,15 @@ ${level.notebookGuide || ""}
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -2261,6 +2248,7 @@ ${level.notebookGuide || ""}
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
@@ -2288,26 +2276,18 @@ ${level.notebookGuide || ""}
 }
 
 function levelPage(level, prev, next) {
-  const oldLessons = level.lessons || (level.oldId ? lessonOverrides[level.oldId] : null);
   let lessons;
-  if (oldLessons) {
-    lessons = updateLessonLinks(enhanceFoundationLessons(level.oldId, oldLessons)).map(lesson => ({...lesson,
-      todo: "概念练习 · 作业见新版任务区",
-      homework: ["完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。"]
-    }));
+  if (Number(level.id) >= 30) {
+    lessons = makeAdvanced(level);
   } else {
-    const checkpoint = currentQuizzes[Number(level.id)];
-    if (!checkpoint) throw new Error(`Missing current quiz: ${level.file}`);
-    lessons = [{id: "current-core", title: "从原理走到本课实现", todo: "新版课程导学",
-      prerequisite: ["先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。"],
-      intuition: level.summary,
-      exampleHtml: `<div class="notebook-content">${renderNotebookMarkdown(level.steps.join("\n\n"), level)}</div>`,
-      syntaxHtml: '<p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>',
-      checkpoint, homework: level.handsOn.length ? level.handsOn : ["按题目函数说明完成实现，并运行 Notebook 测试。"]
-    }];
+    const oldLessons = level.lessons || lessonOverrides[level.oldId];
+    if (!oldLessons) throw new Error(`Missing foundation lesson ${level.id}`);
+    lessons = updateLessonLinks(enhanceFoundationLessons(level.oldId, oldLessons)).map(lesson => ({...lesson,
+      todo: "概念练习",
+      homework: lesson.homework || ["前往官方 Notebook 完成相关实现，并运行测试。"]
+    }));
   }
-  const notebookGuide = notebookGuideHtml(level);
-  return lessonLevelPage({ ...level, lessons, notebookGuide }, prev, next);
+  return lessonLevelPage({ ...level, lessons, notebookGuide: notebookGuideHtml(level) }, prev, next);
 }
 
 function indexPage() {
@@ -2317,8 +2297,9 @@ function indexPage() {
             <span class="badge">L${level.id}</span>
             <span class="status" data-status="${level.id}">待挑战</span>
           </div>
-          <h2>${esc(level.title)}</h2>
-          <p>${esc(level.summary)}</p>
+          <h2>${esc(level.title.split("|").slice(1).join("|").trim() || level.title)}</h2>
+          <small class="course-subtitle">${esc(level.title.split("|")[0].trim())}</small>
+          <p>${esc(level.summary.replace(/\$([^$]+)\$/g, "$1"))}</p>
           <div class="chips">${level.tags.map((tag) => `<span class="chip">${esc(tag)}</span>`).join("")}</div>
           <a class="start" href="notes/${slug(level)}">进入关卡</a>
         </article>`).join("");
@@ -2483,13 +2464,15 @@ function indexPage() {
       .stats, .flow { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/learning_ui.css">
+  ${typeof level !== "undefined" ? '<script defer src="../assets/learning_lab.js"></script>' : ''}
 </head>
 <body>
   <main class="shell">
     <section class="hero">
       <div>
-        <h1>PyTorch Algorithms 闯关地图</h1>
-        <p class="lead">每个 notebook 都有一个可分享的 HTML 导学关卡。每关固定包含三件事：课程输入、闯关检查、Notebook 作业。HTML 负责把概念和关键语法讲清楚，notebook 负责最后的代码刷题检验。</p>
+        <p class="eyebrow">LLM LEARNING ATELIER · 大模型学习工坊</p><h1>把抽象原理，<br>变成你看得见的理解。</h1>
+        <p class="lead">从一个小问题开始，用图解、可操作实验和即时反馈学会大模型算法。先在这里理解，再去 Datawhale 官方 Notebook 亲手实现。</p>
         <div class="stats" aria-label="学习进度">
           <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
           <div class="stat"><strong>${levels.length}</strong><span>正式课程</span></div>
@@ -2506,12 +2489,12 @@ function indexPage() {
       </div>
     </section>
 
-    <section class="card" style="padding:20px;margin:20px 0">
+    <section class="route-banner">
       <h2>新版学习路线</h2><p>00–29 基础机制 → 30–52 方法扩展 → 60–86 项目验证。预留编号不计入通关总数。</p>
-      <p>同步官方 ${upstream.commit.slice(0, 7)} · ${upstream.date}。旧进度按课程主题迁移；新版作业需要重新核对。</p>
-      <p><a href="../../topic_discussion/inference_optimization/intro.md">推理优化路线</a> · <a href="../../topic_discussion/memory_performance_tuning/intro.md">显存优化路线</a> · <a href="../intro.md">Part 02 官方总览</a></p>
-      <label>搜索课程 <input id="course-search" type="search" placeholder="编号、中文、英文或关键词" style="max-width:100%;padding:10px"></label>
-      <details><summary>查看 ${reserved.length} 个预留章节（尚未形成正式课程）</summary><ul>${reserved.map(l => `<li><a href="../${l.file}">${esc(l.title)}</a></li>`).join("")}</ul></details>
+      <p>同步官方 ${upstream.commit.slice(0, 7)} · ${upstream.date}。后半段 45 课已重做为三段教学与交互实验。旧版进度仍保留，新练习从头检查。</p>
+      <p><a href="${officialUrl("topic_discussion/inference_optimization/intro.md")}">推理优化路线</a> · <a href="${officialUrl("topic_discussion/memory_performance_tuning/intro.md")}">显存优化路线</a> · <a href="${officialUrl("02_PyTorch_Algorithms/intro.md")}">Part 02 官方总览</a></p>
+      <label>找到你想学的主题 <input class="course-search" id="course-search" type="search" placeholder="编号、中文、英文或关键词" style="max-width:100%;padding:10px"></label>
+      <details><summary>查看 ${reserved.length} 个预留章节（尚未形成正式课程）</summary><ul>${reserved.map(l => `<li><a href="${officialUrl("02_PyTorch_Algorithms/" + l.file)}">${esc(l.title)}</a></li>`).join("")}</ul></details>
     </section>
     <section class="toolbar">
       <div class="filters" aria-label="关卡过滤器">
@@ -2526,7 +2509,7 @@ function indexPage() {
 
     <section class="levels" id="levels" aria-label="Notebook 关卡列表">
 ${cards}
-    </section>
+    </section><p id="no-results" class="no-results" hidden>还没找到匹配的课程。试试“缓存”“LoRA”或课程编号，也可以切回“全部”。</p>
   </main>
 
   <script>
@@ -2553,6 +2536,7 @@ ${cards}
         card.style.display = (activeFilter === "all" || card.dataset.category === activeFilter)
           && card.textContent.toLowerCase().includes(query) ? "" : "none";
       });
+      document.querySelector("#no-results").hidden = cards.some(card => card.style.display !== "none");
     }
     document.querySelector("#course-search").addEventListener("input", filterCards);
     document.querySelectorAll("[data-filter]").forEach(button => {
@@ -2569,12 +2553,22 @@ ${cards}
 `;
 }
 
+function officializeNotebookLinks(html, filePath) {
+  return html.replace(/href="([^"<>]+\.ipynb(?:#[^"<>]*)?)"/g, (match, href) => {
+    if (/^https?:/.test(href)) return match;
+    const [file, fragment] = href.split("#");
+    const absolute = path.resolve(path.dirname(filePath), file);
+    const relative = path.relative(path.resolve(root, "../.."), absolute);
+    if (relative.startsWith("..")) throw new Error(`Notebook link outside repository: ${href}`);
+    return `href="${officialUrl(relative)}${fragment ? '#' + fragment : ''}" target="_blank" rel="noopener noreferrer"`;
+  });
+}
 const cleanGeneratedHtml = (html) => html.replace(/[ \t]+$/gm, "");
 
 levels.forEach((level, index) => {
   const filePath = path.join(notesDir, slug(level));
   const page = levelPage(level, levels[index - 1], levels[index + 1]);
-  fs.writeFileSync(filePath, cleanGeneratedHtml(page));
+  fs.writeFileSync(filePath, cleanGeneratedHtml(officializeNotebookLinks(page, filePath)));
 });
 
 for (const [oldPage, newPage] of legacyLinks) {
@@ -2589,6 +2583,8 @@ for (const file of fs.readdirSync(notesDir)) {
 }
 
 fs.writeFileSync(path.join(root, "index.html"), cleanGeneratedHtml(indexPage()));
+const factoryPath = path.join(notesDir, "25_quantization_model_factory.html");
+fs.writeFileSync(factoryPath, officializeNotebookLinks(fs.readFileSync(factoryPath, "utf8"), factoryPath));
 
 console.log(`Generated ${levels.length} level pages and index.html`);
 

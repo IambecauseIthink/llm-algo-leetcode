@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,997 +750,181 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 60 | 零基础导学关卡</p>
-        <h1>LoRA Fine-Tuning Project | LoRA 微调项目</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>LoRA 微调项目</h1>
+        <p class="course-subtitle">LoRA Fine-Tuning Project</p>
+        <p class="lead">这一关把 LoRA 从一个公式变成一次可交付实验。像比较两种做饭方法：食材、份量和评分人相同，才能判断省时省力有没有牺牲成品。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">60_LoRA_Fine_Tuning_Project.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">LoRA</span><span class="pill">项目评估</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">quality + trainable params + memory + throughput</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">小补丁省了参数，就值得替换全量微调吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="3288a3f355e502abb783385783c3256b1aea0c1f30691932368b87d916f36c2d">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../60_LoRA_Fine_Tuning_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>60. LoRA Fine-Tuning Project | LoRA 微调项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>LoRA</code>, <code>项目评估</code> | <strong>目标人群：</strong> 具备基础训练经验、开始做微调项目的学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节以指令跟随任务为例，比较全参数微调与 LoRA，观察 LoRA 是否能够减少训练成本并保持可接受的验证效果。实验同时检查可训练参数、训练速度、峰值显存和 adapter 产物。CPU 部分用于检查数据、loss mask、参数账本、指标汇总和决策逻辑；GPU 部分使用真实模型和数据，验证训练损失、验证损失、显存和速度。具体模型、数据集和运行条件见 Step 1。</p>
-<p><strong>关键词：</strong> <code>LoRA</code>, <code>training</code>, <code>project</code>, <code>profiling</code>, <code>report</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 审计 SFT 样本</li><li>TODO 2: 核对 loss mask</li><li>TODO 3: 汇总 baseline 和 LoRA 的项目指标</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本项目后，先用 LoRA 机制、有效 batch 和端到端训练闭环固定实验口径，再比较资源成本、质量变化和 adapter 交付条件。</p>
-<ul>
-<li><a href="09_sft_training_loop.html">09. SFT Training Loop | SFT 训练循环</a></li>
-<li><a href="10_lora_tutorial.html">10. LoRA Tutorial | LoRA 教程</a></li>
-<li><a href="12_gradient_accumulation.html">12. Gradient Accumulation | 梯度累积</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-</ul>
-<h3>Step 1（项目设计与运行入口）：明确实验目标与对照</h3>
-<p>本项目以指令跟随为任务，比较全参数微调与 LoRA 的训练成本和效果。每条样本由 <code>instruction / input</code> 组成输入，<code>output</code> 作为监督目标。</p>
-<p>本项目的输入是模型、指令数据、LoRA 配置和训练条件；操作是分别运行全参数更新与 LoRA 更新；输出是参数量、训练速度、显存、loss 和 adapter 报告。成功条件是：两组对照口径一致，LoRA 的资源成本有明确变化，验证效果处于可接受范围，并且产物可以被复核。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目内容</th>
-<th style="text-align:left">CPU：机制验证</th>
-<th style="text-align:left">GPU：真实对照</th>
-<th style="text-align:left">实验约定</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">任务目标</td>
-<td style="text-align:left">用少量示例检查 <code>instruction / input → output</code> 的任务格式和判断逻辑</td>
-<td style="text-align:left">在指令跟随任务上比较全参数微调与 LoRA</td>
-<td style="text-align:left">观察训练成本是否下降、效果是否可接受</td>
-</tr>
-<tr>
-<td style="text-align:left">指标与判断依据</td>
-<td style="text-align:left">用示例字段检查指标是否齐全、差值方向是否正确；不生成真实训练指标</td>
-<td style="text-align:left">记录可训练参数、峰值显存、每步耗时、token throughput、train loss 和 val loss</td>
-<td style="text-align:left">资源指标用于比较训练成本，loss 指标用于检查效果变化，最终决策结合两类指标</td>
-</tr>
-<tr>
-<td style="text-align:left">实验对象</td>
-<td style="text-align:left">不加载模型；用示例参数计算全参数与 LoRA 的参数账本</td>
-<td style="text-align:left">默认加载 <code>Qwen/Qwen2.5-0.5B-Instruct</code> 的未微调权重</td>
-<td style="text-align:left">可选 <code>Qwen/Qwen2.5-1.5B-Instruct</code> 或 <code>deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B</code>；GPU 对照两组使用同一模型 ID / revision，CPU 只验证示例账本</td>
-</tr>
-<tr>
-<td style="text-align:left">输入数据</td>
-<td style="text-align:left">用少量内置示例模拟字段审计、loss mask 和报告字段</td>
-<td style="text-align:left">默认使用 <code>tatsu-lab/alpaca</code>，最多 32 条样本、最大长度 256 token</td>
-<td style="text-align:left">GPU 对照实验复用同一批样本、训练 / 验证切分、tokenizer 截断与 padding 规则；CPU 只使用内置示例验证机制</td>
-</tr>
-<tr>
-<td style="text-align:left">对照变量</td>
-<td style="text-align:left">用示例数字检查 baseline / LoRA 的比较逻辑</td>
-<td style="text-align:left">baseline 更新底座权重；LoRA 冻结底座，只更新 LoRA 适配器</td>
-<td style="text-align:left">只改变参数更新方式；模型、数据和训练条件保持一致</td>
-</tr>
-<tr>
-<td style="text-align:left">固定训练条件</td>
-<td style="text-align:left">不运行模型训练，只检查配置字段和对照口径</td>
-<td style="text-align:left">两组使用相同的模型、数据、切分、tokenizer、dtype、micro-batch、序列长度、优化器、学习率和步数</td>
-<td style="text-align:left">具体参数在 Step 2 固定</td>
-</tr>
-<tr>
-<td style="text-align:left">输出与判断</td>
-<td style="text-align:left">生成数据审计、参数账本、指标汇总和决策逻辑；不包含真实训练指标</td>
-<td style="text-align:left">生成 train / val loss、可训练参数、峰值显存、step time，并保存 LoRA adapter 与 JSON 报告</td>
-<td style="text-align:left">根据资源变化、验证效果和产物完整性判断是否进入下一步</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/60_lora_project_map.svg" alt="60 LoRA 微调项目学习与实验路径">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;60 LoRA 微调项目学习与实验路径：&lt;/strong&gt;09–13 提供训练口径，60 节依次组织 CPU 检查、GPU 对照和项目交付。&lt;/div&gt;</p>
-<h3>Step 2（项目设计）：固定两组对照条件</h3>
-<p>为了判断 LoRA 是否带来真实收益，两组实验都从同一个模型 ID 的未微调权重开始，使用同一批训练集和验证集，以及相同的 tokenizer、截断、padding、训练和评测设置。实验变量是参数更新方式：baseline 更新底座模型的全部可训练权重；LoRA 挂载适配器后冻结底座，只更新 LoRA 适配器参数。Step 6 / Step 7 的 GPU 对照实验用验证集上有效监督 token 的平均 <code>val_loss</code> 作为主要评测结果。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">对照项</th>
-<th style="text-align:left">全参数更新组（baseline）</th>
-<th style="text-align:left">LoRA 更新组</th>
-<th style="text-align:left">必须保持一致</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">训练对象</td>
-<td style="text-align:left">更新底座模型的全部可训练权重（Embedding、Attention、MLP、Norm 和输出层）</td>
-<td style="text-align:left">冻结底座模型，只更新 LoRA 适配器</td>
-<td style="text-align:left">只改变参数更新方式</td>
-</tr>
-<tr>
-<td style="text-align:left">模型起点</td>
-<td style="text-align:left">使用同一模型 ID 的未微调权重</td>
-<td style="text-align:left">使用同一份未微调权重，并挂载 LoRA 适配器</td>
-<td style="text-align:left">模型权重版本一致</td>
-</tr>
-<tr>
-<td style="text-align:left">数据与切分</td>
-<td style="text-align:left">当前默认使用 <code>tatsu-lab/alpaca</code> 的一批训练集和验证集</td>
-<td style="text-align:left">完全复用 baseline 的训练集和验证集</td>
-<td style="text-align:left">更换数据集时也要保持版本、样本顺序和 <code>SPLIT_SEED</code> 一致</td>
-</tr>
-<tr>
-<td style="text-align:left">训练条件</td>
-<td style="text-align:left">使用相同 dtype、micro-batch、序列长度、优化器、学习率和步数</td>
-<td style="text-align:left">与 baseline 完全相同</td>
-<td style="text-align:left">训练条件一致</td>
-</tr>
-<tr>
-<td style="text-align:left">评测方式</td>
-<td style="text-align:left">对同一验证集进行无梯度前向，只统计有效监督 token 的平均 <code>val_loss</code></td>
-<td style="text-align:left">使用相同验证集和 loss mask 规则</td>
-<td style="text-align:left">tokenizer、截断、padding 和 loss 计算一致</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3（项目设计）：确定项目检查内容</h3>
-<p>A–E 是本项目需要完成的五类检查。Step 5 使用示例数据验证这些检查的实现；Step 6 / Step 7 再把相同字段用于真实 GPU 实验报告。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">环节</th>
-<th style="text-align:left">函数名</th>
-<th style="text-align:left">检查内容</th>
-<th style="text-align:left">作用</th>
-<th style="text-align:left">CPU 验证方式</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">A</td>
-<td style="text-align:left"><code>build_lora_project_config</code></td>
-<td style="text-align:left">配置与有效批大小（micro-batch × 梯度累积步数）</td>
-<td style="text-align:left">固定底座模型、LoRA 参数和训练条件</td>
-<td style="text-align:left">检查配置字段与有效批大小计算</td>
-</tr>
-<tr>
-<td style="text-align:left">B</td>
-<td style="text-align:left"><code>lora_trainable_params</code>、<code>full_linear_params</code>、<code>lora_param_ratio</code></td>
-<td style="text-align:left">参数账本</td>
-<td style="text-align:left">比较完整参数与 LoRA 参数成本</td>
-<td style="text-align:left">使用维度和 rank 计算公式</td>
-</tr>
-<tr>
-<td style="text-align:left">C</td>
-<td style="text-align:left"><code>summarize_lora_project</code></td>
-<td style="text-align:left">baseline / LoRA 指标差值</td>
-<td style="text-align:left">汇总资源和损失变化</td>
-<td style="text-align:left">使用示例指标计算差值</td>
-</tr>
-<tr>
-<td style="text-align:left">D</td>
-<td style="text-align:left"><code>audit_sft_examples</code>、<code>loss_mask_report</code>、<code>build_adapter_artifact_record</code>、<code>check_lora_project_readiness</code></td>
-<td style="text-align:left">数据、监督位置和产物检查</td>
-<td style="text-align:left">判断实验输入和输出是否可用</td>
-<td style="text-align:left">使用示例数据和路径状态检查</td>
-</tr>
-<tr>
-<td style="text-align:left">E</td>
-<td style="text-align:left"><code>recommend_lora_decision</code></td>
-<td style="text-align:left">决策条件和原因</td>
-<td style="text-align:left">输出 <code>accept / tune / reject</code></td>
-<td style="text-align:left">使用示例指标测试决策分支</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4（CPU 实验设计）：阅读 CPU 报告字段</h3>
-<p>下面先阅读 CPU 报告中的主要字段，理解每个字段记录什么、检查什么，以及它如何参与项目判断。Step 5 再实现对应函数。CPU 只验证数据审计、参数账本、指标计算和决策逻辑，不生成真实训练结果。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">报告字段</th>
-<th style="text-align:left">记录内容</th>
-<th style="text-align:left">CPU 中如何验证</th>
-<th style="text-align:left">用于判断</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">数据审计</td>
-<td style="text-align:left">样本数、空回答、重复样本、超长样本</td>
-<td style="text-align:left">使用示例数据调用审计函数</td>
-<td style="text-align:left">数据是否可以进入训练</td>
-</tr>
-<tr>
-<td style="text-align:left">监督 token</td>
-<td style="text-align:left">参与 loss 的 token 数、padding 中误参与 loss 的 token 数</td>
-<td style="text-align:left">检查 <code>attention_mask</code> 与 <code>labels</code></td>
-<td style="text-align:left">loss 监督位置是否正确</td>
-</tr>
-<tr>
-<td style="text-align:left">LoRA 配置</td>
-<td style="text-align:left">底座模型、目标层、rank、alpha、dropout、有效批大小</td>
-<td style="text-align:left">读取配置对象</td>
-<td style="text-align:left">本轮使用了什么训练设置</td>
-</tr>
-<tr>
-<td style="text-align:left">参数账本</td>
-<td style="text-align:left">全参数量、LoRA 可训练参数量、参数占比</td>
-<td style="text-align:left">使用公式计算</td>
-<td style="text-align:left">LoRA 是否减少训练参数</td>
-</tr>
-<tr>
-<td style="text-align:left">对照指标</td>
-<td style="text-align:left">baseline 与 LoRA 的参数、显存、耗时、train loss、val loss 差值</td>
-<td style="text-align:left">使用示例数值调用汇总函数</td>
-<td style="text-align:left">比较逻辑是否正确</td>
-</tr>
-<tr>
-<td style="text-align:left">交付检查</td>
-<td style="text-align:left">adapter 路径、tokenizer 路径、合并检查、生成检查</td>
-<td style="text-align:left">检查字段和布尔状态</td>
-<td style="text-align:left">产物是否具备交付条件</td>
-</tr>
-<tr>
-<td style="text-align:left">项目决策</td>
-<td style="text-align:left"><code>accept / tune / reject</code> 及原因</td>
-<td style="text-align:left">使用示例指标和阈值测试分支</td>
-<td style="text-align:left">是否进入下一步实验</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 5（CPU 代码练习）：实现项目检查函数</h3>
-<p>下面只实现三项核心 TODO：数据审计、loss mask 核对和 baseline / LoRA 指标汇总。配置打包、参数公式、交付检查和决策规则作为给定实现；完成后先运行题目区测试，再进入 Step 6 / Step 7 的 GPU 实验。</p>
-<p>完成上述 CPU 函数后，继续运行下面的决策模拟。它使用同一份项目摘要，每次只改变一个指标或决策阈值；比较输出，理解为什么同一个 LoRA 方案会因为质量要求或资源代价不同而得到不同决策。本练习只验证 CPU 决策逻辑，不代表真实训练结果。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>
-# 目标：把 09-13 的训练闭环收束为 baseline vs LoRA 的项目报告；本代码只验证 CPU 可检查的口径，不虚构 GPU 结果。
-def audit_sft_examples(examples, max_total_chars):
-    &quot;&quot;&quot;统计 SFT 样本完整性；不执行 tokenizer，也不判断模型训练效果。
+<section class="lessons">
 
-    参数:
-        examples: 包含 prompt / response 字段的样本列表。
-        max_total_chars: 单条样本 prompt 与 response 的字符预算。
-    返回:
-        样本数、空回答、重复样本、超长样本和平均字符数。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 1: 审计 SFT 样本
-    # 提示：先用 seen / total_chars / 各计数器保存中间状态，再遍历样本。
-    # prompt = example.get('prompt', ???)；response = example.get('response', ???)
-    # pair = (prompt, response)；total = len(prompt) + len(response)
-    # ==========================================
-    # total_samples = ???
-    # empty_response_count = ???
-    # duplicate_count = ???
-    # over_length_count = ???
-    # avg_total_chars = ???
-    raise NotImplementedError(&quot;请先完成 TODO 1&quot;)
-    return {
-        'total_samples': total_samples,
-        'empty_response_count': empty_response_count,
-        'duplicate_count': duplicate_count,
-        'over_length_count': over_length_count,
-        'avg_total_chars': round(avg_total_chars, 2),
-    }
-
-def loss_mask_report(attention_mask, labels, ignore_index=-100):
-    &quot;&quot;&quot;按 attention mask 和 labels 统计监督 token；不运行 backward。
-
-    `labels == ignore_index` 的位置不参与 loss；padding 位置若仍被监督，
-    应作为数据管线问题报告，而不是被静默忽略。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 核对 loss mask
-    # 提示：先展平并检查长度，再计算四个计数；不要把 supervised_tokens
-    # 直接当成 response token 数，也不要把 padding_supervised_tokens 截断掉。
-    # mask_flat = [value for row in attention_mask for value in row]
-    # labels_flat = [value for row in labels for value in row]
-    # ==========================================
-    # total_tokens = ???
-    # non_padding_tokens = ???
-    # supervised_tokens = ???
-    # padding_supervised_tokens = ???
-    # supervised_ratio = ???
-    raise NotImplementedError(&quot;请先完成 TODO 2&quot;)
-    return {
-        'total_tokens': total_tokens,
-        'non_padding_tokens': non_padding_tokens,
-        'supervised_tokens': supervised_tokens,
-        'padding_supervised_tokens': padding_supervised_tokens,
-        'supervised_ratio': round(supervised_ratio, 4),
-    }
-
-# A：汇总 LoRA 项目配置
-def build_lora_project_config(
-    base_model,
-    target_modules,
-    rank,
-    alpha,
-    dropout,
-    learning_rate,
-    micro_batch_size,
-    accum_steps,
-    scheduler,
-):
-    &quot;&quot;&quot;打包一次 LoRA 训练的最小复现实验配置。
-
-    参数：
-        base_model: 底座模型标识。
-        target_modules: 注入 LoRA 的线性层名称。
-        rank: 低秩矩阵的秩。
-        alpha: LoRA 缩放系数。
-        dropout: adapter dropout。
-        learning_rate: 优化器学习率。
-        micro_batch_size: 单次前向使用的 micro-batch 大小。
-        accum_steps: 梯度累积步数。
-        scheduler: 学习率调度器名称。
-    返回：包含原始配置和 effective_batch_size 的字典。
-    &quot;&quot;&quot;
-    effective_batch_size = micro_batch_size * accum_steps
-    return {
-        'base_model': base_model,
-        'target_modules': target_modules,
-        'rank': rank,
-        'alpha': alpha,
-        'dropout': dropout,
-        'learning_rate': learning_rate,
-        'micro_batch_size': micro_batch_size,
-        'accum_steps': accum_steps,
-        'effective_batch_size': effective_batch_size,
-        'scheduler': scheduler,
-    }
-
-# B：计算 LoRA adapter 参数量
-def lora_trainable_params(in_dim, out_dim, rank):
-    &quot;&quot;&quot;估算单个线性层新增的 LoRA 参数量，不包含冻结底座权重。
-
-    参数量为 `rank * in_dim + rank * out_dim`；这里只计算 adapter，
-    不代表整个模型的可训练参数量。
-    &quot;&quot;&quot;
-    trainable_params = rank * (in_dim + out_dim)
-    return trainable_params
-
-# C：计算完整线性层参数量
-def full_linear_params(in_dim, out_dim):
-    &quot;&quot;&quot;计算对应完整线性层的 weight 参数量，不额外计入 bias。&quot;&quot;&quot;
-    total_params = in_dim * out_dim
-    return total_params
-
-# D：计算 LoRA 参数占比
-def lora_param_ratio(in_dim, out_dim, rank):
-    &quot;&quot;&quot;计算单个线性层中 LoRA 参数占完整 weight 参数的比例。&quot;&quot;&quot;
-    trainable = lora_trainable_params(in_dim, out_dim, rank)
-    total = full_linear_params(in_dim, out_dim)
-    ratio = trainable / total
-    return ratio
-
-def summarize_lora_project(baseline_metrics, lora_metrics):
-    &quot;&quot;&quot;把 baseline 与 LoRA 的同口径指标收束成项目对比摘要。
-
-    资源字段使用 `baseline - lora`，正数表示 LoRA 更省或更快；
-    loss 字段使用 `lora - baseline`，正数表示 LoRA 的 loss 更高。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 3: 汇总 baseline 和 LoRA 的项目指标
-    # 提示：只补 5 个项目判断量；参数/资源收益用 baseline - lora，
-    # loss 代价用 lora - baseline，正负号必须在字段名中保持一致。
-    # ==========================================
-    # param_reduction = 1.0 - ??? / ???
-    # memory_delta = ??? - ???
-    # time_delta = ??? - ???
-    # train_loss_delta = ??? - ???
-    # val_loss_delta = ??? - ???
-    raise NotImplementedError(&quot;请先完成 TODO 3&quot;)
-    return {
-        'param_reduction': round(param_reduction, 4),
-        'peak_mem_delta_mb': round(memory_delta, 2),
-        'step_time_delta_ms': round(time_delta, 2),
-        'final_train_loss_delta': round(train_loss_delta, 4),
-        'final_val_loss_delta': round(val_loss_delta, 4),
-    }
-
-# E：记录 adapter 交付物
-def build_adapter_artifact_record(adapter_path, tokenizer_path, merge_checked, sanity_generation_checked):
-    &quot;&quot;&quot;记录 adapter 交付所需的路径和两项最小可用性检查。&quot;&quot;&quot;
-    return {
-        'adapter_path': adapter_path,
-        'tokenizer_path': tokenizer_path,
-        'merge_checked': merge_checked,
-        'sanity_generation_checked': sanity_generation_checked,
-    }
-
-# 给定实现：生成报告、检查交付和输出项目决策
-def build_lora_project_report(config, baseline, candidates, quality, resources, artifacts, decision, environment=None):
-    &quot;&quot;&quot;组装 `fine-tuning-project/v1` 的公共报告外壳。
-
-    该函数只负责组织字段，不验证训练质量，也不替代 GPU 实验。
-    &quot;&quot;&quot;
-    return {
-        'schema_version': 'fine-tuning-project/v1',
-        'project': '60_lora_fine_tuning',
-        'stage': 'project_decision',
-        'config': config,
-        'baseline': baseline,
-        'candidates': candidates,
-        'quality': quality,
-        'resources': resources,
-        'artifacts': artifacts,
-        'decision': decision,
-        'environment': environment or {},
-    }
-
-def check_lora_project_readiness(data_audit, mask_report, artifact_record):
-    &quot;&quot;&quot;检查数据、loss 口径和交付产物是否满足项目要求。
-
-    这是给定实现；学习者重点阅读 issues 如何阻断最终决策。
-    &quot;&quot;&quot;
-    issues = []
-    if data_audit['empty_response_count'] &gt; 0:
-        issues.append('empty_response')
-    if data_audit['duplicate_count'] &gt; 0:
-        issues.append('duplicate_examples')
-    if mask_report['padding_supervised_tokens'] &gt; 0:
-        issues.append('padding_supervised')
-    if mask_report['supervised_tokens'] == 0:
-        issues.append('no_supervised_tokens')
-    if not artifact_record['merge_checked']:
-        issues.append('merge_not_checked')
-    if not artifact_record['sanity_generation_checked']:
-        issues.append('sanity_generation_not_checked')
-    return {'ready': len(issues) == 0, 'issues': issues}
-
-def recommend_lora_decision(summary, readiness, min_param_reduction=0.5, max_val_loss_delta=0.03, min_peak_mem_delta_mb=128.0, min_step_time_delta_ms=-3.0):
-    &quot;&quot;&quot;根据项目摘要和交付检查结果输出 accept / tune / reject。
-
-    这是给定实现；阈值由参数传入，学习者重点解释分支顺序。
-    &quot;&quot;&quot;
-    memory_gain_ok = summary['peak_mem_delta_mb'] &gt;= min_peak_mem_delta_mb
-    speed_not_too_bad = summary['step_time_delta_ms'] &gt;= min_step_time_delta_ms
-    if not readiness['ready']:
-        decision = 'tune'
-        reason = '数据、loss mask 或 adapter 交付检查未通过，先修复项目可信度问题。'
-    elif summary['param_reduction'] &lt; min_param_reduction:
-        decision = 'reject'
-        reason = '参数节省不足，LoRA 没有带来足够训练成本收益。'
-    elif summary['final_val_loss_delta'] &gt; max_val_loss_delta:
-        decision = 'tune'
-        reason = '参数节省达标，但验证集 loss 损失偏大，优先调 rank、target modules 或学习率。'
-    elif not (memory_gain_ok or speed_not_too_bad):
-        decision = 'tune'
-        reason = '参数节省和验证损失可接受，但显存收益偏弱且速度恶化，优先继续调 rank、插层范围或 batch 配置。'
-    else:
-        decision = 'accept'
-        reason = '参数节省达标，验证集损失可接受，交付检查通过，可以保留当前 LoRA 配置。'
-    return {'decision': decision, 'reason': reason}
-</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code># 测试你的 CPU 逻辑实现
-def test_lora_project_cpu_logic():
-    try:
-        examples = [
-            {'prompt': '问：什么是 LoRA？', 'response': '答：LoRA 是低秩适配方法。'},
-            {'prompt': '问：如何检查 loss？', 'response': '答：检查 labels 中参与监督的 token。'},
-            {'prompt': '问：什么是 LoRA？', 'response': '答：LoRA 是低秩适配方法。'},
-            {'prompt': '问：空回答？', 'response': ''},
-        ]
-        audit = audit_sft_examples(examples, max_total_chars=30)
-        assert audit['total_samples'] == 4, &quot;样本数统计不正确！&quot;
-        assert audit['empty_response_count'] == 1, &quot;空 response 统计不正确！&quot;
-        assert audit['duplicate_count'] == 1, &quot;重复样本统计不正确！&quot;
-        assert audit['over_length_count'] == 1, &quot;超长样本统计不正确！&quot;
-
-        empty_audit = audit_sft_examples([], max_total_chars=30)
-        assert empty_audit['total_samples'] == 0, &quot;空数据集的样本数应为 0！&quot;
-        assert empty_audit['avg_total_chars'] == 0.0, &quot;空数据集的平均长度应为 0！&quot;
-
-        mask = [[1, 1, 1, 0], [1, 1, 0, 0]]
-        labels = [[-100, 7, 8, -100], [-100, 9, -100, 3]]
-        report = loss_mask_report(mask, labels)
-        assert report['total_tokens'] == 8, &quot;total_tokens 统计不正确！&quot;
-        assert report['non_padding_tokens'] == 5, &quot;non_padding_tokens 统计不正确！&quot;
-        assert report['supervised_tokens'] == 4, &quot;supervised_tokens 统计不正确！&quot;
-        assert report['padding_supervised_tokens'] == 1, &quot;padding_supervised_tokens 统计不正确！&quot;
-        assert report['supervised_ratio'] == 0.8, &quot;supervised_ratio 计算不正确！&quot;
-
-        no_token_report = loss_mask_report([[0, 0]], [[-100, -100]])
-        assert no_token_report['supervised_tokens'] == 0, &quot;无有效 token 时监督数应为 0！&quot;
-        assert no_token_report['supervised_ratio'] == 0.0, &quot;无有效 token 时监督比例应为 0！&quot;
-        try:
-            loss_mask_report([[1]], [[-100, -100]])
-        except ValueError:
-            pass
-        else:
-            raise AssertionError(&quot;mask 与 labels 长度不一致时应抛出 ValueError！&quot;)
-
-        config = build_lora_project_config(
-            base_model='tiny-llama',
-            target_modules=['q_proj', 'v_proj'],
-            rank=8,
-            alpha=16,
-            dropout=0.05,
-            learning_rate=2e-4,
-            micro_batch_size=2,
-            accum_steps=4,
-            scheduler='wsd-cosine',
-        )
-        assert config['effective_batch_size'] == 8, &quot;effective_batch_size 计算不正确！&quot;
-        assert config['target_modules'] == ['q_proj', 'v_proj'], &quot;target_modules 应保留原始配置！&quot;
-
-        trainable = lora_trainable_params(8, 8, 2)
-        total = full_linear_params(8, 8)
-        ratio = lora_param_ratio(8, 8, 2)
-
-        assert trainable == 32, &quot;LoRA 可训练参数量计算不正确！&quot;
-        assert total == 64, &quot;完整线性层参数量计算不正确！&quot;
-        assert abs(ratio - 0.5) &lt; 1e-12, &quot;LoRA 参数占比计算不正确！&quot;
-
-        baseline = {
-            'trainable_params': 1000,
-            'step_time_ms': 20.0,
-            'peak_mem_mb': 1024.0,
-            'final_train_loss': 0.40,
-            'final_val_loss': 0.50,
-        }
-        lora = {
-            'trainable_params': 100,
-            'step_time_ms': 22.0,
-            'peak_mem_mb': 768.0,
-            'final_train_loss': 0.42,
-            'final_val_loss': 0.52,
-        }
-        summary = summarize_lora_project(baseline, lora)
-        assert summary['param_reduction'] == 0.9, &quot;param_reduction 计算不正确！&quot;
-        assert summary['peak_mem_delta_mb'] == 256.0, &quot;peak_mem_delta_mb 计算不正确！&quot;
-        assert summary['step_time_delta_ms'] == -2.0, &quot;step_time_delta_ms 计算不正确！&quot;
-        assert summary['final_train_loss_delta'] == 0.02, &quot;final_train_loss_delta 计算不正确！&quot;
-        assert summary['final_val_loss_delta'] == 0.02, &quot;final_val_loss_delta 计算不正确！&quot;
-
-        artifact = build_adapter_artifact_record(
-            adapter_path='outputs/lora-adapter',
-            tokenizer_path='outputs/tokenizer',
-            merge_checked=True,
-            sanity_generation_checked=True,
-        )
-        project_report = build_lora_project_report(
-            config={'model': 'tiny-llama', 'dtype': 'bf16', 'seed': 42},
-            baseline=baseline,
-            candidates=[{'name': 'lora', **lora}],
-            quality={'train_loss': 0.42, 'val_loss': 0.52, 'task_metrics': {}},
-            resources={'trainable_params': 100, 'peak_memory_mb': 768.0, 'step_time_ms': 22.0},
-            artifacts={'adapter': artifact},
-            decision={'decision': 'accept', 'reason': 'test'},
-        )
-        for section in ('config', 'baseline', 'candidates', 'quality', 'resources', 'artifacts', 'decision', 'environment'):
-            assert section in project_report, f'报告缺少 {section} 区域！'
-        clean_audit = {'total_samples': 2, 'empty_response_count': 0, 'duplicate_count': 0, 'over_length_count': 0, 'avg_total_chars': 12.0}
-        clean_report = {'total_tokens': 8, 'non_padding_tokens': 5, 'supervised_tokens': 3, 'padding_supervised_tokens': 0, 'supervised_ratio': 0.6}
-        readiness = check_lora_project_readiness(clean_audit, clean_report, artifact)
-        assert readiness['ready'] is True, &quot;干净项目应允许交付！&quot;
-
-        dirty_readiness = check_lora_project_readiness(audit, report, artifact)
-        assert dirty_readiness['ready'] is False, &quot;存在数据或 mask 问题时不能交付！&quot;
-        assert 'empty_response' in dirty_readiness['issues'], &quot;应报告空 response 问题！&quot;
-        assert 'padding_supervised' in dirty_readiness['issues'], &quot;应报告 padding 参与 loss 问题！&quot;
-
-        decision = recommend_lora_decision(summary, readiness, min_param_reduction=0.5, max_val_loss_delta=0.03, min_peak_mem_delta_mb=128.0, min_step_time_delta_ms=-3.0)
-        assert decision['decision'] == 'accept', &quot;LoRA 决策应为 accept！&quot;
-
-        assert recommend_lora_decision(summary, dirty_readiness)['decision'] == 'tune', &quot;交付检查未通过时应建议 tune！&quot;
-
-        worse_summary = dict(summary)
-        worse_summary['final_val_loss_delta'] = 0.08
-        assert recommend_lora_decision(worse_summary, readiness)['decision'] == 'tune', &quot;val loss 损失过大时应建议 tune！&quot;
-
-        weak_summary = dict(summary)
-        weak_summary['param_reduction'] = 0.2
-        assert recommend_lora_decision(weak_summary, readiness)['decision'] == 'reject', &quot;参数节省不足时应建议 reject！&quot;
-
-        tradeoff_summary = dict(summary)
-        tradeoff_summary['peak_mem_delta_mb'] = 32.0
-        tradeoff_summary['step_time_delta_ms'] = -6.0
-        assert recommend_lora_decision(tradeoff_summary, readiness)['decision'] == 'tune', &quot;显存收益偏弱且速度恶化时应建议 tune！&quot;
-
-        print(&quot;✅ LoRA 项目数据审计、loss 核对、账本、交付检查和决策代码通过基础校验。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, RuntimeError) as e:
-        if isinstance(e, AttributeError):
-            print(&quot;代码未完成，无法找到必要的属性&quot;)
-        elif isinstance(e, NameError):
-            print(&quot;代码可能未完成，导致了变量未定义&quot;)
-        elif isinstance(e, TypeError):
-            print(&quot;代码可能未完成，导致了操作错误&quot;)
-        elif isinstance(e, ValueError):
-            print(&quot;代码可能未完成，导致了数值错误&quot;)
-        elif isinstance(e, RuntimeError):
-            print(&quot;代码可能未完成，导致了运行时错误&quot;)
-        raise
-    except Exception as e:
-        print(f&quot;❌ 发生未知异常: {e}&quot;)
-        raise
-
-
-test_lora_project_cpu_logic()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="lora-parameter-ledger">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先把矩阵数清楚：LoRA 参数量不是凭感觉省</h2>
+          <h2>小补丁省了参数，就值得替换全量微调吗？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">一个 Linear 的 in_dim=8、out_dim=8，LoRA rank=2。</p>
-            <p class="predict-q">A 和 B 一共有多少个可训练参数？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-parameter-ledger" value="0">
-                <span>32</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-parameter-ledger" value="1">
-                <span>128</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-parameter-ledger" value="2">
-                <span>16</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="lora-parameter-ledger">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>这一关把 LoRA 从一个公式变成一次可交付实验。像比较两种做饭方法：食材、份量和评分人相同，才能判断省时省力有没有牺牲成品。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>baseline</dt><dd>用来比较的参照训练方法。</dd></div><div><dt>trainable parameters</dt><dd>真正参与更新的参数，区别于总参数。</dd></div><div><dt>validation loss</dt><dd>在独立验证数据上的损失，用来观察泛化。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="lora-parameter-ledger">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>一个 Linear 的 weight shape 是 [out_dim, in_dim]，元素个数等于 out_dim * in_dim；本 Notebook 明确不统计 bias。</li><li>LoRA 不直接训练完整 weight，而是训练 A 和 B：A 的 shape 是 [rank, in_dim]，B 的 shape 是 [out_dim, rank]。</li><li>张量的参数量就是各维度相乘；两个独立矩阵的参数量要相加，不能相乘。</li><li>参数占比 ratio 的分母是完整 Linear 的参数量，分子是 LoRA A、B 的可训练参数总量。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>把完整 Linear 想成一张 out_dim 行、in_dim 列的大表。LoRA 不重写整张表，而是保存两张窄表 A 和 B。先分别数两张窄表有多少格，再相加；最后除以大表格数，才知道“省了多少”是否有数据依据。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>认 shape</b>A=[rank,in]，B=[out,rank]</span>
-          <span><b>数元素</b>每个矩阵的各维相乘</span>
-          <span><b>合账本</b>rank*in + out*rank</span>
-          <span><b>算占比</b>LoRA 参数 / 完整 weight 参数</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>LoRA 旁路的参数账</h4>
-            <div class="adv-contract">
-              <span><code>A</code></span><strong><code>[rank, in_dim]</code>，参数量 rank * in_dim</strong>
-              <span><code>B</code></span><strong><code>[out_dim, rank]</code>，参数量 out_dim * rank</strong>
-              <span>总可训练量</span><strong><code>rank * (in_dim + out_dim)</code></strong>
-            </div>
-          </section>
-          <section class="adv-panel neutral">
-            <h4>全参数 Linear 的基线账</h4>
-            <div class="adv-contract">
-              <span><code>weight</code></span><strong><code>[out_dim, in_dim]</code></strong>
-              <span>总参数量</span><strong><code>in_dim * out_dim</code></strong>
-              <span>本课边界</span><strong>只统计 weight，不额外加 bias</strong>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>测试输入</th><th>A 参数</th><th>B 参数</th><th>LoRA 总量</th><th>全参总量</th><th>ratio</th></tr></thead>
-          <tbody>
-            <tr><td><code>in=8,out=8,rank=2</code></td><td>16</td><td>16</td><td><strong>32</strong></td><td><strong>64</strong></td><td><strong>0.5</strong></td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">初学者最常见的错误是写成 rank * in_dim * out_dim。LoRA 有两张矩阵，所以是两个参数量相加；B @ A 只是在前向时组合，不会把参数个数相乘。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用两段窄木板练习“各自计数再相加”</h4><pre><code>def adapter_cells(input_width, output_width, bottleneck):
-    down_cells = bottleneck * input_width
-    up_cells = output_width * bottleneck
-    return down_cells + up_cells
-
-def full_grid_cells(input_width, output_width):
-    return input_width * output_width
-
-small = adapter_cells(6, 10, 2)   # 12 + 20 = 32
-full = full_grid_cells(6, 10)     # 60
-share = small / full</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>input_width/output_width/bottleneck</code> -&gt; <code>in_dim/out_dim/rank</code>。</li>
-            <li><code>down_cells + up_cells</code> -&gt; TODO 1 的 <code>rank * (in_dim + out_dim)</code>。</li>
-            <li><code>full_grid_cells</code> -&gt; TODO 2，只计算 <code>in_dim * out_dim</code>。</li>
-            <li><code>share</code> -&gt; TODO 3 的 <code>trainable / total</code>；先调用前两个 helper，不要重复写两套公式。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 lora_param_ratio 应调用前两个计数函数再相除？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「baseline」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-parameter-ledger" value="0">
-                <span>复用同一套参数定义，避免三个函数的口径漂移</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>用来比较的参照训练方法。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-parameter-ledger" value="1">
-                <span>这样会让 ratio 自动变成整数</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>在独立验证数据上的损失，用来观察泛化。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-parameter-ledger" value="2">
-                <span>因为 Python 不允许在函数里做乘法</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>真正参与更新的参数，区别于总参数。</span>
               </label></div>
-              <div class="feedback" data-feedback="lora-parameter-ledger"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="lora-parameter-ledger-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="lora-project-summary">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>再统一差值方向：资源看节省，loss 看代价</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">baseline 每步 20 ms，LoRA 每步 22 ms；时间差定义为 baseline - LoRA。</p>
-            <p class="predict-q">step_time_delta_ms 应该是多少，表示什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-project-summary" value="0">
-                <span>-2.0，LoRA 慢 2 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-project-summary" value="1">
-                <span>2.0，LoRA 快 2 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-project-summary" value="2">
-                <span>0.0，两者相同</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="lora-project-summary">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先固定任务</h4><p>使用相同数据划分、tokenizer、监督区间、训练预算和评测方式。否则方法变化与数据变化会混在一起。</p></li><li><h4>先做参数账本</h4><p>8→6 的线性层全量更新 48 个数，rank=2 的旁路更新 28 个。较大层上节省比例可能更多。</p></li><li><h4>再看训练结果</h4><p>LoRA 更新参数更少，但 forward 仍经过底座。要实测步时、峰值显存和验证效果，保存 adapter 才有可复用产物。</p></li></ol><section class="learning-lab" data-lab="lora" aria-label="把一个大矩阵拆成两块补丁">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>把一个大矩阵拆成两块补丁</h4><p>改变 rank，观察旁路的两段形状和参数规模。</p></header>
+    <div class="lab-controls"><label for="lab-60-rank"><span>旁路 rank <output data-value="rank" for="lab-60-rank">2</output> </span><input type="range" id="lab-60-rank" name="rank" min="1" max="8" step="1" value="2"></label><label for="lab-60-width"><span>输入维度 <output data-value="width" for="lab-60-width">8</output> </span><input type="range" id="lab-60-width" name="width" min="4" max="32" step="1" value="8"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-60" data-challenge-label>算一算</label><div><input id="answer-60" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="lora-project-summary">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>baseline_metrics 与 lora_metrics 都是 Python 字典，必须用方括号和键名读取数值，例如 metrics['peak_mem_mb']。</li><li>param_reduction 是比例：1 - LoRA 可训练参数 / baseline 可训练参数；0.5 表示减少 50%。</li><li>资源类 delta 使用 baseline - LoRA：结果为正表示 LoRA 更省显存或更快。</li><li>loss_delta 使用 LoRA - baseline：结果为正表示 LoRA 的最终 loss 更高，是效果代价；四个字段最后按 Notebook 要求 round。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>报告里的正负号必须先约定语义。显存和时间问的是“省了多少”，所以旧值减新值；loss 问的是“比 baseline 多坏了多少”，所以 LoRA 减 baseline。公式不是随便统一成一个减法方向，而是让每个数字回答清楚的问题。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>资源类：正数是收益</h4>
-            <div class="adv-contract">
-              <span>参数减少率</span><strong><code>1 - lora_params / baseline_params</code></strong>
-              <span>显存差</span><strong><code>baseline_mem - lora_mem</code></strong>
-              <span>时间差</span><strong><code>baseline_time - lora_time</code></strong>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>效果类：正数是代价</h4>
-            <div class="adv-contract">
-              <span>loss 差</span><strong><code>lora_loss - baseline_loss</code></strong>
-              <span>正值</span><strong>LoRA loss 更高，效果略差</strong>
-              <span>负值</span><strong>LoRA loss 更低，效果更好</strong>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>字段</th><th>Notebook 测试数据</th><th>期待值</th><th>如何解释</th></tr></thead>
-          <tbody>
-            <tr><td><code>param_reduction</code></td><td>64 -&gt; 32</td><td>0.5</td><td>可训练参数减少 50%</td></tr>
-            <tr><td><code>peak_mem_delta_mb</code></td><td>1024 -&gt; 768</td><td>256.0</td><td>节省 256 MB</td></tr>
-            <tr><td><code>step_time_delta_ms</code></td><td>20 -&gt; 22</td><td>-2.0</td><td>LoRA 反而慢 2 ms</td></tr>
-            <tr><td><code>loss_delta</code></td><td>0.50 -&gt; 0.52</td><td>0.02</td><td>LoRA loss 高 0.02</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">不要看到负数就认定代码错误。Notebook 的时间测试故意让 LoRA 更慢，因此 step_time_delta_ms 必须是 -2.0；这是项目需要记录的取舍。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用压缩文件方案练习收益与质量代价的不同方向</h4><pre><code>original = {'bytes': 1000, 'load_ms': 8.0, 'quality_loss': 0.00}
-packed = {'bytes': 650, 'load_ms': 9.5, 'quality_loss': 0.03}
-
-size_saved = original['bytes'] - packed['bytes']
-time_saved = original['load_ms'] - packed['load_ms']
-quality_delta = packed['quality_loss'] - original['quality_loss']
-report = {
-    'size_reduction': round(1 - packed['bytes'] / original['bytes'], 4),
-    'time_delta_ms': round(time_saved, 2),
-    'quality_delta': round(quality_delta, 4),
-}</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>original/packed</code> -&gt; <code>baseline_metrics/lora_metrics</code>。</li>
-            <li><code>size_reduction</code> -&gt; <code>param_reduction</code>，都使用 <code>1 - candidate / baseline</code>。</li>
-            <li><code>time_saved</code> -&gt; <code>time_delta</code>；正数才表示候选更快。</li>
-            <li><code>quality_delta</code> -&gt; <code>loss_delta</code>；按候选减 baseline 记录质量代价。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>baseline loss=0.50、LoRA loss=0.52 时，为什么 loss_delta 是 +0.02？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>可训练参数变少，可以直接推出整机显存按相同比例变少吗？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-project-summary" value="0">
-                <span>round 会自动改变符号</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>能，所有显存都是可训练参数</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-project-summary" value="1">
-                <span>它按 LoRA - baseline 记录效果代价</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>不能，还存在底座和激活等开销</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-project-summary" value="2">
-                <span>它按 baseline - LoRA 记录节省</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>能，LoRA 不做前向</span>
               </label></div>
-              <div class="feedback" data-feedback="lora-project-summary"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="lora-project-summary-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="lora-controlled-project">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>最后把账本变成结论：固定实验，只改变 LoRA 方案</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">LoRA 实验把 batch 从 4 改成 2，同时显存从 1024 MB 降到 700 MB。</p>
-            <p class="predict-q">能否把全部显存下降归因于 LoRA？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-controlled-project" value="0">
-                <span>不能，batch 也变化了，实验存在混杂变量</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-controlled-project" value="1">
-                <span>能，只要用了 LoRA 就可以</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-lora-controlled-project" value="2">
-                <span>能，因为显存单位相同</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="lora-controlled-project">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>full, adapter = 48, 28
+reduction = 1 - adapter/full
+print(round(reduction*100,1))  # 41.7% trainable parameters</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>可训练参数减少 90% 不等于整体显存减少 90%，底座、激活与工作区仍有成本。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="lora-controlled-project">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>四个 helper 只完成参数和指标汇总，不会替你训练模型；完整项目还需固定数据、batch size、seq len、optimizer、学习率和 step 数。</li><li>LoRA 减少的是可训练参数、梯度和相应优化器状态；冻结底座仍要存储并参与前向，不能把 param_reduction 当作总显存减少率。</li><li>同口径对比至少要同时看 trainable params、step time、peak memory 与 final loss，单一指标不能决定方案。</li><li>rank、插层位置、学习率和训练步数是结论可复现的必要配置。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>Notebook 的函数像实验室里的四个量具：会数参数、算比例、比较资源与效果。但项目结论还需要你确保两次实验使用同一把尺、同一批样本。只有一次改一个变量，差值才可以归因给 LoRA。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>固定 baseline</b>模型、数据、batch、seq、steps</span>
-          <span><b>记录 LoRA</b>rank、插层、学习率</span>
-          <span><b>同口径测量</b>参数、时间、显存、loss</span>
-          <span><b>调用 summary</b>保留收益与代价</span>
-          <span><b>写出判断</b>是否值得采用及下一轮</span>
-        </div>
-
-        <div class="adv-grid three">
-          <section class="adv-panel blue"><h4>参数问题</h4><p>少训练了多少？用 parameter ledger 和 ratio 回答。</p></section>
-          <section class="adv-panel good"><h4>资源问题</h4><p>显存和 step time 变化多少？保留正负号。</p></section>
-          <section class="adv-panel warn"><h4>效果问题</h4><p>loss 是否仍可接受？不能只因显存下降就通过。</p></section>
-        </div>
-
-        <div class="adv-contract">
-          <span>公平对照</span><strong>除 LoRA 插入方案外，其余训练条件保持一致</strong>
-          <span>本课代码产物</span><strong>参数账本 + baseline/LoRA summary 字典</strong>
-          <span>完整项目产物</span><strong>对比表、loss 曲线、profiling 记录、配置与结论</strong>
-          <span>结论句式</span><strong>参数/显存收益 + 时间/效果代价 + 是否接受 + 下一步</strong>
-        </div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用配置字典检查两次实验只改变 adapter</h4><pre><code>baseline_cfg = {'batch': 4, 'seq': 128, 'lr': 1e-3, 'steps': 200}
-lora_cfg = {'batch': 4, 'seq': 128, 'lr': 1e-3, 'steps': 200}
-
-for key in ['batch', 'seq', 'lr', 'steps']:
-    assert baseline_cfg[key] == lora_cfg[key]
-
-baseline_metrics = {
-    'trainable_params': 64, 'step_time_ms': 20.0,
-    'peak_mem_mb': 1024.0, 'final_loss': 0.50
-}
-lora_metrics = {
-    'trainable_params': 32, 'step_time_ms': 22.0,
-    'peak_mem_mb': 768.0, 'final_loss': 0.52
-}</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook 项目</h4>
-          <ul>
-            <li>配置相等断言 -&gt; Step 1-3 的“固定 baseline、同口径对比”。</li>
-            <li>两个 metrics 字典 -&gt; TODO 4 的真实输入契约。</li>
-            <li>Notebook helper 的 summary -&gt; 对比表中的差值列，而不是完整训练过程本身。</li>
-            <li>最终还需记录 rank 与插层位置，解释为什么选择或放弃当前 LoRA 方案。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>哪一句最符合本课的完整项目结论？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-controlled-project" value="0">
-                <span>LoRA 参数少，所以一定更快、更准</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-controlled-project" value="1">
-                <span>测试通过，因此不需要记录训练配置</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「baseline」的定义和计算。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-lora-controlled-project" value="2">
-                <span>LoRA 参数与显存下降，但每步慢 2 ms、loss 高 0.02；在当前效果阈值可接受时保留，并继续调 rank</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>可训练参数减少 90% 不等于整体显存减少 90%，底座、激活与工作区仍有成本。</span>
               </label></div>
-              <div class="feedback" data-feedback="lora-controlled-project"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="lora-controlled-project-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="4ae6cc3c732a7b509cdfcaec94192139ef80987750cbebb1aa6756c303a6e56d">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/60_LoRA_Fine_Tuning_Project.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>audit_sft_examples</code> · <code>loss_mask_report</code> · <code>build_lora_project_config</code> · <code>lora_trainable_params</code> · <code>full_linear_params</code> · <code>lora_param_ratio</code> · <code>summarize_lora_project</code> · <code>build_adapter_artifact_record</code> · <code>build_lora_project_report</code> · <code>check_lora_project_readiness</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -2017,14 +940,14 @@ lora_metrics = {
 
   <script>
     const levelId = "60";
-    const checkpointData = {"lora-parameter-ledger":{"answer":0,"explain":"把计数逻辑集中在两个 helper 中，后续修改统计口径时 ratio 也会自动保持一致。"},"lora-project-summary":{"answer":1,"explain":"loss 越低通常越好，因此候选减 baseline 的正值能直接表示增加了多少 loss。"},"lora-controlled-project":{"answer":2,"explain":"项目判断要同时陈述收益、代价、约束与下一步，而不是把单个指标当成全部答案。"}};
-    const predictData = {"lora-parameter-ledger":{"answer":0,"revealNote":"A 有 2*8=16 个参数，B 有 8*2=16 个参数，合计 32。"},"lora-project-summary":{"answer":0,"revealNote":"20-22=-2。负数保留了真实性：这组示例中，参数与显存收益伴随着时间代价。"},"lora-controlled-project":{"answer":0,"revealNote":"batch 变小本身就会减少激活显存。必须固定 batch 才能解释 LoRA 的独立影响。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：用来比较的参照训练方法。。另外两个选项分别解释「trainable parameters」和「validation loss」，注意区分。"},"v4-experiment":{"answer":1,"explain":"训练账本至少还包含权重、激活、梯度和优化器状态。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：可训练参数减少 90% 不等于整体显存减少 90%，底座、激活与工作区仍有成本。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "30";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -2033,20 +956,22 @@ lora_metrics = {
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-3288a3f355e5";
+    const homeworkKey = statePrefix + levelId + "-homework-4ae6cc3c732a";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -2071,7 +996,7 @@ lora_metrics = {
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -2113,11 +1038,15 @@ lora_metrics = {
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -2148,6 +1077,7 @@ lora_metrics = {
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

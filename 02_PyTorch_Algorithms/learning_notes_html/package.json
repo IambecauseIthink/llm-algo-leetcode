@@ -4,7 +4,8 @@
   "description": "这个目录用于存放“Notebook 课前导学 + 闯关检查”HTML。",
   "scripts": {
     "generate": "node generate_levels.js",
-    "test": "node test_curriculum_sync.js && node test_level25_model_factory.js"
+    "test": "node test_curriculum_sync.js && node test_learning_lab.js && node test_level25_model_factory.js",
+    "check:notebooks": "node check_official_notebooks.js"
   },
   "keywords": [],
   "author": "",

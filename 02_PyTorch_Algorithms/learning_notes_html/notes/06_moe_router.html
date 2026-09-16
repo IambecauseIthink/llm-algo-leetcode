@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,262 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 06 | 零基础导学关卡</p>
-        <h1>MoE Router | MoE 路由器</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>MoE 路由器</h1>
+        <p class="course-subtitle">MoE Router</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/06_MoE_Router.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">06_MoE_Router.ipynb</span>
           <span class="pill">模型结构</span><span class="pill">MoE</span><span class="pill">Router</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">expert_ids, weights = topk(softmax(router(x)), k)</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">先让每个 token 给所有专家分配概率</a></li><li><a href="#mission-2">再用 topk 同时取出权重和专家编号</a></li><li><a href="#mission-3">最后重归一化，并读懂专家输出如何汇合</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="12b710c33a318116d0959604ebbe1b651c8773c6d935ede57c0405f6f68af97b">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../06_MoE_Router.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/06_MoE_Router.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>06. MoE Router | MoE 路由器</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>模型结构</code>, <code>MoE</code>, <code>Router</code> | <strong>目标人群：</strong> 模型结构学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>普通 Transformer Block 里的 MLP 是稠密计算：每个 token 都要经过同一组参数。模型越大，计算量也越大；但很多时候，一个 token 并不需要动用全部专家能力，只需要被送到最合适的少数分支。</p>
-<p>MoE 的核心就是把 MLP 拆成多个 expert，再用 Router 为每个 token 选择 Top-K 专家。本节会实现最小路由器，重点看清 router logits、softmax 概率、Top-K 选择和专家权重如何连接起来。完成后，你应该能理解 MoE 如何用稀疏激活换取更大的参数容量，也能为下一节的负载均衡损失做好准备。</p>
-<p><strong>关键词：</strong> <code>MoE</code>, <code>Router</code>, <code>Sparse Routing</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 对全量 Logits 进行 Softmax 获取所有专家的概率分布</li><li>TODO 2: 从概率分布中截取 Top-K 最大的概率 (routing_weights) 及其索引 (selected_experts)</li><li>TODO 3: 对截取后的 routing_weights 进行重归一化 (Re-normalize)</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先能定位 Decoder Layer 中稠密 MLP 的输入和输出，再观察 MoE 如何用多个 expert 与 Router 替换这条计算路径。</p>
-<ul>
-<li><a href="05_llama3_block_tutorial.html">05. LLaMA3 Block Tutorial | LLaMA3 Block 教程</a></li>
-<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心思想与痛点</h3>
-<p>稠密模型的主要成本来自每个 token 都要经过全部参数，而 MoE 的核心思路是只激活少数专家来降低计算量。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/06_moe_router.svg" alt="MoE Router：一个 token 如何选择少数专家"></p>
-<blockquote>
-<p><strong>Dense (稠密) 模型的痛点：</strong>
-在标准的 Transformer 中，每一个 Token 都必须经过全网络的所有参数（比如 70B 的 LLaMA）。这导致随着模型变大，推理和训练的计算量呈线性爆炸。</p>
-<p><strong>MoE 的破局：稀疏激活 (Sparse Activation)</strong>
-将原来大规模的 MLP 层，切分成 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></eq> 个小型的独立 MLP（称为 Expert，专家）。
-对于每一个输入的 Token，通过一个非常轻量的 Router (门控网络) 决定它该去请教哪 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq> 个专家（通常 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K=2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span></eq>）。
-这样，即便总参数量有 8x7B=56B，实际每个 Token 只激活了 2x7B=14B 的参数。<strong>计算量骤降，而知识容量剧增。</strong></p>
-</blockquote>
-<h3>Step 2: 代码实现框架</h3>
-<p>在门控网络中，首先计算输入对所有专家的打分矩阵（logits）。<strong>关键陷阱</strong>：必须先在全维度（num_experts）上进行 Softmax 将打分转为概率分布，然后再通过 <code>torch.topk</code> 获取最大的 K 个概率及其对应的专家索引。最后，为了保证加权和仍为 1，必须对截取出的 K 个概率值进行重归一化（Re-normalize）。</p>
-<p>因此实现顺序一定是 <code>router_logits -&gt; 全局 softmax -&gt; top-k -&gt; 重归一化 -&gt; sparse dispatch</code>；如果先截断再做 Softmax，就会丢掉全局相对置信度，路由结果也会变得不稳定。</p>
-<h4>图解：token 如何被 Router 分给专家</h4>
-<p>MoE Router 不让每个 token 经过所有 MLP，而是为每个 token 选择少数专家。</p>
-<pre><code class="language-text">token hidden [D]
-      │
-      ▼
-router linear -&gt; logits over experts [E]
-      │
-      ▼
-softmax over all experts
-      │
-      ▼
-top-k select experts
-      │
-      ├─ expert id:      [e2, e5]
-      └─ expert weights: [0.7, 0.3]
-</code></pre>
-<p>一个 batch 内可以这样理解：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">token</th>
-<th style="text-align:center">Top-1</th>
-<th style="text-align:center">Top-2</th>
-<th style="text-align:left">输出组合</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">token 0</td>
-<td style="text-align:center">expert 2</td>
-<td style="text-align:center">expert 5</td>
-<td style="text-align:left"><code>0.7 * E2(x) + 0.3 * E5(x)</code></td>
-</tr>
-<tr>
-<td style="text-align:center">token 1</td>
-<td style="text-align:center">expert 1</td>
-<td style="text-align:center">expert 2</td>
-<td style="text-align:left"><code>w1 * E1(x) + w2 * E2(x)</code></td>
-</tr>
-<tr>
-<td style="text-align:center">token 2</td>
-<td style="text-align:center">expert 5</td>
-<td style="text-align:center">expert 7</td>
-<td style="text-align:left"><code>w5 * E5(x) + w7 * E7(x)</code></td>
-</tr>
-</tbody>
-</table>
-<p>本页只实现 Router 的 Top-K 选择；完整 MoE 还要负责 expert dispatch、combine 和负载均衡。</p>
-<h3>Step 3: 核心数学机制：Top-K Routing</h3>
-<p>Top-K Routing 的关键不是只选出最大专家，而是按“全局 Softmax -&gt; Top-K -&gt; 重归一化”的顺序保留全局置信度。</p>
-<p><strong>1. 门控网络 (Gating / Router)：</strong>
-给定输入 Token 的特征 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>d</mi></msup></mrow><annotation encoding="application/x-tex">x \in \mathbb{R}^d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></eq>，我们用一个线性层将其映射到各个专家的打分：
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>h</mi><mo>=</mo><mi>x</mi><msub><mi>W</mi><mrow><mi>g</mi><mi>a</mi><mi>t</mi><mi>e</mi></mrow></msub><mspace width="1em"/><mo stretchy="false">(</mo><mi>h</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>E</mi></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> h = x W_{gate} \quad (h \in \mathbb{R}^E) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord mathnormal">x</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:1em;"></span><span class="mopen">(</span><span class="mord mathnormal">h</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1413em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">E</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></eqn></section>
-其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi></mrow><annotation encoding="application/x-tex">E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span></span></span></span></eq> 是专家总数（如 8）。</p>
-<p><strong>2. 全局归一化与 Top-K 选择 (The Softmax Trap)：</strong>
-传统初学者容易犯的错误是先选 Top-K 的 Logits，再做 Softmax。正确的工业级做法（如 Mixtral 8x7B）必须是先做全局 Softmax：
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mo>=</mo><mtext>Softmax</mtext><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo><mspace width="1em"/><mo stretchy="false">(</mo><mi>p</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>E</mi></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> p = \text{Softmax}(h) \quad (p \in \mathbb{R}^E) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Softmax</span></span><span class="mopen">(</span><span class="mord mathnormal">h</span><span class="mclose">)</span><span class="mspace" style="margin-right:1em;"></span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1413em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">E</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></eqn></section>
-为了保持稀疏性，我们提取其中概率最高的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq> 个专家：
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>p</mi><mrow><mi>t</mi><mi>o</mi><mi>p</mi><mi>k</mi></mrow></msub><mo separator="true">,</mo><mi>i</mi><mi>d</mi><msub><mi>x</mi><mrow><mi>t</mi><mi>o</mi><mi>p</mi><mi>k</mi></mrow></msub><mo>=</mo><mtext>TopK</mtext><mo stretchy="false">(</mo><mi>p</mi><mo separator="true">,</mo><mi>K</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> p_{topk}, idx_{topk} = \text{TopK}(p, K) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">i</span><span class="mord mathnormal">d</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">TopK</span></span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mclose">)</span></span></span></span></span></eqn></section></p>
-<p><strong>3. 局部重归一化 (Re-normalize)：</strong>
-由于截取了部分概率，剩下的 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq> 个概率之和不再为 1。为了稳定梯度的尺度，必须按比例将其重新归一化：
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>w</mi><mi>i</mi></msub><mo>=</mo><mfrac><msub><mi>p</mi><mi>i</mi></msub><mrow><munder><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><mi>T</mi><mi>o</mi><mi>p</mi><mi>K</mi></mrow></munder><msub><mi>p</mi><mi>j</mi></msub></mrow></mfrac></mrow><annotation encoding="application/x-tex"> w_i = \frac{p_i}{\sum_{j \in TopK} p_j} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.2294em;vertical-align:-1.1218em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1786em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="mrel mtight">∈</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4358em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.1218em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></eqn></section></p>
-<p><strong>4. 最终输出融合：</strong>
-Token 经过这 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span></eq> 个专家的计算后，按最新权重加权求和：
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>y</mi><mo>=</mo><munder><mo>∑</mo><mrow><mi>i</mi><mo>∈</mo><mi>T</mi><mi>o</mi><mi>p</mi><mi>K</mi></mrow></munder><msub><mi>w</mi><mi>i</mi></msub><mo>⋅</mo><msub><mtext>Expert</mtext><mrow><mi>i</mi><mi>d</mi><msub><mi>x</mi><mi>i</mi></msub></mrow></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> y = \sum_{i \in TopK} w_i \cdot \text{Expert}_{idx_i}(x) </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4804em;vertical-align:-1.4304em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8557em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">∈</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4304em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0942em;vertical-align:-0.3442em;"></span><span class="mord"><span class="mord text"><span class="mord">Expert</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.242em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">d</span><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3442em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span></eqn></section></p>
-<h3>Step 4: 动手实战</h3>
-<p>接下来把全局 Softmax、Top-K 截取和稀疏专家分发写成最小可运行实现。</p>
-<p><strong>要求</strong>：请补全下方 <code>TopKRouter</code> 函数。
-这也是面试中非常经典的 <code>torch.topk</code>、<code>scatter</code> 和 <code>gather</code> 等高级张量操作的考察点。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>class TopKRouter(nn.Module):
-    def __init__(self, hidden_size: int, num_experts: int, top_k: int):
-        super().__init__()
-        self.num_experts = num_experts
-        self.top_k = top_k
+<section class="lessons">
 
-        # 定义门控层，将隐藏状态映射到专家数量的得分
-        self.gate = nn.Linear(hidden_size, num_experts, bias=False)
-
-    def forward(self, hidden_states: torch.Tensor):
-        &quot;&quot;&quot;
-        Args:
-            hidden_states: [batch_size, seq_len, hidden_size]
-        Returns:
-            routing_weights: 形状 [batch_size * seq_len, top_k]，表示选中的专家的权重 (重归一化后)
-            selected_experts: 形状 [batch_size * seq_len, top_k]，表示选中的专家索引
-        &quot;&quot;&quot;
-        batch_size, seq_len, hidden_size = hidden_states.shape
-        # 展平输入
-        hidden_states = hidden_states.view(-1, hidden_size)
-
-        # 1. 计算 logits 得分
-        router_logits = self.gate(hidden_states)
-
-        # ==========================================
-        # TODO 1: 对全量 Logits 进行 Softmax 获取所有专家的概率分布
-        # 提示: 强制使用 FP32 以防止精度溢出 (router_logits.float())
-        # ==========================================
-        # routing_probs = ???
-
-        # ==========================================
-        # TODO 2: 从概率分布中截取 Top-K 最大的概率 (routing_weights) 及其索引 (selected_experts)
-        # ==========================================
-        # routing_weights, selected_experts = ???
-
-        # ==========================================
-        # TODO 3: 对截取后的 routing_weights 进行重归一化 (Re-normalize)
-        # 提示: 让这 K 个专家的概率按比例放大，使其加和等于 1
-        # ==========================================
-        # routing_weights = ???
-
-
-        # 恢复到原始数据类型
-        routing_weights = routing_weights.to(hidden_states.dtype)
-
-        return routing_weights, selected_experts
-
-# 为了验证 Router 能正确工作，我们写一个极简的 MoE 聚合层
-class SparseMoEBlock(nn.Module):
-    def __init__(self, hidden_size: int, num_experts: int, top_k: int):
-        super().__init__()
-        self.router = TopKRouter(hidden_size, num_experts, top_k)
-        # 极简模拟 Expert (真实的 Expert 通常是 SwiGLU MLP)
-        self.experts = nn.ModuleList([nn.Linear(hidden_size, hidden_size) for _ in range(num_experts)])
-
-    def forward(self, hidden_states: torch.Tensor):
-        batch_size, seq_len, hidden_size = hidden_states.shape
-        routing_weights, selected_experts = self.router(hidden_states)
-
-        final_hidden_states = torch.zeros(
-            (batch_size * seq_len, hidden_size),
-            dtype=hidden_states.dtype,
-            device=hidden_states.device
-        )
-        flat_hidden_states = hidden_states.view(-1, hidden_size)
-
-        # 工业界(vLLM/Megatron)会通过 Token Sorting (索引排序) 汇聚同专家的Token，
-        # 为便于理解核心算法逻辑，使用 For 循环遍历被选中的 Expert
-        for expert_idx, expert in enumerate(self.experts):
-            token_idx, kth_expert = torch.where(selected_experts == expert_idx)
-            if token_idx.shape[0] &gt; 0:
-                current_state = flat_hidden_states[token_idx]
-                current_output = expert(current_state)
-                current_weight = routing_weights[token_idx, kth_expert].unsqueeze(-1)
-                final_hidden_states[token_idx] += current_output * current_weight
-
-        return final_hidden_states.view(batch_size, seq_len, hidden_size)
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
-def test_moe_router():
-    try:
-        torch.manual_seed(42)
-        batch_size, seq_len, hidden_size = 2, 4, 16
-        num_experts, top_k = 8, 2
-
-        moe = SparseMoEBlock(hidden_size, num_experts, top_k)
-        x = torch.randn(batch_size, seq_len, hidden_size)
-
-        # 1. 验证输出形状
-        out = moe(x)
-        assert out.shape == x.shape, &quot;MoE 聚合后的输出形状不匹配！&quot;
-
-        # 2. 验证 Router 行为
-        weights, indices = moe.router(x)
-        assert weights.shape == (batch_size * seq_len, top_k), &quot;权重形状不等于 [num_tokens, top_k]！&quot;
-        assert indices.shape == (batch_size * seq_len, top_k), &quot;索引形状不等于 [num_tokens, top_k]！&quot;
-
-        # 验证重归一化是否正确 (每一行的和应非常接近 1)
-        assert torch.allclose(weights.sum(dim=-1), torch.ones(batch_size * seq_len, dtype=weights.dtype)), &quot;重归一化失败：Top-K 权重之和不等于 1！&quot;
-
-        # 3. 验证专家索引合法性
-        assert torch.all((indices &gt;= 0) &amp; (indices &lt; num_experts)), &quot;挑选的专家索引越界！&quot;
-
-        print(&quot;\n✅ All Tests Passed! MoE Top-K Router 和稀疏聚合逻辑验证通过。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except Exception as e:
-        print(f&quot;❌ 发生未知异常: {e}&quot;)
-        raise
-
-test_moe_router()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="router-global-probabilities">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="router-global-probabilities">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>先让每个 token 给所有专家分配概率</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">router_logits.shape=[8,8]，其中第 0 维是 token，第 1 维是专家。</p>
             <p class="predict-q">softmax 应该沿哪个维度计算，才能让每个 token 独立给所有专家分配概率？</p>
             <div class="predict-options">
@@ -1282,14 +1052,11 @@ test_moe_router()
                 <input type="radio" name="predict-router-global-probabilities" value="2">
                 <span>先把整个张量 flatten 成一维</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="router-global-probabilities">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="router-global-probabilities">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="router-global-probabilities">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>输入 hidden_states 的 shape 是 [batch_size, seq_len, hidden_size]。B 是句子数，S 是每句 token 数，H 是每个 token 的特征数。</li><li>view(-1, hidden_size) 把 B 和 S 合并成 token 总数 T=B×S；它不改变数据，只把 [B,S,H] 看成 [T,H]。</li><li>gate 是 nn.Linear(hidden_size, num_experts, bias=False)，所以每个 token 的 H 个特征会变成 E=num_experts 个打分。</li><li>logit 是未归一化分数，可以为负，也不要求总和为 1；softmax 才把一行分数变成概率分布。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>输入 hidden_states 的 shape 是 [batch_size, seq_len, hidden_size]。B 是句子数，S 是每句 token 数，H 是每个 token 的特征数。</li><li>view(-1, hidden_size) 把 B 和 S 合并成 token 总数 T=B×S；它不改变数据，只把 [B,S,H] 看成 [T,H]。</li><li>gate 是 nn.Linear(hidden_size, num_experts, bias=False)，所以每个 token 的 H 个特征会变成 E=num_experts 个打分。</li><li>logit 是未归一化分数，可以为负，也不要求总和为 1；softmax 才把一行分数变成概率分布。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1378,24 +1145,36 @@ print(probabilities.sum(dim=-1)) # [1, 1]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="router-global-probabilities-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 1：只写出从 router_logits 得到 routing_probs 的表达式，不要在这一步提前截取专家。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-global-probabilities-1">
+                <span>shape 自检：routing_probs 与 router_logits 都应为 [batch_size*seq_len, num_experts]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-global-probabilities-2">
+                <span>数值自检：临时查看 routing_probs.sum(dim=-1)，每个 token 都应接近 1。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-global-probabilities-3">
+                <span>错误诊断：若不同 token 被绑在一起分配概率，检查 softmax 是否误用了 dim=0；若低精度出现异常，检查是否漏掉 router_logits.float()。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="router-topk-values-indices">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="router-topk-values-indices">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>再用 topk 同时取出权重和专家编号</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">某 token 的概率是 [0.10, 0.55, 0.20, 0.15]，top_k=2。</p>
             <p class="predict-q">torch.topk 返回的 values 与 indices 分别是什么？</p>
             <div class="predict-options">
@@ -1411,14 +1190,11 @@ print(probabilities.sum(dim=-1)) # [1, 1]</code></pre></div>
                 <input type="radio" name="predict-router-topk-values-indices" value="2">
                 <span>[0.55,0.20] 与 [0,1]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="router-topk-values-indices">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="router-topk-values-indices">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="router-topk-values-indices">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>torch.topk(input, k, dim) 会返回两个 Tensor：values 是最大的 k 个值，indices 是这些值原来所在的下标。</li><li>TODO 2 的输入是完整概率表 routing_probs，不是原始 hidden_states，也不是已经截断的 logits。</li><li>每个 token 只保留 K 位专家，因此最后一维会从 E 变成 K。</li><li>权重是浮点 Tensor；专家编号是整数 Tensor，后续 torch.where 会用编号决定 token 去哪个 expert。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>torch.topk(input, k, dim) 会返回两个 Tensor：values 是最大的 k 个值，indices 是这些值原来所在的下标。</li><li>TODO 2 的输入是完整概率表 routing_probs，不是原始 hidden_states，也不是已经截断的 logits。</li><li>每个 token 只保留 K 位专家，因此最后一维会从 E 变成 K。</li><li>权重是浮点 Tensor；专家编号是整数 Tensor，后续 torch.where 会用编号决定 token 去哪个 expert。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1497,24 +1273,36 @@ print(lane_ids)   # 原来的列下标</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="router-topk-values-indices-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 2：从 routing_probs 沿最后一维取 self.top_k 个最大概率，同时接住 values 和 indices。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-topk-values-indices-1">
+                <span>shape/dtype 自检：两个输出都是 [T,K]；routing_weights 是浮点，selected_experts 是整数。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-topk-values-indices-2">
+                <span>边界自检：selected_experts 的所有值都必须在 [0, num_experts) 内。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-topk-values-indices-3">
+                <span>错误诊断：若后续 torch.where 比较异常，检查是否把 values 和 indices 的接收顺序写反。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="router-renormalize-and-dispatch">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="router-renormalize-and-dispatch">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>最后重归一化，并读懂专家输出如何汇合</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">routing_weights.shape=[8,2]，要让每行两个权重重新相加为 1。</p>
             <p class="predict-q">分母最合适的 shape 是什么？</p>
             <div class="predict-options">
@@ -1530,14 +1318,11 @@ print(lane_ids)   # 原来的列下标</code></pre></div>
                 <input type="radio" name="predict-router-renormalize-and-dispatch" value="2">
                 <span>[1,2]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="router-renormalize-and-dispatch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="router-renormalize-and-dispatch">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="router-renormalize-and-dispatch">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>全量 routing_probs 每行和为 1，但丢掉未入选专家后，Top-K 权重之和通常小于 1。</li><li>sum(dim=-1, keepdim=True) 会把 [T,K] 的每行求和为 [T,1]；保留长度为 1 的维度后可以广播除回 K 个权重。</li><li>返回前 routing_weights.to(hidden_states.dtype) 会恢复输入精度；selected_experts 仍保持整数类型。</li><li>SparseMoEBlock 已经写好：torch.where 找到选择当前专家的 token，专家计算后乘对应权重，再用 += 汇总多位专家的贡献。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>全量 routing_probs 每行和为 1，但丢掉未入选专家后，Top-K 权重之和通常小于 1。</li><li>sum(dim=-1, keepdim=True) 会把 [T,K] 的每行求和为 [T,1]；保留长度为 1 的维度后可以广播除回 K 个权重。</li><li>返回前 routing_weights.to(hidden_states.dtype) 会恢复输入精度；selected_experts 仍保持整数类型。</li><li>SparseMoEBlock 已经写好：torch.where 找到选择当前专家的 token，专家计算后乘对应权重，再用 += 汇总多位专家的贡献。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1622,16 +1407,36 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="router-renormalize-and-dispatch-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 3：沿最后一维计算每个 token 的 Top-K 权重和，并用它重归一化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-1">
+                <span>运行测试前先手算 [0.60,0.20] 应变成 [0.75,0.25]，确认代码保持相对比例。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-2">
+                <span>测试目标：每行权重和接近 1、索引不越界、SparseMoEBlock 输出 shape 与输入完全相同。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="router-renormalize-and-dispatch-3">
+                <span>错误诊断：出现广播错误时检查 keepdim；输出整体偏小时检查是否忘了重归一化；只剩一个专家贡献时检查聚合是否误用赋值代替 +=。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="12b710c33a318116d0959604ebbe1b651c8773c6d935ede57c0405f6f68af97b">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/06_MoE_Router.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>TopKRouter</code> · <code>forward</code> · <code>SparseMoEBlock</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1651,10 +1456,10 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
     const predictData = {"router-global-probabilities":{"answer":0,"revealNote":"最后一维是专家维。沿 dim=-1 后，每一行 8 个专家概率之和为 1。"},"router-topk-values-indices":{"answer":0,"revealNote":"values 保留最大的概率值，indices 保留这些值在原专家维中的列号。"},"router-renormalize-and-dispatch":{"answer":0,"revealNote":"[8,1] 表示每个 token 一个行和，可以沿最后一维广播给该 token 的两个权重。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "06";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1667,16 +1472,18 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1701,7 +1508,7 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1743,11 +1550,15 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1778,6 +1589,7 @@ print(normalized_votes.sum(dim=-1))     # [1, 1]</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

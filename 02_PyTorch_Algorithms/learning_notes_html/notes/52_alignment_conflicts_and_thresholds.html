@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,221 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 52 | 零基础导学关卡</p>
-        <h1>Alignment Conflicts and Thresholds | 对齐冲突与阈值</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>对齐冲突与阈值</h1>
+        <p class="course-subtitle">Alignment Conflicts and Thresholds</p>
+        <p class="lead">对齐指标像一张成绩单：偏好、安全、格式、任务完成度可能相互冲突。先定义及格线，再讨论综合表现。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/52_Alignment_Conflicts_and_Thresholds.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">52_Alignment_Conflicts_and_Thresholds.ipynb</span>
           <span class="pill">后训练对齐</span><span class="pill">评测</span><span class="pill">阈值决策</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">考试总分更高，就可以忽略某门课不及格吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="cf007059a35c2c581eea49b3c5a96d46b9d90e31b437657ecc0a30341d9804f0">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../52_Alignment_Conflicts_and_Thresholds.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/52_Alignment_Conflicts_and_Thresholds.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>52. Alignment Conflicts and Thresholds | 对齐冲突与阈值</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>评测</code>, <code>阈值决策</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>对齐里最危险的误判之一，是看到单一指标上涨就默认模型“变好了”。偏好胜率、格式稳定性、安全性和任务完成度并不总是同向变化；如果这些指标开始互相冲突，而团队又没有事先定义最低阈值和优先级，在线更新或偏好优化就很容易把模型推向一个看似更强、实际上更不稳的方向。</p>
-<p>这是一节<strong>机制判断节</strong>：<code>50</code> 先把偏好数据和评测口径立住，<code>51</code> 再把离线优化推进到在线反馈闭环，而 <code>52</code> 继续回答另一个更接近上线的问题: 当多个指标不一致时，到底以什么边界做最终判断。学完后，你应该能识别常见的对齐冲突、给关键指标设定最低阈值，并把“训练有收益”与“可以上线”这两个结论明确区分开。</p>
-<p><strong>关键词：</strong> <code>reward conflict</code>, <code>evaluation drift</code>, <code>safety threshold</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 汇总最关键的对齐指标。</li><li>TODO 2: 判断是否出现对齐冲突。</li><li>TODO 3: 输出是否值得继续扩成独立对齐页。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<ul>
-<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | DPO 损失教程</a></li>
-<li><a href="50_preference_data_and_evaluation.html">50. Preference Data and Evaluation | 偏好数据与评测</a></li>
-<li><a href="51_online_dpo.html">51. Online DPO | 在线 DPO</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 学完对齐冲突与阈值后，下一步重点不是继续背指标名称，而是看这些冲突判断怎样进入偏好优化项目和在线 benchmark，确认“指标上涨”是否真的还能满足上线边界。</p>
-<ul>
-<li><a href="84_dpo_preference_project.html">84. DPO Preference Project | DPO 偏好优化项目</a></li>
-<li><a href="85_grpo_groupwise_alignment_project.html">85. GRPO Groupwise Alignment Project | GRPO 组内对齐项目</a></li>
-<li><a href="86_dpo_online_benchmark.html">86. DPO Online Benchmark | DPO 在线基准</a></li>
-</ul>
-<hr>
-<h3>Step 1: 先识别评测和奖励是否一致</h3>
-<ul>
-<li>区分偏好胜率、格式稳定性、安全性和人工主观质量。</li>
-<li>如果奖励信号和最终评测目标不一致，对齐训练会很容易偏航。</li>
-</ul>
-<h3>Step 2: 明确冲突和阈值</h3>
-<ul>
-<li>可能的冲突包括：胜率上升但安全性下降，或格式更稳但任务完成度下降。</li>
-<li>上线前必须定义最低阈值，避免单一指标掩盖坏结果。</li>
-</ul>
-<h3>Step 3: 判断是否值得继续单独展开</h3>
-<ul>
-<li>如果冲突类型和阈值判断已经超出当前对齐主线，就值得升级成独立补页。</li>
-</ul>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>summarize_alignment_metrics</code>，汇总多种对齐指标。</li>
-<li>补全 <code>detect_alignment_conflict</code>，识别冲突。</li>
-<li>补全 <code>recommend_alignment_followup</code>，输出是否继续展开。</li>
-</ol>
-<h3>提示</h3>
-<ul>
-<li>这页不是让你做完整对齐评测框架，而是先固定三步判断：关键指标是什么、是否已经出现冲突、这类冲突是否已经值得单独扩页。</li>
-<li><code>TODO 1</code> 只需要把输入里的关键指标收出来，不要在这里引入额外聚合逻辑。</li>
-<li><code>TODO 2</code> 先判断安全分是否低于阈值，再判断偏好胜率是否过低，按这个顺序输出冲突类型。</li>
-<li><code>TODO 3</code> 先看是否存在冲突，再给出是否值得继续展开的结论和原因。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def summarize_alignment_metrics(metrics: Dict[str, float]) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;
-    TODO 1: 汇总最关键的对齐指标。
-    &quot;&quot;&quot;
-    # 提示：只需要返回 win_rate、safety_score、format_score 这 3 个字段。
-    # win_rate = ???
-    # safety_score = ???
-    # format_score = ???
-    raise NotImplementedError
+<section class="lessons">
 
-
-def detect_alignment_conflict(summary: Dict[str, float], safety_threshold: float) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 2: 判断是否出现对齐冲突。
-    &quot;&quot;&quot;
-    # 提示：先判断 safety_score 是否低于 safety_threshold，
-    # 再判断 win_rate 是否低于 0.5，最后返回无冲突结果。
-    raise NotImplementedError
-
-
-def recommend_alignment_followup(conflict: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 3: 输出是否值得继续扩成独立对齐页。
-    &quot;&quot;&quot;
-    # 提示：先看 has_conflict，再给出 needs_dedicated_page 和 reason。
-    # needs_dedicated_page = ???
-    # reason = ???
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code>def test_alignment_conflicts_and_thresholds():
-    try:
-        summary = summarize_alignment_metrics({'win_rate': 0.63, 'safety_score': 0.58, 'format_score': 0.91})
-        assert summary['win_rate'] == 0.63
-        assert summary['safety_score'] == 0.58
-        conflict = detect_alignment_conflict(summary, safety_threshold=0.6)
-        assert conflict['has_conflict'] is True
-        assert conflict['conflict_type'] == 'safety_below_threshold'
-        decision = recommend_alignment_followup(conflict)
-        assert decision['needs_dedicated_page'] is True
-        print('测试通过：对齐冲突与阈值页面模板可以工作。')
-    except NotImplementedError:
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_alignment_conflicts_and_thresholds()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>考试总分更高，就可以忽略某门课不及格吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>对齐里最危险的误判之一，是看到单一指标上涨就默认模型“变好了”。偏好胜率、格式稳定性、安全性和任务完成度并不总是同向变化；如果这些指标开始互相冲突，而团队又没有事先定义最低阈值和优先级，在线更新或偏好优化就很容易把模型推向一个看似更强、实际上更不稳的方向。</p>
-            <div class="notebook-content"><h3>Step 1: 先识别评测和奖励是否一致</h3>
-<ul>
-<li>区分偏好胜率、格式稳定性、安全性和人工主观质量。</li>
-<li>如果奖励信号和最终评测目标不一致，对齐训练会很容易偏航。</li>
-</ul>
-<h3>Step 2: 明确冲突和阈值</h3>
-<ul>
-<li>可能的冲突包括：胜率上升但安全性下降，或格式更稳但任务完成度下降。</li>
-<li>上线前必须定义最低阈值，避免单一指标掩盖坏结果。</li>
-</ul>
-<h3>Step 3: 判断是否值得继续单独展开</h3>
-<ul>
-<li>如果冲突类型和阈值判断已经超出当前对齐主线，就值得升级成独立补页。</li>
-</ul>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>summarize_alignment_metrics</code>，汇总多种对齐指标。</li>
-<li>补全 <code>detect_alignment_conflict</code>，识别冲突。</li>
-<li>补全 <code>recommend_alignment_followup</code>，输出是否继续展开。</li>
-</ol>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>对齐指标像一张成绩单：偏好、安全、格式、任务完成度可能相互冲突。先定义及格线，再讨论综合表现。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>metric conflict</dt><dd>一个指标改善、另一个重要指标变差。</dd></div><div><dt>threshold</dt><dd>能接受的最低值或最高值。</dd></div><div><dt>Pareto</dt><dd>在所有目标上不更差且至少一项更好的比较关系。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>对齐指标出现冲突时应怎样决策？</p>
+            <p>本课中的「metric conflict」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只保留提升最大的指标</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>能接受的最低值或最高值。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>按预设阈值检查收益与退化是否可接受</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>一个指标改善、另一个重要指标变差。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>删掉变差的指标再报告</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>在所有目标上不更差且至少一项更好的比较关系。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1: 汇总最关键的对齐指标。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>看单项</h4><p>A 胜率 0.70、安全 0.85；B 胜率 0.65、安全 0.96。</p></li><li><h4>应用门槛</h4><p>若安全至少 0.95，只有 B 可行。不能把 A 较高胜率直接抵消安全不达标。</p></li><li><h4>说明取舍</h4><p>若二者均满足门槛但各有优势，应说明目标优先级，而不是假装存在唯一最优。</p></li></ol><section class="learning-lab" data-lab="gate" aria-label="当一次有原则的方案评审员">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>当一次有原则的方案评审员</h4><p>改变显存和质量门槛。先过滤，再在合格者中比较速度。</p></header>
+    <div class="lab-controls"><label for="lab-52-budget"><span>显存上限 <output data-value="budget" for="lab-52-budget">10</output> GiB</span><input type="range" id="lab-52-budget" name="budget" min="6" max="16" step="1" value="10"></label><label for="lab-52-quality"><span>质量下限 <output data-value="quality" for="lab-52-quality">90</output> %</span><input type="range" id="lab-52-quality" name="quality" min="80" max="98" step="1" value="90"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-52" data-challenge-label>算一算</label><div><input id="answer-52" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>安全门槛 0.95，候选安全 0.85 但胜率更高，怎么办？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>让胜率补分</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>删除安全指标</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>判为不可行</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>safety_floor = .95
+runs = [(&quot;A&quot;, .70, .85), (&quot;B&quot;, .65, .96)]
+print([name for name, win, safe in runs if safe &gt;= safety_floor])</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>为了让候选通过，事后修改阈值；这会让评测失去约束意义。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>为了让候选通过，事后修改阈值；这会让评测失去约束意义。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「metric conflict」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2: 判断是否出现对齐冲突。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3: 输出是否值得继续扩成独立对齐页。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="cf007059a35c2c581eea49b3c5a96d46b9d90e31b437657ecc0a30341d9804f0">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/52_Alignment_Conflicts_and_Thresholds.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_alignment_metrics</code> · <code>detect_alignment_conflict</code> · <code>recommend_alignment_followup</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -966,14 +940,14 @@ test_alignment_conflicts_and_thresholds()
 
   <script>
     const levelId = "52";
-    const checkpointData = {"current-core":{"answer":1,"explain":"按预设阈值检查收益与退化是否可接受。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：一个指标改善、另一个重要指标变差。。另外两个选项分别解释「threshold」和「Pareto」，注意区分。"},"v4-experiment":{"answer":2,"explain":"硬约束不参与加权抵消。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：为了让候选通过，事后修改阈值；这会让评测失去约束意义。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -986,16 +960,18 @@ test_alignment_conflicts_and_thresholds()
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1020,7 +996,7 @@ test_alignment_conflicts_and_thresholds()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1062,11 +1038,15 @@ test_alignment_conflicts_and_thresholds()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1097,6 +1077,7 @@ test_alignment_conflicts_and_thresholds()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,922 +733,206 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 37 | 零基础导学关卡</p>
-        <h1>KV Cache Scheduling | KV Cache 调度</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>KV Cache 调度</h1>
+        <p class="course-subtitle">KV Cache Scheduling</p>
+        <p class="lead">KV Cache 调度是在容量受限时决定保留什么。不同驱逐策略衡量不同的“价值”，不能只用一个名字判断好坏。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/37_KV_Cache_Scheduling.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">37_KV_Cache_Scheduling.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">KV Cache</span><span class="pill">调度</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">reuse/recency/size -&gt; priority -&gt; keep or evict</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">书架满了，应该丢掉最厚的书，还是最久没看的书？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="3c11f6cf87dbbc4af2e9f2ef9be85af05ddf7c161e03e7ffb93aacdf09a98d77">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../37_KV_Cache_Scheduling.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/37_KV_Cache_Scheduling.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>37. KV Cache Scheduling | KV Cache 调度</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>KV Cache</code>, <code>调度</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>当多个请求共享前缀并持续生成时，KV Cache 会同时面临复用和容量压力。调度器需要记录每个缓存的大小、命中次数和最近访问时间，再根据这些状态决定缓存的保留顺序和驱逐顺序。</p>
-<p>本节沿着“请求访问 → 缓存状态 → 价值评分 → 优先级队列 → 容量驱逐”的顺序理解 KV Cache 调度。重点是看清访问热度、缓存容量和驱逐顺序之间如何相互影响，并建立从状态变化到调度决策的完整认知链。</p>
-<p>本节难度为 Hard，因为它需要同时理解缓存复用、容量约束、堆队列和状态更新之间的联系，并把这些机制组织成连续的调度过程。</p>
-<p><strong>关键词：</strong> <code>KV Cache 调度</code>、<code>缓存复用</code>、<code>容量驱逐</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 计算 cache entry 的保留优先级</li><li>TODO 2: 把最新优先级写入堆队列</li><li>TODO 3: 跳过堆中的过期记录</li><li>TODO 4: 创建新的 cache entry</li><li>TODO 5: 按优先级导出当前 cache 状态</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能读出一个缓存块的容量、命中和最近访问状态，再观察这些状态如何影响保留与驱逐顺序。</p>
-<ul>
-<li><a href="22_vllm_pagedattention.html">22. vLLM PagedAttention | vLLM 分页注意力</a></li>
-<li><a href="34_prefix_caching_and_chunked_prefill.html">34. Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充</a></li>
-<li><a href="36_decode_scheduling.html">36. Decode Scheduling | 解码调度</a></li>
-</ul>
-<hr>
-<h3>Step 1: 为什么 KV Cache 需要调度</h3>
-<p>先把问题拆成三个容易观察的变化：哪些内容可以复用、每段缓存占用多少空间、哪些缓存最近更常被访问。前缀缓存提供复用线索，分页管理把 KV Cache 组织成可分配的 block，请求推进过程则不断更新访问热度。多个请求同时生成时，调度器要把这些信息合在一起，安排缓存的保留和驱逐。</p>
-<table>
-<thead>
-<tr>
-<th>观察入口</th>
-<th>发生了什么</th>
-<th>形成的调度依据</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>内容复用</td>
-<td>同一前缀再次被访问</td>
-<td>命中次数和复用价值</td>
-</tr>
-<tr>
-<td>空间占用</td>
-<td>新请求需要更多 KV Cache block</td>
-<td>当前容量和驱逐压力</td>
-</tr>
-<tr>
-<td>访问热度</td>
-<td>命中次数和最近访问不断变化</td>
-<td>当前缓存价值和优先级</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/37_kv_cache_scheduling_map.svg" alt="KV Cache 调度概念图：前置机制、缓存状态与容量决策"></p>
-<h3>Step 2: 缓存状态与容量账本</h3>
-<p>先把每段可复用缓存看成一条状态记录，再把所有记录放进同一份容量账本。单条记录描述一个前缀的占用和访问历史，全局字段描述当前容量；这些信息共同为下一步的价值评估提供输入。</p>
-<table>
-<thead>
-<tr>
-<th>字段层级</th>
-<th>记录什么</th>
-<th>对调度的作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>单条缓存：标识</td>
-<td>prefix 对应的缓存记录</td>
-<td>判断访问是否命中同一前缀</td>
-</tr>
-<tr>
-<td>单条缓存：大小</td>
-<td>这段缓存占用多少字节</td>
-<td>计算新增缓存带来的容量压力</td>
-</tr>
-<tr>
-<td>单条缓存：命中次数</td>
-<td>该前缀已经复用多少次</td>
-<td>估计继续保留的复用价值</td>
-</tr>
-<tr>
-<td>单条缓存：最近访问</td>
-<td>最近一次访问发生的时间</td>
-<td>反映当前访问热度</td>
-</tr>
-<tr>
-<td>全局账本：容量</td>
-<td>总容量和当前已分配容量</td>
-<td>判断何时需要触发驱逐</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: 评分、堆队列与过期记录</h3>
-<p>Step 2 的状态字段进入价值评估：复用次数体现未来命中机会，最近访问体现当前热度，缓存大小体现容量成本。教学实现把三者合成为一个可比较的保留分数，再交给优先级队列处理。评分可以写成：<code>score = 复用奖励 + 最近访问奖励 - 容量惩罚</code>。</p>
-<table>
-<thead>
-<tr>
-<th>机制</th>
-<th>作用</th>
-<th>设计时关注</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>评分</td>
-<td>把缓存价值变成可比较的数字</td>
-<td>复用、时间和容量共同影响分数</td>
-</tr>
-<tr>
-<td>堆队列</td>
-<td>让低优先级缓存可以先被找到</td>
-<td>刷新时追加当前记录，保留可追溯状态</td>
-</tr>
-<tr>
-<td>过期检查（stale check）</td>
-<td>弹出时重新核对当前 entry</td>
-<td>让驱逐依据跟随最新状态</td>
-</tr>
-<tr>
-<td>驱逐</td>
-<td>容量不足时释放低价值缓存</td>
-<td>超过容量时选择驱逐或降级路径</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/37_kv_cache_score_heap.svg" alt="KV Cache 调度的评分、堆队列与过期记录"></p>
-<h3>Step 4: 动手实战</h3>
-<p>把前面的状态账本和评分机制落到代码中，再用访问事件复查缓存状态如何变化。表格列出每个实现位置的输入、动作和观察重点，完成后沿着“访问 → 评分 → 驱逐 → 快照”检查整条调度链。</p>
-<table>
-<thead>
-<tr>
-<th>实现位置</th>
-<th>输入或状态</th>
-<th>应完成的动作</th>
-<th>测试时观察</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_score</code></td>
-<td>命中次数、容量、最近访问</td>
-<td>合成可比较的保留分数</td>
-<td>复用多、访问近的缓存分数更高</td>
-</tr>
-<tr>
-<td><code>_refresh_queue</code></td>
-<td>当前 entry</td>
-<td>追加最新的评分、时间和前缀</td>
-<td>历史记录保留，等待弹出时核对</td>
-</tr>
-<tr>
-<td><code>_evict_until_fit</code></td>
-<td>堆顶记录、当前 entry</td>
-<td>核对状态后释放所需容量</td>
-<td>过期记录跳过，有效低分记录参与驱逐</td>
-</tr>
-<tr>
-<td><code>touch</code> / <code>snapshot</code></td>
-<td>新旧前缀与当前状态</td>
-<td>处理新增、复用并输出排序快照</td>
-<td><code>snapshot</code> 只展示状态，<code>current_bytes</code> 维持容量约束</td>
-</tr>
-</tbody>
-</table>
-<h3>测试</h3>
-<p>运行下面的测试单元，确认缓存评分、驱逐和快照输出都符合预期。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 5</summary><pre><code>@dataclass(order=True)
-class CacheEntry:
-    priority: float
-    last_used: int
-    prefix: str = field(compare=False)
-    hits: int = field(default=0, compare=False)
-    bytes: int = field(default=0, compare=False)
+<section class="lessons">
 
-
-class KVCacheSchedulerSim:
-    &quot;&quot;&quot;用优先级堆模拟可复用前缀的容量调度。&quot;&quot;&quot;
-
-    def __init__(self, capacity_bytes: int = 1024):
-        &quot;&quot;&quot;初始化容量账本、缓存状态和优先级队列。&quot;&quot;&quot;
-        if capacity_bytes &lt;= 0:
-            raise ValueError('capacity_bytes must be positive')
-        self.capacity_bytes = capacity_bytes
-        self.current_bytes = 0
-        self.time = 0
-        self.entries: Dict[str, CacheEntry] = {}
-        self.queue: List[Tuple[float, int, str]] = []
-        self.log: List[str] = []
-
-    def _score(self, hits: int, size: int, last_used: int) -&gt; float:
-        &quot;&quot;&quot;根据复用次数、访问热度和容量成本计算保留分数。&quot;&quot;&quot;
-        recency = 1.0 / (1.0 + max(self.time - last_used, 0))
-        reuse_bonus = float(hits)
-        size_penalty = size / max(self.capacity_bytes, 1)
-        # ==========================================
-        # TODO 1: 计算 cache entry 的保留优先级
-        # 提示: 复用次数越多越该保留，越新越该保留，越大越需要惩罚
-        # 可用变量: reuse_bonus、recency、size_penalty；结果应为 float
-        # ==========================================
-        # score = ???
-        return score
-
-    def _refresh_queue(self, prefix: str):
-        &quot;&quot;&quot;把当前 entry 的最新评分追加到优先级堆。&quot;&quot;&quot;
-        entry = self.entries[prefix]
-        entry.priority = self._score(entry.hits, entry.bytes, entry.last_used)
-        # ==========================================
-        # TODO 2: 把最新优先级写入堆队列
-        # 提示: 这里要弹出低 priority 的缓存，因此不要对 priority 取负
-        # queue_item 应包含 (priority, last_used, prefix) 三个字段
-        # ==========================================
-        # queue_item = ???
-        heapq.heappush(self.queue, queue_item)
-
-    def _evict_until_fit(self, needed: int):
-        &quot;&quot;&quot;在新增缓存前驱逐低价值 entry，直到容量可以容纳它。&quot;&quot;&quot;
-        while self.current_bytes + needed &gt; self.capacity_bytes and self.entries:
-            while self.queue:
-                priority, last_used, prefix = heapq.heappop(self.queue)
-                entry = self.entries.get(prefix)
-                if entry is None:
-                    continue
-                # ==========================================
-                # TODO 3: 跳过堆中的过期记录
-                # 提示: entry 的 priority 或 last_used 已变化时，旧堆项不再有效
-                # 可比较堆顶的 priority、last_used 与 entry 的当前字段
-                # ==========================================
-                # is_stale = ???
-                if is_stale:
-                    continue
-                break
-            else:
-                entry = min(self.entries.values(), key=lambda e: (e.priority, e.last_used))
-                prefix = entry.prefix
-
-            self.current_bytes -= entry.bytes
-            self.entries.pop(prefix, None)
-            self.log.append(f&quot;evict:{prefix}&quot;)
-
-    def touch(self, prefix: str, bytes_: int):
-        &quot;&quot;&quot;访问一个前缀，更新命中状态或创建新的缓存 entry。&quot;&quot;&quot;
-        if not isinstance(prefix, str) or not prefix:
-            raise ValueError('prefix must be a non-empty string')
-        if bytes_ &lt;= 0:
-            raise ValueError('bytes_ must be positive')
-        if bytes_ &gt; self.capacity_bytes:
-            raise ValueError(&quot;single cache entry exceeds capacity&quot;)
-
-        self.time += 1
-        if prefix in self.entries:
-            entry = self.entries[prefix]
-            entry.hits += 1
-            entry.last_used = self.time
-            self._refresh_queue(prefix)
-            self.log.append(f&quot;reuse:{prefix}&quot;)
-            return
-
-        self._evict_until_fit(bytes_)
-        # ==========================================
-        # TODO 4: 创建新的 cache entry
-        # 提示: 新 entry 的 hits 从 1 开始，last_used 使用当前 time
-        # entry 需要保存 prefix、bytes_、当前 time，并先使用 0.0 作为初始 priority
-        # ==========================================
-        # entry = ???
-        self.entries[prefix] = entry
-        self.current_bytes += bytes_
-        self._refresh_queue(prefix)
-        self.log.append(f&quot;add:{prefix}&quot;)
-
-    def schedule(self, requests: List[Tuple[str, int]]) -&gt; List[str]:
-        &quot;&quot;&quot;按给定访问顺序处理前缀请求并返回事件日志。&quot;&quot;&quot;
-        for prefix, bytes_ in requests:
-            self.touch(prefix, bytes_)
-        return list(self.log)
-
-    def snapshot(self) -&gt; List[Tuple[str, int, float, int]]:
-        &quot;&quot;&quot;按保留价值从高到低导出当前缓存状态。&quot;&quot;&quot;
-        # ==========================================
-        # TODO 5: 按优先级导出当前 cache 状态
-        # 提示: 高 priority 在前；priority 相同则按 last_used 和 prefix 稳定排序
-        # ordered_entries 应是 CacheEntry 列表，不能修改 self.entries
-        # ==========================================
-        # ordered_entries = ???
-        return [(e.prefix, e.bytes, round(e.priority, 4), e.hits) for e in ordered_entries]
-</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code># 测试你的实现
-def test_kv_cache_scheduler():
-    try:
-        def expect_value_error(action, label):
-            try:
-                action()
-            except ValueError:
-                return
-            raise AssertionError(f'{label} 应拒绝非法输入')
-
-        expect_value_error(lambda: KVCacheSchedulerSim(capacity_bytes=0), 'capacity_bytes=0')
-        sim = KVCacheSchedulerSim(capacity_bytes=128)
-        requests = [
-            ('a', 40),
-            ('b', 48),
-            ('a', 40),
-            ('c', 56),
-            ('d', 48),
-            ('a', 40),
-        ]
-        log = sim.schedule(requests)
-        snap = sim.snapshot()
-
-        assert len(log) &gt;= len(requests)
-        assert any(item.startswith('reuse:a') for item in log)
-        assert any(item.startswith('evict:') for item in log)
-        assert sim.current_bytes &lt;= sim.capacity_bytes
-        assert isinstance(snap, list)
-        assert all(len(item) == 4 for item in snap)
-        priorities = [item[2] for item in snap]
-        assert priorities == sorted(priorities, reverse=True)
-
-        # 评分应体现三条机制：更多复用、更近访问和更小容量成本。
-        hot_score = sim._score(hits=3, size=16, last_used=sim.time)
-        cold_score = sim._score(hits=1, size=16, last_used=0)
-        small_score = sim._score(hits=1, size=16, last_used=sim.time)
-        large_score = sim._score(hits=1, size=64, last_used=sim.time)
-        assert hot_score &gt; cold_score
-        assert small_score &gt; large_score
-
-        # 同一前缀被访问后，旧堆记录必须被识别为 stale，而不是重复驱逐同一 entry。
-        stale_sim = KVCacheSchedulerSim(capacity_bytes=80)
-        stale_sim.touch('hot', 32)
-        stale_sim.touch('hot', 32)
-        assert len(stale_sim.queue) &gt;= 2
-        stale_sim.touch('cold', 64)
-        assert stale_sim.current_bytes &lt;= stale_sim.capacity_bytes
-        assert len(stale_sim.entries) == len(set(stale_sim.entries))
-        assert stale_sim.current_bytes == sum(item.bytes for item in stale_sim.entries.values())
-
-        # 输入校验属于容量账本的边界条件，不应被宽泛异常处理吞掉。
-        expect_value_error(lambda: sim.touch('', 8), '空 prefix')
-        expect_value_error(lambda: sim.touch('bad-size', 0), '非正 bytes')
-        expect_value_error(lambda: sim.touch('too-large', 129), '超过容量的 entry')
-
-        print('✅ KVCacheSchedulerSim 测试通过')
-    except NotImplementedError as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except (NameError, AttributeError) as e:
-        raise NotImplementedError('请先完成 TODO 代码或检查字段名！') from e
-
-
-test_kv_cache_scheduler()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="kv-cache-score-heap-and-stale-records">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>优先级会变化：评分、最小堆与懒删除必须配套</h2>
+          <h2>书架满了，应该丢掉最厚的书，还是最久没看的书？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">同一 prefix 的旧堆项是 (1.2,3)，entries 中最新值是 (3.5,8)。</p>
-            <p class="predict-q">弹出旧项后应该怎么做？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-score-heap-and-stale-records" value="0">
-                <span>判定 stale 并继续弹下一项</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-score-heap-and-stale-records" value="1">
-                <span>立即驱逐该 prefix</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-score-heap-and-stale-records" value="2">
-                <span>把 current_bytes 清零</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="kv-cache-score-heap-and-stale-records">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>KV Cache 调度是在容量受限时决定保留什么。不同驱逐策略衡量不同的“价值”，不能只用一个名字判断好坏。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>capacity</dt><dd>可保存的缓存容量。</dd></div><div><dt>LRU</dt><dd>优先淘汰最长时间未访问的条目。</dd></div><div><dt>stale entry</dt><dd>优先级已过期的队列记录，不能按旧值做决策。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="kv-cache-score-heap-and-stale-records">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>heapq 是最小堆：heappop 总是先弹出 tuple 最小的记录，因此低 priority 天然先被驱逐。</li><li>缓存命中会增加 hits 并更新 last_used，同一个 prefix 的 priority 会随时间变化。</li><li>heapq 没有直接修改任意旧项的简单接口；Notebook 采用懒删除：压入新项，弹出时检查旧项是否 stale。</li><li>tuple (priority,last_used,prefix) 既定义堆顺序，也携带足够信息与 entries 中的最新对象核对。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>entries 是当前事实，queue 只是等待处理的历史便签。每次缓存价值变化，就把一张新便签压入堆；旧便签仍在，但真正驱逐前必须与 entries 核对。这样不用在堆中搜索删除，却能保证不会根据过期优先级误删热门缓存。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 1：可解释评分</h4>
-            <div class="adv-contract">
-              <span><code>reuse_bonus</code></span><strong>hits，复用越多分越高</strong>
-              <span><code>recency</code></span><strong>1/(1+time gap)，越新越接近 1</strong>
-              <span><code>size_penalty</code></span><strong>size/capacity，越大成本越高</strong>
-              <span><code>score</code></span><strong>reuse + 0.5*recency - 0.25*size penalty</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 2-3：两份数据各司其职</h4>
-            <div class="adv-contract">
-              <span><code>entries[prefix]</code></span><strong>唯一的最新 CacheEntry</strong>
-              <span><code>queue</code></span><strong>可能含同一 prefix 的多条历史 tuple</strong>
-              <span>最新项</span><strong>(priority,last_used) 与 entry 相同</strong>
-              <span>过期项</span><strong>二元组不相等，continue 跳过</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>a 首次加入<br>hits=1</span>
-          <span>压入旧项<br>(p1,t1,a)</span>
-          <span>a 再次命中<br>hits=2,t2</span>
-          <span>压入新项<br>(p2,t2,a)</span>
-          <strong>弹出旧项时<br>stale check 跳过</strong>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>动作</th><th>堆中 priority 符号</th><th>原因</th></tr></thead>
-          <tbody>
-            <tr><td>保留高价值项</td><td>不取负</td><td>最小堆先弹出低分项用于驱逐</td></tr>
-            <tr><td>snapshot 高分在前</td><td>排序 key 用 -e.priority</td><td>这是展示排序，与驱逐堆方向相反</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">如果在 _refresh_queue 对 priority 取负，最小堆会先弹出绝对值最大的高价值缓存，驱逐方向正好反了。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用文章热度练习最小堆与过期项检查</h4><pre><code>import heapq
-
-latest = {'guide': (3.5, 8)}  # score, last_seen
-queue = []
-heapq.heappush(queue, (1.2, 3, 'guide'))  # 历史项
-heapq.heappush(queue, (3.5, 8, 'guide'))  # 最新项
-
-score, seen, name = heapq.heappop(queue)
-current = latest.get(name)
-is_stale = current is not None and (score, seen) != current
-if is_stale:
-    pass  # 跳过旧记录，继续弹堆</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>heapq.heappush</code> -&gt; TODO 2；queue_item 是 <code>(entry.priority,entry.last_used,prefix)</code>。</li>
-            <li><code>latest</code> -&gt; <code>self.entries</code>，它才保存当前真相。</li>
-            <li><code>(score,seen) != current</code> -&gt; TODO 3 对 priority 与 last_used 的联合核对。</li>
-            <li>例子省略的评分 -&gt; TODO 1 必须使用 Notebook 给定的三个权重系数。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 queue_item 中的 priority 不取负？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「capacity」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-score-heap-and-stale-records" value="0">
-                <span>因为 priority 永远小于 0</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>优先级已过期的队列记录，不能按旧值做决策。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-score-heap-and-stale-records" value="1">
-                <span>因为这里要让低 priority 先从最小堆弹出并被驱逐</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>可保存的缓存容量。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-score-heap-and-stale-records" value="2">
-                <span>因为 heapq 会自动把数字取负</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>优先淘汰最长时间未访问的条目。</span>
               </label></div>
-              <div class="feedback" data-feedback="kv-cache-score-heap-and-stale-records"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="kv-cache-score-heap-and-stale-records-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="kv-cache-touch-eviction-and-snapshot">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>容量不足时再驱逐：创建条目、维护字节数、导出稳定快照</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">capacity=128，current_bytes=88，现在要加入 56 bytes 的新缓存。</p>
-            <p class="predict-q">驱逐循环至少要释放多少 bytes 才能停止？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-touch-eviction-and-snapshot" value="0">
-                <span>16 bytes</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-touch-eviction-and-snapshot" value="1">
-                <span>56 bytes</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-kv-cache-touch-eviction-and-snapshot" value="2">
-                <span>88 bytes</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="kv-cache-touch-eviction-and-snapshot">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>登记访问</h4><p>书架容量 2，访问顺序 A、B、A，此时 A 最新，B 最旧。</p></li><li><h4>新书到来</h4><p>访问 C 时要腾位置。LRU 驱逐 B，留下 A、C，而不是因为 A 最先入架就驱逐 A。</p></li><li><h4>更新队列</h4><p>若用堆维护优先级，A 更新后旧条目可能还在堆中，取出时要核对版本或当前状态。</p></li></ol><section class="learning-lab" data-lab="cache" aria-label="亲手看一次 LRU 淘汰">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>亲手看一次 LRU 淘汰</h4><p>按下一步播放 A→B→A→C 的访问，改变书架容量。</p></header>
+    <div class="lab-controls"><label for="lab-37-capacity"><span>缓存容量 <output data-value="capacity" for="lab-37-capacity">2</output> 条</span><input type="range" id="lab-37-capacity" name="capacity" min="1" max="3" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-37" data-challenge-label>算一算</label><div><input id="answer-37" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="kv-cache-touch-eviction-and-snapshot">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>新 prefix 第一次 touch 既是写入也是首次使用，所以 hits 从 1 开始，last_used 使用已经加 1 的 self.time。</li><li>_evict_until_fit(needed) 的循环条件是 current_bytes + needed &gt; capacity_bytes；每次驱逐都要同步扣减 current_bytes。</li><li>CacheEntry 使用 order=True，但 prefix/hits/bytes 标记 compare=False；堆中仍显式保存 tuple，避免依赖整个对象比较。</li><li>sorted 的 key 可用 -priority 实现高分在前，再用 last_used 与 prefix 做确定性破平局。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>touch 是调度器的统一入口：命中时更新价值，未命中时先腾空间再登记新对象。驱逐、entries、current_bytes、log 和 queue 必须一起维护，最后 snapshot 把内部状态转换成容易测试和观察的四元组列表。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>touch</b>time 先加 1</span>
-          <span><b>hit</b>hits/last_used 更新并 refresh</span>
-          <span><b>miss</b>先 evict_until_fit</span>
-          <span><b>add</b>写 entries、bytes、queue、log</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 4：新条目的初始值</h4>
-            <div class="adv-contract">
-              <span><code>priority=0.0</code></span><strong>占位，随后 _refresh_queue 统一重算</strong>
-              <span><code>last_used=self.time</code></span><strong>记录当前 touch 时刻</strong>
-              <span><code>prefix=prefix</code></span><strong>entries 的业务键</strong>
-              <span><code>hits=1, bytes=bytes_</code></span><strong>首次使用与真实容量成本</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 5：快照契约</h4>
-            <div class="adv-contract">
-              <span>内部排序</span><strong><code>(-priority,last_used,prefix)</code></strong>
-              <span>输出 tuple</span><strong>(prefix, bytes, round(priority,4), hits)</strong>
-              <span>测试方向</span><strong>priority 列必须降序</strong>
-              <span>展示取整</span><strong>只 round 输出，不改内部 priority</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>capacity=128<br>已有 a=40,b=48</span>
-          <span>新增 c=56<br>总需求 144</span>
-          <span>堆弹低价值项<br>扣除它的 bytes</span>
-          <strong>直到 current+56<br>不超过 128</strong>
-        </div>
-
-        <div class="adv-callout">单条缓存若比总容量还大，touch 会直接 ValueError；不要靠驱逐所有旧缓存去容纳一个本来就不可能放下的条目。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用书架容量练习先腾空间再新增</h4><pre><code>capacity = 10
-used = 7
-books = {'old': {'size': 7, 'score': 1.0}}
-new_size = 6
-
-while used + new_size &gt; capacity and books:
-    name, item = min(books.items(), key=lambda pair: pair[1]['score'])
-    used -= item['size']
-    books.pop(name)
-
-books['new'] = {'size': new_size, 'score': 2.0}
-used += new_size
-ordered = sorted(
-    books.items(), key=lambda pair: (-pair[1]['score'], pair[0])
-)</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>used + new_size</code> -&gt; <code>current_bytes + needed</code> 的容量判断。</li>
-            <li><code>books['new']</code> -&gt; TODO 4 创建 CacheEntry 并写入 entries。</li>
-            <li><code>used += new_size</code> -&gt; Notebook 的 current_bytes 同步更新。</li>
-            <li><code>-score</code> 排序 -&gt; TODO 5 的高 priority 在前 snapshot。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>新 CacheEntry 为什么先写 priority=0.0？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>容量 2，访问 A、B、A、C，LRU 淘汰谁？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-touch-eviction-and-snapshot" value="0">
-                <span>因为 heapq 只接受 0</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>C</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-touch-eviction-and-snapshot" value="1">
-                <span>因为所有新缓存永久最低优先级</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>A</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-kv-cache-touch-eviction-and-snapshot" value="2">
-                <span>随后 _refresh_queue 会根据 hits、大小和时间统一计算真实分数</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>B</span>
               </label></div>
-              <div class="feedback" data-feedback="kv-cache-touch-eviction-and-snapshot"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="kv-cache-touch-eviction-and-snapshot-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>from collections import OrderedDict
+cache = OrderedDict()
+for key in [&quot;A&quot;, &quot;B&quot;, &quot;A&quot;, &quot;C&quot;]:
+    cache[key] = True
+    cache.move_to_end(key)
+    if len(cache) &gt; 2: cache.popitem(last=False)
+print(list(cache))  # A, C</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把最近插入当最近访问，或者在条目更新后仍使用旧优先级。Notebook 的评分规则也可能不是纯 LRU。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>把最近插入当最近访问，或者在条目更新后仍使用旧优先级。Notebook 的评分规则也可能不是纯 LRU。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「capacity」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="60f86f75c73f8559d5e581df390230e93498c184f08379d98e014d7bed3c65c6">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/37_KV_Cache_Scheduling.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>CacheEntry</code> · <code>KVCacheSchedulerSim</code> · <code>touch</code> · <code>schedule</code> · <code>snapshot</code> · <code>expect_value_error</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1660,14 +944,14 @@ ordered = sorted(
 
   <script>
     const levelId = "37";
-    const checkpointData = {"kv-cache-score-heap-and-stale-records":{"answer":1,"explain":"驱逐堆与高分在前的展示排序方向不同，不能混用。"},"kv-cache-touch-eviction-and-snapshot":{"answer":2,"explain":"初始化与评分职责分开，避免在 touch 中复制 _score 逻辑。"}};
-    const predictData = {"kv-cache-score-heap-and-stale-records":{"answer":0,"revealNote":"queue 可以有历史记录；只有与 entries 最新 priority 和 last_used 同时一致的项才有效。"},"kv-cache-touch-eviction-and-snapshot":{"answer":0,"revealNote":"88+56=144，超过容量 16；实际会按完整 entry 驱逐，所以释放量可能大于 16。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：可保存的缓存容量。。另外两个选项分别解释「LRU」和「stale entry」，注意区分。"},"v4-experiment":{"answer":2,"explain":"A 刚访问过，B 才是最久未访问的条目。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：把最近插入当最近访问，或者在条目更新后仍使用旧优先级。Notebook 的评分规则也可能不是纯 LRU。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "41";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1676,20 +960,22 @@ ordered = sorted(
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-3c11f6cf87db";
+    const homeworkKey = statePrefix + levelId + "-homework-60f86f75c73f";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1714,7 +1000,7 @@ ordered = sorted(
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1756,11 +1042,15 @@ ordered = sorted(
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1791,6 +1081,7 @@ ordered = sorted(
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,365 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 68 | 零基础导学关卡</p>
-        <h1>Speculative Decoding Benchmark | 推测解码基准</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>推测解码基准</h1>
+        <p class="course-subtitle">Speculative Decoding Benchmark</p>
+        <p class="lead">投机解码 benchmark 比较的是完整 draft+verify 路径。接受率高只是其中一项，草稿成本、验证成本和回退都影响收益。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">68_Speculative_Decoding_Benchmark.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">Speculative Decoding</span><span class="pill">基准对比</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">速记员写得快，审稿人忙不过来，最终能省时间吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="a047c2e8ed0d810c465bd815b858d057492b971161f76d2dee3a992fa445b3c7">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../68_Speculative_Decoding_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>68. Speculative Decoding Benchmark | 推测解码基准</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>Speculative Decoding</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
-<strong>主责与复用边界：</strong> 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。</p>
-<p><strong>关键词：</strong> <code>acceptance rate</code>, <code>draft cost</code>, <code>verify cost</code>, <code>benchmark</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。</li><li>TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、</li><li>TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，</li><li>TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把解码策略、推测解码机制和基础推理对比理顺，再进入这个 benchmark；本节默认你已经知道 draft / verify 的基本链路，重点转向这条链路是否值得保留。</p>
-<ul>
-<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
-<li><a href="23_speculative_decoding.html">23. Speculative Decoding | 推测解码</a></li>
-<li><a href="66_inference_performance_comparison.html">66. Inference Performance Comparison | 推理性能对比实验</a></li>
-<li><a href="20_flashattention_sim.html">20. FlashAttention Sim | FlashAttention 模拟</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成推测解码 benchmark 后，用 69 比较缓存复用，用 70 比较请求调度；两者都应沿用本节的 workload 和指标口径。</p>
-<ul>
-<li><a href="69_prefix_caching_benchmark.html">69. Prefix Caching Benchmark | 前缀缓存基准</a></li>
-<li><a href="70_serving_scheduler_benchmark.html">70. Serving Scheduler Benchmark | 推理服务调度基准</a></li>
-</ul>
-<h3>Step 1：定义实验口径</h3>
-<p>先固定模型、请求集和 speculative 配置，再建立 G0 baseline。下面的 Step 2 比较 baseline 与 candidate，Step 3 解释收益来源，Step 4 输出项目决策；Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">固定项</th>
-<th style="text-align:left">记录内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">模型</td>
-<td style="text-align:left">target、draft、版本和 dtype</td>
-</tr>
-<tr>
-<td style="text-align:left">workload</td>
-<td style="text-align:left">prompt 分布、batch、max new tokens、temperature</td>
-</tr>
-<tr>
-<td style="text-align:left">speculative 配置</td>
-<td style="text-align:left">proposal length、verify policy、acceptance 定义</td>
-</tr>
-<tr>
-<td style="text-align:left">质量门槛</td>
-<td style="text-align:left">输出一致性或任务指标、允许的误差</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 2：建立 target baseline</h3>
-<ul>
-<li>G0 只运行 target，记录 TTFT、TPOT、E2E、吞吐、P99、峰值显存和质量。</li>
-<li>G1 才运行 draft + target；两组必须使用同一 workload 和采样参数。</li>
-<li>普通 vLLM endpoint 只能证明服务链路可用，不能产生 acceptance rate。</li>
-</ul>
-<h3>Step 3：解释收益来源</h3>
-<ul>
-<li>同时检查 acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost、TPOT、吞吐和质量。CPU 模拟先给出每轮推进量，backend 实验再记录真实调用和时间。</li>
-<li>acceptance rate 低或 verify 成本高时，吞吐收益不能直接归因于 speculative。</li>
-<li>G2 一次只改变 proposal length 或 draft model，避免多个变量混合。</li>
-</ul>
-<h3>Step 4：输出项目决策</h3>
-<ul>
-<li>只有吞吐/延迟改善、质量达标且 acceptance 与 verify 成本可解释时，才可 <code>accept</code>。</li>
-<li>证据不足为 <code>tune</code>；质量不达标或性能退化为 <code>reject</code>。</li>
-<li>没有真实 draft + target backend 时，结论只能停留在 CPU 机制验证。</li>
-</ul>
-<p>质量和性能是两条独立的验收线：</p>
-<table>
-<thead>
-<tr>
-<th>证据类别</th>
-<th>主要指标</th>
-<th>回答的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>质量 / 机制</td>
-<td>输出一致性、任务指标、acceptance rate、accepted tokens per round</td>
-<td>输出是否仍满足任务要求，推测链路是否按预期推进</td>
-</tr>
-<tr>
-<td>性能</td>
-<td>TTFT、TPOT、吞吐、P50、P99、峰值显存</td>
-<td>请求通常多快、尾部是否稳定、资源代价是否可接受</td>
-</tr>
-</tbody>
-</table>
-<p>P50 表示典型请求延迟，P99 表示尾部请求延迟；它们只描述速度分布，不能替代质量校验。质量通过但 P99 明显恶化，或性能变快但质量未达门槛，都不能直接 <code>accept</code>。样本量不足时，P50 / P99 只能作为 smoke 观察值。</p>
-<h4>图解：20-24 如何收束到 68 推测解码基准</h4>
-<pre><code class="language-text">20 FlashAttention -&gt; 21 Decoding -&gt; 23 Speculative
-                                      ↓
-                          68 Speculative Benchmark -&gt; 66 Inference Comparison
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">模块</th>
-<th style="text-align:left">必须记录</th>
-<th style="text-align:left">用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">TTFT、TPOT、throughput、P99、质量</td>
-<td style="text-align:left">保证比较合法</td>
-</tr>
-<tr>
-<td style="text-align:left">candidate</td>
-<td style="text-align:left">acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost</td>
-<td style="text-align:left">解释收益来源</td>
-</tr>
-<tr>
-<td style="text-align:left">对比</td>
-<td style="text-align:left">吞吐增益、延迟变化、显存和质量</td>
-<td style="text-align:left">判断是否真的划算</td>
-</tr>
-<tr>
-<td style="text-align:left">决策</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出 benchmark 结论</td>
-</tr>
-</tbody>
-</table>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code># 4 个核心 TODO：逐轮验证、workload 汇总、baseline 对比、项目判断
-# 目标：先在 CPU 上还原可检查的状态转移，再把结果整理成 benchmark 报告。
-# CPU 练习验证 proposal/verify 的计数和成本模型；真实 acceptance rate、TPOT 和 kernel 行为属于 GPU backend 扩展。
-def simulate_speculative_decode(rounds, draft_ms_per_token=1.0, verify_ms_per_round=4.0):
-    &quot;&quot;&quot;模拟多轮 draft proposal / target verify，并返回可审计的状态与成本。
+<section class="lessons">
 
-    参数：
-        rounds: 每轮包含 draft_tokens 与 target_tokens 的字典列表。
-        draft_ms_per_token: 教学用 draft 线性成本，不是实测时间。
-        verify_ms_per_round: 教学用每轮 verify 成本，不是 GPU kernel 时间。
-
-    返回：机制指标、成本模型指标和 round_trace；不实现概率性 rejection sampling。&quot;&quot;&quot;
-    if draft_ms_per_token &lt; 0 or verify_ms_per_round &lt; 0:
-        raise ValueError('draft 和 verify 成本不能为负数')
-    # ==========================================
-    # TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。
-    # 要求：校验每轮字段；比较最长相同前缀；记录 accepted_prefix_length、rejected_token；
-    #       分歧后计入一个 correction token，并区分 mechanism_metrics / cost_model_metrics。
-    # 变量提示：使用 proposed_tokens、accepted_tokens、corrected_tokens、accepted_rounds、round_trace；
-    # proposed_tokens = ???；accepted_tokens = ???；corrected_tokens = ???；round_trace = ???。
-    #       每轮结果至少包含 round、proposed、accepted_prefix_length、rejected_token、corrected。
-    #       最终返回 acceptance_rate、effective_output_tokens、draft_cost_ms、verify_cost_ms；
-    #       rounds 为空时返回可解释的零计数摘要，不能伪造一次成功验证。
-    # ==========================================
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_speculative_benchmark(runs: List[Dict[str, float]]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;汇总同一 workload 的多次运行结果，不把空输入伪装成性能结果。&quot;&quot;&quot;
-    # TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、
-    #       平均吞吐和最高吞吐 run。不要把缺失字段静默当成实测 0。
-    # 变量提示：遍历 runs；读取 name、acceptance_rate、throughput；
-    # run_count = ???；avg_acceptance_rate = ???；avg_throughput = ???；best_throughput_run = ???。
-    #       返回 run_count、best_throughput_run、avg_acceptance_rate、avg_throughput。
-    #       缺失字段应报错或明确标记，不能当成 0 纳入均值。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def compare_speculative_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;计算 candidate 相对 G0 的变化，不代表真实 backend 归因。&quot;&quot;&quot;
-    # TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，
-    #       并计算 throughput_speedup；baseline 吞吐为 0 时应明确报错。
-    # 变量提示：从 baseline / candidate 读取 ttft_ms、throughput、acceptance_rate、verify_cost_ms；
-    # ttft_delta_ms = ???；throughput_gain = ???；throughput_speedup = ???。
-    #       返回 ttft_delta_ms、throughput_gain、acceptance_rate、verify_cost_delta、throughput_speedup。
-    #       throughput_speedup = candidate / baseline；baseline 吞吐必须大于 0。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, float], min_acceptance_rate: float, quality_ok: bool = True, max_verify_cost_delta: float = 10.0) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;按吞吐、接受率、质量和验证成本给出教学决策。
-
-    这是项目筛选模板，不是生产环境的自动调参器；门槛必须随 workload 重新校准。&quot;&quot;&quot;
-    # TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和
-    #       verify cost 输出 decision、reason、next_action。
-    # 变量提示：使用 comparison、min_acceptance_rate、quality_ok、max_verify_cost_delta；
-    # acceptance_ok = ???；throughput_ok = ???；verify_cost_ok = ???；decision = ???。
-    #       decision 只能是 accept / tune / reject，并给出对应的下一步动作。
-    #       quality_ok=False 时优先 reject；只有接受率、吞吐和 verify cost 同时过门槛才 accept。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>速记员写得快，审稿人忙不过来，最终能省时间吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节要求你评估推测解码在固定 workload 下是否值得保留。草稿模型（draft model）负责快速提出候选，目标模型（target model）负责验证并决定最终输出。CPU 部分验证 proposal / verify 的接受与回退逻辑；可选 GPU 部分才比较真实 draft + target backend 的 TTFT、TPOT、吞吐、acceptance rate 和质量。普通 target 服务只能作为 baseline，不能当作 speculative 已启用。
-主责与复用边界： 本项目主责是 draft / verify 的接受率和端到端收益；66 只复用统一 workload 和性能指标，显存优化只观察峰值显存与 KV Cache 代价，不在本项目内判断 serving 调度或量化收益。</p>
-            <div class="notebook-content"><h3>Step 1：定义实验口径</h3>
-<p>先固定模型、请求集和 speculative 配置，再建立 G0 baseline。下面的 Step 2 比较 baseline 与 candidate，Step 3 解释收益来源，Step 4 输出项目决策；Step 5 是 CPU 执行区，Step 6 是可选 GPU/backend 验证区。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">固定项</th>
-<th style="text-align:left">记录内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">模型</td>
-<td style="text-align:left">target、draft、版本和 dtype</td>
-</tr>
-<tr>
-<td style="text-align:left">workload</td>
-<td style="text-align:left">prompt 分布、batch、max new tokens、temperature</td>
-</tr>
-<tr>
-<td style="text-align:left">speculative 配置</td>
-<td style="text-align:left">proposal length、verify policy、acceptance 定义</td>
-</tr>
-<tr>
-<td style="text-align:left">质量门槛</td>
-<td style="text-align:left">输出一致性或任务指标、允许的误差</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 2：建立 target baseline</h3>
-<ul>
-<li>G0 只运行 target，记录 TTFT、TPOT、E2E、吞吐、P99、峰值显存和质量。</li>
-<li>G1 才运行 draft + target；两组必须使用同一 workload 和采样参数。</li>
-<li>普通 vLLM endpoint 只能证明服务链路可用，不能产生 acceptance rate。</li>
-</ul>
-<h3>Step 3：解释收益来源</h3>
-<ul>
-<li>同时检查 acceptance rate、accepted tokens per round、target forward calls、draft cost、verify cost、TPOT、吞吐和质量。CPU 模拟先给出每轮推进量，backend 实验再记录真实调用和时间。</li>
-<li>acceptance rate 低或 verify 成本高时，吞吐收益不能直接归因于 speculative。</li>
-<li>G2 一次只改变 proposal length 或 draft model，避免多个变量混合。</li>
-</ul>
-<h3>Step 4：输出项目决策</h3>
-<ul>
-<li>只有吞吐/延迟改善、质量达标且 acceptance 与 verify 成本可解释时，才可 <code>accept</code>。</li>
-<li>证据不足为 <code>tune</code>；质量不达标或性能退化为 <code>reject</code>。</li>
-<li>没有真实 draft + target backend 时，结论只能停留在 CPU 机制验证。</li>
-</ul>
-<p>质量和性能是两条独立的验收线：</p>
-<table>
-<thead>
-<tr>
-<th>证据类别</th>
-<th>主要指标</th>
-<th>回答的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>质量 / 机制</td>
-<td>输出一致性、任务指标、acceptance rate、accepted tokens per round</td>
-<td>输出是否仍满足任务要求，推测链路是否按预期推进</td>
-</tr>
-<tr>
-<td>性能</td>
-<td>TTFT、TPOT、吞吐、P50、P99、峰值显存</td>
-<td>请求通常多快、尾部是否稳定、资源代价是否可接受</td>
-</tr>
-</tbody>
-</table>
-<p>P50 表示典型请求延迟，P99 表示尾部请求延迟；它们只描述速度分布，不能替代质量校验。质量通过但 P99 明显恶化，或性能变快但质量未达门槛，都不能直接 <code>accept</code>。样本量不足时，P50 / P99 只能作为 smoke 观察值。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>投机解码 benchmark 比较的是完整 draft+verify 路径。接受率高只是其中一项，草稿成本、验证成本和回退都影响收益。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>acceptance rate</dt><dd>按约定分母计算的候选接受比例。</dd></div><div><dt>draft cost</dt><dd>生成草稿需要的时间或计算量。</dd></div><div><dt>verify cost</dt><dd>目标模型验证草稿的成本。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>投机解码接受率高，是否必然更快？</p>
+            <p>本课中的「acceptance rate」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只看 draft token 数即可</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>目标模型验证草稿的成本。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>必然，验证没有开销</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>生成草稿需要的时间或计算量。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>不一定，还要比较验证成本、吞吐和质量</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>按约定分母计算的候选接受比例。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 0：逐轮执行 verify，并保留每一轮的可审计轨迹。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>算基线</h4><p>假设普通解码每 token 花 10 个时间单位。</p></li><li><h4>算一轮</h4><p>草稿+验证合计 30 单位，最后推进 2 token，平均 15/token，反而慢；推进 4 token 才是 7.5/token。</p></li><li><h4>确认真实路径</h4><p>检查后端确实启用 speculative。普通 target-only 服务可以做 baseline，不能算已开启投机。</p></li></ol><section class="learning-lab" data-lab="speculate" aria-label="草稿接受到哪里就在哪里停">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>草稿接受到哪里就在哪里停</h4><p>调整首次拒绝位置与验证成本，看看有效推进量如何影响收益。</p></header>
+    <div class="lab-controls"><label for="lab-68-accepted"><span>连续接受的草稿 <output data-value="accepted" for="lab-68-accepted">2</output> token</span><input type="range" id="lab-68-accepted" name="accepted" min="0" max="4" step="1" value="2"></label><label for="lab-68-cost"><span>一轮 draft + verify 成本 <output data-value="cost" for="lab-68-cost">30</output> 时间单位</span><input type="range" id="lab-68-cost" name="cost" min="10" max="50" step="1" value="30"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-68" data-challenge-label>算一算</label><div><input id="answer-68" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>一轮成本 30，只推进 2 token，平均成本是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>15/token</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>2/token</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>30/4=7.5/token</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>round_cost, progress = 30, 2
+per_token = round_cost / progress
+print(per_token)  # 15 &gt; baseline 10</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把 draft 提出长度当作实际推进长度，或用接受率替代最终吞吐测量。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「acceptance rate」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>把 draft 提出长度当作实际推进长度，或用接受率替代最终吞吐测量。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 1：先处理空列表；非空时汇总 run_count、平均 acceptance_rate、</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 2：补充 TTFT、吞吐、acceptance rate、verify cost 的差值，</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 3：校验两个门槛，先处理质量失败，再根据吞吐、接受率和</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="463ee40a1a05f3f70cbea3fb7a7e1837eae0d4cbd6de91863731462406cad35c">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/68_Speculative_Decoding_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>simulate_speculative_decode</code> · <code>summarize_speculative_benchmark</code> · <code>compare_speculative_to_baseline</code> · <code>recommend_speculative_run</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1110,14 +940,14 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
 
   <script>
     const levelId = "68";
-    const checkpointData = {"current-core":{"answer":2,"explain":"不一定，还要比较验证成本、吞吐和质量。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：按约定分母计算的候选接受比例。。另外两个选项分别解释「draft cost」和「verify cost」，注意区分。"},"v4-experiment":{"answer":0,"explain":"分母必须是实际推进的 2，而不是提议的长度。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：把 draft 提出长度当作实际推进长度，或用接受率替代最终吞吐测量。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
+    const checkpointTotal = 3;
     const homeworkTotal = 4;
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1126,20 +956,22 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-a047c2e8ed0d";
+    const homeworkKey = statePrefix + levelId + "-homework-463ee40a1a05";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1164,7 +996,7 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1206,11 +1038,15 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1241,6 +1077,7 @@ def recommend_speculative_run(baseline: Dict[str, float], candidate: Dict[str, f
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

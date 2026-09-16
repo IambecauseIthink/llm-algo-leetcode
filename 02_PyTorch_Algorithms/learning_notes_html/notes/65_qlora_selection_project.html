@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,487 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 65 | 零基础导学关卡</p>
-        <h1>QLoRA Selection Project | QLoRA 选型项目</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>QLoRA 选型项目</h1>
+        <p class="course-subtitle">QLoRA Selection Project</p>
+        <p class="lead">把方案放进一张选择表：先看装不装得下，再看质量与吞吐能否过线。QLoRA 的量化底座可能省空间，但额外误差与计算路径也要计入。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/65_QLoRA_Selection_Project.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">65_QLoRA_Selection_Project.ipynb</span>
           <span class="pill">量化压缩</span><span class="pill">QLoRA</span><span class="pill">选型</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">预算有限时，选全量、LoRA 还是 QLoRA？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="6f3c4ae6c218b5bfc28a87693bfb74d9c33c9c2921a02b6866d97af8cba30094">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../65_QLoRA_Selection_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/65_QLoRA_Selection_Project.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>65. QLoRA Selection Project | QLoRA 选型项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>QLoRA</code>, <code>选型</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节要求你在显存预算和质量下限明确的情况下，比较全参数、LoRA 与 QLoRA 三种方案。统一记录显存、吞吐、训练稳定性和验证质量，确认量化收益是否足以覆盖额外误差与实现成本。最终输出当前预算下的方案选择及其适用边界。</p>
-<p>本项目聚焦 NF4/QLoRA、LoRA 参数、训练显存和验证质量，并把结果与 <code>40</code> 的权重量化机制、<code>67</code> 的量化部署验证连接起来。</p>
-<p><strong>关键词：</strong> <code>QLoRA</code>, <code>budget</code>, <code>memory</code>, <code>selection</code>, <code>project</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1：检查候选名称、显存、吞吐和验证损失</li><li>TODO 2：检查预算与质量下限是否完整</li><li>TODO 3：汇总低资源微调候选</li><li>TODO 3：对每个候选分别计算以下布尔变量：</li><li>TODO 4：输出项目结论</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本项目前，先能说明 LoRA、有效 batch 和低比特权重如何组合，再在预算约束下判断是否采用 QLoRA。</p>
-<ul>
-<li><a href="10_lora_tutorial.html">10. LoRA Tutorial | LoRA 教程</a></li>
-<li><a href="12_gradient_accumulation.html">12. Gradient Accumulation | 梯度累积</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-<li><a href="40_gptq_and_awq_weight_quantization.html">40. GPTQ and AWQ | GPTQ 与 AWQ</a>（交叉参考：部署侧权重量化，不是本项目候选）</li>
-</ul>
-<h3>Step 1（项目设计）：明确预算问题与实验目的</h3>
-<p>本节默认你已经知道 LoRA、NF4 和冻结基座的基本含义；现在要回答的是：在给定显存上限、最低吞吐和质量下限时，应该保留全参数、LoRA 还是 QLoRA。先写下这三个约束，再决定哪些候选值得进入实验。CPU 代码负责预算推演，真实显存与量化 kernel 仍需 GPU 验证。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验层级</th>
-<th style="text-align:left">候选与变量</th>
-<th style="text-align:left">主要指标</th>
-<th style="text-align:left">结论边界</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">CPU 主实验</td>
-<td style="text-align:left">baseline / LoRA / QLoRA 的账本与规则</td>
-<td style="text-align:left">估算显存、可行性、候选排序</td>
-<td style="text-align:left">只能筛选方案，不能证明真实速度</td>
-</tr>
-<tr>
-<td style="text-align:left">GPU 验证（可选）</td>
-<td style="text-align:left">固定数据、步数和评测，仅改变适配器或量化配置</td>
-<td style="text-align:left">peak memory、step time、吞吐、val loss、OOM</td>
-<td style="text-align:left">验证真实训练代价与质量</td>
-</tr>
-</tbody>
-</table>
-<p>固定任务、数据集、训练步数、batch size、seq_len、评测指标和质量下限；候选只改变训练方式或量化配置，不同时改变数据和训练口径。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/65_qlora_selection_flow.svg" alt="QLoRA 的预算选型">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;QLoRA 的预算选型：&lt;/strong&gt;先用账本筛选候选，再用 GPU 验证真实显存、速度和质量。&lt;/div&gt;</p>
-<h3>Step 2（项目设计）：固定 baseline 与预算条件</h3>
-<p>先为 baseline、LoRA 和 QLoRA 分别列出冻结基座、可训练参数、梯度、optimizer state、activation 和量化元数据。全参数方案的 optimizer state 与梯度通常是主要差异来源；QLoRA 重点减少冻结基座的权重表示，但不会自动消除 activation 或 adapter 状态。</p>
-<p>CPU 实验要核对 <code>bit_width</code>、NF4/double quant、rank、target_modules、batch 和 seq_len，并把每项估算标记为 <code>estimated</code>。账本用于筛选和解释，不能写成 CUDA 峰值。</p>
-<h3>Step 3（项目设计）：确定量化机制、指标与候选方案</h3>
-<p>最小 GPU 对照是同一模型、数据 split、dtype、batch、seq_len、steps 和 seed 下的 LoRA 与 QLoRA；显存足够时再加入全参数方案。先确认 QLoRA 模型确实按预期格式加载，再开始计时。</p>
-<p>统一记录 <code>peak_memory</code>、<code>peak_reserved</code>、<code>step_time</code>、<code>tokens/s</code>、<code>train_loss</code>、<code>val_loss</code> 和 OOM 状态，并记录量化格式、backend/kernel 与软件版本。结果只适用于当前模型、硬件和软件栈。</p>
-<h3>Step 4（项目设计）：确定报告字段与决策约束</h3>
-<p>把 CPU 账本和 GPU 结果放进同一张对照表，依次检查：是否能加载、是否 OOM、是否低于显存上限、是否达到吞吐下限、是否通过质量门槛，以及额外 backend/量化维护成本是否可接受。</p>
-<p>QLoRA 只节省少量显存却明显拖慢或损害质量时，进入 <code>tune</code> 或 <code>reject</code>；只有在预算收益、质量和工程代价同时满足约束时，才进入 <code>accept</code>。</p>
-<h3>Step 5（CPU）：实现并测试 QLoRA 选型逻辑</h3>
-<p>报告必须能让别人复算你的选择：保留预算约束、候选配置、账本估算、GPU 结果、质量判断、量化格式和下一步动作。最终结论统一为 <code>accept / tune / reject</code>，而不是只报告“QLoRA 最省显存”。</p>
-<p>若进入 <code>tune</code>，先指出失败约束：调整 rank、target_modules、量化位宽、batch 或 activation 策略；不要在没有定位问题前盲目增加候选。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/65_qlora_cpu_todo_flow.svg" alt="65 Step 5：QLoRA 选型的 CPU 决策实现">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;QLoRA 选型的 CPU 决策实现：&lt;/strong&gt;先检查预算，再筛选候选并保留每个失败约束。&lt;/div&gt;</p>
-<h4>图解：10 / 12 / 13 / 25 / 26 如何收束到 65 QLoRA 选型项目</h4>
-<p><code>65</code> 不重复实现 LoRA 或量化原理，而是把前面几节的训练与压缩口径收成一份预算下的方案对比报告。</p>
-<pre><code class="language-text">10 LoRA            target modules / rank / adapter config
-      │
-12 Accumulation    effective batch / update cadence
-      │
-13 End-to-end      train / val loop and minimal report
-      │
-25 W8A16          weight-only representation intuition
-26 QLoRA / NF4    frozen base + trainable adapter
-      ▼
-65 QLoRA Selection Project
-      ├─ budget ledger
-      ├─ baseline vs LoRA vs QLoRA
-      ├─ quality floor review
-      └─ accept / tune / reject
-</code></pre>
-<p>显存证据边界：本节的 CPU 代码只负责预算筛选、候选排序和决策逻辑；如果候选显存来自估算，报告必须标记为 <code>estimated</code>，不能写成 CUDA 峰值。要证明底座权重、LoRA 参数、梯度、optimizer state 或 activation 的实际占用，需在固定 workload 下采集 GPU 的 <code>peak_memory</code>、<code>peak_reserved</code> 和 OOM 状态。<code>73–76</code> 提供训练侧通用测量与策略对照，<code>65</code> 只补充 QLoRA/NF4 的专项选型。</p>
-<p><code>40</code> 的 GPTQ/AWQ 和 <code>67</code> 的量化部署属于推理侧交叉路线，不是本项目的候选方案；<code>GGUF</code> 也不应被当作 QLoRA 的训练格式。</p>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">预算账本</td>
-<td style="text-align:left">显存上限、目标吞吐、质量下限</td>
-<td style="text-align:left">固定选型边界</td>
-</tr>
-<tr>
-<td style="text-align:left">候选配置</td>
-<td style="text-align:left">baseline / LoRA / QLoRA 的关键配置</td>
-<td style="text-align:left">保证比较口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">结果对比</td>
-<td style="text-align:left">peak memory、step time、val loss</td>
-<td style="text-align:left">统一看收益与代价</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出方案选择</td>
-</tr>
-</tbody>
-</table>
-<h3>参数口径说明</h3>
-<p><code>memory_cap_mb</code> 是显存上限，<code>min_tokens_per_s</code> 是最低吞吐，<code>max_val_loss</code> 是质量上限；三者共同定义 candidate 是否可行。<code>bit_width</code>、量化格式、double quant、LoRA rank 和 target modules 属于候选配置，比较时只能改变量化/适配器变量，不能同时改变数据、训练步数和质量评测口径。</p>
-<p>显存账本建议至少拆成：<code>base_weight_mb</code>（冻结底座）、<code>trainable_param_mb</code>（LoRA 参数）、<code>gradient_mb</code>、<code>optimizer_state_mb</code>、<code>activation_mb</code> 和 <code>quant_metadata_mb</code>。这些字段用于解释显存来源；<code>estimated_total_mb</code> 是账本估算，<code>peak_memory_mb</code> / <code>peak_reserved_mb</code> 只有在 CUDA 训练中采集后才是实测值。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code># TODO: 完成 QLoRA 选型项目的预算检查、候选汇总和项目结论
-# 目标：把 baseline / LoRA / QLoRA 的低资源微调比较收束成一份选型报告
+<section class="lessons">
 
-def build_memory_ledger(base_weight_mb: float, trainable_param_mb: float, gradient_mb: float, optimizer_state_mb: float, activation_mb: float, quant_metadata_mb: float = 0.0, peak_memory_mb: float = None, peak_reserved_mb: float = None, evidence: str = 'estimated') -&gt; Dict[str, object]:
-    &quot;&quot;&quot;汇总训练显存对象，并区分账本估算与 CUDA 峰值。
-
-    `base_weight_mb` 等字段用于解释显存来源；只有实际采集后的
-    `peak_memory_mb` 和 `peak_reserved_mb` 才表示 CUDA 实测值。
-    &quot;&quot;&quot;
-    values = {
-        'base_weight_mb': base_weight_mb, 'trainable_param_mb': trainable_param_mb,
-        'gradient_mb': gradient_mb, 'optimizer_state_mb': optimizer_state_mb,
-        'activation_mb': activation_mb, 'quant_metadata_mb': quant_metadata_mb,
-    }
-    if any(float(value) &lt; 0 for value in values.values()):
-        raise ValueError('显存账本中的各项不能为负数。')
-    estimated_total_mb = sum(float(value) for value in values.values())
-    report = {**values, 'estimated_total_mb': round(estimated_total_mb, 3), 'evidence': evidence}
-    if peak_memory_mb is not None:
-        report['peak_memory_mb'] = float(peak_memory_mb)
-        report['reconciliation_gap_mb'] = round(float(peak_memory_mb) - estimated_total_mb, 3)
-    if peak_reserved_mb is not None:
-        report['peak_reserved_mb'] = float(peak_reserved_mb)
-    return report
-
-
-def validate_qlora_candidate(candidate: Dict[str, float]) -&gt; List[str]:
-    &quot;&quot;&quot;检查候选是否具备进入预算筛选的完整测量字段。
-
-    缺字段、非有限数值或负资源值都应返回错误，不能静默进入排序。
-    &quot;&quot;&quot;
-    # TODO 1：检查候选名称、显存、吞吐和验证损失
-    # 提示：required = ('name', 'memory_mb', 'tokens_per_s', 'val_loss')。
-    # 对数值字段检查可转换、有限且 memory_mb / tokens_per_s 不为负。
-    # 返回错误列表；空列表表示候选可以进入排序。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def validate_budget_and_quality(budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;检查显存上限、吞吐下限和验证损失上限是否完整。
-
-    返回缺失字段和合法性结果；不为缺失阈值补默认值。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 2：检查预算与质量下限是否完整
-    # 提示：required_budget_keys = ['memory_cap_mb', 'min_tokens_per_s']。
-    #       required_quality_keys = ['max_val_loss']。
-    # 依次计算 budget_missing、quality_missing，再合并为 missing_keys。
-    # 数值上限必须为正；max_val_loss 不能为负。
-    # 没有统一预算口径时，后面的显存、吞吐和质量比较都没有解释力。
-    # ==========================================
-    required_budget_keys = ['memory_cap_mb', 'min_tokens_per_s']
-    required_quality_keys = ['max_val_loss']
-    # budget_missing = ???
-    # quality_missing = ???
-    # missing_keys = ???
-    return {
-        'is_valid': len(missing_keys) == 0,
-        'missing_keys': missing_keys,
-    }
-
-
-def summarize_low_resource_candidates(candidates: List[Dict[str, float]], budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;按显存、吞吐和验证损失筛选 QLoRA 候选。
-
-    只返回通过全部门槛的候选名称；非法或缺失测量不能静默进入排序。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 3：汇总低资源微调候选
-    # 提示：逐个计算 within_memory、enough_throughput、within_val_loss；
-    #       三项都为 True 才能放入 feasible；否则记录候选名称和失败原因。
-    #       best_candidate 只从 feasible 中选择，不能只按显存排序。
-    # ==========================================
-    feasible = []
-    rejected = []
-    for candidate in candidates:
-        # TODO 3：对每个候选分别计算以下布尔变量：
-        # within_memory = candidate['memory_mb'] &lt;= budget['memory_cap_mb']
-        # enough_throughput = candidate['tokens_per_s'] &gt;= budget['min_tokens_per_s']
-        # within_val_loss = candidate['val_loss'] &lt;= quality_floor['max_val_loss']
-        # is_feasible = within_memory and enough_throughput and within_val_loss
-        # is_feasible 时追加 candidate，否则把 candidate['name'] 放入 rejected。
-        pass
-    best_candidate = min(feasible, key=lambda item: item['memory_mb'])['name'] if feasible else None
-    return {
-        'candidate_count': len(candidates),
-        'feasible_count': len(feasible),
-        'best_candidate': best_candidate,
-        'feasible_candidates': [item['name'] for item in feasible],
-        'rejected_candidates': rejected,
-    }
-
-
-def decide_qlora_project(summary: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;根据可行候选汇总给出 QLoRA 选型结论。&quot;&quot;&quot;
-    # 返回 decision、reason 和 next_action；accept 只表示当前预算下值得继续验证。
-    # ==========================================
-    # TODO 4：输出项目结论
-    # 提示：读取 feasible_count、best_candidate、quality_failed_count。
-    # 返回 decision / reason / next_action 三个字段。
-    # 没有可行候选时 reject；QLoRA 是最优可行方案时 accept；否则通常进入 tune。
-    # ==========================================
-    feasible_count = summary.get('feasible_count', 0)
-    best_candidate = summary.get('best_candidate')
-    # TODO：没有可行候选时 reject。
-    # TODO：best_candidate == 'qlora' 时 accept。
-    # TODO：其余仍有可行候选时返回 tune。
-    return {
-        'decision': 'reject',
-        'reason': '',
-        'next_action': '',
-    }
-</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code># 测试你的实现
-def test_qlora_selection_project():
-    try:
-        budget = {'memory_cap_mb': 12000.0, 'min_tokens_per_s': 18.0}
-        quality_floor = {'max_val_loss': 1.20}
-        assert validate_qlora_candidate({'name': 'broken', 'memory_mb': -1})
-        check = validate_budget_and_quality(budget, quality_floor)
-        assert check['is_valid'] is True, '预算检查应通过'
-        assert check['missing_keys'] == [], '完整预算不应缺字段'
-        ledger = build_memory_ledger(100.0, 10.0, 10.0, 40.0, 200.0, quant_metadata_mb=5.0, peak_memory_mb=380.0, peak_reserved_mb=420.0)
-        assert ledger['estimated_total_mb'] == 365.0, '账本估算总量应等于各显存对象之和'
-        assert ledger['peak_memory_mb'] == 380.0 and ledger['peak_reserved_mb'] == 420.0
-        assert ledger['reconciliation_gap_mb'] == 15.0, '应保留估算与 CUDA 峰值的差值'
-        try:
-            build_memory_ledger(-1.0, 0.0, 0.0, 0.0, 0.0)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError('显存账本不应接受负数')
-
-        candidates = [
-            {'name': 'full_ft', 'memory_mb': 22000.0, 'tokens_per_s': 10.0, 'val_loss': 1.05},
-            {'name': 'lora', 'memory_mb': 14500.0, 'tokens_per_s': 20.0, 'val_loss': 1.10},
-            {'name': 'qlora', 'memory_mb': 9800.0, 'tokens_per_s': 19.0, 'val_loss': 1.16},
-        ]
-        summary = summarize_low_resource_candidates(candidates, budget, quality_floor)
-        assert summary['feasible_count'] == 1, '只应有一个方案满足预算与质量'
-        assert summary['best_candidate'] == 'qlora', 'QLoRA 应成为最优可行方案'
-
-        decision = decide_qlora_project(summary)
-        assert decision['decision'] == 'accept', '可行且最优的 QLoRA 应被接受'
-
-        hard_summary = summarize_low_resource_candidates(
-            [
-                {'name': 'lora', 'memory_mb': 13000.0, 'tokens_per_s': 17.0, 'val_loss': 1.18},
-                {'name': 'qlora', 'memory_mb': 11000.0, 'tokens_per_s': 19.0, 'val_loss': 1.28},
-            ],
-            budget,
-            quality_floor,
-        )
-        hard_decision = decide_qlora_project(hard_summary)
-        assert hard_decision['decision'] == 'reject', '没有满足质量下限时应 reject'
-        print('所有测试通过！')
-    except NotImplementedError:
-        print('请先完成 TODO 代码！')
-        raise
-    except AssertionError as e:
-        print(f'测试失败: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except Exception as e:
-        print(f'发生错误: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_qlora_selection_project()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>预算有限时，选全量、LoRA 还是 QLoRA？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节要求你在显存预算和质量下限明确的情况下，比较全参数、LoRA 与 QLoRA 三种方案。统一记录显存、吞吐、训练稳定性和验证质量，确认量化收益是否足以覆盖额外误差与实现成本。最终输出当前预算下的方案选择及其适用边界。</p>
-            <div class="notebook-content"><h3>Step 1（项目设计）：明确预算问题与实验目的</h3>
-<p>本节默认你已经知道 LoRA、NF4 和冻结基座的基本含义；现在要回答的是：在给定显存上限、最低吞吐和质量下限时，应该保留全参数、LoRA 还是 QLoRA。先写下这三个约束，再决定哪些候选值得进入实验。CPU 代码负责预算推演，真实显存与量化 kernel 仍需 GPU 验证。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">实验层级</th>
-<th style="text-align:left">候选与变量</th>
-<th style="text-align:left">主要指标</th>
-<th style="text-align:left">结论边界</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">CPU 主实验</td>
-<td style="text-align:left">baseline / LoRA / QLoRA 的账本与规则</td>
-<td style="text-align:left">估算显存、可行性、候选排序</td>
-<td style="text-align:left">只能筛选方案，不能证明真实速度</td>
-</tr>
-<tr>
-<td style="text-align:left">GPU 验证（可选）</td>
-<td style="text-align:left">固定数据、步数和评测，仅改变适配器或量化配置</td>
-<td style="text-align:left">peak memory、step time、吞吐、val loss、OOM</td>
-<td style="text-align:left">验证真实训练代价与质量</td>
-</tr>
-</tbody>
-</table>
-<p>固定任务、数据集、训练步数、batch size、seq_len、评测指标和质量下限；候选只改变训练方式或量化配置，不同时改变数据和训练口径。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/65_qlora_selection_flow.svg" alt="QLoRA 的预算选型">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;QLoRA 的预算选型：&lt;/strong&gt;先用账本筛选候选，再用 GPU 验证真实显存、速度和质量。&lt;/div&gt;</p>
-<h3>Step 2（项目设计）：固定 baseline 与预算条件</h3>
-<p>先为 baseline、LoRA 和 QLoRA 分别列出冻结基座、可训练参数、梯度、optimizer state、activation 和量化元数据。全参数方案的 optimizer state 与梯度通常是主要差异来源；QLoRA 重点减少冻结基座的权重表示，但不会自动消除 activation 或 adapter 状态。</p>
-<p>CPU 实验要核对 <code>bit_width</code>、NF4/double quant、rank、target_modules、batch 和 seq_len，并把每项估算标记为 <code>estimated</code>。账本用于筛选和解释，不能写成 CUDA 峰值。</p>
-<h3>Step 3（项目设计）：确定量化机制、指标与候选方案</h3>
-<p>最小 GPU 对照是同一模型、数据 split、dtype、batch、seq_len、steps 和 seed 下的 LoRA 与 QLoRA；显存足够时再加入全参数方案。先确认 QLoRA 模型确实按预期格式加载，再开始计时。</p>
-<p>统一记录 <code>peak_memory</code>、<code>peak_reserved</code>、<code>step_time</code>、<code>tokens/s</code>、<code>train_loss</code>、<code>val_loss</code> 和 OOM 状态，并记录量化格式、backend/kernel 与软件版本。结果只适用于当前模型、硬件和软件栈。</p>
-<h3>Step 4（项目设计）：确定报告字段与决策约束</h3>
-<p>把 CPU 账本和 GPU 结果放进同一张对照表，依次检查：是否能加载、是否 OOM、是否低于显存上限、是否达到吞吐下限、是否通过质量门槛，以及额外 backend/量化维护成本是否可接受。</p>
-<p>QLoRA 只节省少量显存却明显拖慢或损害质量时，进入 <code>tune</code> 或 <code>reject</code>；只有在预算收益、质量和工程代价同时满足约束时，才进入 <code>accept</code>。</p>
-<h3>Step 5（CPU）：实现并测试 QLoRA 选型逻辑</h3>
-<p>报告必须能让别人复算你的选择：保留预算约束、候选配置、账本估算、GPU 结果、质量判断、量化格式和下一步动作。最终结论统一为 <code>accept / tune / reject</code>，而不是只报告“QLoRA 最省显存”。</p>
-<p>若进入 <code>tune</code>，先指出失败约束：调整 rank、target_modules、量化位宽、batch 或 activation 策略；不要在没有定位问题前盲目增加候选。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/65_qlora_cpu_todo_flow.svg" alt="65 Step 5：QLoRA 选型的 CPU 决策实现">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;QLoRA 选型的 CPU 决策实现：&lt;/strong&gt;先检查预算，再筛选候选并保留每个失败约束。&lt;/div&gt;</p>
-<h4>图解：10 / 12 / 13 / 25 / 26 如何收束到 65 QLoRA 选型项目</h4>
-<p><code>65</code> 不重复实现 LoRA 或量化原理，而是把前面几节的训练与压缩口径收成一份预算下的方案对比报告。</p>
-<pre><code class="language-text">10 LoRA            target modules / rank / adapter config
-      │
-12 Accumulation    effective batch / update cadence
-      │
-13 End-to-end      train / val loop and minimal report
-      │
-25 W8A16          weight-only representation intuition
-26 QLoRA / NF4    frozen base + trainable adapter
-      ▼
-65 QLoRA Selection Project
-      ├─ budget ledger
-      ├─ baseline vs LoRA vs QLoRA
-      ├─ quality floor review
-      └─ accept / tune / reject
-</code></pre>
-<p>显存证据边界：本节的 CPU 代码只负责预算筛选、候选排序和决策逻辑；如果候选显存来自估算，报告必须标记为 <code>estimated</code>，不能写成 CUDA 峰值。要证明底座权重、LoRA 参数、梯度、optimizer state 或 activation 的实际占用，需在固定 workload 下采集 GPU 的 <code>peak_memory</code>、<code>peak_reserved</code> 和 OOM 状态。<code>73–76</code> 提供训练侧通用测量与策略对照，<code>65</code> 只补充 QLoRA/NF4 的专项选型。</p>
-<p><code>40</code> 的 GPTQ/AWQ 和 <code>67</code> 的量化部署属于推理侧交叉路线，不是本项目的候选方案；<code>GGUF</code> 也不应被当作 QLoRA 的训练格式。</p>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">预算账本</td>
-<td style="text-align:left">显存上限、目标吞吐、质量下限</td>
-<td style="text-align:left">固定选型边界</td>
-</tr>
-<tr>
-<td style="text-align:left">候选配置</td>
-<td style="text-align:left">baseline / LoRA / QLoRA 的关键配置</td>
-<td style="text-align:left">保证比较口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">结果对比</td>
-<td style="text-align:left">peak memory、step time、val loss</td>
-<td style="text-align:left">统一看收益与代价</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出方案选择</td>
-</tr>
-</tbody>
-</table>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>把方案放进一张选择表：先看装不装得下，再看质量与吞吐能否过线。QLoRA 的量化底座可能省空间，但额外误差与计算路径也要计入。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>full fine-tuning</dt><dd>更新完整模型参数。</dd></div><div><dt>LoRA</dt><dd>底座固定，主要训练低秩旁路。</dd></div><div><dt>QLoRA</dt><dd>低比特底座配合可训练 adapter。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>QLoRA 候选显存低但质量不达标，应如何处理？</p>
+            <p>本课中的「full fine-tuning」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>直接接受显存最小方案</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>底座固定，主要训练低秩旁路。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>把质量缺失当成通过</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>低比特底座配合可训练 adapter。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>排除不可行候选，再在可行集合中选择</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>更新完整模型参数。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1：检查候选名称、显存、吞吐和验证损失</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>写约束</h4><p>预算 10 GiB、验证质量至少 0.90。</p></li><li><h4>筛候选</h4><p>全量用 16 GiB 不可行；LoRA 12 GiB 也不可行；QLoRA 8 GiB、质量 0.92 才进入比较。</p></li><li><h4>保留条件</h4><p>如果 QLoRA 质量只有 0.85，则没有可行候选。正确结论是调整计划，不是强选一个。</p></li></ol><section class="learning-lab" data-lab="gate" aria-label="当一次有原则的方案评审员">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>当一次有原则的方案评审员</h4><p>改变显存和质量门槛。先过滤，再在合格者中比较速度。</p></header>
+    <div class="lab-controls"><label for="lab-65-budget"><span>显存上限 <output data-value="budget" for="lab-65-budget">10</output> GiB</span><input type="range" id="lab-65-budget" name="budget" min="6" max="16" step="1" value="10"></label><label for="lab-65-quality"><span>质量下限 <output data-value="quality" for="lab-65-quality">90</output> %</span><input type="range" id="lab-65-quality" name="quality" min="80" max="98" step="1" value="90"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-65" data-challenge-label>算一算</label><div><input id="answer-65" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>预算 10 GiB，QLoRA 8 GiB 但质量 0.85&lt;0.90，怎么办？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>排除它；可能没有可行候选</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>一定选 QLoRA</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>把质量字段删掉</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>runs = [(&quot;full&quot;,16,.95),(&quot;lora&quot;,12,.94),(&quot;qlora&quot;,8,.92)]
+valid = [r for r in runs if r[1] &lt;= 10 and r[2] &gt;= .90]
+print(valid)</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>没有任何候选通过，却总返回排行榜第一名。空的可行集合是重要结果。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「full fine-tuning」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>没有任何候选通过，却总返回排行榜第一名。空的可行集合是重要结果。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2：检查预算与质量下限是否完整</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3：汇总低资源微调候选</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 3：对每个候选分别计算以下布尔变量：</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-4">
-                <span>TODO 4：输出项目结论</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="7f08b38ec4e667891e92ca5e2cad20cb4c4a4ed55f3aad9158aa10cf9afbefba">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/65_QLoRA_Selection_Project.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>build_memory_ledger</code> · <code>validate_qlora_candidate</code> · <code>validate_budget_and_quality</code> · <code>summarize_low_resource_candidates</code> · <code>decide_qlora_project</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1232,14 +940,14 @@ test_qlora_selection_project()
 
   <script>
     const levelId = "65";
-    const checkpointData = {"current-core":{"answer":2,"explain":"排除不可行候选，再在可行集合中选择。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：更新完整模型参数。。另外两个选项分别解释「LoRA」和「QLoRA」，注意区分。"},"v4-experiment":{"answer":0,"explain":"省显存是必要条件之一，不能替代质量门槛。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：没有任何候选通过，却总返回排行榜第一名。空的可行集合是重要结果。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 5;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1248,20 +956,22 @@ test_qlora_selection_project()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-6f3c4ae6c218";
+    const homeworkKey = statePrefix + levelId + "-homework-7f08b38ec4e6";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1286,7 +996,7 @@ test_qlora_selection_project()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1328,11 +1038,15 @@ test_qlora_selection_project()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1363,6 +1077,7 @@ test_qlora_selection_project()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

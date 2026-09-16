@@ -733,806 +733,203 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 40 | 零基础导学关卡</p>
-        <h1>GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>GPTQ 与 AWQ 权重量化</h1>
+        <p class="course-subtitle">GPTQ and AWQ Weight Quantization</p>
+        <p class="lead">权重量化像用更粗的尺子记录长度。GPTQ 和 AWQ 都关注低比特误差，但不是同一种算法：GPTQ 利用近似二阶信息补偿，AWQ 利用激活信息寻找重要通道。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">40_GPTQ_and_AWQ_Weight_Quantization.ipynb</span>
           <span class="pill">量化压缩</span><span class="pill">权重量化</span><span class="pill">GPTQ/AWQ</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">calibrate -&gt; group -&gt; protect -&gt; quantize -&gt; dequantize -&gt; check error</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">把尺子刻度变粗，为什么有的误差特别伤输出？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="b09a8a968eac2dd5aa95826e28ddd729b665110475bbeaa8192916617b9ca370">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../40_GPTQ_and_AWQ_Weight_Quantization.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>40. GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>量化压缩</code>, <code>权重量化</code>, <code>GPTQ/AWQ</code> | <strong>目标人群：</strong> 量化压缩学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>第 25 节和第 26 节已经把量化的两条主线铺开：W8A16 说明了 weight-only 量化如何减少权重读取压力，QLoRA 说明了 4-bit 权重如何服务于低成本微调。但部署阶段还会遇到一个更细的问题：同样是把权重压到低比特，哪些权重更敏感，哪些误差可以接受，校准数据又应该如何参与量化决策？</p>
-<p>本节用一个极简 <code>WeightQuantizerSim</code> 模拟 GPTQ / AWQ 的核心直觉：GPTQ 更关注校准后的重构误差，AWQ 更强调激活感知和敏感通道保护。学完后，你应该能看清“校准 -&gt; 分组 -&gt; 量化 -&gt; 保护 -&gt; 反量化 -&gt; 误差检查”这条权重量化链路。</p>
-<p>本节还会把三类对象放到同一条链路中比较：GPTQ 关注校准后的误差补偿，AWQ 关注激活感知和敏感通道保护，GGUF 负责量化权重的文件格式与部署封装。真实 artifact、backend 和 kernel 的验证继续连接到 <a href="67_quantized_inference_and_deployment.html">67. 量化推理与部署</a>。</p>
-<p><strong>关键词：</strong> <code>GPTQ</code>, <code>AWQ</code>, <code>weight quantization</code></p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/40_gptq_awq_map_cn.svg" alt="GPTQ 与 AWQ 的校准路径"></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 根据校准激活统计输入通道重要性</li><li>TODO 2: 计算输入维度需要被切成多少个 group</li><li>TODO 3: 标记本组中需要保护的敏感通道</li><li>TODO 4: 为未保护的普通通道计算分组 scale</li><li>TODO 5: 将整数权重反量化回浮点近似值</li><li>TODO 6: 计算原始权重和恢复权重之间的均方误差</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能区分权重、激活和 KV Cache 的量化对象，再观察校准数据如何影响低比特权重的误差。</p>
-<ul>
-<li><a href="25_quantization_w8a16.html">25. Quantization W8A16 | W8A16 量化</a></li>
-<li><a href="26_qlora_and_4bit_quantization.html">26. QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/21_Quantization_Theory_and_INT4_INT8.ipynb">P1: 21. Quantization Theory and INT4/INT8 | 量化理论与 INT4/INT8</a></li>
-</ul>
-<hr>
-<h3>Step 1: 为什么 4-bit 量化需要校准</h3>
-<p>W8A16 已经说明低比特可以减少权重存储，但继续压到 4-bit 后，所有权重使用同一套规则可能放大敏感通道的误差。本节先建立一个判断框架：校准数据提供激活统计，分组 scale 控制局部动态范围，GPTQ / AWQ 再用不同方式处理误差或保护敏感通道。</p>
-<p>本节只模拟机制变量，不生成真实 GPTQ / AWQ artifact。学习重点是看清输入、校准信息、量化决策和重构误差之间的关系。</p>
-<h3>Step 2: 校准数据与分组 scale</h3>
-<p>校准样本不是训练数据，而是用来观察激活分布的代表性输入。模拟器先按输入通道汇总激活强度，再把权重按 <code>group_size</code> 划分，每组使用独立 scale。需要观察两个变量：校准统计是否能区分敏感通道，以及分组粒度变化后误差和元数据如何变化。</p>
-<table>
-<thead>
-<tr>
-<th>变量</th>
-<th>改变什么</th>
-<th>观察结果</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>calibration_samples</code></td>
-<td>激活统计的样本量</td>
-<td>重要性估计是否稳定</td>
-</tr>
-<tr>
-<td><code>group_size</code></td>
-<td>每组共享 scale 的范围</td>
-<td>重构误差与 scale 数量</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: GPTQ 与 AWQ 的策略差异</h3>
-<p>两种方法都属于部署前的权重量化，但关注点不同：</p>
-<ul>
-<li>GPTQ：以层输出重构误差为主要观察对象；</li>
-<li>AWQ：利用激活统计识别敏感通道，再对这些通道采取保护策略；</li>
-<li>共同点：都需要校准输入，且都不能仅凭权重绝对值判断最终质量。</li>
-</ul>
-<p>本节的模拟结果只回答“分组、校准和保护策略如何影响局部误差”，真实模型质量和 backend 速度留给 67 节。</p>
-<h3>Step 4: 实现、测试与结果解读</h3>
-<p>下面的题目区实现 <code>WeightQuantizerSim</code>，测试区检查量化权重 dtype、scale 形状、敏感通道标记、恢复形状和重构误差。完成后再阅读参考实现和解析，重点对照每个 TODO 如何改变量化状态。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class WeightQuantizerSim(nn.Module):
-    &quot;&quot;&quot;极简版 GPTQ / AWQ 权重量化模拟器。&quot;&quot;&quot;
+<section class="lessons">
 
-    def __init__(self, bits: int = 4, group_size: int = 32, method: str = &quot;gptq&quot;, protect_ratio: float = 0.05, eps: float = 1e-8):
-        super().__init__()
-        if bits &lt; 2:
-            raise ValueError(&quot;bits must be &gt;= 2&quot;)
-        if group_size &lt;= 0:
-            raise ValueError(&quot;group_size must be positive&quot;)
-        self.bits = bits
-        self.group_size = group_size
-        self.method = method.lower()
-        self.protect_ratio = protect_ratio
-        self.eps = eps
-        self.qmax = 2 ** (bits - 1) - 1
-
-        self.register_buffer(&quot;qweight&quot;, torch.empty(0, dtype=torch.int8), persistent=False)
-        self.register_buffer(&quot;scales&quot;, torch.empty(0), persistent=False)
-        self.register_buffer(&quot;protected_weight&quot;, torch.empty(0), persistent=False)
-        self.register_buffer(&quot;protected_mask&quot;, torch.empty(0, dtype=torch.bool), persistent=False)
-        self.register_buffer(&quot;importance&quot;, torch.empty(0), persistent=False)
-        self.weight_shape = None
-
-    def _collect_importance(self, activations: torch.Tensor, in_features: int) -&gt; torch.Tensor:
-        act = activations.detach().float()
-        if act.ndim == 1:
-            importance = act.abs()
-        else:
-            reduce_dims = tuple(range(act.ndim - 1))
-            # ==========================================
-            # TODO 1: 根据校准激活统计输入通道重要性
-            # 提示: 对除最后一维外的维度求 RMS，最后一维对应 in_features
-            # ==========================================
-            # importance = ???
-        if importance.numel() != in_features:
-            raise ValueError(f&quot;Calibration importance dim mismatch: expected {in_features}, got {importance.numel()}&quot;)
-        return importance
-
-    def fit(self, weight: torch.Tensor, activations: torch.Tensor | None = None) -&gt; &quot;WeightQuantizerSim&quot;:
-        w = weight.detach().float()
-        if w.ndim != 2:
-            raise ValueError(&quot;WeightQuantizerSim only supports 2D linear weights.&quot;)
-
-        out_features, in_features = w.shape
-        self.weight_shape = (out_features, in_features)
-        importance = torch.ones(in_features, device=w.device, dtype=w.dtype) if activations is None else self._collect_importance(activations, in_features)
-        self.importance = importance
-
-        # ==========================================
-        # TODO 2: 计算输入维度需要被切成多少个 group
-        # 提示: 使用向上取整，最后一组可以不足 group_size
-        # ==========================================
-        # n_groups = ???
-        qweight = torch.zeros_like(w, dtype=torch.int8)
-        scales = torch.zeros((out_features, n_groups), dtype=w.dtype, device=w.device)
-        protected_weight = torch.zeros_like(w)
-        protected_mask = torch.zeros_like(w, dtype=torch.bool)
-
-        for row in range(out_features):
-            for g in range(n_groups):
-                start = g * self.group_size
-                end = min(start + self.group_size, in_features)
-                wg = w[row, start:end]
-                ig = importance[start:end]
-                if wg.numel() == 0:
-                    continue
-
-                mask = torch.zeros_like(ig, dtype=torch.bool)
-                if self.method == &quot;awq&quot;:
-                    k = max(1, int(round(wg.numel() * self.protect_ratio)))
-                    k = min(k, wg.numel())
-                    topk = torch.topk(ig, k=k, largest=True).indices
-                    # ==========================================
-                    # TODO 3: 标记本组中需要保护的敏感通道
-                    # 提示: topk 是通道下标，把这些位置在 mask 中置为 True
-                    # ==========================================
-                    # mask[topk] = ???
-                    protected_mask[row, start:end] = mask
-                    protected_weight[row, start:end] = wg * mask.to(wg.dtype)
-
-                base = wg[~mask]
-                if base.numel() == 0:
-                    base = wg
-                # ==========================================
-                # TODO 4: 为未保护的普通通道计算分组 scale
-                # 提示: 对称量化 scale = absmax / qmax，并用 eps 避免除零
-                # ==========================================
-                # scale = ???
-
-                q_group = torch.zeros_like(wg, dtype=torch.int8)
-                q_group[~mask] = torch.clamp(torch.round(wg[~mask] / scale), -self.qmax, self.qmax).to(torch.int8)
-                qweight[row, start:end] = q_group
-                scales[row, g] = scale
-
-        self.qweight = qweight
-        self.scales = scales
-        self.protected_weight = protected_weight
-        self.protected_mask = protected_mask
-        return self
-
-    def dequantize(self) -&gt; torch.Tensor:
-        if self.weight_shape is None:
-            raise RuntimeError(&quot;Call fit() before dequantize().&quot;)
-
-        out_features, in_features = self.weight_shape
-        n_groups = self.scales.size(1)
-        weight = torch.zeros((out_features, in_features), dtype=self.scales.dtype, device=self.scales.device)
-
-        for row in range(out_features):
-            for g in range(n_groups):
-                start = g * self.group_size
-                end = min(start + self.group_size, in_features)
-                scale = self.scales[row, g]
-                q_group = self.qweight[row, start:end].to(self.scales.dtype)
-                # ==========================================
-                # TODO 5: 将整数权重反量化回浮点近似值
-                # 提示: 量化时除以 scale，恢复时乘回 scale
-                # ==========================================
-                # dequant = ???
-                protected = self.protected_mask[row, start:end]
-                if protected.any():
-                    dequant = dequant.clone()
-                    dequant[protected] = self.protected_weight[row, start:end][protected]
-                weight[row, start:end] = dequant
-
-        return weight
-
-    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
-        if self.weight_shape is None:
-            raise RuntimeError(&quot;Call fit() before forward().&quot;)
-        weight = self.dequantize().to(x.dtype)
-        return F.linear(x, weight)
-
-    def mse(self, weight: torch.Tensor) -&gt; torch.Tensor:
-        recon = self.dequantize().to(weight.dtype)
-        # ==========================================
-        # TODO 6: 计算原始权重和恢复权重之间的均方误差
-        # 提示: 先相减、平方，再求平均
-        # ==========================================
-        # error = ???
-        return error
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
-def test_weight_quantizer():
-    try:
-        torch.manual_seed(0)
-        weight = torch.randn(4, 8)
-        acts = torch.randn(16, 8)
-        sim = WeightQuantizerSim(bits=4, group_size=4, method=&quot;awq&quot;, protect_ratio=0.25).fit(weight, acts)
-        restored = sim.dequantize()
-        y = sim.forward(torch.randn(2, 8))
-
-        assert sim.qweight.dtype == torch.int8
-        assert sim.scales.shape == (4, 2)
-        assert sim.importance.shape == (8,)
-        assert sim.protected_mask.any()
-        assert restored.shape == weight.shape
-        assert y.shape == (2, 4)
-        assert float(sim.mse(weight)) &gt;= 0.0
-
-        gptq = WeightQuantizerSim(bits=4, group_size=4, method=&quot;gptq&quot;).fit(weight, acts)
-        assert not gptq.protected_mask.any()
-        assert gptq.dequantize().shape == weight.shape
-
-        print(&quot;✅ WeightQuantizerSim 测试通过&quot;)
-    except NotImplementedError as e:
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except (AttributeError, NameError, TypeError, ValueError, RuntimeError, AssertionError) as e:
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-
-
-test_weight_quantizer()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="weight-calibration-groups-and-awq-mask">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先找敏感通道：RMS 校准、向上分组与 AWQ mask</h2>
+          <h2>把尺子刻度变粗，为什么有的误差特别伤输出？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">in_features=10、group_size=4。</p>
-            <p class="predict-q">n_groups 应该是多少，最后一组有几个通道？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="0">
-                <span>3 组，最后 2 个通道</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="1">
-                <span>2 组，最后 4 个通道</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-calibration-groups-and-awq-mask" value="2">
-                <span>4 组，最后 0 个通道</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="weight-calibration-groups-and-awq-mask">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>权重量化像用更粗的尺子记录长度。GPTQ 和 AWQ 都关注低比特误差，但不是同一种算法：GPTQ 利用近似二阶信息补偿，AWQ 利用激活信息寻找重要通道。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>scale</dt><dd>一个整数刻度对应多少浮点数。</dd></div><div><dt>group</dt><dd>共享量化参数的一组权重。</dd></div><div><dt>calibration</dt><dd>用代表性输入观察分布或敏感性。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="weight-calibration-groups-and-awq-mask">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Linear 权重 shape 是 [out_features,in_features]；校准激活最后一维也必须是 in_features。</li><li>RMS 的顺序是平方、求平均、开平方；对 activations 除最后一维外的所有维度归约，才能留下每个输入通道一个分数。</li><li>向上取整分组可写成 (length + group_size - 1) // group_size，保证不足一整组的尾部也被覆盖。</li><li>torch.topk(...).indices 返回局部 group 内的下标；布尔 mask 用 True 表示该位置被保护。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>4-bit 可表示的状态很少，误差不能平均分配。Notebook 用校准激活的 RMS 估计输入通道的重要程度：某通道经常出现大激活，它对应的权重误差更容易影响输出。AWQ 教学模式在每个 group 内挑出 top-k，先做一张保护名单，再量化剩余权重。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>activations</b>[样本..., in_features]</span>
-          <span><b>RMS reduce</b>只留下 [in_features]</span>
-          <span><b>ceil groups</b>覆盖最后不足一组的通道</span>
-          <span><b>top-k mask</b>每组保护高重要性位置</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 1：维度为什么这样消失</h4>
-            <table class="adv-shapes">
-              <thead><tr><th>变量</th><th>shape</th><th>动作</th></tr></thead>
-              <tbody>
-                <tr><td><code>act</code></td><td>[16,8]</td><td>校准 batch 有 16 个样本、8 个输入通道</td></tr>
-                <tr><td><code>reduce_dims</code></td><td>(0,)</td><td>只归约样本维</td></tr>
-                <tr><td><code>importance</code></td><td>[8]</td><td>每个输入通道留下一个 RMS</td></tr>
-              </tbody>
-            </table>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 2-3：每组独立保护</h4>
-            <div class="adv-contract">
-              <span><code>in_features=8</code></span><strong>输入通道总数</strong>
-              <span><code>group_size=4</code></span><strong>得到 n_groups=2</strong>
-              <span><code>protect_ratio=.25</code></span><strong>每个 4 元 group 保护 k=1</strong>
-              <span><code>mask[topk]=True</code></span><strong>只标记当前 group 的局部位置</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>权重一行<br>[8]</span>
-          <span>group 0<br>通道 0:4</span>
-          <span>group 1<br>通道 4:8</span>
-          <strong>每组各自 top-k<br>写入二维 protected_mask</strong>
-        </div>
-
-        <div class="adv-callout">这只是 AWQ 核心直觉的教学模拟，不是完整 AWQ 搜索；GPTQ 模式不会进入 method == "awq" 分支，因此 protected_mask 应全部为 False。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用传感器校准值练习 RMS 与分组 top-k</h4><pre><code>samples = torch.tensor([[3.0, 0.0, 1.0, 2.0],
-                        [4.0, 0.0, 1.0, 2.0]])
-dims = tuple(range(samples.ndim - 1))
-importance = samples.pow(2).mean(dim=dims).sqrt()  # [4]
-
-width = 3
-num_groups = (importance.numel() + width - 1) // width
-first_group = importance[0:3]
-mask = torch.zeros_like(first_group, dtype=torch.bool)
-top_index = torch.topk(first_group, k=1).indices
-mask[top_index] = True</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>samples</code> -&gt; <code>activations</code>；最后一维就是 in_features。</li>
-            <li><code>dims</code> 与 RMS 表达式 -&gt; TODO 1，输出元素数必须等于 in_features。</li>
-            <li><code>num_groups</code> -&gt; TODO 2；不能用普通整除丢掉尾组。</li>
-            <li><code>mask[top_index] = True</code> -&gt; TODO 3 的 <code>mask[topk] = True</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>对 shape [batch,seq,in_features] 的 activations，RMS 应归约哪些维？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「scale」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="0">
-                <span>只归约 in_features</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>共享量化参数的一组权重。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="1">
-                <span>batch 与 seq，保留最后的 in_features</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>一个整数刻度对应多少浮点数。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-calibration-groups-and-awq-mask" value="2">
-                <span>三个维度全部归约成标量</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>用代表性输入观察分布或敏感性。</span>
               </label></div>
-              <div class="feedback" data-feedback="weight-calibration-groups-and-awq-mask"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="weight-calibration-groups-and-awq-mask-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="weight-quantize-dequantize-and-mse">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>低比特闭环：scale 只看普通通道，恢复后再盖回保护值</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">bits=4，某组普通权重 absmax=1.4。</p>
-            <p class="predict-q">Notebook 的 qmax 与 scale 分别是多少？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="0">
-                <span>7 与 0.2</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="1">
-                <span>15 与约 0.093</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-weight-quantize-dequantize-and-mse" value="2">
-                <span>127 与约 0.011</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="weight-quantize-dequantize-and-mse">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先学最小闭环</h4><p>scale=0.5 时，0.9/0.5=1.8，四舍五入为 2，恢复为 1.0，误差为 0.1。</p></li><li><h4>比较影响</h4><p>y=xw。若 x=1，权重误差 0.1 造成输出误差 0.1；若 x=10，输出误差变成 1.0。</p></li><li><h4>理解校准</h4><p>所以同样的权重误差对不同通道的后果不同。下面的对称量化实验只解释机制，不实现完整 GPTQ/AWQ。</p></li></ol><section class="learning-lab" data-lab="quant" aria-label="用更粗的尺子记录四个权重">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>用更粗的尺子记录四个权重</h4><p>改变位宽，观察整数刻度、恢复误差和存储量。</p></header>
+    <div class="lab-controls"><label for="lab-40-bits"><span>对称有符号位宽 <output data-value="bits" for="lab-40-bits">4</output> bit</span><input type="range" id="lab-40-bits" name="bits" min="2" max="8" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-40" data-challenge-label>算一算</label><div><input id="answer-40" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="weight-quantize-dequantize-and-mse">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>本课采用对称量化：qmax=2^(bits-1)-1；bits=4 时 qmax=7，int8 只是保存这些低比特整数的容器。</li><li>scale = absmax / qmax，因此量化是 round(weight / scale)，反量化必须用 q * scale。</li><li>AWQ 的保护位置没有写入正常 qweight；反量化后要用 protected_weight 覆盖 mask=True 的位置。</li><li>MSE 是 (original - reconstructed)^2 的逐元素平均，返回一个标量 Tensor。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>量化和反量化必须是一对方向相反的操作。先用一个 group 的普通权重确定步长 scale，把连续值落到有限整数格点；恢复时乘回同一步长。被保护通道绕过格点近似，最后像贴补丁一样用原浮点值盖回去。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>普通通道的对称量化</h4>
-            <div class="adv-flow">
-              <span>base.abs().max()</span>
-              <span>除以 qmax<br>得到 scale</span>
-              <span>round(w/scale)</span>
-              <strong>clamp 后存 int8</strong>
-            </div>
-            <p><code>clamp_min(eps)</code> 防止全零 group 产生除零。</p>
-          </section>
-          <section class="adv-panel good">
-            <h4>反量化与保护覆盖</h4>
-            <div class="adv-flow">
-              <span>q_group<br>转 scales.dtype</span>
-              <span>q_group * scale</span>
-              <span>mask=True<br>取 protected_weight</span>
-              <strong>恢复完整 weight</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-contract">
-          <span><code>qweight</code></span><strong>shape [out_features,in_features]，dtype int8</strong>
-          <span><code>scales</code></span><strong>shape [out_features,n_groups]，每行每组一个 scale</strong>
-          <span><code>dequantize()</code></span><strong>恢复 shape [out_features,in_features] 的浮点近似权重</strong>
-          <span><code>forward(x)</code></span><strong>F.linear(x, restored_weight)，[2,8] -&gt; [2,4]</strong>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>TODO</th><th>Notebook 表达式方向</th><th>常见反向错误</th></tr></thead>
-          <tbody>
-            <tr><td>4 scale</td><td><code>absmax / qmax</code></td><td>写成 qmax / absmax</td></tr>
-            <tr><td>5 restore</td><td><code>q_group * scale</code></td><td>再次除以 scale</td></tr>
-            <tr><td>6 MSE</td><td><code>((weight-recon)**2).mean()</code></td><td>只求差值平均，正负会抵消</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">第 40 课会采用另一种 scale 定义 q=round(x*scale)，所以恢复时除 scale。不要只背“量化都乘或都除”；先看当前 scale 的公式，再写互逆操作。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用一组温度权重练习对称量化闭环</h4><pre><code>values = torch.tensor([-1.0, -0.2, 0.6, 1.4])
-qmax = 7
-eps = 1e-8
-
-scale = (values.abs().max() / qmax).clamp_min(eps)
-codes = torch.clamp(torch.round(values / scale), -qmax, qmax)
-restored = codes * scale
-error = ((values - restored) ** 2).mean()
-
-assert restored.shape == values.shape
-assert error &gt;= 0</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>values</code> -&gt; TODO 4 的 <code>base</code>，也就是排除保护位置后的普通权重。</li>
-            <li><code>scale</code> -&gt; <code>scales[row,g]</code>；Notebook 每行每组都单独保存。</li>
-            <li><code>codes * scale</code> -&gt; TODO 5 的 <code>dequant</code>。</li>
-            <li><code>error</code> -&gt; TODO 6；Notebook 比较完整原权重与 <code>dequantize()</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 AWQ 反量化后还要按 protected_mask 覆盖 protected_weight？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>权重误差为 0.1，输入激活为 10，线性输出误差是多少？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="0">
-                <span>为了把所有 qweight 变成 bool</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>0.1</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="1">
-                <span>为了改变输出 shape</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>0.01</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-weight-quantize-dequantize-and-mse" value="2">
-                <span>保护通道没有按普通低比特路径保存，需要恢复原浮点权重</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>1.0</span>
               </label></div>
-              <div class="feedback" data-feedback="weight-quantize-dequantize-and-mse"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="weight-quantize-dequantize-and-mse-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>weight, scale = 0.9, 0.5
+q = round(weight / scale)
+restored = q * scale
+print(q, restored)  # 2, 1.0</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>仅按权重绝对误差排名就等同 AWQ，或把分组对称量化称作完整 GPTQ。校准分布必须与使用场景相关。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>仅按权重绝对误差排名就等同 AWQ，或把分组对称量化称作完整 GPTQ。校准分布必须与使用场景相关。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「scale」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="8732e9e84e1bb257d5af1196090ad3a0678ac935992b3ce521f1ac80f4a233c8">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/40_GPTQ_and_AWQ_Weight_Quantization.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>WeightQuantizerSim</code> · <code>fit</code> · <code>dequantize</code> · <code>forward</code> · <code>mse</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1544,14 +941,14 @@ assert error &gt;= 0</code></pre></div>
 
   <script>
     const levelId = "40";
-    const checkpointData = {"weight-calibration-groups-and-awq-mask":{"answer":1,"explain":"Notebook 用 tuple(range(act.ndim - 1))，也就是保留最后一维的逐通道重要性。"},"weight-quantize-dequantize-and-mse":{"answer":2,"explain":"保护位置绕开了普通量化误差；覆盖只替换数值，不改变 shape。"}};
-    const predictData = {"weight-calibration-groups-and-awq-mask":{"answer":0,"revealNote":"(10+4-1)//4=3，区间依次是 0:4、4:8、8:10。"},"weight-quantize-dequantize-and-mse":{"answer":0,"revealNote":"有符号 4-bit 教学范围使用 qmax=2^(4-1)-1=7，scale=1.4/7=0.2。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：一个整数刻度对应多少浮点数。。另外两个选项分别解释「group」和「calibration」，注意区分。"},"v4-experiment":{"answer":2,"explain":"Δy=x×Δw=10×0.1=1。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：仅按权重绝对误差排名就等同 AWQ，或把分组对称量化称作完整 GPTQ。校准分布必须与使用场景相关。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "39";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1560,20 +957,22 @@ assert error &gt;= 0</code></pre></div>
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-b09a8a968eac";
+    const homeworkKey = statePrefix + levelId + "-homework-8732e9e84e1b";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1598,7 +997,7 @@ assert error &gt;= 0</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1640,11 +1039,15 @@ assert error &gt;= 0</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1675,6 +1078,7 @@ assert error &gt;= 0</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

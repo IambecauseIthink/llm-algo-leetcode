@@ -11,14 +11,16 @@
 - `curriculum_v2.js`: upstream 新版 12–42 课程的元数据与 Notebook 映射。
 - `lesson_overrides.js` / `lesson_overrides_extra.js`: 各关的零基础导学、图例、语法热身、闯关题和 notebook 作业数据。
 
-当前地图对应官方 `4fa62623ae7f2f207871b43c3f254a765765bf2e`（2026-09-11 的 main，2026-09-14 同步）：00–89 共 90 个 Notebook，其中 **75 个正式课程 + 15 个预留入口**。预留编号不生成闯关题、不计入完成率。
+当前地图对应官方 `518cc451c51a1e86d6e17f304147135d2a8cb379`（2026-09-16）：**75 个正式课程 + 15 个预留入口**。
 
-- `curriculum_current.js` 每次构建读取当前 Notebook 的标题、导读、标签、题目和 TODO；`course_manifest.json` 记录课程映射和源文件 SHA-256。
-- 原有 43 课精讲按主题迁移到新编号，新增 32 课采用官方原理、图解和任务配合概念检查题。参考答案不在 HTML 中提前展开。
-- 原始 Notebook、Markdown、docs、工具和专题按官方更新；原有量化工厂仍是第 25 课的附加练习。
-- 旧 HTML 地址保留跳转。比如旧 30 LoRA 项目 → 新 60，旧 31 推理对比 → 新 66，旧 42 NCCL → 新 46；新的 30 是长上下文微调。
-- 同一浏览器存储范围内，旧通关/答题记录按主题迁移到 v3，原有 v1/v2 数据不删除。旧 Notebook 作业 checklist 不自动复用，新作业键包含源文件哈希，防止题目变化后仍显示已完成。
-- 公式、图片和代码支持静态离线渲染；分享时保留仓库相对目录（图片位于 `docs/public`），不需要携带 `node_modules`。
+- 所有 Notebook 入口直接指向 Datawhale 官方仓库的固定版本。
+- `upstream_source.json` 固定官方提交；`curriculum_current.js` 只通过 Git blob 读取官方题目，不读取本地 Notebook。个人作业不会进入生成的 HTML。
+- 后半段 45 课（30–52、60–86 中正式课程）按「生活问题 → 术语 → 数字推演 → 交互实验 → 最小 Python → 纠错 → 官方练习」重写。`teaching_specs.js` 维护逐课教学内容。
+- `assets/learning_lab.js` 提供 21 类教学实验，支持参数调节、逐步播放、暂停、重置和计算反馈；所有数字都是简化模型计算，不是实际 GPU 测量。
+- 新版进度使用 v4；基础课保留旧进度，重写的后半段重新答题。v1/v2/v3 原数据不删除。
+- 页面支持桌面和手机、键盘操作及减少动态效果偏好。HTML 可离线阅读，官方 Notebook 链接需要联网。
+- 旧 HTML 地址保留跳转；原有第 25 课量化工厂保留。
+- 发布前执行 `npm run check:notebooks --prefix 02_PyTorch_Algorithms/learning_notes_html`，比对 Git 暂存区与官方所有 Notebook 的路径和 blob，拒绝个人改动或额外 Notebook。
 
 每个关卡页面包含：
 
@@ -49,4 +51,4 @@ npm run generate --prefix 02_PyTorch_Algorithms/learning_notes_html
 npm test --prefix 02_PyTorch_Algorithms/learning_notes_html
 ```
 
-同步详情和验收记录见 [SYNC_REPORT.md](SYNC_REPORT.md)。
+历史同步记录见 [SYNC_REPORT.md](SYNC_REPORT.md)，本轮教学与 UI 验收见 [UI_REVIEW.md](UI_REVIEW.md)。

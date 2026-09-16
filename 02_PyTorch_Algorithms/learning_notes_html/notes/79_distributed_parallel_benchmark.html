@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,564 +750,182 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 79 | 零基础导学关卡</p>
-        <h1>Distributed Parallel Benchmark | 分布式并行基准</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>分布式并行基准</h1>
+        <p class="course-subtitle">Distributed Parallel Benchmark</p>
+        <p class="lead">把模型切成阶段后，第一批数据要逐段进入，最后一批要逐段退出。更多 microbatch 可以摊薄这段暖机/排空时间，但不能无限忽略调度成本。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">79_Distributed_Parallel_Benchmark.ipynb</span>
           <span class="pill">并行通信</span><span class="pill">分布式</span><span class="pill">基准对比</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">parallel value = memory/throughput gain - communication/scheduling cost</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">流水线越长，工人越多，为什么还会有人闲着？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="0849d10941b3689e181c78970f973e1abf9522a209e06c355e53d93044367fc6">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../79_Distributed_Parallel_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>79. Distributed Parallel Benchmark | 分布式并行基准</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>分布式</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节要求你在统一 workload 下比较 ZeRO、Pipeline Parallelism 和 Tensor Parallelism。先明确模型规模、显存上限与吞吐目标，再记录各方案的显存、吞吐、延迟、通信量和 pipeline bubble。最终输出并行策略选择，并说明结论受哪些模型和硬件条件限制。
-<strong>层级定位：</strong> 本项目主落在 L3 分布式运行时，依赖 L2 的 NCCL 等通信库和 L1 的互联拓扑；集群资源申请、作业排队和跨团队资源治理属于 L5，不由本 benchmark 单独证明。
-<strong>主责与复用边界：</strong> 本项目主责是参数、梯度和 optimizer state 的切分、通信与扩展效率；显存优化路线复用各 rank 的显存分摊，性能分析专题复用通信等待和 trace 口径，推理服务的副本路由不在本项目内验证。</p>
-<p><strong>关键词：</strong> <code>distributed training</code>, <code>benchmark</code>, <code>parallelism</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 先做 warmup，再测量平均耗时</li><li>TODO 2: 汇总 baseline / parallel 的核心指标差异</li><li>TODO 3: 生成并行策略选型报告</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把三类并行策略和通信 / profiling 的最小口径理顺，再进入并行 benchmark 项目会更容易把显存、吞吐和通信代价区分开。</p>
-<ul>
-<li><a href="27_zero_optimizer_sim.html">27. ZeRO Optimizer Sim | ZeRO 优化器模拟</a></li>
-<li><a href="28_pipeline_parallelism_microbatch.html">28. Pipeline Parallelism MicroBatch | Pipeline 并行微批次</a></li>
-<li><a href="29_tensor_parallelism_sim.html">29. Tensor Parallelism Sim | Tensor 并行模拟</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb">P1: 05. Communication Topologies | 通信拓扑与分布式基石</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成并行策略 benchmark 后，用 80 继续检查 MoE 专家并行的通信与负载均衡；如果需要验证端到端收益，再交给 74 做 profiling 闭环。</p>
-<ul>
-<li><a href="80_moe_expert_parallel_benchmark.html">80. MoE Expert Parallel Benchmark | MoE 专家并行基准</a></li>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling-Driven End-to-End Optimization | 端到端 profiling 优化</a></li>
-</ul>
-<hr>
-<h3>Step 1: 定义 distributed benchmark 目标</h3>
-<p>先回答一个问题：在同一模型、同一输入和同一硬件条件下，哪种并行策略更适合当前瓶颈？</p>
-<ul>
-<li>固定模型结构、参数量、输入长度、global batch size、micro-batch 数和训练 step 数。</li>
-<li>固定硬件环境、GPU 数、网络拓扑和运行后端，避免把环境差异误判为策略收益。</li>
-<li>统一记录 peak memory、throughput、latency / step time、communication overhead 和是否稳定收敛。</li>
-<li>先写清约束条件，例如单卡显存上限、最低吞吐要求、最大可接受延迟或通信占比。</li>
-<li>这一步的目标是保证 ZeRO、Pipeline、Tensor Parallelism 能在同一口径下比较。</li>
-</ul>
-<h3>Step 2: 先确认 workload 和评测口径合法</h3>
-<p>分布式并行 benchmark 必须先确认 workload、硬件环境和通信条件可复现，不能直接把不同 GPU 数、不同拓扑或不同 batch 的结果放在一起比较。</p>
-<ul>
-<li>固定模型结构、参数量、输入长度、global batch size、micro-batch 数、训练 step 数和硬件环境，保证 baseline 与 candidate 的改动边界清晰。</li>
-<li>ZeRO、Pipeline 和 Tensor Parallelism 的指标必须来自同一套评测字段，避免把不同实验口径拼成一张表。</li>
-<li>每种策略至少都要有 baseline 与 candidate 两组结果，避免只描述理论收益。</li>
-<li>如果 baseline 自身波动很大，后面的并行收益与通信结论就没有解释空间。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<p>分布式并行项目必须同时看 peak memory、throughput、latency 和 communication overhead，不能只挑显存或单项吞吐收益下结论。</p>
-<ul>
-<li>如果 peak memory 降了但 throughput 也下降，要判断通信或调度开销是否抵消了显存收益。</li>
-<li>如果 throughput 提升但 latency 变差，要说明这个策略更适合离线训练还是在线服务。</li>
-<li>如果通信占比过高，要记录瓶颈来自 All-Reduce、All-Gather、Reduce-Scatter 还是 pipeline bubble。</li>
-<li>如果某个策略只在大 batch 或特定模型规模下有效，要写清适用条件。</li>
-<li>这一阶段的产物应该是“收益 + 代价 + 适用条件”，而不是只输出排行榜。</li>
-</ul>
-<h3>Step 4: 输出选型结论</h3>
-<p>并行策略最终不是输出“哪个方案更高级”，而是输出它在当前 workload 和通信条件下是否值得继续保留、微调或采用。</p>
-<ul>
-<li>输出 ZeRO / Pipeline / Tensor Parallelism 的对比表，至少包含 peak memory、throughput、latency 和 communication overhead。</li>
-<li>写清楚每种策略适合什么模型规模、显存瓶颈和通信条件。</li>
-<li>给出“什么时候选它、什么时候别选它”的结论。</li>
-<li>如果后面要扩展 FSDP、sequence parallel 或 expert parallel，就沿用同一套评测字段。</li>
-<li>最终产物应回答：当前 workload 下推荐哪种并行策略，理由是什么，下一轮需要验证什么。</li>
-</ul>
-<h3>Step 5: 最小代码模板</h3>
-<p>上面的 Step 1-4 是完整分布式并行 benchmark 流程。下面的代码只实现其中最小、可复用的三块：测平均耗时、汇总 baseline / parallel 指标差异、生成并行策略报告。真实项目中的多卡启动、通信 trace 和 profiler 截图，需要基于这三个结果继续补充。</p>
-<h3>测试</h3>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>def benchmark_fn(fn, warmup=2, iters=5):
-    &quot;&quot;&quot;null&quot;&quot;&quot;
-    # ==========================================
-    # TODO 1: 先做 warmup，再测量平均耗时
-    # 提示: 用 time.perf_counter() 记录起止时间
-    # 返回单位统一为 ms，方便和 latency / step time 对齐
-    # ==========================================
-    for _ in range(warmup):
-        fn()
+<section class="lessons">
 
-    # start = ???
-    for _ in range(iters):
-        fn()
-    # total = ???
-    # avg_time_ms = ???
-    return avg_time_ms
-
-
-def summarize_parallel_result(base_metrics, parallel_metrics):
-    &quot;&quot;&quot;null&quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 汇总 baseline / parallel 的核心指标差异
-    # 提示: memory / latency / communication 越低越好，throughput 越高越好
-    # 正数表示 parallel 相比 baseline 有改善
-    # ==========================================
-    # memory_delta = ???
-    # throughput_delta = ???
-    # latency_delta = ???
-    # communication_delta = ???
-
-    summary = {
-        'memory_delta_mb': round(memory_delta, 2),
-        'throughput_delta': round(throughput_delta, 2),
-        'latency_delta_ms': round(latency_delta, 2),
-        'communication_delta_ms': round(communication_delta, 2),
-        'memory_improved': memory_delta &gt; 0,
-        'throughput_improved': throughput_delta &gt; 0,
-        'latency_improved': latency_delta &gt; 0,
-        'communication_improved': communication_delta &gt; 0,
-    }
-    return summary
-
-
-def format_parallel_report(strategy_name, summary, recommendation):
-    &quot;&quot;&quot;null&quot;&quot;&quot;
-    # ==========================================
-    # TODO 3: 生成并行策略选型报告
-    # 提示: 把策略名、核心指标变化和推荐结论放在一起
-    # ==========================================
-    header = &quot;| 指标 | 变化 | 判断 |&quot;
-    sep = &quot;| --- | --- | --- |&quot;
-    # rows = ???
-    # conclusion = ???
-    return &quot;\n&quot;.join([f&quot;策略：{strategy_name}&quot;, header, sep] + rows + [conclusion])
-</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code>def test_parallel_project_template():
-    try:
-        counter = {'n': 0}
-
-        def fn():
-            counter['n'] += 1
-
-        avg = benchmark_fn(fn, warmup=0, iters=2)
-        assert counter['n'] == 2, &quot;benchmark 应该运行 iters 次&quot;
-        assert avg &gt;= 0.0, &quot;平均耗时应该非负&quot;
-
-        baseline = {
-            'peak_mem_mb': 12000.0,
-            'throughput': 80.0,
-            'latency_ms': 120.0,
-            'communication_ms': 30.0,
-        }
-        parallel = {
-            'peak_mem_mb': 9000.0,
-            'throughput': 100.0,
-            'latency_ms': 96.0,
-            'communication_ms': 24.0,
-        }
-        summary = summarize_parallel_result(baseline, parallel)
-
-        assert summary['memory_delta_mb'] == 3000.0
-        assert summary['throughput_delta'] == 20.0
-        assert summary['latency_delta_ms'] == 24.0
-        assert summary['communication_delta_ms'] == 6.0
-        assert summary['memory_improved'] is True
-        assert summary['throughput_improved'] is True
-        assert summary['latency_improved'] is True
-        assert summary['communication_improved'] is True
-
-        report = format_parallel_report('Tensor Parallelism', summary, '当前单层矩阵较大，优先保留 TP 并继续观察 All-Reduce')
-        assert 'Tensor Parallelism' in report
-        assert '| 指标 | 变化 | 判断 |' in report
-        assert 'All-Reduce' in report
-
-        print(&quot;✅ 分布式并行基准项目模板代码通过基础校验。&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-
-
-test_parallel_project_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="parallel-benchmark-fairness">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>公平比较从计时开始：同一 workload、同一单位、同一轮次</h2>
+          <h2>流水线越长，工人越多，为什么还会有人闲着？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">warmup=0、iters=2，fn 每调用一次就让 counter 加 1。</p>
-            <p class="predict-q">函数返回前 counter 应该是多少？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-benchmark-fairness" value="0">
-                <span>2</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-benchmark-fairness" value="1">
-                <span>0</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-benchmark-fairness" value="2">
-                <span>4</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="parallel-benchmark-fairness">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>把模型切成阶段后，第一批数据要逐段进入，最后一批要逐段退出。更多 microbatch 可以摊薄这段暖机/排空时间，但不能无限忽略调度成本。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>stage</dt><dd>流水线中的一个计算阶段。</dd></div><div><dt>microbatch</dt><dd>一个 batch 拆出的较小工作单元。</dd></div><div><dt>bubble</dt><dd>设备没有有效计算的空闲槽位。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="parallel-benchmark-fairness">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>并行策略比较必须固定模型、输入、global batch、硬件数量和后端，否则差异无法归因。</li><li>warmup 调用不计时，正式 iters 调用才构成 total。</li><li>time.perf_counter() 的差值单位是秒，报告中的 latency 使用毫秒。</li><li>本 Notebook 是 CPU-first 最小模板，不会真的启动 ZeRO、Pipeline 或 Tensor Parallel 多卡进程。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>选择并行策略像比较三种运输方案：货物、路程和车辆数量都相同，时间才有可比性。代码里的 benchmark_fn 只是共同秒表；真正的公平性还来自 Step 1 固定 workload 的实验纪律。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>代码层计时契约</h4>
-            <div class="adv-flow">
-              <span>warmup 次<br>不统计</span>
-              <span>perf_counter<br>开始</span>
-              <span>iters 次<br>正式运行</span>
-              <strong>平均 latency<br>ms</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>实验层公平契约</h4>
-            <div class="adv-checks">
-              <span>模型与输入一致</span>
-              <span>global batch 一致</span>
-              <span>GPU 数与拓扑一致</span>
-              <span>运行后端一致</span>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-contract">
-          <span><code>fn</code></span><strong>待测的一次完整工作负载</strong>
-          <span><code>warmup=2</code></span><strong>默认先运行两次，不进入平均值</strong>
-          <span><code>iters=5</code></span><strong>默认正式运行五次</strong>
-          <span><code>avg_time_ms</code></span><strong>每次平均耗时，非负浮点数</strong>
-        </div>
-
-        <div class="adv-callout">真实 GPU 多卡 benchmark 还需要同步、通信 trace 和稳定性检查。当前 TODO 只要求实现 CPU 计时骨架，先通过它建立可复用的评测入口。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用排序算法练习统一计时入口</h4><pre><code>import time
-
-def average_ms(task, warmup=2, trials=5):
-    for _ in range(warmup):
-        task()
-
-    start = time.perf_counter()
-    for _ in range(trials):
-        task()
-    total_seconds = time.perf_counter() - start
-    return total_seconds / trials * 1000</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>task/trials</code> 对应 <code>fn/iters</code>。</li>
-            <li><code>total_seconds</code> 对应 TODO 的 <code>total</code>，其单位仍是秒。</li>
-            <li>返回表达式对应 <code>avg_time_ms</code>：除以正式轮次，再乘 1000。</li>
-            <li>测试用 counter 验证调用次数，因此不能把 warmup 循环移动到正式计时循环内部。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>只把 TP 的 batch size 调大后，能否把它和原 baseline 直接比较来证明 TP 更快？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「stage」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="0">
-                <span>能，只要 throughput 更高</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>设备没有有效计算的空闲槽位。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="1">
-                <span>不能，workload 同时变化，收益无法只归因于 TP</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>流水线中的一个计算阶段。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-benchmark-fairness" value="2">
-                <span>能，因为 benchmark_fn 会自动修正 batch 差异</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>一个 batch 拆出的较小工作单元。</span>
               </label></div>
-              <div class="feedback" data-feedback="parallel-benchmark-fairness"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="parallel-benchmark-fairness-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="parallel-four-metric-ledger">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>四本账一起看：显存、吞吐、延迟、通信都统一为正收益</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">baseline communication=20 ms，parallel communication=32 ms。</p>
-            <p class="predict-q">communication_delta 与 communication_improved 是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-four-metric-ledger" value="0">
-                <span>-12，False</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-four-metric-ledger" value="1">
-                <span>12，True</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-four-metric-ledger" value="2">
-                <span>-12，True</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="parallel-four-metric-ledger">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>设简化条件</h4><p>仅看前向，3 个等时长阶段，每阶段处理一个 microbatch 需 1 个单位。</p></li><li><h4>算总槽位</h4><p>4 个 microbatch 的总时间为 m+p−1=4+3−1=6。</p></li><li><h4>看利用率</h4><p>有效工作量 3×4=12；可用槽位 3×6=18，利用率 2/3。训练的反向与 1F1B 调度需要另一套账本。</p></li></ol><section class="learning-lab" data-lab="bubble" aria-label="给三段流水线持续喂任务">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>给三段流水线持续喂任务</h4><p>三阶段等时长前向模型，增加 microbatch，观察空泡占比。</p></header>
+    <div class="lab-controls"><label for="lab-79-batches"><span>Microbatch 数量 <output data-value="batches" for="lab-79-batches">4</output> </span><input type="range" id="lab-79-batches" name="batches" min="1" max="12" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-79" data-challenge-label>算一算</label><div><input id="answer-79" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="parallel-four-metric-ledger">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>peak_mem_mb、latency_ms、communication_ms 越低越好，使用 baseline - parallel。</li><li>throughput 越高越好，使用 parallel - baseline。</li><li>通信时间下降为正收益；若并行方案引入更多通信，communication_delta 会是负数。</li><li>summary 的键名是后续报告和测试的接口，必须逐字保留。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>并行方案经常用一项资源换另一项资源：更省显存，却增加通信；吞吐变高，却让单请求延迟变差。四项指标放在同一张账本里，才不会把局部收益误判成整体胜利。</p>
-              <div class="adv-course">
-        <table class="adv-shapes">
-          <thead><tr><th>指标</th><th>偏好</th><th>差值公式</th><th>测试数据</th></tr></thead>
-          <tbody>
-            <tr><td>peak memory</td><td>低</td><td><code>base - parallel</code></td><td>12000 - 9000 = 3000 MB</td></tr>
-            <tr><td>throughput</td><td>高</td><td><code>parallel - base</code></td><td>100 - 80 = 20</td></tr>
-            <tr><td>latency</td><td>低</td><td><code>base - parallel</code></td><td>120 - 96 = 24 ms</td></tr>
-            <tr><td>communication</td><td>低</td><td><code>base - parallel</code></td><td>30 - 24 = 6 ms</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-grid three">
-          <section class="adv-panel blue">
-            <h4>ZeRO 常看</h4>
-            <p>训练状态切分后的单卡显存，以及 Reduce-Scatter / All-Gather 代价。</p>
-          </section>
-          <section class="adv-panel neutral">
-            <h4>Pipeline 常看</h4>
-            <p>按层切分后的显存、吞吐、stage 等待和 bubble ratio。</p>
-          </section>
-          <section class="adv-panel good">
-            <h4>TP 常看</h4>
-            <p>单层矩阵分摊后的显存与计算，以及 All-Reduce / All-Gather 开销。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">四个 improved 都由对应 delta 是否大于 0 得出。不要让“communication overhead 本来是代价”扰乱公式：这里比较的是代价减少了多少。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用数据库方案练习多指标取舍</h4><pre><code>base = {'memory': 64, 'queries': 120, 'latency': 18}
-candidate = {'memory': 48, 'queries': 150, 'latency': 21}
-
-memory_gain = base['memory'] - candidate['memory']
-query_gain = candidate['queries'] - base['queries']
-latency_gain = base['latency'] - candidate['latency']
-
-tradeoff = {
-    'memory_improved': memory_gain &gt; 0,
-    'queries_improved': query_gain &gt; 0,
-    'latency_improved': latency_gain &gt; 0,
-}</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>memory</code> 对应 <code>peak_mem_mb</code>，低者更好。</li>
-            <li><code>queries</code> 对应 <code>throughput</code>，高者更好。</li>
-            <li><code>latency</code> 对应 <code>latency_ms</code>；再用同样模式加入 <code>communication_ms</code>。</li>
-            <li>将四个原始差值写入已给出的 summary，数值统一 <code>round(..., 2)</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>某方案显存下降 3000 MB，但 communication_delta=-15 ms。正确解读是什么？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>3 个等时前向阶段，4 个 microbatch，总共多少时间单位？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="0">
-                <span>四项指标都改善</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>12</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="1">
-                <span>通信指标应取绝对值后判定改善</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>4</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-four-metric-ledger" value="2">
-                <span>它省显存，但通信时间增加了 15 ms，需要权衡</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>6</span>
               </label></div>
-              <div class="feedback" data-feedback="parallel-four-metric-ledger"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="parallel-four-metric-ledger-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="parallel-selection-report">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>报告不是排行榜：策略名、四项取舍与推荐条件缺一不可</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">summary 中 memory_improved=True，latency_improved=False。</p>
-            <p class="predict-q">报告应如何呈现？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-selection-report" value="0">
-                <span>memory 写改善，latency 写未改善</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-selection-report" value="1">
-                <span>只保留改善的 memory 行</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-parallel-selection-report" value="2">
-                <span>两行都写改善</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="parallel-selection-report">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>stages, microbatches = 3, 4
+ticks = microbatches+stages-1
+utilization = microbatches/ticks
+print(ticks, round(utilization,2))  # 6, 0.67</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把前向玩具流水线公式直接用于任意训练调度，或忽略阶段之间不均衡。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="parallel-selection-report">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>format_parallel_report 接收 strategy_name、summary、recommendation，不能依赖函数外的固定变量。</li><li>rows 要覆盖 memory、throughput、latency、communication 四项。</li><li>每一行既展示 delta，也根据对应布尔键展示改善或未改善。</li><li>返回字符串的第一行先写策略名，再接 Markdown 表格和推荐结论。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>并行选型没有脱离 workload 的冠军。报告要把策略是谁、改善了什么、牺牲了什么、为什么推荐写在一起。这样同事才能知道这条建议只适用于当前模型规模和通信条件。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>策略名</b>ZeRO / Pipeline / TP</span>
-          <span><b>四项 rows</b>收益和代价同屏</span>
-          <span><b>recommendation</b>说明适用条件</span>
-          <span><b>下一轮</b>指出需继续观察的开销</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>Notebook 测试要看到</h4>
-            <div class="adv-checks">
-              <span>Tensor Parallelism</span>
-              <span>Markdown 表头</span>
-              <span>四项指标变化</span>
-              <span>All-Reduce 建议</span>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>推荐要有边界</h4>
-            <p>“优先保留 TP”不是永恒结论；样例理由是当前单层矩阵较大，同时还要继续观察 All-Reduce。换 workload 后应重新测量。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">测试会搜索字符串，但不要只拼测试关键字。完整四行让报告在指标不全都改善时仍可用于真实决策。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用存储方案练习参数化报告</h4><pre><code>plan_name = '分片存储'
-saved_gb = 12
-saved = saved_gb &gt; 0
-rows = [
-    f"| 容量 | {saved_gb} GB | {'改善' if saved else '未改善'} |",
-]
-advice = '适合容量瓶颈，继续观察网络读取'
-
-report = "\n".join(
-    [f"方案：{plan_name}", '| 指标 | 变化 | 判断 |', '| --- | --- | --- |']
-    + rows
-    + [f"推荐结论：{advice}。"]
-)</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>plan_name</code> 对应 <code>strategy_name</code>，必须来自函数参数。</li>
-            <li>容量单行扩展成 memory、throughput、latency、communication 四行。</li>
-            <li><code>advice</code> 对应 <code>recommendation</code>。</li>
-            <li>第一行前缀改成 Notebook 规定的“策略：”，结论前缀改成“推荐结论：”。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 strategy_name 必须出现在报告里？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-selection-report" value="0">
-                <span>否则同一份指标无法知道对应 ZeRO、Pipeline 还是 TP</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>把前向玩具流水线公式直接用于任意训练调度，或忽略阶段之间不均衡。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-selection-report" value="1">
-                <span>因为测试不允许中文结论</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-parallel-selection-report" value="2">
-                <span>因为 join 只能处理带策略名的列表</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「stage」的定义和计算。</span>
               </label></div>
-              <div class="feedback" data-feedback="parallel-selection-report"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="parallel-selection-report-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="d9f26bc2adc6d8f66bab064126c257d6b9b917f2f1404a012cd0b23057ef8b5b">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/79_Distributed_Parallel_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>benchmark_fn</code> · <code>summarize_parallel_result</code> · <code>format_parallel_report</code> · <code>fn</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1584,14 +941,14 @@ report = "\n".join(
 
   <script>
     const levelId = "79";
-    const checkpointData = {"parallel-benchmark-fairness":{"answer":1,"explain":"统一计时函数不会替你固定实验条件，公平性仍需由 benchmark 设计保证。"},"parallel-four-metric-ledger":{"answer":2,"explain":"负差值是有价值的代价证据，不能取绝对值把退步伪装成收益。"},"parallel-selection-report":{"answer":0,"explain":"指标离开策略和 workload 上下文就无法支持选型。"}};
-    const predictData = {"parallel-benchmark-fairness":{"answer":0,"revealNote":"没有预热调用，正式循环执行两次，测试正是用它排查额外调用。"},"parallel-four-metric-ledger":{"answer":0,"revealNote":"低指标用 baseline - parallel：20 - 32 = -12，说明并行方案增加了通信等待。"},"parallel-selection-report":{"answer":0,"revealNote":"报告要保留完整取舍，不能隐藏不利指标。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：流水线中的一个计算阶段。。另外两个选项分别解释「microbatch」和「bubble」，注意区分。"},"v4-experiment":{"answer":2,"explain":"第一批穿过 3 阶段，后续每单位完成一批：3+3=6。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：把前向玩具流水线公式直接用于任意训练调度，或忽略阶段之间不均衡。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "34";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1600,20 +957,22 @@ report = "\n".join(
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-0849d10941b3";
+    const homeworkKey = statePrefix + levelId + "-homework-d9f26bc2adc6";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1638,7 +997,7 @@ report = "\n".join(
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1680,11 +1039,15 @@ report = "\n".join(
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1715,6 +1078,7 @@ report = "\n".join(
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

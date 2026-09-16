@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,654 +750,184 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 35 | 零基础导学关卡</p>
-        <h1>Multi-Token Decoding | 多 Token 解码</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>多 Token 解码</h1>
+        <p class="course-subtitle">Multi-Token Decoding</p>
+        <p class="lead">草稿模型像速记员，目标模型像审稿人。后面的候选依赖前面的上下文，所以第一个错误会让后续草稿失去原先的条件。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/35_Multi_Token_Decoding.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">35_Multi_Token_Decoding.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">解码</span><span class="pill">Multi-Token Decoding</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">propose -&gt; verify in order -&gt; accept prefix -&gt; rollback suffix</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">草稿一次写四个字，为什么不能跳过错误继续抄？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="6ff61bf0d3df8376b0447eeaa17d72f730064e74d8821ace0939ab2fde350e0b">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../35_Multi_Token_Decoding.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/35_Multi_Token_Decoding.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>35. Multi-Token Decoding | 多 Token 解码</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>解码</code>, <code>Multi-Token Decoding</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>自回归生成最朴素的路径是“一次生成一个 token”：每轮推进一次状态，再进入下一轮解码。输出越长，解码轮数越多，单轮推进量就越值得关注。</p>
-<p>本节关注一次解码步实际推进多少 token：先提出一段候选，再按顺序验证，保留连续通过的前缀，并在首次拒绝处回退。学习重点是接受长度、<code>progress_per_round</code> 和验证成本之间的关系；它与 23 节共享外层流程，但更关注单轮推进效率，并为 36 节的调度和 68 节的 backend 基准提供指标。</p>
-<p><strong>关键词：</strong> <code>multi-token decoding</code>, <code>draft model</code>, <code>verification</code>, <code>rollback</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 从草稿 token 中生成本轮候选序列</li><li>TODO 2: 判断单个候选 token 是否被目标模型接受</li><li>TODO 3: 逐个验证候选 token，遇到第一次拒绝就停止</li><li>TODO 4: 切出被拒绝后缀，形成完整解码结果</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先理解单 token 解码和投机验证的顺序，再观察一次请求如何在一轮中推进多个候选 token。</p>
-<ul>
-<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
-<li><a href="23_speculative_decoding.html">23. Speculative Decoding | 投机解码</a></li>
-</ul>
-<hr>
-<h3>Step 1: 单轮多 Token 推进的机制</h3>
-<p>单 token 解码的瓶颈在于每次只能推进一个 token：模型需要反复进入 decoder，KV Cache 也要频繁追加和读取。对短输出来说这不是大问题，但对长文本生成、代码生成、多轮对话这类场景，逐 token 调度会放大延迟和系统开销。</p>
-<p>Multi-Token Decoding 的目标不是“无条件一次吐出更多 token”，而是在可验证的前提下，让一次解码步尽量推进多个 token。如果连续几个候选 token 都能被接受，就减少了多轮单 token 解码；如果中途被拒绝，则立刻停止并回退到更保守的路径。</p>
-<p>本节与 Speculative Decoding 共享“提议—验证—回退”的外层流程。这里的提议者称为草稿模型（draft model），负责快速给出候选；目标模型（target model）负责验证。关注点不同：23 节重点解释分布校正，本节重点观察一轮最多推进多少 token，以及首次拒绝如何影响有效进度。这里的接受规则是教学用近似，不等同于 23 节的分布保持算法。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/35_multi_token_overview.svg" alt="多 Token 解码总览"></p>
-<h3>Step 2: 候选序列与验证状态</h3>
-<p>先固定一轮验证所需的输入和状态，再观察候选如何从提议进入顺序验证。<code>draft_tokens</code>、<code>draft_probs</code> 和 <code>target_probs</code> 是机制模拟的输入，不代表真实模型前向。阅读表格时抓住一条状态链：提议序列 → 从左到右验证 → 首次拒绝 → 切分接受前缀和回退后缀。</p>
-<table>
-<thead>
-<tr>
-<th>机制阶段</th>
-<th>输入 / 状态</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>提议序列</td>
-<td>草稿 token 与最大提议长度</td>
-<td>截取本轮最多可尝试的候选序列</td>
-</tr>
-<tr>
-<td>接受判断</td>
-<td>草稿概率与目标概率</td>
-<td>判断单个候选 token 是否可靠</td>
-</tr>
-<tr>
-<td>顺序验证</td>
-<td>候选序列与当前前缀</td>
-<td>从左到右验证，首次拒绝后停止</td>
-</tr>
-<tr>
-<td>结果汇总</td>
-<td>接受前缀、拒绝位置、回退后缀</td>
-<td>区分可直接推进的 token 与待重新生成的 token</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: 连续接受、首次拒绝与有效推进</h3>
-<p>多 token 解码的收益来自“连续接受”。如果本轮提出 4 个候选 token，并且前 3 个都通过验证，那么系统相当于用一次解码流程推进了 3 个 token；如果第 1 个就被拒绝，则这轮几乎没有收益，还需要回到保守生成路径。</p>
-<p>因此，提议长度和接受阈值需要平衡；除了接受率，还要记录本轮实际推进了多少 token。<code>progress_per_round = accepted_len / len(proposed_tokens)</code> 表示一轮提议中真正写入输出前缀的比例；项目 benchmark 中可用 <code>accepted_tokens_per_round</code> 记录同一类指标。本节用一个简化规则来模拟接受判断：若目标模型给候选 token 的概率不低于草稿概率的一定比例，就认为它可以被接受。真实系统可能使用更严格的分布校正或其他验证协议；本节只保留“连续接受、首次拒绝、后缀回退”的控制流。</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th>过大时的问题</th>
-<th>过小时的问题</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>max_proposal_len</code></td>
-<td>候选更激进，拒绝和回退概率更高</td>
-<td>单轮推进短，加速效果有限</td>
-</tr>
-<tr>
-<td><code>min_accept_ratio</code></td>
-<td>接受规则更严格，通过率下降</td>
-<td>接受规则更宽松，可能引入更大偏差</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/35_acceptance_budget.svg" alt="多 Token 解码的接受长度与收益"></p>
-<h3>Step 4: 实现多 Token 解码器</h3>
-<p><strong>要求</strong>：请补全下方 <code>MultiTokenDecoderSim</code>，实现一个极简版的多 token 生成与验证模拟器。重点不是复杂采样，而是把“提议 -&gt; 验证 -&gt; 接受 / 回退”这条链路跑通。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>class MultiTokenDecoderSim:
-    &quot;&quot;&quot;教学用的多 token 提议—验证模拟器。
+<section class="lessons">
 
-    本类只模拟候选前缀、首次拒绝和回退后缀，不代表真实推理 backend 的
-    概率校正、KV Cache 管理或吞吐收益。&quot;&quot;&quot;
-
-    def __init__(self, max_proposal_len: int = 4, min_accept_ratio: float = 0.5):
-        if not isinstance(max_proposal_len, int) or isinstance(max_proposal_len, bool) or max_proposal_len &lt;= 0:
-            raise ValueError(&quot;max_proposal_len must be positive&quot;)
-        if not (0.0 &lt; min_accept_ratio &lt;= 1.0):
-            raise ValueError(&quot;min_accept_ratio must be in (0, 1]&quot;)
-        self.max_proposal_len = max_proposal_len
-        self.min_accept_ratio = min_accept_ratio
-        self.history: List[dict] = []
-
-    def propose(self, draft_tokens: Sequence[int]) -&gt; List[int]:
-        &quot;&quot;&quot;把草稿序列截断为本轮允许验证的候选前缀。
-
-        空序列返回空列表；返回长度不超过 `max_proposal_len`。&quot;&quot;&quot;
-        # ==========================================
-        # TODO 1: 从草稿 token 中生成本轮候选序列
-        # 提示：先把 draft_tokens 转成 list，再截取前 max_proposal_len 个 token。
-        # 这个结果决定本轮最多验证多少个位置，不要修改输入序列。
-        # ==========================================
-        # proposed = ???
-        return proposed
-
-    def _accept_token(self, draft_prob: float, target_prob: float) -&gt; bool:
-        &quot;&quot;&quot;按教学用概率阈值判断一个候选是否通过验证。
-
-        这里的阈值规则用于观察控制流，不等同于严格的分布保持算法。&quot;&quot;&quot;
-        # ==========================================
-        # TODO 2: 判断单个候选 token 是否被目标模型接受
-        # 提示：正常情况下，target_prob 至少要达到
-        # draft_prob * min_accept_ratio；draft_prob &lt;= 0 时单独处理。
-        # ==========================================
-        if draft_prob &lt;= 0:
-            return target_prob &gt; 0
-        # accepted = ???
-        return accepted
-
-    def verify(
-        self,
-        draft_probs: torch.Tensor,
-        target_probs: torch.Tensor,
-        draft_tokens: Sequence[int],
-    ) -&gt; Tuple[List[int], int | None]:
-        &quot;&quot;&quot;从左到右验证候选，并在首次拒绝处停止。
-
-        `draft_probs` 和 `target_probs` 的第 i 行对应第 i 个候选位置；
-        返回已接受前缀以及首次拒绝的位置。&quot;&quot;&quot;
-        proposed = self.propose(draft_tokens)
-        accepted_tokens: List[int] = []
-        rejected_at = None
-        draft_probs = torch.as_tensor(draft_probs)
-        target_probs = torch.as_tensor(target_probs)
-
-        if draft_probs.ndim != 2 or target_probs.ndim != 2:
-            raise ValueError(&quot;draft_probs 和 target_probs 必须是二维张量&quot;)
-        if draft_probs.shape != target_probs.shape or draft_probs.shape[0] &lt; len(proposed):
-            raise ValueError(&quot;概率矩阵必须具有相同形状，并覆盖所有候选位置&quot;)
-        vocab_size = draft_probs.shape[1]
-        if any(not isinstance(token_id, int) or not 0 &lt;= token_id &lt; vocab_size for token_id in proposed):
-            raise ValueError(&quot;draft token id 必须是词表范围内的整数&quot;)
-
-        for i, token_id in enumerate(proposed):
-            draft_prob = float(draft_probs[i, token_id])
-            target_prob = float(target_probs[i, token_id])
-            # ==========================================
-            # TODO 3: 逐个验证候选 token，遇到第一次拒绝就停止
-            # 提示: 调用 _accept_token 得到 accepted；后续接受/拒绝分支已经给出
-            # ==========================================
-            # accepted = ???
-
-            if accepted:
-                accepted_tokens = accepted_tokens + [token_id]
-            else:
-                rejected_at = i
-                break
-
-        return accepted_tokens, rejected_at
-
-    def decode(
-        self,
-        draft_probs: torch.Tensor,
-        target_probs: torch.Tensor,
-        draft_tokens: Sequence[int],
-    ) -&gt; dict:
-        &quot;&quot;&quot;汇总接受前缀、拒绝位置、回退后缀和本轮推进比例。
-
-        `progress_per_round` 只表示本轮接受比例，不代表真实吞吐提升。&quot;&quot;&quot;
-        proposed = self.propose(draft_tokens)
-        accepted_tokens, rejected_at = self.verify(draft_probs, target_probs, draft_tokens)
-        # ==========================================
-        # TODO 4: 切出被拒绝后缀，形成完整解码结果
-        # 提示: rejected_at 为 None 表示全部接受；否则从 rejected_at 开始都是回退后缀
-        # ==========================================
-        # rejected_suffix = ???
-
-        result = {
-            &quot;proposed_tokens&quot;: proposed,
-            &quot;accepted_tokens&quot;: accepted_tokens,
-            &quot;accepted_len&quot;: len(accepted_tokens),
-            # 本轮真正推进的 token 占提议长度的比例，和项目 benchmark 的指标对应
-            &quot;progress_per_round&quot;: (len(accepted_tokens) / len(proposed)) if proposed else 0.0,
-            &quot;rejected_at&quot;: rejected_at,
-            &quot;rejected_suffix&quot;: rejected_suffix,
-        }
-        self.history.append(result)
-        return result
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code>def test_multi_token_decoder():
-    try:
-        sim = MultiTokenDecoderSim(max_proposal_len=3, min_accept_ratio=0.6)
-        draft_tokens = [10, 20, 30, 31]
-        draft_probs = torch.zeros(4, 40)
-        target_probs = torch.zeros(4, 40)
-
-        for i, tok in enumerate(draft_tokens):
-            draft_probs[i, tok] = 0.5
-            target_probs[i, tok] = 0.8 if i &lt; 2 else 0.2
-
-        assert sim.propose(draft_tokens) == [10, 20, 30]
-        assert sim._accept_token(0.5, 0.31) is True
-        assert sim._accept_token(0.5, 0.2) is False
-
-        accepted, rejected_at = sim.verify(draft_probs, target_probs, draft_tokens)
-        assert accepted == [10, 20]
-        assert rejected_at == 2
-
-        result = sim.decode(draft_probs, target_probs, draft_tokens)
-        assert result[&quot;proposed_tokens&quot;] == [10, 20, 30]
-        assert result[&quot;accepted_tokens&quot;] == [10, 20]
-        assert result[&quot;accepted_len&quot;] == 2
-        assert result[&quot;progress_per_round&quot;] == 2 / 3
-        assert result[&quot;rejected_at&quot;] == 2
-        assert result[&quot;rejected_suffix&quot;] == [30]
-        assert len(sim.history) == 1
-
-        # 全部接受：本轮推进比例应为 1，且没有回退后缀
-        all_target = torch.zeros(4, 40)
-        for i, tok in enumerate([10, 20, 30, 31]):
-            all_target[i, tok] = 0.8
-        all_result = sim.decode(draft_probs, all_target, draft_tokens)
-        assert all_result[&quot;accepted_len&quot;] == 3
-        assert all_result[&quot;progress_per_round&quot;] == 1.0
-        assert all_result[&quot;rejected_at&quot;] is None
-        assert all_result[&quot;rejected_suffix&quot;] == []
-
-        # 改变提议长度时，推进量应随实际接受前缀变化
-        for proposal_len in (1, 2, 4):
-            variable_sim = MultiTokenDecoderSim(max_proposal_len=proposal_len, min_accept_ratio=0.6)
-            variable_tokens = [10, 20, 30, 31]
-            variable_result = variable_sim.decode(draft_probs, all_target, variable_tokens)
-            assert variable_result[&quot;accepted_len&quot;] == proposal_len
-            assert variable_result[&quot;progress_per_round&quot;] == 1.0
-
-        print(&quot;✅ MultiTokenDecoderSim 测试通过！&quot;)
-    except NotImplementedError as e:
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except (AttributeError, NameError, TypeError, ValueError, IndexError) as e:
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        raise AssertionError(&quot;测试未通过，请检查提议、验证和回退逻辑。&quot;) from e
-
-
-test_multi_token_decoder()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="multi-token-propose">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>提议阶段只做两件事：统一为 list，再截取本轮上限</h2>
+          <h2>草稿一次写四个字，为什么不能跳过错误继续抄？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">max_proposal_len=3，draft_tokens=(10,20,30,31)。</p>
-            <p class="predict-q">propose 返回什么类型和内容？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-propose" value="0">
-                <span>list [10,20,30]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-propose" value="1">
-                <span>tuple (10,20,30)</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-propose" value="2">
-                <span>list [10,20,30,31]</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="multi-token-propose">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>草稿模型像速记员，目标模型像审稿人。后面的候选依赖前面的上下文，所以第一个错误会让后续草稿失去原先的条件。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>proposal</dt><dd>草稿提出的一串候选 token。</dd></div><div><dt>verify</dt><dd>目标模型按规则验证候选。</dd></div><div><dt>accepted prefix</dt><dd>从开头连续通过的部分。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="multi-token-propose">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Sequence[int] 可以是 list 或 tuple；list(draft_tokens) 把它统一成普通列表。</li><li>values[:n] 取前 n 个元素；当原列表不足 n 个时，Python 会返回全部元素而不报错。</li><li>max_proposal_len 在 __init__ 中已验证为正数。</li><li>propose 只决定本轮候选序列，不读取概率，也不做接受判断。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>多 token 解码先控制尝试规模。提议太长可能增加验证和回退成本，因此每轮只拿草稿序列的一个前缀。这里先把“提出哪些 token”和“是否接受”拆开，后面的控制流会更容易验证。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>输入输出契约</h4>
-            <div class="adv-contract">
-              <span>输入</span><strong>draft_tokens: Sequence[int]</strong>
-              <span>配置</span><strong>self.max_proposal_len</strong>
-              <span>输出</span><strong>List[int]，长度不超过上限</strong>
-              <span>不负责</span><strong>概率比较、验证、回退</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>测试数据流</h4>
-            <div class="adv-flow">
-              <span>草稿<br>[10,20,30,31]</span>
-              <span>上限<br>3</span>
-              <strong>proposed<br>[10,20,30]</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel neutral">
-            <h4>候选少于上限</h4>
-            <p><code>[4,5][:3]</code> 返回 <code>[4,5]</code>，切片不会补 token。</p>
-          </section>
-          <section class="adv-panel warn">
-            <h4>不要在这里验证</h4>
-            <p>propose 没有 draft_probs 和 target_probs 参数；擅自读取概率会破坏方法职责。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">候选序列具有前缀顺序。不要用 set 去重，也不要排序；token 的位置决定后续概率矩阵使用哪一行。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用待办队列练习截取本轮处理上限</h4><pre><code>def propose_tasks(task_ids, max_tasks):
-    normalized = list(task_ids)
-    proposed = normalized[:max_tasks]
-    return proposed
-
-print(propose_tasks((7, 4, 9, 2), 3))
-# [7, 4, 9]</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>task_ids</code> 对应 <code>draft_tokens</code>。</li>
-            <li><code>max_tasks</code> 对应实例属性 <code>self.max_proposal_len</code>。</li>
-            <li>两步可以合并成 <code>list(draft_tokens)[: self.max_proposal_len]</code>。</li>
-            <li>把结果赋给 Notebook 已给出的 <code>proposed</code> 并返回。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 propose 不能把 draft_tokens 排序后再截取？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「proposal」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-propose" value="0">
-                <span>因为 Python 不支持整数排序</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>目标模型按规则验证候选。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-propose" value="1">
-                <span>因为 max_proposal_len 只能用于 tuple</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>从开头连续通过的部分。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-propose" value="2">
-                <span>候选顺序对应自回归位置和概率矩阵行，排序会改变语义</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>草稿提出的一串候选 token。</span>
               </label></div>
-              <div class="feedback" data-feedback="multi-token-propose"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="multi-token-propose-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="multi-token-verify-first-rejection">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>验证要沿位置走：取出候选概率，达到比例才接受，首次拒绝立刻停止</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">draft_prob=0.5，target_prob=0.31，min_accept_ratio=0.6。</p>
-            <p class="predict-q">_accept_token 应返回什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-verify-first-rejection" value="0">
-                <span>True</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-verify-first-rejection" value="1">
-                <span>False</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-verify-first-rejection" value="2">
-                <span>None</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="multi-token-verify-first-rejection">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>提出草稿</h4><p>本轮提议 4 个 token。假设课堂验证结果依次为 对、对、错、对。</p></li><li><h4>在首错处停止</h4><p>只能接受前 2 个，不能把第 4 个“对”捡回来，因为它依赖未通过的第 3 个。</p></li><li><h4>记录推进和成本</h4><p>回退规则还可能增加目标 token；实际实现需要记录 accepted、fallback 和验证成本，不能把候选数等同推进数。</p></li></ol><section class="learning-lab" data-lab="speculate" aria-label="草稿接受到哪里就在哪里停">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>草稿接受到哪里就在哪里停</h4><p>调整首次拒绝位置与验证成本，看看有效推进量如何影响收益。</p></header>
+    <div class="lab-controls"><label for="lab-35-accepted"><span>连续接受的草稿 <output data-value="accepted" for="lab-35-accepted">2</output> token</span><input type="range" id="lab-35-accepted" name="accepted" min="0" max="4" step="1" value="2"></label><label for="lab-35-cost"><span>一轮 draft + verify 成本 <output data-value="cost" for="lab-35-cost">30</output> 时间单位</span><input type="range" id="lab-35-cost" name="cost" min="10" max="50" step="1" value="30"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-35" data-challenge-label>算一算</label><div><input id="answer-35" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="multi-token-verify-first-rejection">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>二维概率张量用 tensor[row, column] 取单个值；这里 row=i，column=token_id。</li><li>float(tensor_scalar) 把零维 Tensor 转成 Python 浮点数，便于普通条件判断。</li><li>正常接受条件是 target_prob 不低于 draft_prob * min_accept_ratio。</li><li>accepted_tokens 只保存连续通过的前缀；第一次 False 时记录 rejected_at=i 并 break。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>第 i 个候选建立在前 i-1 个候选都成立的上下文上。一旦某个位置被目标模型拒绝，后续候选的前缀基础就失效，所以不能跳过它继续接受后面的 token。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>位置 i</b>读取 proposed[i]</span>
-          <span><b>二维索引</b>probs[i, token_id]</span>
-          <span><b>比例阈值</b>target 对比 draft * ratio</span>
-          <span><b>首次拒绝</b>记录 i，立即 break</span>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>位置 i</th><th>token_id</th><th>draft_prob</th><th>target_prob</th><th>结果</th></tr></thead>
-          <tbody>
-            <tr><td>0</td><td>10</td><td>0.5</td><td>0.8</td><td>接受</td></tr>
-            <tr><td>1</td><td>20</td><td>0.5</td><td>0.8</td><td>接受</td></tr>
-            <tr><td>2</td><td>30</td><td>0.5</td><td>0.2</td><td>拒绝并停止</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>正常分支</h4>
-            <div class="adv-contract">
-              <span>ratio</span><strong>0.6</strong>
-              <span>阈值</span><strong>0.5 * 0.6 = 0.3</strong>
-              <span>0.31</span><strong>达到阈值，True</strong>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>零草稿概率边界</h4>
-            <p>draft_prob 不大于 0 时，Notebook 已写好特殊返回：target_prob 大于 0 才接受。TODO 2 不要覆盖这段分支。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">draft_probs 和 target_probs 的 shape 在测试中都是 [4,40]：行表示候选位置，列表示 vocabulary token id。不要误写成 probs[token_id, i]。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用质量抽检练习比例阈值与首次失败</h4><pre><code>draft_scores = [0.8, 0.6, 0.5]
-review_scores = [0.7, 0.4, 0.2]
-ratio = 0.6
-accepted_indices = []
-rejected_at = None
-
-for i, draft_score in enumerate(draft_scores):
-    accepted = review_scores[i] &gt;= draft_score * ratio
-    if accepted:
-        accepted_indices = accepted_indices + [i]
-    else:
-        rejected_at = i
-        break</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>draft_score/review_scores[i]</code> 对应单个位置的 draft_prob/target_prob。</li>
-            <li>TODO 2 把比例条件赋给 <code>accepted</code>；保留已有的零概率提前返回。</li>
-            <li>TODO 3 不重写条件，调用 <code>self._accept_token(draft_prob, target_prob)</code>。</li>
-            <li>Notebook 已写好追加、rejected_at 和 break 分支；只补方法调用，避免重复控制流。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么位置 2 首次拒绝后不能继续验证位置 3 并直接接受？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>验证结果为 对、对、错、对，连续接受多少？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="0">
-                <span>位置 3 的候选依赖包含位置 2 的前缀，前缀已不再成立</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>2</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="1">
-                <span>因为 tensor 只能索引三行</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>3</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-verify-first-rejection" value="2">
-                <span>因为 accepted_tokens 必须总是偶数长度</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>4</span>
               </label></div>
-              <div class="feedback" data-feedback="multi-token-verify-first-rejection"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="multi-token-verify-first-rejection-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="multi-token-decode-rollback-history">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>汇总阶段切开两段：接受前缀进入结果，拒绝位置起整段回退</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">proposed=[10,20,30]，第 0 个 token 就被拒绝。</p>
-            <p class="predict-q">rejected_suffix 应是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-decode-rollback-history" value="0">
-                <span>[10,20,30]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-decode-rollback-history" value="1">
-                <span>[]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-multi-token-decode-rollback-history" value="2">
-                <span>[20,30]</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="multi-token-decode-rollback-history">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>checks = [True, True, False, True]
+accepted = 0
+for ok in checks:
+    if not ok: break
+    accepted += 1
+print(accepted)  # 2</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>数一串布尔值里 True 的总数当接受长度。连续前缀是 2，True 总数 3 是另一件事。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="multi-token-decode-rollback-history">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>rejected_at 是整数索引或 None；None 表示所有 proposed token 都被接受。</li><li>判断 None 应写 is not None，避免把合法索引 0 当成 False。</li><li>proposed[rejected_at:] 从首次拒绝位置开始保留整个后缀，包含被拒绝 token 本身。</li><li>decode 返回 dict，并把同一个 result 追加到 self.history；测试会检查 history 长度。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>验证结束后要把控制流变成可消费的状态：连续接受的前缀可以推进解码，首次拒绝及其后续候选都不再可靠。全接受时没有回退；第一个就拒绝时则整个 proposed 都属于回退后缀。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel warn">
-            <h4>发生首次拒绝</h4>
-            <div class="adv-flow">
-              <span>proposed<br>[10,20,30]</span>
-              <strong>accepted<br>[10,20]</strong>
-              <span>rejected_at<br>2</span>
-              <span>suffix<br>[30]</span>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>全部接受</h4>
-            <div class="adv-flow">
-              <span>proposed<br>[10,20,30]</span>
-              <strong>accepted<br>[10,20,30]</strong>
-              <span>rejected_at<br>None</span>
-              <span>suffix<br>[]</span>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-contract">
-          <span><code>proposed_tokens</code></span><strong>本轮最多 max_proposal_len 个候选</strong>
-          <span><code>accepted_tokens</code></span><strong>从左到右连续通过的前缀</strong>
-          <span><code>accepted_len</code></span><strong>len(accepted_tokens)</strong>
-          <span><code>rejected_at</code></span><strong>首次拒绝索引或 None</strong>
-          <span><code>rejected_suffix</code></span><strong>从拒绝索引开始的 proposed 后缀</strong>
-        </div>
-
-        <div class="adv-callout">不能写 <code>if rejected_at</code>：当第 0 个 token 被拒绝时 rejected_at=0，Python 会把 0 当作 False，错误地产生空后缀。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用批量审批练习 None 与索引 0</h4><pre><code>proposed = ['A', 'B', 'C']
-rejected_at = 0
-
-rejected_suffix = (
-    proposed[rejected_at:]
-    if rejected_at is not None
-    else []
-)
-result = {
-    'rejected_at': rejected_at,
-    'rejected_suffix': rejected_suffix,
-}
-# rejected_suffix 是 ['A', 'B', 'C']</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>proposed</code> 对应 decode 已经取得的 <code>proposed</code>。</li>
-            <li>条件必须保留 <code>rejected_at is not None</code>，正确覆盖索引 0。</li>
-            <li>TODO 4 只补 <code>rejected_suffix</code>；result 字典和 history.append 已经写好。</li>
-            <li>测试样例 rejected_at=2，因此后缀应从 token 30 开始，即 [30]。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>全部候选通过时，rejected_at=None，应返回什么 rejected_suffix？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="0">
-                <span>None</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「proposal」的定义和计算。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="1">
-                <span>[]</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>数一串布尔值里 True 的总数当接受长度。连续前缀是 2，True 总数 3 是另一件事。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-multi-token-decode-rollback-history" value="2">
-                <span>完整 proposed</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label></div>
-              <div class="feedback" data-feedback="multi-token-decode-rollback-history"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="multi-token-decode-rollback-history-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="65f945bd1d9d8eb2606fd39ed8195973fd6983c65fc8b7c5f078d295152bcb14">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/35_Multi_Token_Decoding.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>MultiTokenDecoderSim</code> · <code>propose</code> · <code>verify</code> · <code>decode</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1674,14 +943,14 @@ result = {
 
   <script>
     const levelId = "35";
-    const checkpointData = {"multi-token-propose":{"answer":2,"explain":"多 token 候选是有顺序的前缀，不是无序集合。"},"multi-token-verify-first-rejection":{"answer":0,"explain":"自回归候选存在前缀依赖，首次拒绝后的整个后缀都需要回退。"},"multi-token-decode-rollback-history":{"answer":1,"explain":"没有首次拒绝位置，就没有需要回退的后缀；返回类型仍保持 List[int]。"}};
-    const predictData = {"multi-token-propose":{"answer":0,"revealNote":"先 list 转换，再取前三个，因此类型是 list，长度为 3。"},"multi-token-verify-first-rejection":{"answer":0,"revealNote":"阈值是 0.5 * 0.6 = 0.3，0.31 大于等于 0.3。"},"multi-token-decode-rollback-history":{"answer":0,"revealNote":"切片从 rejected_at=0 开始，整个提议都需要回退。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：草稿提出的一串候选 token。。另外两个选项分别解释「verify」和「accepted prefix」，注意区分。"},"v4-experiment":{"answer":0,"explain":"遇到第一次拒绝立即停，后面的结果不能独立复用。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：数一串布尔值里 True 的总数当接受长度。连续前缀是 2，True 总数 3 是另一件事。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "37";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1690,20 +959,22 @@ result = {
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-6ff61bf0d3df";
+    const homeworkKey = statePrefix + levelId + "-homework-65f945bd1d9d";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1728,7 +999,7 @@ result = {
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1770,11 +1041,15 @@ result = {
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1805,6 +1080,7 @@ result = {
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

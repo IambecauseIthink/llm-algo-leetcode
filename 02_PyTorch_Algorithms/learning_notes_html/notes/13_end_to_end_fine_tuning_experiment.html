@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,376 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 13 | 零基础导学关卡</p>
-        <h1>End-to-End Fine-Tuning Experiment | 端到端微调实验</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>端到端微调实验</h1>
+        <p class="course-subtitle">End-to-End Fine-Tuning Experiment</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">13_End_to_End_Fine_Tuning_Experiment.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">SFT</span><span class="pill">训练闭环</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">input → masked next-token loss → backward → optimizer.step</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">把 prompt 和 response 变成可监督的 SFT 样本</a></li><li><a href="#mission-2">错开一位：让位置 t 预测位置 t+1</a></li><li><a href="#mission-3">合成四层闭环：数据、模型、loss 与优化器</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="a708cd7b5e092a6d27db2315b9954196cf20767c06ec46f4e579b4a548f3aa37">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../13_End_to_End_Fine_Tuning_Experiment.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>13. End-to-End Fine-Tuning Experiment | 端到端微调实验</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first / GPU optional | <strong>标签：</strong> <code>训练微调</code>, <code>SFT</code>, <code>训练闭环</code> | <strong>目标人群：</strong> 训练机制学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>前面的小节已经分别讲过模型封装、优化器、损失函数和梯度累积，但真实微调不是把这些概念单独跑通就结束。只要数据构造、label 对齐、loss 计算或参数更新里有一个环节接错，训练就会表现成 loss 不降、shape 对不上，或者看似运行但模型没有真正学习。</p>
-<p>本节把这些训练要素收成一个最小端到端 SFT 实验：先构造 train / val 样本，再计算自回归 loss，最后走完 backward、梯度累积、optimizer step 和周期性评估。它是本部分第一个训练闭环小项目：前面分别实现训练组件，这里验证组件能否共同产出可解释的训练结果；后续第 64 节先检查数据准入，第 62 节验证指令微调任务，第 60 节再比较全参数更新与 LoRA 适配是否值得交付。</p>
-<p>主线使用 CPU 即可完成；有 GPU 时可选运行 Step 5 的真实 SFT smoke，用于确认真实模型和真实数据能够走通训练闭环。GPU 实验的配置、自动下载方式和证据边界见 Step 5；环境安装与预检见<a href="../../../docs/guide.md">使用指南</a>。</p>
-<p><strong>关键词：</strong> <code>end-to-end</code>, <code>fine-tuning</code>, <code>train/val</code>, <code>report</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 构造单条 SFT 样本</li><li>TODO 2: 对齐 next-token 预测并计算 SFT loss</li><li>TODO 3: 在 eval 模式下计算 batch loss</li><li>TODO 4: 端到端训练闭环与报告</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先掌握 SFT 数据与训练循环、优化器与 loss、梯度累积这三个直接前置，再做端到端微调实验。</p>
-<ul>
-<li><a href="09_sft_training_loop.html">09. SFT Training Loop | 监督微调训练循环</a></li>
-<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失</a></li>
-<li><a href="12_gradient_accumulation.html">12. Gradient Accumulation | 梯度累积</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成最小 SFT 闭环后，下一步最自然的是把它推进到 LoRA 项目、指令微调项目和训练性能分析里。</p>
-<ul>
-<li><a href="60_lora_fine_tuning_project.html">60. LoRA Fine-Tuning Project | LoRA 微调项目</a></li>
-<li><a href="62_instruction_fine_tuning_project.html">62. Instruction Fine-Tuning Project | 指令微调项目</a></li>
-<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling-Driven End-to-End Optimization | Profiling 驱动的端到端优化</a></li>
-</ul>
-<hr>
-<h3>Step 1: 端到端训练闭环长什么样</h3>
-<p>端到端微调实验的核心，是把数据、模型、loss、优化器和评估接成一个可运行闭环。</p>
-<p>一个完整的微调实验通常包含五层：</p>
-<ol>
-<li><strong>数据层</strong>：将 prompt/response 构造为 tokenized batch（input_ids + attention_mask + labels），并进行 padding 对齐，作为模型的直接输入。</li>
-<li><strong>模型层</strong>：输入 token 经过 embedding -&gt; Transformer / RNN -&gt; LM head，输出每个位置的 logits。</li>
-<li><strong>优化层</strong>：计算 SFT loss，执行 backward、step 和 zero_grad。</li>
-<li><strong>训练控制层</strong>：控制梯度累积、参数更新频率和 loss 记录。</li>
-<li><strong>评估层</strong>：在训练中定期记录 train / val loss，并用小样本 overfit 检查确认闭环真的接通。</li>
-</ol>
-<p>前面的训练组件分别解决了局部问题；本节把它们放进一个极小语言模型的完整训练循环，观察数据如何经过前向、loss、反向传播和参数更新，并在 train / val 中形成可检查的报告。模型已经给出，具体实现任务见 Step 4。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/13_training_components.svg" alt="端到端微调的五个组成部分"></p>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;端到端微调的组成部分：&lt;/strong&gt; 图片按功能拆开数据、模型、优化、训练控制和评估五个部分，帮助你建立后续代码的阅读索引。&lt;/div&gt;</p>
-<h3>Step 2: 运行前先想清楚要观察什么</h3>
-<p>这次实验的任务不是调出一个有代表性的模型，而是确认训练链路真的在工作；因此先不调学习率，运行后按下表依次检查四个现象。重复样本只用于验证闭环，val loss 也不代表真实任务的泛化能力；正式项目还需要独立验证集、任务指标和样例回归。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">先看什么</th>
-<th style="text-align:left">正常现象</th>
-<th style="text-align:left">它说明了什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">输入和输出</td>
-<td style="text-align:left">batch、logits、labels 的 shape 能对上</td>
-<td style="text-align:left">数据可以进入 loss</td>
-</tr>
-<tr>
-<td style="text-align:left">参数和状态</td>
-<td style="text-align:left"><code>optimizer.step()</code> 后参数变化，optimizer 产生 state</td>
-<td style="text-align:left">梯度和优化器已经接上</td>
-</tr>
-<tr>
-<td style="text-align:left">训练曲线</td>
-<td style="text-align:left">重复样本上的 train loss 下降</td>
-<td style="text-align:left">模型确实在利用梯度学习</td>
-</tr>
-<tr>
-<td style="text-align:left">评估结果</td>
-<td style="text-align:left">train / val 能用同一口径计算</td>
-<td style="text-align:left">训练和评估流程没有断开</td>
-</tr>
-</tbody>
-</table>
-<p>如果某一步没有出现预期现象，就回到表格中的对应环节排查。</p>
-<h3>Step 3: 先读懂四个接口各自负责什么</h3>
-<p>先不要修改模型。<code>TinyCausalLM</code> 只是一个可快速运行的验证模型；本节真正要接通的是它周围的四个接口：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">接口</th>
-<th style="text-align:left">负责的事情</th>
-<th style="text-align:left">你要关注的连接</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left"><code>build_sft_batch</code> / <code>collate_sft_batch</code></td>
-<td style="text-align:left">把 prompt、response 变成 batch</td>
-<td style="text-align:left">哪些 token 参与监督，哪些位置被 mask</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>compute_sft_loss</code></td>
-<td style="text-align:left">对齐 next-token 预测并计算 loss</td>
-<td style="text-align:left">logits、labels 和 padding 是否错开一位</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>evaluate_loss</code></td>
-<td style="text-align:left">在不更新参数的情况下计算 loss</td>
-<td style="text-align:left"><code>eval()</code> 和 <code>no_grad()</code> 的作用范围</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>run_finetuning_experiment</code></td>
-<td style="text-align:left">累积梯度、更新参数并记录报告</td>
-<td style="text-align:left">一个 update 如何串起 forward 到 train / val</td>
-</tr>
-</tbody>
-</table>
-<p>下面的图把这些接口之间的数据流展开；阅读时重点看每个接口的输入、输出，以及它在训练闭环中的位置。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/13_training_loop.svg" alt="端到端训练闭环"></p>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;端到端训练闭环：&lt;/strong&gt; 图中箭头表示 batch、loss 和参数在训练闭环中的数据或控制流，不表示运行时间、显存占用或性能比例。&lt;/div&gt;</p>
-<h3>Step 4：完成 TODO，并用结果检查闭环</h3>
-<p>现在回到题目区，按“数据构造 → loss → 评估 → 训练报告”的顺序完成 4 个 TODO。不要改动 <code>TinyCausalLM</code>；每完成一个接口，先看它的返回值是否符合下一个接口的输入。最后运行测试，确认 loss 能计算、重复样本上的 train loss 会下降、参数确实更新，并生成最小报告。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>
-def build_sft_batch(prompt_ids, response_ids, pad_id=0, eos_id=2, max_len=10):
-    &quot;&quot;&quot;拼接一条 SFT 样本，并返回定长的输入、掩码和监督标签。
+<section class="lessons">
 
-    prompt 只提供上下文，response + EOS 才是监督目标；padding 不应产生 loss。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 1: 构造单条 SFT 样本
-    # 提示：先拼接 prompt 与 response_with_eos；prompt 的 labels 填 -100，
-    #       response/EOS 保留原 token。截断后必须仍有一个有效监督 token。
-    #       最后右侧 padding 到 max_len，并返回三个等长的 long tensor。
-    # ==========================================
-    response_with_eos = response_ids + [eos_id]
-    # input_ids = ??? prompt_ids + response_with_eos
-    # labels = ??? prompt 部分填 -100，response_with_eos 保留原 token
-
-    if len(input_ids) &gt; max_len:
-        input_ids = input_ids[:max_len]
-        labels = labels[:max_len]
-    if not any(label != -100 for label in labels):
-        raise ValueError(&quot;截断后没有有效监督 token&quot;)
-
-    # attention_mask = ??? 真实 token 为 1，padding 为 0
-    # pad_len = ??? max_len - len(input_ids)
-    # input_ids = ??? 在右侧补 pad_id
-    # attention_mask = ??? 在右侧补 0
-    # labels = ??? 在右侧补 -100
-
-    return {
-        &quot;input_ids&quot;: torch.tensor(input_ids, dtype=torch.long),
-        &quot;attention_mask&quot;: torch.tensor(attention_mask, dtype=torch.long),
-        &quot;labels&quot;: torch.tensor(labels, dtype=torch.long),
-    }
-
-
-def collate_sft_batch(samples, pad_id=0, eos_id=2, max_len=10):
-    &quot;&quot;&quot;将多条定长 SFT 样本堆叠成 batch。&quot;&quot;&quot;
-    items = [build_sft_batch(prompt, response, pad_id=pad_id, eos_id=eos_id, max_len=max_len) for prompt, response in samples]
-    return {key: torch.stack([item[key] for item in items], dim=0) for key in items[0]}
-
-
-class TinyCausalLM(nn.Module):
-    &quot;&quot;&quot;用于验证训练接口的最小语言模型；本题不要求修改模型结构。&quot;&quot;&quot;
-    def __init__(self, vocab_size=64, hidden_size=32):
-        super().__init__()
-        self.embedding = nn.Embedding(vocab_size, hidden_size)
-        self.rnn = nn.GRU(hidden_size, hidden_size, batch_first=True)
-        self.lm_head = nn.Linear(hidden_size, vocab_size)
-
-    def forward(self, input_ids, attention_mask=None):
-        x = self.embedding(input_ids)
-        hidden, _ = self.rnn(x)
-        logits = self.lm_head(hidden)
-        return logits
-
-
-def compute_sft_loss(logits, labels, attention_mask=None):
-    &quot;&quot;&quot;按 causal LM 的 next-token 对齐规则计算 SFT loss。&quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 对齐 next-token 预测并计算 SFT loss
-    # 提示：logits 取前 t-1 个位置，labels 取后 t-1 个位置；
-    #       attention_mask 只需作用在目标 label 位置，并继续使用 -100 忽略。
-    #       使用 CrossEntropyLoss(ignore_index=-100)，返回一个标量 loss。
-    # ==========================================
-    # shift_logits = ??? 保留前 t-1 个位置
-    # shift_labels = ??? 从第 2 个 token 开始对齐
-    # if attention_mask is not None:
-    #     shift_attention_mask = ??? 取目标 token 对应的 mask
-    #     shift_labels = ??? 将 padding 对应位置改为 -100
-    # if 没有任何 shift_labels != -100:  # 应主动拒绝空监督 batch
-    #     raise ValueError(???)
-    # loss = ??? CrossEntropyLoss(ignore_index=-100)(...)
-    return loss
-
-
-def evaluate_loss(model, batch):
-    &quot;&quot;&quot;在不记录梯度的条件下，用统一口径计算一个 batch 的 loss。&quot;&quot;&quot;
-    # ==========================================
-    # TODO 3: 在 eval 模式下计算 batch loss
-    # 提示：切换到 eval 模式并关闭梯度记录；调用同一个 loss 函数，
-    #       保持训练和验证的 label / padding 口径一致，返回 Python float。
-    # ==========================================
-    # model.eval()
-    # with torch.no_grad():
-    #     logits = ???
-    #     loss = ???
-    # return ???
-    pass
-
-
-def run_finetuning_experiment(model, optimizer, train_batch, val_batch=None, accum_steps=2, num_updates=40, eval_every=10):
-    &quot;&quot;&quot;
-    在小批样本上训练，验证梯度累积、参数更新和 train / val 报告。
-
-    每次 optimizer.step() 前处理 accum_steps 个等大的 micro-batch。
-    &quot;&quot;&quot;
-    if train_batch[&quot;input_ids&quot;].size(0) % accum_steps != 0:
-        raise ValueError(&quot;batch size 必须能被 accum_steps 整除&quot;)
-
-    # ==========================================
-    # TODO 4: 端到端训练闭环与报告
-    # 提示：先记录初始 train/val loss；每次 update 切分等大的 micro-batch，
-    #       累积梯度后只调用一次 optimizer.step()，并在指定节点追加 history。
-    # ==========================================
-    report = {
-        &quot;initial_train_loss&quot;: evaluate_loss(model, train_batch),
-        &quot;initial_val_loss&quot;: evaluate_loss(model, val_batch) if val_batch is not None else None,
-        &quot;final_train_loss&quot;: None,
-        &quot;final_val_loss&quot;: None,
-        &quot;history&quot;: [],
-    }
-    # micro_size = ??? train_batch 大小 / accum_steps
-    for step in range(1, num_updates + 1):
-        model.train()
-        optimizer.zero_grad()
-        for idx in range(accum_steps):
-            # mb = ??? 取出第 idx 个 micro-batch
-            # logits = ??? 调用模型得到输出
-            # loss = ??? 当前 micro-batch 的 loss / accum_steps
-            # loss.backward()
-            pass
-        # optimizer.step()
-        # if ??? 第 1 步、评估间隔或最后一步:
-        #     report[&quot;history&quot;].append(...)
-    # report[&quot;final_train_loss&quot;] = ???
-    # report[&quot;final_val_loss&quot;] = ???
-    # return report
-    pass
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
-def test_end_to_end_finetuning():
-    try:
-        torch.manual_seed(7)
-
-        train_samples = [
-            ([1, 2, 3], [4, 5, 6, 7]),
-            ([1, 2, 3], [4, 5, 6, 7]),
-            ([1, 2, 3], [4, 5, 6, 7]),
-            ([1, 2, 3], [4, 5, 6, 7]),
-        ]
-        val_samples = [
-            ([1, 2, 3], [4, 5, 6, 7]),
-            ([1, 2, 3], [4, 5, 6, 7]),
-        ]
-
-        train_batch = collate_sft_batch(train_samples, pad_id=0, eos_id=2, max_len=9)
-        val_batch = collate_sft_batch(val_samples, pad_id=0, eos_id=2, max_len=9)
-
-        assert train_batch[&quot;input_ids&quot;].shape == (4, 9), &quot;train batch shape 错误&quot;
-        assert train_batch[&quot;attention_mask&quot;].sum().item() == 32, &quot;attention_mask 统计错误&quot;
-        assert torch.any(train_batch[&quot;labels&quot;] == -100), &quot;prompt/padding 应该被 mask&quot;
-        assert torch.all(train_batch[&quot;labels&quot;][:, :3] == -100), &quot;prompt token 不应参与监督&quot;
-        assert torch.all(train_batch[&quot;attention_mask&quot;][:, 8] == 0), &quot;padding 的 attention_mask 应为 0&quot;
-        assert torch.all(train_batch[&quot;labels&quot;][:, 8] == -100), &quot;padding 不应参与 loss&quot;
-
-        truncated = build_sft_batch([1, 2, 3, 4], [5, 6], max_len=5)
-        assert truncated[&quot;input_ids&quot;].tolist() == [1, 2, 3, 4, 5], &quot;截断顺序错误&quot;
-        assert truncated[&quot;labels&quot;].tolist() == [-100, -100, -100, -100, 5], &quot;截断后监督标签错误&quot;
-        try:
-            build_sft_batch([1, 2, 3, 4], [5], max_len=4)
-        except ValueError as exc:
-            assert &quot;有效监督&quot; in str(exc), &quot;无监督样本的错误提示不清晰&quot;
-        else:
-            raise AssertionError(&quot;截断后没有监督 token 时应报错&quot;)
-
-        torch.manual_seed(9)
-        probe_logits = torch.randn(1, 4, 8)
-        probe_labels = torch.tensor([[-100, 2, 3, -100]])
-        probe_mask = torch.tensor([[1, 1, 1, 0]])
-        actual_loss = compute_sft_loss(probe_logits, probe_labels, probe_mask)
-        expected_labels = probe_labels[:, 1:].masked_fill(probe_mask[:, 1:] == 0, -100)
-        expected_loss = nn.CrossEntropyLoss(ignore_index=-100)(
-            probe_logits[:, :-1, :].reshape(-1, 8), expected_labels.reshape(-1)
-        )
-        assert torch.allclose(actual_loss, expected_loss), &quot;next-token shift 或 padding mask 错误&quot;
-
-        model = TinyCausalLM(vocab_size=64, hidden_size=32)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=0.05)
-        before_update = {name: parameter.detach().clone() for name, parameter in model.named_parameters()}
-
-        report = run_finetuning_experiment(
-            model,
-            optimizer,
-            train_batch,
-            val_batch=val_batch,
-            accum_steps=2,
-            num_updates=30,
-            eval_every=10,
-        )
-
-        changed = any(not torch.equal(before_update[name], parameter.detach()) for name, parameter in model.named_parameters())
-        assert changed, &quot;optimizer.step() 后至少应有一组参数发生变化&quot;
-        assert len(optimizer.state) &gt; 0, &quot;完成 optimizer.step() 后应生成 optimizer state&quot;
-
-        print(f&quot;Initial train loss: {report['initial_train_loss']:.4f}&quot;)
-        print(f&quot;Final train loss  : {report['final_train_loss']:.4f}&quot;)
-        print(f&quot;Initial val loss  : {report['initial_val_loss']:.4f}&quot;)
-        print(f&quot;Final val loss    : {report['final_val_loss']:.4f}&quot;)
-        print(f&quot;History           : {report['history']}&quot;)
-
-        assert len(report[&quot;history&quot;]) &gt;= 3, &quot;训练过程应该至少记录 3 次评估&quot;
-        assert report[&quot;final_train_loss&quot;] &lt; report[&quot;initial_train_loss&quot;], &quot;训练没有让 train loss 下降&quot;
-        assert report[&quot;final_val_loss&quot;] &lt; report[&quot;initial_val_loss&quot;], &quot;训练没有让 val loss 下降&quot;
-        assert report[&quot;final_train_loss&quot;] &lt; 0.2, &quot;重复样本过拟合不充分，闭环可能有问题&quot;
-
-        print(f&quot;Optimizer updated parameters: {changed}; state entries: {len(optimizer.state)}&quot;)
-        print(&quot;✅ 测试通过！端到端微调闭环、参数更新、评估和报告均运行正常。&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分。&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分。&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分。&quot;) from e
-    except Exception as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise
-
-test_end_to_end_finetuning()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="sft-build-batch">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="sft-build-batch">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>把 prompt 和 response 变成可监督的 SFT 样本</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">prompt=[1,2,3]，response=[4,5]，max_len=7，pad_id=0。</p>
             <p class="predict-q">正确的 labels 是哪一个？</p>
             <div class="predict-options">
@@ -1396,14 +1052,11 @@ test_end_to_end_finetuning()
                 <input type="radio" name="predict-sft-build-batch" value="2">
                 <span>[-100,-100,-100,-100,-100,0,0]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-build-batch">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-build-batch">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-build-batch">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>input_ids 是模型真正读取的 token 序列；labels 决定每个位置是否产生训练损失。</li><li>CrossEntropyLoss 的 ignore_index=-100 会忽略 label 为 -100 的位置。</li><li>Python 列表用 + 表示拼接；[value] * n 会生成 n 个相同值。</li><li>函数最终返回两个 dtype=torch.long 的一维 Tensor，长度都必须恰好等于 max_len。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>input_ids 是模型真正读取的 token 序列；labels 决定每个位置是否产生训练损失。</li><li>CrossEntropyLoss 的 ignore_index=-100 会忽略 label 为 -100 的位置。</li><li>Python 列表用 + 表示拼接；[value] * n 会生成 n 个相同值。</li><li>函数最终返回两个 dtype=torch.long 的一维 Tensor，长度都必须恰好等于 max_len。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1463,24 +1116,36 @@ targets = targets + [-100] * padding</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-build-batch-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 input_ids=prompt+response，以及 labels=prompt 对应 -100、response 保留原 token。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-build-batch-1">
+                <span>按 Notebook 顺序处理长度：超长时两个列表都取 [:max_len]；不足时 input 补 pad_id、labels 补 -100。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-build-batch-2">
+                <span>返回两个 torch.long Tensor，并确认测试样本得到 shape [8]；随后 repeat 后 batch shape 是 [4,8]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-build-batch-3">
+                <span>错误诊断：长度不同时检查两个列表是否同步截断/补齐；prompt 也产生 loss 时检查 labels mask；Embedding 报 dtype 错时检查是否用了 long。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="sft-next-token-loss">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="sft-next-token-loss">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>错开一位：让位置 t 预测位置 t+1</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">logits.shape=[4,8,64]，labels.shape=[4,8]。</p>
             <p class="predict-q">完成 shift 并展平后，交叉熵的两个输入 shape 是什么？</p>
             <div class="predict-options">
@@ -1496,14 +1161,11 @@ targets = targets + [-100] * padding</code></pre></div>
                 <input type="radio" name="predict-sft-next-token-loss" value="2">
                 <span>[4,7] 与 [4,7]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-next-token-loss">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-next-token-loss">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-next-token-loss">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>TinyCausalLM 输出 logits.shape=[B,T,V]，最后一维 V 是词表类别数；labels.shape=[B,T]。</li><li>自回归训练中，位置 t 的 logits 用来预测下一个 token，即 labels 的位置 t+1。</li><li>切片后的 Tensor 可能不连续；contiguous 后再 view 展平更稳妥。</li><li>CrossEntropyLoss 接收 [N,C] 浮点 logits 与 [N] long targets，并通过 ignore_index=-100 跳过 mask。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>TinyCausalLM 输出 logits.shape=[B,T,V]，最后一维 V 是词表类别数；labels.shape=[B,T]。</li><li>自回归训练中，位置 t 的 logits 用来预测下一个 token，即 labels 的位置 t+1。</li><li>切片后的 Tensor 可能不连续；contiguous 后再 view 展平更稳妥。</li><li>CrossEntropyLoss 接收 [N,C] 浮点 logits 与 [N] long targets，并通过 ignore_index=-100 跳过 mask。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1571,24 +1233,36 @@ loss = loss_fn(
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-loss-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成两个 shift，并在 view 前调用 contiguous；检查 shift_logits=[B,T-1,V]、shift_labels=[B,T-1]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-loss-1">
+                <span>用 nn.CrossEntropyLoss(ignore_index=-100) 对展平后的 Tensor 计算标量 loss 并返回。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-loss-2">
+                <span>错误诊断：target size 报错时检查时间维切片与展平；prompt/pad 也计入 loss 时检查 ignore_index；view 报 stride 时检查 contiguous。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-loss-3">
+                <span>测试会在训练前后重复调用该函数，因此实现不能修改传入的 logits 或 labels。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="sft-training-loop">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="sft-training-loop">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>合成四层闭环：数据、模型、loss 与优化器</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">input_ids.shape=[4,8]、accum_steps=2。</p>
             <p class="predict-q">每个 micro-batch 的 mb_input 与模型 logits shape 分别是什么？</p>
             <div class="predict-options">
@@ -1604,14 +1278,11 @@ loss = loss_fn(
                 <input type="radio" name="predict-sft-training-loop" value="2">
                 <span>[2,64] 与 [2,8]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-training-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-training-loop">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-training-loop">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>input_ids 与 labels 的 batch size 必须能被 accum_steps 整除；Notebook 已为非法情况抛 ValueError。</li><li>每个 update 开始先 model.train 和 optimizer.zero_grad；每个 micro-batch 都 forward、loss、backward。</li><li>每段 loss 必须除以 accum_steps，循环结束后才 optimizer.step。</li><li>history 每个 update 追加一个 Python 数值；测试要求长度等于 num_updates，并要求最终 loss 小于初始 loss。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>input_ids 与 labels 的 batch size 必须能被 accum_steps 整除；Notebook 已为非法情况抛 ValueError。</li><li>每个 update 开始先 model.train 和 optimizer.zero_grad；每个 micro-batch 都 forward、loss、backward。</li><li>每段 loss 必须除以 accum_steps，循环结束后才 optimizer.step。</li><li>history 每个 update 追加一个 Python 数值；测试要求长度等于 num_updates，并要求最终 loss 小于初始 loss。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1676,16 +1347,36 @@ for update in range(update_count):
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-training-loop-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 micro-batch 切片、forward、缩放 loss、backward、total_loss 累加，并在内层循环后 step。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-training-loop-1">
+                <span>每个 update 只向 history 追加一次 total_loss；测试传入 num_updates=30，所以返回长度必须是 30。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-training-loop-2">
+                <span>运行 test_end_to_end_finetuning，确认 final_loss&lt;init_loss；不要依赖固定 loss 数值，因为初始化和优化过程才决定它。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-training-loop-3">
+                <span>错误诊断：history 长度过长时检查 append 层级；loss 不降时依次检查 labels mask、shift 方向、loss 缩放、backward 和 step。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="a708cd7b5e092a6d27db2315b9954196cf20767c06ec46f4e579b4a548f3aa37">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/13_End_to_End_Fine_Tuning_Experiment.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>build_sft_batch</code> · <code>collate_sft_batch</code> · <code>TinyCausalLM</code> · <code>forward</code> · <code>compute_sft_loss</code> · <code>evaluate_loss</code> · <code>run_finetuning_experiment</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1705,10 +1396,10 @@ for update in range(update_count):
     const predictData = {"sft-build-batch":{"answer":0,"revealNote":"prompt 与 padding 都忽略，只有 response token 4、5 保留为监督目标。"},"sft-next-token-loss":{"answer":0,"revealNote":"每条序列保留 7 个预测位置，4×7=28；类别维 64 不变。"},"sft-training-loop":{"answer":0,"revealNote":"只切 batch 维；序列长度 8 不变，模型再增加词表维 64。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "13";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1721,16 +1412,18 @@ for update in range(update_count):
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1755,7 +1448,7 @@ for update in range(update_count):
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1797,11 +1490,15 @@ for update in range(update_count):
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1832,6 +1529,7 @@ for update in range(update_count):
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

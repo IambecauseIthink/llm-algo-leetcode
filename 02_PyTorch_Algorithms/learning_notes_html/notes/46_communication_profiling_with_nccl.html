@@ -733,798 +733,202 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 2</span>
-        <span class="pill" id="status">闯关题：0 / 2</span>
-        <span class="pill" id="xp">XP 0 / 200</span>
+
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 46 | 零基础导学关卡</p>
-        <h1>Communication Profiling with NCCL | NCCL 通信剖析</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>NCCL 通信剖析</h1>
+        <p class="course-subtitle">Communication Profiling with NCCL</p>
+        <p class="lead">通信 trace 像两条时间轨道：计算与传输可能同时发生。要用区间判断重叠，而不是看到两段都存在就认定实现了 overlap。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">46_Communication_Profiling_with_NCCL.ipynb</span>
           <span class="pill">并行通信</span><span class="pill">NCCL</span><span class="pill">性能剖析</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">record -&gt; overlap check -&gt; aggregate by op -&gt; export timeline</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">两个同学同时干活，为什么总时间不能直接相加？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="a265c1a35d0fef3db2afa5368c759a70b5acbaafa64b91760b424fdd699cb270">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../46_Communication_Profiling_with_NCCL.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>46. Communication Profiling with NCCL | NCCL 通信剖析</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>并行通信</code>, <code>NCCL</code>, <code>性能剖析</code> | <strong>目标人群：</strong> 并行通信学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>前面的并行章节已经介绍过 ZeRO、Pipeline Parallelism 和 Tensor Parallelism：它们都能把大模型训练或推理拆到多张卡上。但一旦跨卡，性能瓶颈就不再只来自矩阵乘法，通信、同步等待和计算通信重叠都会影响整体吞吐。</p>
-<p>本节用一个极简 <code>NCCLProfilerSim</code> 模拟通信 profiling 的基本思路：记录 compute 事件、记录 communication 事件、判断两者是否 overlap，再按通信算子汇总时间和数据量。学完后，你应该能看清“记录 -&gt; overlap 判断 -&gt; 按 op 汇总 -&gt; 时间线导出”这条通信瓶颈分析链路。</p>
-<p><strong>关键词：</strong> <code>nccl</code>, <code>all-reduce</code>, <code>communication profiling</code>, <code>overlap</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 完成事件记录层</li><li>TODO 2: 完成 overlap 判断与汇总统计</li><li>TODO 3: 导出 timeline 记录</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能区分计算事件、通信事件和同步等待，再观察 NCCL 时间线如何定位 overlap 与通信热点。</p>
-<ul>
-<li><a href="29_tensor_parallelism_sim.html">29. Tensor Parallelism Sim | Tensor 并行模拟</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/05_Communication_Topologies.ipynb">P1: 05. Communication Topologies | 通信拓扑与分布式基石</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/20_NCCL_and_AllReduce_Basics.ipynb">P1: 20. NCCL and AllReduce Basics | NCCL 与 AllReduce 基础</a></li>
-</ul>
-<hr>
-<h3>Step 1: 原理与痛点</h3>
-<blockquote>
-<p><strong>为什么分布式性能不能只看 GPU 利用率？</strong></p>
-<p>多卡训练或推理中，GPU 可能看起来很忙，但真正限制吞吐的可能是 all-reduce 等通信操作，也可能是某些 rank 在等待其他 rank 同步。只看单个算子的耗时，往往看不出通信和计算之间的阻塞关系。</p>
-</blockquote>
-<p>NCCL profiling 要回答的不是“有没有通信”，而是三件事：</p>
-<ul>
-<li><strong>通信对象是什么</strong>：all-reduce、broadcast、reduce-scatter，还是其他 collective；</li>
-<li><strong>通信耗时是多少</strong>：每类 op 总共花了多久、搬了多少 bytes；</li>
-<li><strong>是否被计算掩盖</strong>：通信是否和 forward / backward 等 compute 区间重叠。</li>
-</ul>
-<p>这一步的核心直觉是：同样一段通信时间，如果能和计算重叠，体感开销会小很多；如果完全落在关键路径上，就会直接拖慢训练或推理。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/46_nccl_profiling_overview.svg" alt="NCCL 通信分析总览"></p>
-<h3>Step 2: 代码实现框架</h3>
-<p>本节会实现一个最小 <code>NCCLProfilerSim</code>。它不调用真实 NCCL，也不依赖多卡环境，而是用时间区间模拟 compute event 和 communication event。</p>
-<p>代码拆成五个动作：</p>
-<table>
-<thead>
-<tr>
-<th>动作</th>
-<th>对应方法 / 变量</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>记录计算</td>
-<td><code>add_compute</code></td>
-<td>保存 compute 区间，例如 forward / backward</td>
-</tr>
-<tr>
-<td>记录通信</td>
-<td><code>add_comm</code></td>
-<td>保存通信 op、起止时间、传输 bytes</td>
-</tr>
-<tr>
-<td>overlap 判断</td>
-<td><code>_has_overlap</code></td>
-<td>判断通信区间是否和任一 compute 区间重叠</td>
-</tr>
-<tr>
-<td>汇总统计</td>
-<td><code>summarize</code></td>
-<td>统计总通信时间、overlap 时间和按 op 聚合结果</td>
-</tr>
-<tr>
-<td>时间线导出</td>
-<td><code>timeline</code></td>
-<td>按时间顺序导出通信事件，便于观察瓶颈</td>
-</tr>
-</tbody>
-</table>
-<p>这个模拟器的重点是 profiling 数据结构，而不是 NCCL API 本身。真实 profiler 可能来自 PyTorch Profiler、Nsight Systems 或 NCCL 日志，但最终都需要把事件整理成可比较的时间线和统计表。</p>
-<h3>Step 3: 核心机制</h3>
-<p>判断两个时间区间是否重叠，可以用一个反向条件：如果通信区间完全在计算区间左侧，或者完全在计算区间右侧，则不重叠；否则就是重叠。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/46_collective_trace.svg" alt="通信事件如何读时间线"></p>
-<p>写成代码就是：</p>
-<pre><code class="language-python">not (comm_end &lt;= compute_start or comm_start &gt;= compute_end)
-</code></pre>
-<p>汇总时，本节计算三个核心指标：</p>
-<ul>
-<li><code>total_comm_time</code>：所有通信事件的总耗时；</li>
-<li><code>overlap_time</code>：被标记为和计算重叠的通信耗时；</li>
-<li><code>overlap_ratio</code>：<code>overlap_time / total_comm_time</code>，用于粗略判断通信是否被计算隐藏。</li>
-</ul>
-<p>需要注意：这里的 <code>overlap_time</code> 是教学近似，直接把整个通信事件计入重叠。真实 profiler 会进一步计算区间交集长度，甚至分析 critical path。</p>
-<h3>Step 4: 动手实战</h3>
-<p><strong>要求</strong>：请补全下方 <code>NCCLProfilerSim</code>，跑通“记录 compute -&gt; 记录 comm -&gt; 判断 overlap -&gt; 汇总 by_op -&gt; 导出 timeline”这条链路。你需要重点完成六个位置：compute 事件字典、通信事件对象、overlap 判断条件、op 聚合桶、op 统计累加，以及 timeline 单条记录。</p>
-<p>完成后观察测试结果：<code>all_reduce</code> 应该被统计到 <code>by_op</code> 中，部分通信事件应该被标记为 overlap，时间线应该按开始时间排序。只要这些结果成立，就说明最小通信 profiling 闭环已经跑通。</p>
-<h3>提示</h3>
-<ul>
-<li>先记 <code>compute</code>，再记 <code>comm</code>；通信是否 overlap，要依赖前面已经登记过的 compute 区间。</li>
-<li>判断 overlap 时，可以先想“什么时候完全不重叠”，再把这个条件取反。</li>
-<li><code>summarize</code> 最好分两步写：先为当前 <code>op</code> 拿到统计桶，再累加 <code>count / time / bytes</code>。</li>
-<li><code>timeline</code> 只是把单条事件导出成字典，字段名保持和测试里访问的一致即可。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>@dataclass
-class CommEvent:
-    op: str
-    start: float
-    end: float
-    bytes: int
-    overlap_with_compute: bool = False
+<section class="lessons">
 
-    @property
-    def duration(self) -&gt; float:
-        return max(self.end - self.start, 0.0)
-
-
-class NCCLProfilerSim:
-    &quot;&quot;&quot;极简版 NCCL 通信 profiling 模拟器。&quot;&quot;&quot;
-
-    def __init__(self):
-        self.events: List[CommEvent] = []
-        self.compute_events: List[Dict[str, float]] = []
-
-    def add_compute(self, name: str, start: float, end: float):
-        # ==========================================
-        # TODO 1: 完成事件记录层
-        # 提示: 这里先构造 compute event 字典并 append；
-        # add_comm 里再构造 CommEvent，并补 overlap_with_compute 状态。
-        # ==========================================
-        # event = ???
-        self.compute_events.append(event)
-
-    def add_comm(self, op: str, start: float, end: float, bytes: int):
-        # ==========================================
-        # TODO 1: 完成事件记录层
-        # 提示: 先构造 CommEvent，再调用 _has_overlap 判断是否和 compute 重叠。
-        # ==========================================
-        # event = ???
-        event.overlap_with_compute = self._has_overlap(event.start, event.end)
-        self.events.append(event)
-
-    def _has_overlap(self, start: float, end: float) -&gt; bool:
-        for c in self.compute_events:
-            # ==========================================
-            # TODO 2: 完成 overlap 判断与汇总统计
-            # 提示: 先排除 end &lt;= c[&quot;start&quot;] 或 start &gt;= c[&quot;end&quot;] 这两种完全错开情况。
-            # ==========================================
-            # overlaps = ???
-            if overlaps:
-                return True
-        return False
-
-    def summarize(self) -&gt; Dict[str, Any]:
-        total_comm_time = sum(e.duration for e in self.events)
-        overlap_time = sum(e.duration for e in self.events if e.overlap_with_compute)
-        by_op: Dict[str, Dict[str, float]] = {}
-        for e in self.events:
-            # ==========================================
-            # TODO 2: 完成 overlap 判断与汇总统计
-            # 提示: 先为当前 op 取出或创建 {&quot;count&quot;: 0, &quot;time&quot;: 0.0, &quot;bytes&quot;: 0} 统计桶。
-            # ==========================================
-            # item = ???
-            # ==========================================
-            # TODO 2: 完成 overlap 判断与汇总统计
-            # 提示: 再在同一个 item 上依次累加 count、time 和 bytes。
-            # ==========================================
-            # item[&quot;count&quot;] = ???
-            item[&quot;time&quot;] += e.duration
-            item[&quot;bytes&quot;] += e.bytes
-        return {
-            &quot;num_comm_events&quot;: len(self.events),
-            &quot;total_comm_time&quot;: total_comm_time,
-            &quot;overlap_time&quot;: overlap_time,
-            &quot;overlap_ratio&quot;: overlap_time / max(total_comm_time, 1e-8),
-            &quot;by_op&quot;: by_op,
-        }
-
-    def timeline(self) -&gt; List[Dict[str, Any]]:
-        records = []
-        for e in sorted(self.events, key=lambda x: (x.start, x.end, x.op)):
-            # ==========================================
-            # TODO 3: 导出 timeline 记录
-            # 提示: 返回的字典至少包含 op、start、end、duration、bytes、overlap 这 6 个字段。
-            # ==========================================
-            # record = ???
-            records.append(record)
-        return records
-</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code># 测试你的实现
-def test_nccl_profiler():
-    try:
-        profiler = NCCLProfilerSim()
-        profiler.add_compute('forward', 0.0, 2.0)
-        profiler.add_comm('all_reduce', 1.0, 2.5, 128 * 1024)
-        profiler.add_comm('broadcast', 2.6, 3.0, 64 * 1024)
-        profiler.add_compute('backward', 3.0, 5.0)
-        profiler.add_comm('reduce_scatter', 3.5, 4.3, 96 * 1024)
-
-        timeline = profiler.timeline()
-        summary = profiler.summarize()
-
-        assert len(timeline) == 3
-        assert timeline[0]['op'] == 'all_reduce'
-        assert timeline[0]['overlap'] is True
-        assert timeline[1]['overlap'] is False
-        assert summary['num_comm_events'] == 3
-        assert summary['total_comm_time'] &gt; 0
-        assert summary['overlap_time'] &gt; 0
-        assert 0.0 &lt;= summary['overlap_ratio'] &lt;= 1.0
-        assert summary['by_op']['all_reduce']['count'] == 1
-        assert summary['by_op']['all_reduce']['bytes'] == 128 * 1024
-
-        print('✅ NCCLProfilerSim 测试通过')
-    except NotImplementedError as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_nccl_profiler()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="nccl-events-and-interval-overlap">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先把性能问题变成时间区间：记录事件并判断 overlap</h2>
+          <h2>两个同学同时干活，为什么总时间不能直接相加？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">compute=[3.0,5.0)，comm=[2.6,3.0)。</p>
-            <p class="predict-q">Notebook 的判断会把它标记成 overlap 吗？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="0">
-                <span>不会，comm_end &lt;= compute_start</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="1">
-                <span>会，因为它们都包含 3.0</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-events-and-interval-overlap" value="2">
-                <span>会，因为 bytes 大于 0</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="nccl-events-and-interval-overlap">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>通信 trace 像两条时间轨道：计算与传输可能同时发生。要用区间判断重叠，而不是看到两段都存在就认定实现了 overlap。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>collective</dt><dd>多设备共同参与的通信操作，如 AllReduce。</dd></div><div><dt>overlap</dt><dd>两个事件在时间轴上同时进行的部分。</dd></div><div><dt>critical path</dt><dd>决定最早完成时刻的依赖链。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="nccl-events-and-interval-overlap">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>compute 事件用 dict 保存 name/start/end；通信事件用 dataclass CommEvent 保存 op/start/end/bytes。</li><li>duration 属性返回 max(end-start,0.0)，可避免错误时间顺序产生负耗时。</li><li>两个区间完全错开的条件是 end &lt;= compute_start 或 start &gt;= compute_end；对这个条件取 not 就得到重叠。</li><li>边界刚好接触不算重叠，例如通信 end=3.0、计算 start=3.0 会满足 end &lt;= start。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>Profiler 的第一步不是优化，而是把发生了什么记录成结构化事件。只要每条事件有类型、起止时间和字节数，就能把“通信似乎很慢”拆成可计算的问题；overlap 判断则回答这段通信有没有被任意计算区间覆盖。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>add_compute</b>保存名称与 [start,end)</span>
-          <span><b>add_comm</b>构造 op/时间/bytes</span>
-          <span><b>_has_overlap</b>遍历已有 compute</span>
-          <span><b>event flag</b>写 overlap_with_compute</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 1-2 的数据契约</h4>
-            <div class="adv-contract">
-              <span>compute</span><strong><code>{"name":name,"start":start,"end":end}</code></strong>
-              <span>communication</span><strong><code>CommEvent(op=op,start=start,end=end,bytes=bytes)</code></strong>
-              <span>overlap 字段</span><strong>add_comm 时调用 _has_overlap 后写入</strong>
-              <span>保存位置</span><strong>compute_events 与 events 两个列表分开</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 3 的反向思考</h4>
-            <div class="adv-flow">
-              <span>通信完全在左边<br>end &lt;= c.start</span>
-              <span>或完全在右边<br>start &gt;= c.end</span>
-              <strong>都不是<br>说明有交集</strong>
-            </div>
-            <p>代码是 <code>not (left_case or right_case)</code>，括号不能漏。</p>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>compute</th><th>comm</th><th>结果</th><th>原因</th></tr></thead>
-          <tbody>
-            <tr><td>[0.0,2.0)</td><td>[1.0,2.5)</td><td>True</td><td>区间 1.0 到 2.0 相交</td></tr>
-            <tr><td>[3.0,5.0)</td><td>[2.6,3.0)</td><td>False</td><td>只在 3.0 接触边界</td></tr>
-            <tr><td>[3.0,5.0)</td><td>[3.5,4.3)</td><td>True</td><td>通信落在计算区间内部</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">overlap 标记只在 add_comm 当下根据已经记录的 compute 事件计算，不会因以后新增 compute 自动回溯更新；给定测试按正确顺序添加事件。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用会议日程练习区间是否冲突</h4><pre><code>meetings = [
-    {'name': 'design', 'start': 9.0, 'end': 10.5},
-    {'name': 'review', 'start': 14.0, 'end': 15.0},
-]
-
-candidate_start = 10.0
-candidate_end = 11.0
-has_conflict = False
-for meeting in meetings:
-    overlaps = not (
-        candidate_end &lt;= meeting['start']
-        or candidate_start &gt;= meeting['end']
-    )
-    if overlaps:
-        has_conflict = True
-        break</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>meetings</code> 字典 -&gt; TODO 1 的 compute event。</li>
-            <li><code>candidate_start/end</code> -&gt; TODO 2 创建的 CommEvent 时间。</li>
-            <li><code>overlaps</code> -&gt; TODO 3；字段名替换为 <code>c["start"]</code> 与 <code>c["end"]</code>。</li>
-            <li><code>break</code> -&gt; Notebook 找到任一 overlap 后立即 return True。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>判断通信 [s,e) 与计算 [cs,ce) 重叠的正确表达式是哪一个？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「collective」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="0">
-                <span>s &lt; e</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>两个事件在时间轴上同时进行的部分。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="1">
-                <span>not (e &lt;= cs or s &gt;= ce)</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>多设备共同参与的通信操作，如 AllReduce。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-events-and-interval-overlap" value="2">
-                <span>e &lt;= cs and s &gt;= ce</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>决定最早完成时刻的依赖链。</span>
               </label></div>
-              <div class="feedback" data-feedback="nccl-events-and-interval-overlap"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="nccl-events-and-interval-overlap-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="nccl-summary-buckets-and-timeline">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>把事件变成结论：按 op 聚合，再输出可排序时间线</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">all_reduce 有两条事件，duration 分别 1.2 与 0.8，bytes 分别 100 与 60。</p>
-            <p class="predict-q">聚合桶应该得到什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="0">
-                <span>count=2, time=2.0, bytes=160</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="1">
-                <span>count=1, time=0.8, bytes=60</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-nccl-summary-buckets-and-timeline" value="2">
-                <span>count=2, time=0.96, bytes=40</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="nccl-summary-buckets-and-timeline">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>画区间</h4><p>计算在 [0,6]，通信在 [4,8]，共同覆盖 [4,6]，重叠 2。</p></li><li><h4>算覆盖时间</h4><p>6+4−2=8，不能把总时长说成 10。</p></li><li><h4>读等待</h4><p>即使某次通信短，频繁同步也可能让关键路径变长；记录起止时刻和依赖才能解释。</p></li></ol><section class="learning-lab" data-lab="overlap" aria-label="在两条时间轨道上找交集">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>在两条时间轨道上找交集</h4><p>计算固定在 [0,6]，通信长 4；移动通信起点。</p></header>
+    <div class="lab-controls"><label for="lab-46-start"><span>通信开始时刻 <output data-value="start" for="lab-46-start">4</output> 时间单位</span><input type="range" id="lab-46-start" name="start" min="0" max="8" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-46" data-challenge-label>算一算</label><div><input id="answer-46" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="nccl-summary-buckets-and-timeline">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>dict.setdefault(key, default) 会在 key 不存在时写入 default，并无论如何返回该 key 对应的对象。</li><li>item 是 by_op 中嵌套 dict 的引用；修改 item['count'] 会直接更新 by_op[e.op]。</li><li>sorted(events,key=lambda x:(x.start,x.end,x.op)) 用开始时间、结束时间、op 名依次做稳定排序。</li><li>overlap_ratio 使用 max(total_comm_time,1e-8) 防止没有通信事件时除零。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>timeline 回答“什么时候发生”，summary 回答“总体花在哪里”。同一份 CommEvent 既可以按时间排序，也可以按 op 分桶累加。初学者只要先建立一个固定的桶结构，再对每条事件做三次加法，就能得到最小可用的通信分析报告。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>TODO 4-5：聚合桶</h4>
-            <div class="adv-contract">
-              <span>桶 key</span><strong>通信 op，例如 all_reduce</strong>
-              <span>初始值</span><strong><code>{"count":0,"time":0.0,"bytes":0}</code></strong>
-              <span>每条事件</span><strong>count +1，time +duration，bytes +e.bytes</strong>
-              <span>全局指标</span><strong>total、overlap_time、overlap_ratio</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>TODO 6：timeline 单条记录</h4>
-            <div class="adv-contract">
-              <span>身份</span><strong>op</strong>
-              <span>位置</span><strong>start、end、duration</strong>
-              <span>规模</span><strong>bytes</strong>
-              <span>关系</span><strong>overlap=overlap_with_compute</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-flow">
-          <span>events<br>3 条 CommEvent</span>
-          <span>按 op 分桶<br>count/time/bytes</span>
-          <span>按 start 排序<br>生成 records</span>
-          <strong>summary + timeline<br>两个观察视角</strong>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>给定测试事件</th><th>duration</th><th>overlap</th><th>进入哪个桶</th></tr></thead>
-          <tbody>
-            <tr><td>all_reduce 1.0-2.5</td><td>1.5</td><td>True</td><td>by_op["all_reduce"]</td></tr>
-            <tr><td>broadcast 2.6-3.0</td><td>0.4</td><td>False</td><td>by_op["broadcast"]</td></tr>
-            <tr><td>reduce_scatter 3.5-4.3</td><td>0.8</td><td>True</td><td>by_op["reduce_scatter"]</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">Notebook 的 overlap_time 是教学近似：只要事件有任何重叠，就把该通信事件的完整 duration 计入，不计算精确交集长度。不要自行改成另一套指标，否则测试含义会变化。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用快递记录练习 setdefault 聚合与时间排序</h4><pre><code>deliveries = [
-    {'kind': 'air', 'start': 3.0, 'end': 5.0, 'boxes': 4},
-    {'kind': 'ground', 'start': 1.0, 'end': 4.0, 'boxes': 7},
-    {'kind': 'air', 'start': 6.0, 'end': 7.0, 'boxes': 2},
-]
-
-by_kind = {}
-for event in deliveries:
-    bucket = by_kind.setdefault(
-        event['kind'], {'count': 0, 'time': 0.0, 'boxes': 0}
-    )
-    bucket['count'] += 1
-    bucket['time'] += event['end'] - event['start']
-    bucket['boxes'] += event['boxes']
-
-timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子 -&gt; Notebook TODO</h4>
-          <ul>
-            <li><code>by_kind</code> -&gt; <code>by_op</code>；<code>event['kind']</code> -&gt; <code>e.op</code>。</li>
-            <li><code>bucket</code> -&gt; TODO 4 的 <code>item</code>，默认字段改为 count/time/bytes。</li>
-            <li>三次累加 -&gt; TODO 5；duration 使用 <code>e.duration</code> 属性。</li>
-            <li><code>timeline</code> -&gt; TODO 6 外层排序；Notebook 还要把 dataclass 转成六字段 dict。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>setdefault 在当前 op 已存在时会做什么？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>计算 [0,6]，通信 [4,8]，重叠长度是多少？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="0">
-                <span>返回 None</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>6</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="1">
-                <span>每次都把桶清零</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>4</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-nccl-summary-buckets-and-timeline" value="2">
-                <span>返回已有聚合桶，不覆盖其中已累计的数据</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>2</span>
               </label></div>
-              <div class="feedback" data-feedback="nccl-summary-buckets-and-timeline"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="nccl-summary-buckets-and-timeline-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>compute, comm = (0,6), (4,8)
+overlap = max(0, min(compute[1],comm[1])-max(compute[0],comm[0]))
+print(overlap)  # 2</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把两个事件名出现在同一 trace 当成已经重叠，或用所有 overlap 之和直接推出端到端加速。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>把两个事件名出现在同一 trace 当成已经重叠，或用所有 overlap 之和直接推出端到端加速。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「collective」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="a265c1a35d0fef3db2afa5368c759a70b5acbaafa64b91760b424fdd699cb270">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/46_Communication_Profiling_with_NCCL.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>CommEvent</code> · <code>duration</code> · <code>NCCLProfilerSim</code> · <code>add_compute</code> · <code>add_comm</code> · <code>summarize</code> · <code>timeline</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 2 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1536,14 +940,14 @@ timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre>
 
   <script>
     const levelId = "46";
-    const checkpointData = {"nccl-events-and-interval-overlap":{"answer":1,"explain":"先写两种完全错开情况，用 or 合并，再整体取反。"},"nccl-summary-buckets-and-timeline":{"answer":2,"explain":"因此循环中的 item 始终指向 by_op[e.op] 的当前桶，可以继续累加。"}};
-    const predictData = {"nccl-events-and-interval-overlap":{"answer":0,"revealNote":"代码采用半开区间式边界，end 与 start 相等属于完全错开。"},"nccl-summary-buckets-and-timeline":{"answer":0,"revealNote":"同 op 的事件逐项累加：次数 2、耗时 1.2+0.8、数据量 100+60。"}};
-    const predictTotal = 2;
-    const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：多设备共同参与的通信操作，如 AllReduce。。另外两个选项分别解释「overlap」和「critical path」，注意区分。"},"v4-experiment":{"answer":2,"explain":"交集是 [4,6]。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：把两个事件名出现在同一 trace 当成已经重叠，或用所有 overlap 之和直接推出端到端加速。"}};
+    const predictData = {};
+    const predictTotal = 0;
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "42";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1556,16 +960,18 @@ timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1590,7 +996,7 @@ timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1632,11 +1038,15 @@ timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1667,6 +1077,7 @@ timeline = sorted(deliveries, key=lambda e: (e['start'], e['end']))</code></pre>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

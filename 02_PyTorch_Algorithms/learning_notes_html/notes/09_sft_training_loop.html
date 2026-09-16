@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,387 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 09 | 零基础导学关卡</p>
-        <h1>SFT Training Loop | 监督微调训练循环</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>监督微调训练循环</h1>
+        <p class="course-subtitle">SFT Training Loop</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/09_SFT_Training_Loop.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">09_SFT_Training_Loop.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">SFT</span><span class="pill">训练循环</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">loss = CrossEntropy(logits[:, :-1], labels[:, 1:])</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">先构造 labels：只让 response 与有效位置参与学习</a></li><li><a href="#mission-2">再做 shift：第 t 个预测对齐第 t+1 个标签</a></li><li><a href="#mission-3">最后展平：把所有有效位置交给交叉熵</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="7ab9a5d67da715c630f0de93ccf2722cd3a3b10da6763421c40c4e574e4fe09e">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../09_SFT_Training_Loop.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/09_SFT_Training_Loop.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>09. SFT Training Loop | 监督微调训练循环</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>SFT</code>, <code>训练循环</code> | <strong>目标人群：</strong> 训练机制学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>把模型结构写出来以后，下一步就是让它按监督数据学习回答。Fine-tuning 是继续训练预训练模型以适应下游任务的总称，SFT（监督微调）是其中使用 prompt-response 标注数据的一种训练方式。SFT 最容易出错的地方并不在 optimizer，而在数据和 loss 的对齐：模型输入通常是 <code>[prompt + response]</code>，真正应该学习的是 response，而不是让模型去复述 prompt。</p>
-<p>本节聚焦 SFT 训练循环中的数据与 loss 对齐：用 prompt masking 将上下文位置设为 <code>ignore_index</code>，用 <code>attention_mask</code> 区分真实 token 和 padding，再通过 shift logits / labels 对齐下一个 token 预测。完成后，你应该能看懂 <code>input_ids</code>、<code>attention_mask</code>、<code>labels</code> 和 cross entropy 之间的关系。参数更新、评估和 LoRA / RLHF 训练将在后续内容中沿用这套对齐规则。</p>
-<p><strong>关键词：</strong> <code>SFT</code>, <code>masking</code>, <code>attention_mask</code>, <code>shift logits</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 构造 labels</li><li>TODO 2: 截断（Truncation）与有效监督检查</li><li>TODO 3: attention mask 与填充 (Padding)</li><li>TODO 4: 实现 Shift 错位对齐</li><li>TODO 5: 检查有效监督 token，并计算交叉熵</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把模型封装、训练循环和优化器基础看清，再读 SFT 的数据构造与 loss 对齐会更顺。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础</a></li>
-<li><a href="../../../00_Prerequisites/11_PyTorch_Optimizers_and_Loss.ipynb">P0: 11. PyTorch Optimizers and Loss | PyTorch 优化器与损失</a></li>
-<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 读完 SFT 的最小训练循环后，建议继续看端到端微调实验、LoRA 以及训练显存和性能分析。</p>
-<ul>
-<li><a href="10_lora_tutorial.html">10. LoRA Tutorial | LoRA 教程</a></li>
-<li><a href="13_end_to_end_fine_tuning_experiment.html">13. End-to-End Fine-Tuning Experiment | 端到端微调实验</a></li>
-<li><a href="../../../00_Prerequisites/17_PyTorch_Profiling_Basics.ipynb">P0: 17. PyTorch Profiling Basics | PyTorch 性能剖析基础</a></li>
-<li><a href="../../../00_Prerequisites/18_Memory_Profiling_and_Optimization.ipynb">P0: 18. Memory Profiling and Optimization | 显存剖析与优化</a></li>
-</ul>
-<hr>
-<h3>Step 1：从一条问答样本理解 SFT</h3>
-<p>SFT 使用“输入—回答”样本训练模型。例如：</p>
-<ul>
-<li>prompt：<code>请计算 2 + 2。</code></li>
-<li>response：<code>答案是 4。</code></li>
-</ul>
-<p><code>EOS</code>（end of sequence）是表示序列结束的特殊 token。它让模型知道回答何时结束。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/09_sft_example_flow.svg" alt="SFT 训练序列与预测目标"></p>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;SFT 训练序列与预测目标：&lt;/strong&gt; 训练时将 prompt 与 response 拼接成序列并逐位置预测下一个 token；推理时只输入 prompt，再逐步生成 response。&lt;/div&gt;</p>
-<p>本节先从问答样本理解模型如何逐步生成回答，再逐步实现数据张量与 loss 对齐。</p>
-<h3>Step 2: 构造输入数据三件套</h3>
-<p>一条 SFT 样本进入模型前，至少要整理成 <code>input_ids</code>、<code>attention_mask</code> 和 <code>labels</code>。本 Step 先关注序列构造与 padding 对齐；监督目标和 loss 规则放到 Step 3。</p>
-<p><code>padding</code> 是为了让同一 batch 的序列长度一致而补的占位位置；<code>mask</code> 用来标记哪些位置有效、哪些位置需要忽略。</p>
-<p>下面的表先只检查序列结构；<code>labels</code> 的监督位置和 next-token 对齐规则留到 Step 3。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">位置</th>
-<th style="text-align:center">0</th>
-<th style="text-align:center">1</th>
-<th style="text-align:center">2</th>
-<th style="text-align:center">3</th>
-<th style="text-align:center">4</th>
-<th style="text-align:center">5</th>
-<th style="text-align:center">6</th>
-<th style="text-align:center">7</th>
-<th style="text-align:center">8</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">语义</td>
-<td style="text-align:center">prompt</td>
-<td style="text-align:center">prompt</td>
-<td style="text-align:center">prompt</td>
-<td style="text-align:center">response</td>
-<td style="text-align:center">response</td>
-<td style="text-align:center">response</td>
-<td style="text-align:center">response</td>
-<td style="text-align:center">EOS</td>
-<td style="text-align:center">padding</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>input_ids</code></td>
-<td style="text-align:center">10</td>
-<td style="text-align:center">20</td>
-<td style="text-align:center">30</td>
-<td style="text-align:center">40</td>
-<td style="text-align:center">50</td>
-<td style="text-align:center">60</td>
-<td style="text-align:center">70</td>
-<td style="text-align:center">2</td>
-<td style="text-align:center">0</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>attention_mask</code></td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">1</td>
-<td style="text-align:center">0</td>
-</tr>
-<tr>
-<td style="text-align:left"><code>labels</code></td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-<td style="text-align:center">先不填</td>
-</tr>
-</tbody>
-</table>
-<p>读表时先确认：真实 token 的 <code>attention_mask</code> 为 1，padding 位为 0；<code>input_ids</code> 可以包含 padding，但 padding 不应成为训练目标。Step 3 再把 prompt、response 和 EOS 映射为具体的 <code>labels</code>。</p>
-<h3>Step 3: 对齐 next-token loss</h3>
-<p>先记住一个位置关系：模型读到位置 <code>t</code> 的内容后，要预测位置 <code>t+1</code> 的 token。模型对词表中每个 token 给出的分数叫 <code>logits</code>；计算 loss 前，要把最后一个 logit 去掉，并把 labels 从第二个位置开始取，也就是 <code>logits[..., :-1, :]</code> 对齐 <code>labels[..., 1:]</code>。</p>
-<p>交叉熵可以看成“预测错得有多严重”：先把 logits 转成概率，再查看正确目标 token 的概率；概率越低，loss 越大。Step 2 的序列中，prompt 和 padding 的 label 设为 <code>-100</code>，response 与可选 EOS 保留目标 token；<code>CrossEntropyLoss(ignore_index=-100)</code> 会跳过 <code>-100</code> 位置并对其余目标求平均。若传入 <code>attention_mask</code>，还要同步屏蔽 shift 后的 padding。</p>
-<p><strong>实现约束：</strong> response 至少要留下一个监督 token；如果加入 EOS，它放在 response 后面；本节构造函数采用右侧 padding。截断后没有监督 token 时，应该调大 <code>max_len</code>、过滤样本或报错。</p>
-<p>下表把 label 的监督范围与 shift 后的预测位置放在一起，帮助检查 logits、目标 token 和 loss 是否对应。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">预测位置</th>
-<th style="text-align:center">0</th>
-<th style="text-align:center">1</th>
-<th style="text-align:center">2</th>
-<th style="text-align:center">3</th>
-<th style="text-align:center">4</th>
-<th style="text-align:center">5</th>
-<th style="text-align:center">6</th>
-<th style="text-align:center">7</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">logit 预测的 token</td>
-<td style="text-align:center">20</td>
-<td style="text-align:center">30</td>
-<td style="text-align:center">40</td>
-<td style="text-align:center">50</td>
-<td style="text-align:center">60</td>
-<td style="text-align:center">70</td>
-<td style="text-align:center">2</td>
-<td style="text-align:center">0</td>
-</tr>
-<tr>
-<td style="text-align:left">shift 后的 label</td>
-<td style="text-align:center">-100</td>
-<td style="text-align:center">-100</td>
-<td style="text-align:center">40</td>
-<td style="text-align:center">50</td>
-<td style="text-align:center">60</td>
-<td style="text-align:center">70</td>
-<td style="text-align:center">2</td>
-<td style="text-align:center">-100</td>
-</tr>
-<tr>
-<td style="text-align:left">是否计入 loss</td>
-<td style="text-align:center">否</td>
-<td style="text-align:center">否</td>
-<td style="text-align:center">是</td>
-<td style="text-align:center">是</td>
-<td style="text-align:center">是</td>
-<td style="text-align:center">是</td>
-<td style="text-align:center">是</td>
-<td style="text-align:center">否</td>
-</tr>
-</tbody>
-</table>
-<p>表中 <code>labels=-100</code> 决定哪些目标参与交叉熵，shift 决定 logits 与目标 token 的时间位置；两者缺一不可。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/09_sft_alignment.svg" alt="SFT 数据与损失对齐"></p>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;SFT 数据与损失对齐：&lt;/strong&gt; 图中展示 labels、shift 和有效监督位置的关系；具体 mask 规则见本 Step 说明。&lt;/div&gt;</p>
-<h3>Step 4: 完成 TODO 并运行测试</h3>
-<p><strong>要求</strong>：请补全下方两个函数的 <code>TODO</code>。TODO 1–3 对应 Step 2 的数据阶段：labels、截断检查和 padding；TODO 4–5 对应 Step 3 的 loss 阶段：shift 对齐、有效监督检查和交叉熵。</p>
-<p>这里仍然使用 token id 直接演示；真实工程中的 chat template 和 tokenizer 会在进入本函数前完成。完成代码后运行测试，检查样本结构和 loss 对齐。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def build_sft_data(
-    prompt_ids: list[int],
-    response_ids: list[int],
-    pad_id: int = 0,
-    eos_id: int | None = None,
-    max_len: int = 16,
-    min_response_tokens: int = 1,
-):
-    &quot;&quot;&quot;构造一条右侧 padding 的 SFT 样本。
+<section class="lessons">
 
-    参数：prompt_ids / response_ids 为 token id 列表；pad_id 和 eos_id
-    分别指定 padding 与可选 EOS；max_len 是输出固定长度；
-    min_response_tokens 是截断后必须保留的监督 token 数。
-
-    返回三个长度为 max_len 的 torch.long 张量：input_ids、
-    attention_mask 和 labels；labels 中的 -100 不参与交叉熵。
-    截断后有效监督 token 不足时抛出 ValueError。
-    &quot;&quot;&quot;
-    response_with_eos = response_ids + ([] if eos_id is None else [eos_id])
-
-    # 1. 拼接成完整序列。
-    input_ids = prompt_ids + response_with_eos
-
-    # ==========================================
-    # Prompt 部分先统一标成 ignore_index，确保只对 Response/EOS 计算损失。
-    # TODO 1: 构造 labels
-    # 规则：
-    # - 长度与 input_ids 相同
-    # - prompt 部分的 label 设置为 -100
-    # - response/EOS 部分的 label 保持原样
-    # ==========================================
-    # labels = ???
-
-    # ==========================================
-    # TODO 2: 截断（Truncation）与有效监督检查
-    # 规则：
-    # - input_ids 和 labels 使用同一个 [:max_len] 范围截断
-    # - 从截断后的 labels 统计有效监督 token
-    # - 截断后至少保留 min_response_tokens 个可监督 token
-    # ==========================================
-    # input_ids = ???
-    # labels = ???
-    # valid_supervised = ???
-    # if valid_supervised &lt; min_response_tokens:
-    #     raise ValueError(...)
-
-    # ==========================================
-    # TODO 3: attention mask 与填充 (Padding)
-    # 规则：
-    # - 真实 token 的 attention_mask 为 1
-    # - 计算 pad_len；若大于 0，再分别追加 pad_id、0 和 -100
-    # ==========================================
-    # attention_mask = ???
-    # pad_len = ???
-    # if pad_len &gt; 0: 追加 padding 到三个序列
-
-    return (
-        torch.tensor(input_ids, dtype=torch.long),
-        torch.tensor(attention_mask, dtype=torch.long),
-        torch.tensor(labels, dtype=torch.long),
-    )
-
-
-def compute_sft_loss(logits: torch.Tensor, labels: torch.Tensor, attention_mask: torch.Tensor | None = None):
-    &quot;&quot;&quot;计算自回归 SFT 的 token-level cross entropy。
-
-    logits 的 shape 为 [batch_size, seq_len, vocab_size]；labels 和
-    attention_mask 的 shape 为 [batch_size, seq_len]。返回标量 loss；
-    shift 后没有有效监督 token 时抛出 ValueError。
-    &quot;&quot;&quot;
-    # ==========================================
-    # TODO 4: 实现 Shift 错位对齐
-    # 将 logits 的最后一个 token 切掉
-    # 将 labels 的第一个 token 切掉
-    # 如果传入 attention_mask，也同步切掉第一个位置
-    # ==========================================
-    # shift_logits = ???
-    # shift_labels = ???
-    # if attention_mask is not None:
-    #     shift_attention_mask = ???
-    #     shift_labels = ???
-
-    # ==========================================
-    # TODO 5: 检查有效监督 token，并计算交叉熵
-    # 提示：loss_fct 使用 ignore_index=-100；计算前将
-    # shift_logits 整理为 [有效位置数, vocab_size]，
-    # shift_labels 整理为 [有效位置数]。
-    # ==========================================
-    # if ???:
-    #     raise ValueError(...)
-    # loss_fct = ???
-    # loss = ???
-
-    return loss
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 运行此单元格以测试你的实现
-def test_sft_pipeline():
-    try:
-        # --- 测试数据构造 ---
-        prompt = [10, 20, 30]
-        response = [40, 50, 60, 70]
-        pad_id = 0
-        eos_id = 2
-        max_len = 9
-
-        input_ids, attention_mask, labels = build_sft_data(prompt, response, pad_id, eos_id, max_len)
-
-        print(f&quot;Input IDs      : {input_ids.tolist()}&quot;)
-        print(f&quot;Attention Mask : {attention_mask.tolist()}&quot;)
-        print(f&quot;Labels         : {labels.tolist()}&quot;)
-
-        assert input_ids.tolist() == [10, 20, 30, 40, 50, 60, 70, 2, 0], &quot;Input IDs 构造错误！&quot;
-        assert attention_mask.tolist() == [1, 1, 1, 1, 1, 1, 1, 1, 0], &quot;attention_mask 构造错误！&quot;
-        assert labels.tolist() == [-100, -100, -100, 40, 50, 60, 70, 2, -100], &quot;Labels 构造或 Padding 错误！&quot;
-
-        # --- 测试截断后无监督 token 的保护 ---
-        try:
-            build_sft_data(prompt, [40], pad_id=pad_id, eos_id=eos_id, max_len=3)
-            raise AssertionError(&quot;截断后没有 response token 时应该报错&quot;)
-        except ValueError:
-            pass
-
-        # --- 测试 Loss 计算 ---
-        batch_size = 1
-        vocab_size = 100
-        logits = torch.randn(batch_size, max_len, vocab_size)
-
-        # 手动让它预测准确：logits[t] 预测 labels[t+1]
-        logits[0, 2, 40] = 50.0
-        logits[0, 3, 50] = 50.0
-        logits[0, 4, 60] = 50.0
-        logits[0, 5, 70] = 50.0
-        logits[0, 6, 2] = 50.0
-
-        labels_batch = labels.unsqueeze(0)
-        attention_batch = attention_mask.unsqueeze(0)
-        loss = compute_sft_loss(logits, labels_batch, attention_batch)
-
-        assert loss.item() &lt; 0.01, f&quot;Loss 异常偏大，可能包含了 Prompt 或 Padding 的计算！Loss = {loss.item()}&quot;
-
-        # --- 验证监督范围：prompt 的预测分数不应改变 loss ---
-        neutral_logits = torch.zeros_like(logits)
-        masked_prompt_logits = neutral_logits.clone()
-        masked_prompt_logits[0, 0, 99] = 50.0
-        masked_prompt_loss = compute_sft_loss(masked_prompt_logits, labels_batch, attention_batch)
-        neutral_loss = compute_sft_loss(neutral_logits, labels_batch, attention_batch)
-        assert torch.allclose(masked_prompt_loss, neutral_loss), &quot;Prompt 位置不应参与 loss&quot;
-
-        # response 位置的目标概率变化，应当反映到 loss。
-        response_logits = neutral_logits.clone()
-        response_logits[0, 2, 40] = 10.0
-        response_loss = compute_sft_loss(response_logits, labels_batch, attention_batch)
-        assert response_loss &lt; neutral_loss, &quot;response 目标位置没有参与 loss&quot;
-
-        # 即使错误地给 padding 写入 token id，attention_mask 也应将其屏蔽。
-        labels_with_pad_target = labels_batch.clone()
-        labels_with_pad_target[0, -1] = 99
-        protected_loss = compute_sft_loss(neutral_logits, labels_with_pad_target, attention_batch)
-        assert torch.allclose(protected_loss, neutral_loss), &quot;padding 目标没有被 attention_mask 屏蔽&quot;
-
-        print(&quot;\n✅ All Tests Passed! SFT 数据与 loss 对齐逻辑实现正确。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot; if isinstance(e, NameError) else &quot;代码可能未完成，导致了类型错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except Exception as e:
-        print(f&quot;❌ 发生异常: {e}&quot;)
-        raise
-
-test_sft_pipeline()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="sft-label-mask-and-length">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="sft-label-mask-and-length">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>先构造 labels：只让 response 与有效位置参与学习</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">prompt 长 3、response 长 4、max_len=8。</p>
             <p class="predict-q">labels 的最后一个位置应该填什么？</p>
             <div class="predict-options">
@@ -1407,14 +1052,11 @@ test_sft_pipeline()
                 <input type="radio" name="predict-sft-label-mask-and-length" value="2">
                 <span>response 的最后一个 token 70</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-label-mask-and-length">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-label-mask-and-length">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-label-mask-and-length">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>input_ids 是 prompt_ids + response_ids；它包含模型需要看到的完整上下文。</li><li>labels 与 input_ids 长度相同，但 prompt 位置写 -100，response 位置保留真实 token id。</li><li>nn.CrossEntropyLoss(ignore_index=-100) 会跳过标签为 -100 的位置，因此 prompt 与 padding 都不会贡献 loss。</li><li>截断时 input_ids 与 labels 必须切同一范围；填充时 input_ids 填 pad_id，而 labels 填 -100。最终两者固定为 max_len 个 long 元素。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>input_ids 是 prompt_ids + response_ids；它包含模型需要看到的完整上下文。</li><li>labels 与 input_ids 长度相同，但 prompt 位置写 -100，response 位置保留真实 token id。</li><li>nn.CrossEntropyLoss(ignore_index=-100) 会跳过标签为 -100 的位置，因此 prompt 与 padding 都不会贡献 loss。</li><li>截断时 input_ids 与 labels 必须切同一范围；填充时 input_ids 填 pad_id，而 labels 填 -100。最终两者固定为 max_len 个 long 元素。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1499,24 +1141,36 @@ else:
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-label-mask-and-length-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 1：labels 的 prompt 部分全部为 -100，response 部分保留原 token id。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-label-mask-and-length-1">
+                <span>完成 TODO 2：实现超长时同步截断、不足时分别用 pad_id 和 -100 补到 max_len。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-label-mask-and-length-2">
+                <span>合同自检：返回两个 shape=[max_len]、dtype=torch.long 的 Tensor。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-label-mask-and-length-3">
+                <span>错误诊断：标签断言失败时逐段打印 prompt 区、response 区、pad 区；若长度不同，检查是否两张列表都执行了相同截断或补齐。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="sft-next-token-shift">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="sft-next-token-shift">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>再做 shift：第 t 个预测对齐第 t+1 个标签</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">labels 原位置 3 的值是 response token 40。</p>
             <p class="predict-q">哪一个 logits 原位置应该负责预测这个 40？</p>
             <div class="predict-options">
@@ -1532,14 +1186,11 @@ else:
                 <input type="radio" name="predict-sft-next-token-shift" value="2">
                 <span>位置 4</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-next-token-shift">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-next-token-shift">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-next-token-shift">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>logits.shape=[batch_size, seq_len, vocab_size]；每个位置保存对词表中所有 token 的预测分数。</li><li>labels.shape=[batch_size, seq_len]；每个位置只有一个目标 token id 或 ignore_index=-100。</li><li>自回归模型在位置 t 的输出用于预测下一个 token t+1，因此不能让 logits[t] 与 labels[t] 对齐。</li><li>切片后的 Tensor 可能不是连续内存；Notebook 使用 contiguous() 后再 view 展平。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>logits.shape=[batch_size, seq_len, vocab_size]；每个位置保存对词表中所有 token 的预测分数。</li><li>labels.shape=[batch_size, seq_len]；每个位置只有一个目标 token id 或 ignore_index=-100。</li><li>自回归模型在位置 t 的输出用于预测下一个 token t+1，因此不能让 logits[t] 与 labels[t] 对齐。</li><li>切片后的 Tensor 可能不是连续内存；Notebook 使用 contiguous() 后再 view 展平。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1617,24 +1268,36 @@ print(next_actual)       # [11,19,31]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-next-token-shift-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 3：logits 去掉最后一个序列位置，labels 去掉第一个序列位置，并让切片连续。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-shift-1">
+                <span>shape 自检：shift_logits=[B,S-1,V]，shift_labels=[B,S-1]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-shift-2">
+                <span>用测试样例追踪：logits 原位置 2、3、4、5 应分别预测 labels 中的 40、50、60、70。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-next-token-shift-3">
+                <span>错误诊断：loss 很大但 shape 正确时，优先检查两边切片方向是否写反。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="sft-cross-entropy-contract">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="sft-cross-entropy-contract">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>最后展平：把所有有效位置交给交叉熵</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">shift_logits.shape=[1,7,100]。</p>
             <p class="predict-q">交给 CrossEntropyLoss 前，正确的 view shape 是什么？</p>
             <div class="predict-options">
@@ -1650,14 +1313,11 @@ print(next_actual)       # [11,19,31]</code></pre></div>
                 <input type="radio" name="predict-sft-cross-entropy-contract" value="2">
                 <span>[1,700]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="sft-cross-entropy-contract">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="sft-cross-entropy-contract">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="sft-cross-entropy-contract">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>nn.CrossEntropyLoss 的常用输入合同是 logits [N,C]、targets [N]；C 是类别数，在语言模型里就是 vocab_size。</li><li>shift_logits 当前是 [B,S-1,V]，要把 B 与 S-1 合并为样本数 N；shift_labels 同样合并为 N。</li><li>logits 最后一维 V 必须保留，不能把整个 Tensor flatten 成一列。</li><li>ignore_index=-100 让 prompt 与 padding 对齐到的目标位置不计入平均 loss。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>nn.CrossEntropyLoss 的常用输入合同是 logits [N,C]、targets [N]；C 是类别数，在语言模型里就是 vocab_size。</li><li>shift_logits 当前是 [B,S-1,V]，要把 B 与 S-1 合并为样本数 N；shift_labels 同样合并为 N。</li><li>logits 最后一维 V 必须保留，不能把整个 Tensor flatten 成一列。</li><li>ignore_index=-100 让 prompt 与 padding 对齐到的目标位置不计入平均 loss。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1737,16 +1397,36 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="sft-cross-entropy-contract-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 TODO 4：创建 ignore_index=-100 的交叉熵，把 logits 保留词表维展平、labels 展平，再计算 loss。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-cross-entropy-contract-1">
+                <span>shape/dtype 自检：flat logits=[B×(S-1),V]，flat labels=[B×(S-1)] 且为 long，loss 为标量 Tensor。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-cross-entropy-contract-2">
+                <span>运行测试：手工强化的四个 response 预测应让 loss 小于 0.01。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="sft-cross-entropy-contract-3">
+                <span>错误诊断：类别维报错时检查是否把 logits 完全 flatten；loss 偏大时检查 prompt/padding 是否仍为 -100，以及 shift 是否正确。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="7ab9a5d67da715c630f0de93ccf2722cd3a3b10da6763421c40c4e574e4fe09e">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/09_SFT_Training_Loop.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>build_sft_data</code> · <code>compute_sft_loss</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1766,10 +1446,10 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
     const predictData = {"sft-label-mask-and-length":{"answer":0,"revealNote":"第 8 个位置是 padding；labels 中 padding 必须是 ignore_index=-100。"},"sft-next-token-shift":{"answer":0,"revealNote":"自回归预测向前看一位：位置 2 的输出预测位置 3 的 token。"},"sft-cross-entropy-contract":{"answer":0,"revealNote":"7 个位置是 7 道分类题，每道题仍有 100 个词表候选。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "09";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1782,16 +1462,18 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1816,7 +1498,7 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1858,11 +1540,15 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1893,6 +1579,7 @@ loss = criterion(flat_logits, flat_answers)</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

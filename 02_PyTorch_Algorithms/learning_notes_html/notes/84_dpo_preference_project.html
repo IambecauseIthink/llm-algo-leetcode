@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,220 +742,195 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 84 | 零基础导学关卡</p>
-        <h1>DPO Preference Project | DPO 偏好优化项目</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>DPO 偏好优化项目</h1>
+        <p class="course-subtitle">DPO Preference Project</p>
+        <p class="lead">DPO 使用成对偏好比较 policy 与 reference 的相对倾向。项目评估先检查偏好对，再把 margin、loss 和有效样本比例放在一起看。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/84_DPO_Preference_Project.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">84_DPO_Preference_Project.ipynb</span>
           <span class="pill">后训练对齐</span><span class="pill">DPO</span><span class="pill">项目评估</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">模型更喜欢正确答案了吗？先把“喜欢”的刻度说清楚。</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="bf9e787c66c694825fdcd81047305d491602b28f66de2d7aaaf1102877733e42">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../84_DPO_Preference_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/84_DPO_Preference_Project.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>84. DPO Preference Project | DPO 偏好优化项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>DPO</code>, <code>项目评估</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>按下方题目代码中的函数说明和测试完成实现。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>本节导读</h2>
-<p>本节围绕一个离线 DPO 方案是否值得继续训练展开。你需要先检查偏好数据和 chosen / rejected 样本的合法性，再比较 baseline 与 candidate 的 loss、margin 和有效样本比例。最后判断当前收益是否足以覆盖数据风险，并给出继续训练、调整数据或停止实验的建议。</p>
-<p><strong>关键词：</strong> <code>preference pair</code>, <code>margin</code>, <code>baseline</code>, <code>alignment decision</code></p>
-<h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把 DPO 损失、偏好优化主线、偏好数据评测和在线 DPO 背景理顺，再进入这个项目；本节默认你已经知道离线偏好优化的基本对象，重点转向 DPO 方案是否值得继续训练。</p>
-<ul>
-<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | DPO 损失教程</a></li>
-<li><a href="../../2_4.md">2.4</a></li>
-<li><a href="50_preference_data_and_evaluation.html">50. Preference Data and Evaluation | 偏好数据与评测</a></li>
-<li><a href="51_online_dpo.html">51. Online DPO | 在线 DPO</a></li>
-<li><a href="../../../topic_discussion/post_training_alignment/intro.md">后训练与对齐专题入口</a></li>
-<li><a href="../../../topic_discussion/post_training_alignment/06_project_decision_and_delivery.md">06 Project Decision and Delivery | 项目决策与交付</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 做完离线 DPO 项目后，最自然的下一步是继续看 group-wise 对齐，或把离线结论推进到在线基准。</p>
-<ul>
-<li><a href="85_grpo_groupwise_alignment_project.html">85. GRPO Groupwise Alignment Project | GRPO 组内对齐项目</a></li>
-<li><a href="86_dpo_online_benchmark.html">86. DPO Online Benchmark | DPO 在线基准</a></li>
-</ul>
-<h3>Step 1: 定义离线偏好项目目标</h3>
-<ul>
-<li>固定 baseline、偏好数据模板、beta 和评测口径。</li>
-<li>明确 candidate 想回答的是“margin 是否更稳、loss 是否更低、chosen 是否更 consistently 胜出”。</li>
-<li>输出的不是公式推导，而是一个可以继续训练还是应该先停下修数据的项目结论。</li>
-</ul>
-<h3>Step 2: baseline 和数据合法性先要成立</h3>
-<ul>
-<li>偏好对至少要有足够样本数，且 chosen / rejected 字段不能缺失。</li>
-<li>baseline 先要给出可比较的 loss 和 margin 口径。</li>
-<li>如果数据本身不合法，后面的 candidate 再好也不能直接 adopt。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<ul>
-<li>DPO 项目必须同时看 loss、margin 和 valid_ratio，不能只挑单项 loss 收益下结论。</li>
-<li><code>loss</code> 回答 candidate 是否更容易优化。</li>
-<li><code>margin_mean</code> 和 <code>margin_min</code> 回答 chosen 是否真的被稳定拉开。</li>
-<li><code>valid_ratio</code> 回答偏好数据是否足够干净，避免拿脏数据做错结论。</li>
-</ul>
-<h3>Step 4: 输出项目结论</h3>
-<ul>
-<li>DPO 项目最终不是输出“loss 有没有降”，而是输出这套离线偏好优化方案在当前数据口径下是否值得继续保留、微调或放弃。</li>
-<li>最终建议统一为 <code>accept / tune / reject</code>。</li>
-<li>若进入 <code>tune</code>，下一轮优先回偏好数据、模板一致性和 beta，而不是直接加训练步数。</li>
-</ul>
-<h4>图解：15-50-51 如何收束到 84 DPO 项目</h4>
-<pre><code class="language-text">15 DPO loss -&gt; 50 preference data/eval -&gt; 51 online DPO context -&gt; 84 offline DPO project
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">模块</th>
-<th style="text-align:left">必须记录</th>
-<th style="text-align:left">用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">loss、margin、valid_ratio</td>
-<td style="text-align:left">保证比较口径合法</td>
-</tr>
-<tr>
-<td style="text-align:left">candidate</td>
-<td style="text-align:left">beta、loss、margin、样本覆盖</td>
-<td style="text-align:left">解释离线收益来源</td>
-</tr>
-<tr>
-<td style="text-align:left">对比</td>
-<td style="text-align:left">loss 改善、margin 改善、coverage 风险</td>
-<td style="text-align:left">判断是否值得继续训练</td>
-</tr>
-<tr>
-<td style="text-align:left">决策</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出项目结论</td>
-</tr>
-</tbody>
-</table>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 11</summary><pre><code># 4 个核心 TODO：样本审计、候选汇总、baseline 对比、项目决策
-# 目标：把离线偏好优化整理成 baseline -&gt; candidate -&gt; decision 闭环
+<section class="lessons">
 
-def audit_preference_batch(samples: List[Dict[str, object]]) -&gt; Dict[str, float]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_dpo_candidate(losses: List[float], margins: List[float], audit: Dict[str, float], beta: float) -&gt; Dict[str, float]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def compare_dpo_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def recommend_dpo_project_decision(
-    baseline: Dict[str, float], candidate: Dict[str, float], min_margin_gain: float, min_valid_ratio: float
-) -&gt; Dict[str, object]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>模型更喜欢正确答案了吗？先把“喜欢”的刻度说清楚。</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节围绕一个离线 DPO 方案是否值得继续训练展开。你需要先检查偏好数据和 chosen / rejected 样本的合法性，再比较 baseline 与 candidate 的 loss、margin 和有效样本比例。最后判断当前收益是否足以覆盖数据风险，并给出继续训练、调整数据或停止实验的建议。</p>
-            <div class="notebook-content"><h3>Step 1: 定义离线偏好项目目标</h3>
-<ul>
-<li>固定 baseline、偏好数据模板、beta 和评测口径。</li>
-<li>明确 candidate 想回答的是“margin 是否更稳、loss 是否更低、chosen 是否更 consistently 胜出”。</li>
-<li>输出的不是公式推导，而是一个可以继续训练还是应该先停下修数据的项目结论。</li>
-</ul>
-<h3>Step 2: baseline 和数据合法性先要成立</h3>
-<ul>
-<li>偏好对至少要有足够样本数，且 chosen / rejected 字段不能缺失。</li>
-<li>baseline 先要给出可比较的 loss 和 margin 口径。</li>
-<li>如果数据本身不合法，后面的 candidate 再好也不能直接 adopt。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<ul>
-<li>DPO 项目必须同时看 loss、margin 和 valid_ratio，不能只挑单项 loss 收益下结论。</li>
-<li><code>loss</code> 回答 candidate 是否更容易优化。</li>
-<li><code>margin_mean</code> 和 <code>margin_min</code> 回答 chosen 是否真的被稳定拉开。</li>
-<li><code>valid_ratio</code> 回答偏好数据是否足够干净，避免拿脏数据做错结论。</li>
-</ul>
-<h3>Step 4: 输出项目结论</h3>
-<ul>
-<li>DPO 项目最终不是输出“loss 有没有降”，而是输出这套离线偏好优化方案在当前数据口径下是否值得继续保留、微调或放弃。</li>
-<li>最终建议统一为 <code>accept / tune / reject</code>。</li>
-<li>若进入 <code>tune</code>，下一轮优先回偏好数据、模板一致性和 beta，而不是直接加训练步数。</li>
-</ul>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>DPO 使用成对偏好比较 policy 与 reference 的相对倾向。项目评估先检查偏好对，再把 margin、loss 和有效样本比例放在一起看。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>log probability</dt><dd>概率的对数；序列常通过 token log probability 累加。</dd></div><div><dt>margin</dt><dd>chosen 与 rejected 的相对分数差。</dd></div><div><dt>reference adjustment</dt><dd>减去参照模型的相对偏好，避免只看 policy 绝对值。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>DPO 偏好项目在比较候选之前先做什么？</p>
+            <p>本课中的「log probability」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>审计 chosen/rejected 样本合法性</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>概率的对数；序列常通过 token log probability 累加。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>把无效偏好对作为有效样本</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>chosen 与 rejected 的相对分数差。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>只比较训练速度</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>减去参照模型的相对偏好，避免只看 policy 绝对值。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>按题目函数说明完成实现，并运行 Notebook 测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>算 policy 差</h4><p>chosen=-2，rejected=-4，policy margin=2。</p></li><li><h4>扣掉 reference</h4><p>reference margin=1，调整后 margin=1；beta=1 时 sigmoid(1)≈0.731。</p></li><li><h4>理解 loss</h4><p>-log(0.731)≈0.313。这个数小表示这对样本偏好拟合较好，不等同整体任务质量已经提升。</p></li></ol><section class="learning-lab" data-lab="dpo" aria-label="把两种相对偏好放到同一把尺上">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>把两种相对偏好放到同一把尺上</h4><p>改变 policy margin，reference margin 固定为 1，观察 DPO 玩具损失。</p></header>
+    <div class="lab-controls"><label for="lab-84-margin"><span>Policy margin <output data-value="margin" for="lab-84-margin">2</output> </span><input type="range" id="lab-84-margin" name="margin" min="-3" max="4" step="0.5" value="2"></label><label for="lab-84-beta"><span>beta <output data-value="beta" for="lab-84-beta">1</output> </span><input type="range" id="lab-84-beta" name="beta" min="0.5" max="2" step="0.5" value="1"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-84" data-challenge-label>算一算</label><div><input id="answer-84" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>policy margin=2，reference margin=1，调整后的 margin 是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>3</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>1</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>2</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>import math
+policy_margin, reference_margin, beta = 2, 1, 1
+z = beta*(policy_margin-reference_margin)
+loss = math.log1p(math.exp(-z))
+print(round(loss,3))  # .313</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把负的 log probability 看成“不合法概率”，或只看训练 pair 的 loss 就下交付结论。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「log probability」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>把负的 log probability 看成“不合法概率”，或只看训练 pair 的 loss 就下交付结论。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="bf9e787c66c694825fdcd81047305d491602b28f66de2d7aaaf1102877733e42">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/84_DPO_Preference_Project.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>audit_preference_batch</code> · <code>summarize_dpo_candidate</code> · <code>compare_dpo_to_baseline</code> · <code>recommend_dpo_project_decision</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -965,14 +942,14 @@ def recommend_dpo_project_decision(
 
   <script>
     const levelId = "84";
-    const checkpointData = {"current-core":{"answer":0,"explain":"审计 chosen/rejected 样本合法性。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：概率的对数；序列常通过 token log probability 累加。。另外两个选项分别解释「margin」和「reference adjustment」，注意区分。"},"v4-experiment":{"answer":1,"explain":"先做 policy−reference，再乘 beta。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：把负的 log probability 看成“不合法概率”，或只看训练 pair 的 loss 就下交付结论。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 1;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -985,16 +962,18 @@ def recommend_dpo_project_decision(
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1019,7 +998,7 @@ def recommend_dpo_project_decision(
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1061,11 +1040,15 @@ def recommend_dpo_project_decision(
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1096,6 +1079,7 @@ def recommend_dpo_project_decision(
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

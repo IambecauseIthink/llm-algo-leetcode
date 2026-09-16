@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,679 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 42 | 零基础导学关卡</p>
-        <h1>Activation Offload | 激活卸载</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>激活卸载</h1>
+        <p class="course-subtitle">Activation Offload</p>
+        <p class="lead">Activation offload 将反向传播稍后需要的激活暂存到主机内存。房间是 GPU，仓库是 CPU；腾空间的代价是往返搬运。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/42_Activation_Offload.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">42_Activation_Offload.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">激活值</span><span class="pill">Offload</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">把东西搬到仓库能腾出房间，但取回来要多久？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="bfb152a794d2be2e028db6f564795d355088c3f220b2ffd808b317a1649b4984">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../42_Activation_Offload.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/42_Activation_Offload.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>42. Activation Offload | 激活卸载</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first
-<strong>标签：</strong> <code>显存优化</code>, <code>激活值</code>, <code>Offload</code> | <strong>目标人群：</strong> 显存优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>当 activation 占用超过 GPU 预算时，除了 checkpointing，还可以把部分激活搬到 CPU 或 host memory，并在反向传播需要时取回。本节用预算模型计算保留量、搬运量和理论传输时间，先把搬运路线的成本结构拆开。</p>
-<p>这是一节<strong>机制原理节</strong>：它和 <code>19</code> 是兄弟关系。<code>19</code> 主讲 checkpointing 的重算路线；<code>42</code> 主讲 offload 的搬运路线。两者都在回答“怎么把训练显存压下来”，但实现机制不同，代价模型也不同。</p>
-<p>在显存路线里，offload 是否值得采用取决于 GPU 预算、可搬运对象、host / PCIe / NVLink 带宽和额外传输时间。若传输代价过高，应同时比较 checkpointing、batch 调整和 mixed precision 等方案。</p>
-<p>完成本节后，你应该能够解释激活为什么需要在不同存储层级之间移动，判断搬运收益是否可能被带宽与同步成本抵消，并知道哪些结论需要放回固定 workload 做真实验证。</p>
-<p><strong>关键词：</strong> <code>offload</code>, <code>transfer</code>, <code>bandwidth</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 汇总 offload 结果和显存/带宽指标</li><li>TODO 2: 计算往返搬运时间</li><li>TODO 3: 补全策略判断逻辑</li><li>TODO 4: 完成 offload 与 checkpointing 的性价比比较</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能区分 checkpointing 的重算路径和反向传播需要的激活状态，再观察 offload 如何用设备间搬运换取 GPU 空间。</p>
-<ul>
-<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing | 激活检查点</a></li>
-<li><a href="18_activation_and_loss_backward.html">18. Activation and Loss Backward | 激活与损失反向</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/03_GPU_Architecture_and_Memory.ipynb">Part 01 · 03. GPU 物理架构与内存层级</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心思想与痛点</h3>
-<p>Activation Offload 处理的是“需要保留、但暂时不用”的 activation：前向后把它从 GPU 搬到 CPU 或 host memory，反向需要时再搬回。它释放的是 GPU 驻留空间，新增的是设备间传输和同步成本。先沿着前向结束、反向取回和策略组合三个阶段阅读表格，再看主图中的驻留路径。</p>
-<table>
-<thead>
-<tr>
-<th>训练阶段</th>
-<th>Offload 的动作</th>
-<th>需要关注的成本</th>
-<th>与 checkpoint 的区别</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>前向结束后</td>
-<td>把暂时不用的 activation 搬出 GPU</td>
-<td>搬出时间、主机内存和同步</td>
-<td>checkpoint 选择少保存</td>
-</tr>
-<tr>
-<td>反向开始前</td>
-<td>按需把 activation 搬回 GPU</td>
-<td>搬回时间、带宽和等待</td>
-<td>checkpoint 重新执行前向</td>
-</tr>
-<tr>
-<td>策略组合</td>
-<td>与重算策略共同作用</td>
-<td>搬运与重算代价可能叠加</td>
-<td>需要固定 workload 验证</td>
-</tr>
-<tr>
-<td>判断结果</td>
-<td>显存是否回到预算内</td>
-<td>释放空间是否值得新增代价</td>
-<td>同时观察 peak memory、step time 和吞吐</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/42_activation_offload.svg" alt="Activation Offload：用带宽换 GPU 显存"></p>
-<h3>Step 2: 代价模型与边界</h3>
-<p>设一组激活块的总大小为 <code>A</code>，GPU 可用预算为 <code>B</code>，带宽为 <code>bw</code>。本步先把容量、搬运量和时间放进同一张账；这些数值用于解释机制，不代表真实 PCIe / NVLink 测量。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/42_offload_cost_model.svg" alt="Offload 代价模型：省下多少显存，付出多少搬运"></p>
-<ul>
-<li>如果总激活量不超过 GPU 预算，理论上不需要 offload；如果超过预算，优先评估距离下一次使用较远且允许搬运的激活块。</li>
-<li>单程理论时间等于搬运数据量除以假设带宽；真实反向通常还要考虑搬回 GPU 的往返流量。</li>
-<li>offload 不是越多越好：如果留在 GPU 的状态仍超过预算，方案不可行；如果搬运和同步时间过长，显存收益可能不值得。</li>
-</ul>
-<h3>Step 3: 驻留选择与预算决策</h3>
-<p>offload 的决策可以拆成四个机制问题：哪些激活暂时不会被使用、哪些对象允许离开 GPU、搬出后 GPU 是否回到预算内、搬运时间是否值得这次显存收益。表格把这些问题映射到可观察量和判断结果；“距下一次使用的层数”只是教学模型中的冷热近似，不等同于真实运行时调度指标。</p>
-<table>
-<thead>
-<tr>
-<th>决策环节</th>
-<th>需要回答的问题</th>
-<th>本题中的观察量</th>
-<th>读数如何解释</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>选择对象</td>
-<td>哪些激活距离下一次使用较远，且允许搬运？</td>
-<td>激活冷热程度、是否允许搬运</td>
-<td>越冷越适合优先评估，但不等于真实调度顺序</td>
-</tr>
-<tr>
-<td>计算容量</td>
-<td>搬出后 GPU 是否回到预算内？</td>
-<td>保留量、超预算量</td>
-<td>仍然超预算表示当前计划不可行</td>
-</tr>
-<tr>
-<td>计算搬运</td>
-<td>为释放空间需要搬多少数据、多久？</td>
-<td>搬运量、理论传输时间</td>
-<td>理论时间还未包含完整往返和重叠</td>
-</tr>
-<tr>
-<td>输出策略</td>
-<td>收益和代价是否达到教学阈值？</td>
-<td>可行性、节省比例、策略判断</td>
-<td>这是预算模拟决策，不是 GPU 实测结论</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 动手实战（预算模拟）</h3>
-<p>完成下面四个函数。先说明边界：本题只验证“预算不足时搬哪些块、理论上搬多少数据、估算单程和往返传输时间”，不创建 CUDA tensor，也不执行真实 CPU↔GPU copy。先用下表把机制概念、代码输入输出和验证重点对齐，完成后仍必须在 <code>76</code> 的真实 GPU benchmark 中验证。</p>
-<p>例如总激活为 736 MiB、GPU 预算为 384 MiB，需要搬出 352 MiB；若假设带宽为 8 GiB/s，单程理论时间约为 <code>352 / 8 × 1000 = 44 ms</code>。真实训练还要考虑搬回 GPU 的另一程，以及 pinned memory、异步拷贝和重叠；这些因素不写入本题的纸面估算。</p>
-<table>
-<thead>
-<tr>
-<th>实现对象</th>
-<th>作用与关键输入</th>
-<th>输出或关键字段</th>
-<th>验证重点</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ActivationChunkSpec</code></td>
-<td>描述激活块的大小、预计复用距离和是否允许搬运；<code>bytes_</code> 单位为 byte，<code>reuse_delay_layers</code> 单位为 layer</td>
-<td>激活块描述</td>
-<td>非负大小、非负复用距离、名称可区分</td>
-</tr>
-<tr>
-<td><code>summarize_activation_offload</code></td>
-<td>按预算选择需要搬出的激活块；<code>gpu_budget_bytes</code> 为 byte，带宽按 GiB/s 解释</td>
-<td>保留量、搬运量、单程理论时间、预算可行性</td>
-<td><code>overflow_bytes</code>、<code>pressure_ratio</code>、<code>saved_ratio</code> 和名称列表</td>
-</tr>
-<tr>
-<td><code>estimate_round_trip_transfer_ms</code></td>
-<td>根据搬运量和假设带宽估算搬出与搬回的理论时间</td>
-<td>往返时间，单位 ms</td>
-<td>往返系数、零字节和非法带宽</td>
-</tr>
-<tr>
-<td><code>recommend_offload_policy</code></td>
-<td>根据节省比例和理论时间阈值给出教学用策略判断</td>
-<td><code>accept / tune / reject</code></td>
-<td>先检查可行性，再检查收益与时间阈值</td>
-</tr>
-<tr>
-<td><code>compare_offload_vs_checkpointing</code></td>
-<td>用理论节省字节数除以理论额外时间比较两条路线</td>
-<td>两个 score 与 <code>preferred</code></td>
-<td>零时间、非负输入；结果不替代真实 benchmark</td>
-</tr>
-</tbody>
-</table>
-<h3>提示</h3>
-<ul>
-<li><code>reuse_delay_layers</code> 是教学模型中的“距离下一次使用的层数”，不是硬件指标；数值越大，表示这块激活越冷。</li>
-<li>offload 先搬运冷块，但真实系统还要考虑反向访问顺序、pinned memory、异步拷贝、往返搬运、重叠和同步，这些不在本题模拟范围内。</li>
-<li><code>bandwidth_gbps</code> 是理论有效带宽假设，代码按 GiB/s 解释；它不是 <code>nvidia-smi</code> 能直接给出的实测传输带宽。这里保留旧字段名以兼容示例，实际含义更接近 <code>bandwidth_gib_per_s</code>。</li>
-<li>比较 offload 和 checkpointing 时，可以先看“单位时间省了多少显存”，但只有在预算可行、质量和吞吐都满足要求时才有工程意义。</li>
-</ul>
-<h3>测试</h3>
-<p>运行下面的测试，检查你的 offload 计划、策略判断和路线比较是否正确。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>@dataclass
-class ActivationChunkSpec:
-    &quot;&quot;&quot;描述一个用于预算模拟的激活块。
+<section class="lessons">
 
-    这里只记录选择依据和理论大小，不代表真实 CUDA tensor，也不包含 pinned memory、
-    异步拷贝或实际生命周期。&quot;&quot;&quot;
-    name: str  # 激活块名称，便于解释最终搬出/保留了谁
-    bytes_: int  # 激活块大小，单位 byte
-    reuse_delay_layers: int  # 距离下一次使用的预计层数，越大越冷
-    offloadable: bool = True  # 是否允许本策略搬出
-
-@dataclass
-class ActivationOffloadSummary:
-    &quot;&quot;&quot;记录一次 offload 预算计划的容量、传输和可行性结果。
-
-    `transfer_ms` 是单程理论时间；真实训练还要测量搬回、同步和重叠。
-    `feasible` 只表示当前不可搬运状态没有超过 GPU 激活预算。&quot;&quot;&quot;
-    total_bytes: int
-    gpu_budget_bytes: int
-    kept_bytes: int
-    offloaded_bytes: int
-    transfer_ms: float
-    pressure_ratio: float
-    saved_ratio: float
-    offloaded_names: list
-    kept_names: list
-    feasible: bool
-    overflow_bytes: int
-
-
-def summarize_activation_offload(chunks, gpu_budget_bytes, bandwidth_gbps=12.0):
-    &quot;&quot;&quot;汇总一次 activation offload 预算计划，不执行真实 tensor 搬运。
-
-    Args:
-        chunks: ActivationChunkSpec 或等价 dict 的序列。
-        gpu_budget_bytes: 允许保留在 GPU 的 activation 预算，单位 byte。
-        bandwidth_gbps: 理论有效带宽，代码按 GiB/s 解释。
-
-    Returns:
-        ActivationOffloadSummary；feasible 表示不可搬运对象也没有超预算。
-    &quot;&quot;&quot;
-    if gpu_budget_bytes &lt;= 0:
-        raise ValueError(&quot;gpu_budget_bytes must be positive&quot;)
-    if bandwidth_gbps &lt;= 0:
-        raise ValueError(&quot;bandwidth_gbps must be positive&quot;)
-
-    normalized = []
-    for c in chunks:
-        if isinstance(c, ActivationChunkSpec):
-            normalized.append(c)
-        elif isinstance(c, dict):
-            normalized.append(ActivationChunkSpec(**c))
-        else:
-            raise TypeError(&quot;chunks must contain ActivationChunkSpec or dict&quot;)
-
-    names = [c.name for c in normalized]
-    if len(names) != len(set(names)):
-        raise ValueError(&quot;chunk names must be unique&quot;)
-    if any(c.bytes_ &lt; 0 for c in normalized):
-        raise ValueError(&quot;chunk bytes must be non-negative&quot;)
-    if any(c.reuse_delay_layers &lt; 0 for c in normalized):
-        raise ValueError(&quot;reuse_delay_layers must be non-negative&quot;)
-
-    total_bytes = sum(c.bytes_ for c in normalized)
-    kept_bytes = total_bytes
-    offloaded_names = []
-
-    candidates = sorted(
-        [c for c in normalized if c.offloadable],
-        key=lambda c: (-c.reuse_delay_layers, -c.bytes_, c.name),
-    )
-
-    for chunk in candidates:
-        if kept_bytes &lt;= gpu_budget_bytes:
-            break
-        kept_bytes -= chunk.bytes_
-        offloaded_names.append(chunk.name)
-
-    kept_names = [c.name for c in normalized if c.name not in offloaded_names]
-
-    # ==========================================
-    # TODO 1: 汇总 offload 结果和显存/带宽指标
-    # 提示：保持上面的选择结果不变，先算 offloaded_bytes = total_bytes - kept_bytes；
-    # 再按 GiB/s 转成字节/秒，估算单程 transfer_ms，并补出 pressure_ratio / saved_ratio。
-    # overflow_bytes &gt; 0 时 feasible 必须为 False；total_bytes 为 0 时比例取 0。
-    # ==========================================
-    overflow_bytes = max(kept_bytes - gpu_budget_bytes, 0)
-    feasible = overflow_bytes == 0
-    # offloaded_bytes = ???
-    # transfer_ms = ???
-    # pressure_ratio = ???
-    # saved_ratio = ???
-
-    return ActivationOffloadSummary(
-        total_bytes=total_bytes,
-        gpu_budget_bytes=gpu_budget_bytes,
-        kept_bytes=kept_bytes,
-        offloaded_bytes=offloaded_bytes,
-        transfer_ms=round(transfer_ms, 2),
-        pressure_ratio=round(pressure_ratio, 3),
-        saved_ratio=round(saved_ratio, 3),
-        offloaded_names=offloaded_names,
-        kept_names=kept_names,
-        feasible=feasible,
-        overflow_bytes=overflow_bytes,
-    )
-
-
-def estimate_round_trip_transfer_ms(offloaded_bytes: int, bandwidth_gbps: float):
-    &quot;&quot;&quot;估算 activation 搬出 GPU 再搬回的理论时间，不执行真实 copy。
-
-    Args:
-        offloaded_bytes: 单次搬运的数据量，单位 byte。
-        bandwidth_gbps: 假设有效带宽，代码按 GiB/s 解释。
-
-    Returns:
-        搬出加搬回的理论时间，单位 ms；不包含同步和重叠效果。&quot;&quot;&quot;
-    if offloaded_bytes &lt; 0:
-        raise ValueError(&quot;offloaded_bytes must be non-negative&quot;)
-    if bandwidth_gbps &lt;= 0:
-        raise ValueError(&quot;bandwidth_gbps must be positive&quot;)
-
-    # ==========================================
-    # TODO 2: 计算往返搬运时间
-    # 提示：单程是 bytes / (bandwidth_gbps * 2**30)，
-    # 往返需要乘以 2，并换算为毫秒；输入为 0 时返回 0.0。
-    # return_ms = ???
-    # ==========================================
-    pass
-
-
-def recommend_offload_policy(summary: ActivationOffloadSummary, min_saved_ratio=0.25, max_transfer_ms=60.0):
-    &quot;&quot;&quot;根据教学阈值返回策略建议。
-
-    Args:
-        summary: summarize_activation_offload 返回的预算摘要。
-        min_saved_ratio: 教学用最低显存节省比例。
-        max_transfer_ms: 教学用单程理论传输时间上限。
-
-    Returns:
-        'accept'、'tune' 或 'reject'；不代表真实工程决策。
-    &quot;&quot;&quot;
-    if summary.offloaded_bytes &lt;= 0:
-        return &quot;reject&quot;
-    if min_saved_ratio &lt; 0 or max_transfer_ms &lt; 0:
-        raise ValueError(&quot;policy thresholds must be non-negative&quot;)
-
-    if not summary.feasible:
-        return &quot;reject&quot;
-    # ==========================================
-    # TODO 3: 补全策略判断逻辑
-    # 提示：先拒绝不可行方案，再检查 saved_ratio 和 transfer_ms；
-    # 收益达到阈值且传输可接受时 accept，达到放宽后的教学阈值时 tune，
-    # 其余情况 reject。不要把这个教学决策写成真实 GPU 结论。
-    # ==========================================
-    # if ???:
-    #     return &quot;accept&quot;
-    # if ???:
-    #     return &quot;tune&quot;
-
-    return &quot;reject&quot;
-
-
-def compare_offload_vs_checkpointing(offload_summary: ActivationOffloadSummary, checkpoint_saved_bytes, checkpoint_extra_ms):
-    &quot;&quot;&quot;用理论节省字节数除以理论额外代价做教学比较。
-
-    Args:
-        offload_summary: offload 预算摘要。
-        checkpoint_saved_bytes: checkpoint 理论节省字节数。
-        checkpoint_extra_ms: checkpoint 理论额外时间，单位 ms。
-
-    Returns:
-        包含两种 score 和 preferred 的字典；不替代真实 benchmark。
-    &quot;&quot;&quot;
-    if checkpoint_saved_bytes &lt; 0 or checkpoint_extra_ms &lt; 0:
-        raise ValueError(&quot;checkpoint values must be non-negative&quot;)
-    # ==========================================
-    # TODO 4: 完成 offload 与 checkpointing 的性价比比较
-    # 提示：只比较“理论节省字节数 / 理论额外时间”；
-    # offload 使用 offloaded_bytes / transfer_ms，checkpoint 使用
-    # checkpoint_saved_bytes / checkpoint_extra_ms。使用 max(..., 1e-6)
-    # 处理零时间，返回 score 更大的 preferred。
-    # ==========================================
-    # offload_score = ???
-    # checkpoint_score = ???
-    # preferred = ???
-    return {
-        &quot;offload_score&quot;: round(offload_score, 3),
-        &quot;checkpoint_score&quot;: round(checkpoint_score, 3),
-        &quot;preferred&quot;: preferred,
-    }
-</code></pre></details><details><summary>题目与测试代码 · Cell 11</summary><pre><code>def test_activation_offload():
-    try:
-        chunks = [
-            ActivationChunkSpec(&quot;embed&quot;, 256 * 1024 * 1024, 0),
-            ActivationChunkSpec(&quot;mid_a&quot;, 192 * 1024 * 1024, 2),
-            ActivationChunkSpec(&quot;mid_b&quot;, 160 * 1024 * 1024, 3),
-            ActivationChunkSpec(&quot;tail&quot;, 128 * 1024 * 1024, 1),
-        ]
-        summary = summarize_activation_offload(chunks, gpu_budget_bytes=384 * 1024 * 1024, bandwidth_gbps=8.0)
-        assert summary.total_bytes == 736 * 1024 * 1024
-        assert summary.offloaded_bytes == 352 * 1024 * 1024
-        assert summary.kept_bytes == 384 * 1024 * 1024
-        assert summary.offloaded_names == [&quot;mid_b&quot;, &quot;mid_a&quot;]
-        assert summary.kept_names == [&quot;embed&quot;, &quot;tail&quot;]
-        assert 42.0 &lt; summary.transfer_ms &lt; 44.0
-        assert 0.47 &lt; summary.saved_ratio &lt; 0.49
-        assert estimate_round_trip_transfer_ms(summary.offloaded_bytes, 8.0) == 85.94
-        assert recommend_offload_policy(summary) == &quot;accept&quot;
-
-        tuned = summarize_activation_offload(chunks, gpu_budget_bytes=384 * 1024 * 1024, bandwidth_gbps=4.0)
-        assert recommend_offload_policy(tuned) == &quot;tune&quot;
-
-        rejected = summarize_activation_offload(chunks, gpu_budget_bytes=384 * 1024 * 1024, bandwidth_gbps=1.0)
-        assert recommend_offload_policy(rejected) == &quot;reject&quot;
-
-        empty = summarize_activation_offload(chunks, gpu_budget_bytes=1024 * 1024 * 1024, bandwidth_gbps=8.0)
-        assert empty.offloaded_bytes == 0
-        assert empty.feasible is True
-        assert empty.overflow_bytes == 0
-        assert recommend_offload_policy(empty) == &quot;reject&quot;
-
-        blocked = summarize_activation_offload(
-            [ActivationChunkSpec(&quot;fixed&quot;, 512 * 1024 * 1024, 0, offloadable=False)],
-            gpu_budget_bytes=256 * 1024 * 1024,
-            bandwidth_gbps=8.0,
-        )
-        assert blocked.feasible is False
-        assert blocked.overflow_bytes == 256 * 1024 * 1024
-        assert recommend_offload_policy(blocked) == &quot;reject&quot;
-
-        invalid_specs = [
-            [ActivationChunkSpec(&quot;bad&quot;, -1, 0)],
-            [ActivationChunkSpec(&quot;bad&quot;, 1, -1)],
-            [ActivationChunkSpec(&quot;dup&quot;, 1, 0), ActivationChunkSpec(&quot;dup&quot;, 1, 1)],
-        ]
-        for invalid in invalid_specs:
-            try:
-                summarize_activation_offload(invalid, gpu_budget_bytes=1, bandwidth_gbps=1.0)
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(&quot;invalid activation metadata should be rejected&quot;)
-
-        better_offload = compare_offload_vs_checkpointing(summary, checkpoint_saved_bytes=300 * 1024 * 1024, checkpoint_extra_ms=80.0)
-        assert better_offload[&quot;preferred&quot;] == &quot;offload&quot;
-
-        better_ckpt = compare_offload_vs_checkpointing(summary, checkpoint_saved_bytes=500 * 1024 * 1024, checkpoint_extra_ms=20.0)
-        assert better_ckpt[&quot;preferred&quot;] == &quot;checkpointing&quot;
-
-        for kwargs in [
-            {&quot;min_saved_ratio&quot;: -0.1},
-            {&quot;max_transfer_ms&quot;: -1.0},
-        ]:
-            try:
-                recommend_offload_policy(summary, **kwargs)
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(&quot;negative policy thresholds should be rejected&quot;)
-
-        for args in [
-            (summary, -1, 10.0),
-            (summary, 100, -1.0),
-        ]:
-            try:
-                compare_offload_vs_checkpointing(*args)
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(&quot;negative checkpoint values should be rejected&quot;)
-        print(&quot;✅ 预算模拟验证通过：offload 计划、可行性和教学策略判断符合预期。&quot;)
-        print(&quot;证据边界：这是理论预算模拟，不是实际 CPU↔GPU 搬运或真实 step time 测量。&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except Exception as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise
-
-
-test_activation_offload()</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>把东西搬到仓库能腾出房间，但取回来要多久？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>当 activation 占用超过 GPU 预算时，除了 checkpointing，还可以把部分激活搬到 CPU 或 host memory，并在反向传播需要时取回。本节用预算模型计算保留量、搬运量和理论传输时间，先把搬运路线的成本结构拆开。</p>
-            <div class="notebook-content"><h3>Step 1: 核心思想与痛点</h3>
-<p>Activation Offload 处理的是“需要保留、但暂时不用”的 activation：前向后把它从 GPU 搬到 CPU 或 host memory，反向需要时再搬回。它释放的是 GPU 驻留空间，新增的是设备间传输和同步成本。先沿着前向结束、反向取回和策略组合三个阶段阅读表格，再看主图中的驻留路径。</p>
-<table>
-<thead>
-<tr>
-<th>训练阶段</th>
-<th>Offload 的动作</th>
-<th>需要关注的成本</th>
-<th>与 checkpoint 的区别</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>前向结束后</td>
-<td>把暂时不用的 activation 搬出 GPU</td>
-<td>搬出时间、主机内存和同步</td>
-<td>checkpoint 选择少保存</td>
-</tr>
-<tr>
-<td>反向开始前</td>
-<td>按需把 activation 搬回 GPU</td>
-<td>搬回时间、带宽和等待</td>
-<td>checkpoint 重新执行前向</td>
-</tr>
-<tr>
-<td>策略组合</td>
-<td>与重算策略共同作用</td>
-<td>搬运与重算代价可能叠加</td>
-<td>需要固定 workload 验证</td>
-</tr>
-<tr>
-<td>判断结果</td>
-<td>显存是否回到预算内</td>
-<td>释放空间是否值得新增代价</td>
-<td>同时观察 peak memory、step time 和吞吐</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/42_activation_offload.svg" alt="Activation Offload：用带宽换 GPU 显存"></p>
-<h3>Step 2: 代价模型与边界</h3>
-<p>设一组激活块的总大小为 <code>A</code>，GPU 可用预算为 <code>B</code>，带宽为 <code>bw</code>。本步先把容量、搬运量和时间放进同一张账；这些数值用于解释机制，不代表真实 PCIe / NVLink 测量。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/42_offload_cost_model.svg" alt="Offload 代价模型：省下多少显存，付出多少搬运"></p>
-<ul>
-<li>如果总激活量不超过 GPU 预算，理论上不需要 offload；如果超过预算，优先评估距离下一次使用较远且允许搬运的激活块。</li>
-<li>单程理论时间等于搬运数据量除以假设带宽；真实反向通常还要考虑搬回 GPU 的往返流量。</li>
-<li>offload 不是越多越好：如果留在 GPU 的状态仍超过预算，方案不可行；如果搬运和同步时间过长，显存收益可能不值得。</li>
-</ul>
-<h3>Step 3: 驻留选择与预算决策</h3>
-<p>offload 的决策可以拆成四个机制问题：哪些激活暂时不会被使用、哪些对象允许离开 GPU、搬出后 GPU 是否回到预算内、搬运时间是否值得这次显存收益。表格把这些问题映射到可观察量和判断结果；“距下一次使用的层数”只是教学模型中的冷热近似，不等同于真实运行时调度指标。</p>
-<table>
-<thead>
-<tr>
-<th>决策环节</th>
-<th>需要回答的问题</th>
-<th>本题中的观察量</th>
-<th>读数如何解释</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>选择对象</td>
-<td>哪些激活距离下一次使用较远，且允许搬运？</td>
-<td>激活冷热程度、是否允许搬运</td>
-<td>越冷越适合优先评估，但不等于真实调度顺序</td>
-</tr>
-<tr>
-<td>计算容量</td>
-<td>搬出后 GPU 是否回到预算内？</td>
-<td>保留量、超预算量</td>
-<td>仍然超预算表示当前计划不可行</td>
-</tr>
-<tr>
-<td>计算搬运</td>
-<td>为释放空间需要搬多少数据、多久？</td>
-<td>搬运量、理论传输时间</td>
-<td>理论时间还未包含完整往返和重叠</td>
-</tr>
-<tr>
-<td>输出策略</td>
-<td>收益和代价是否达到教学阈值？</td>
-<td>可行性、节省比例、策略判断</td>
-<td>这是预算模拟决策，不是 GPU 实测结论</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 4: 动手实战（预算模拟）</h3>
-<p>完成下面四个函数。先说明边界：本题只验证“预算不足时搬哪些块、理论上搬多少数据、估算单程和往返传输时间”，不创建 CUDA tensor，也不执行真实 CPU↔GPU copy。先用下表把机制概念、代码输入输出和验证重点对齐，完成后仍必须在 <code>76</code> 的真实 GPU benchmark 中验证。</p>
-<p>例如总激活为 736 MiB、GPU 预算为 384 MiB，需要搬出 352 MiB；若假设带宽为 8 GiB/s，单程理论时间约为 <code>352 / 8 × 1000 = 44 ms</code>。真实训练还要考虑搬回 GPU 的另一程，以及 pinned memory、异步拷贝和重叠；这些因素不写入本题的纸面估算。</p>
-<table>
-<thead>
-<tr>
-<th>实现对象</th>
-<th>作用与关键输入</th>
-<th>输出或关键字段</th>
-<th>验证重点</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ActivationChunkSpec</code></td>
-<td>描述激活块的大小、预计复用距离和是否允许搬运；<code>bytes_</code> 单位为 byte，<code>reuse_delay_layers</code> 单位为 layer</td>
-<td>激活块描述</td>
-<td>非负大小、非负复用距离、名称可区分</td>
-</tr>
-<tr>
-<td><code>summarize_activation_offload</code></td>
-<td>按预算选择需要搬出的激活块；<code>gpu_budget_bytes</code> 为 byte，带宽按 GiB/s 解释</td>
-<td>保留量、搬运量、单程理论时间、预算可行性</td>
-<td><code>overflow_bytes</code>、<code>pressure_ratio</code>、<code>saved_ratio</code> 和名称列表</td>
-</tr>
-<tr>
-<td><code>estimate_round_trip_transfer_ms</code></td>
-<td>根据搬运量和假设带宽估算搬出与搬回的理论时间</td>
-<td>往返时间，单位 ms</td>
-<td>往返系数、零字节和非法带宽</td>
-</tr>
-<tr>
-<td><code>recommend_offload_policy</code></td>
-<td>根据节省比例和理论时间阈值给出教学用策略判断</td>
-<td><code>accept / tune / reject</code></td>
-<td>先检查可行性，再检查收益与时间阈值</td>
-</tr>
-<tr>
-<td><code>compare_offload_vs_checkpointing</code></td>
-<td>用理论节省字节数除以理论额外时间比较两条路线</td>
-<td>两个 score 与 <code>preferred</code></td>
-<td>零时间、非负输入；结果不替代真实 benchmark</td>
-</tr>
-</tbody>
-</table>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>Activation offload 将反向传播稍后需要的激活暂存到主机内存。房间是 GPU，仓库是 CPU；腾空间的代价是往返搬运。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>activation</dt><dd>前向计算产生、反向可能需要的中间状态。</dd></div><div><dt>offload</dt><dd>把状态暂时移到另一层存储。</dd></div><div><dt>checkpoint</dt><dd>少保存状态，需要时重算；与搬运是不同路径。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>Activation offload 的显存收益需要与什么代价一起比较？</p>
+            <p>本课中的「activation」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>往返搬运时间以及 checkpoint 重算成本</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>前向计算产生、反向可能需要的中间状态。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>只有模型文件数量</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>少保存状态，需要时重算；与搬运是不同路径。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>只有参数总量</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>把状态暂时移到另一层存储。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1: 汇总 offload 结果和显存/带宽指标</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先算腾多少</h4><p>激活 12 GiB，保留 4 GiB，搬走 8 GiB，则这部分驻留由 12 降到 4。</p></li><li><h4>再算往返</h4><p>假设有效带宽 8 GiB/s，8 GiB 去程 1 秒、回程 1 秒，总共 2 秒，未计重叠。</p></li><li><h4>与重算比较</h4><p>若重算需要 1.5 秒，在这个简化条件下重算时间更少；实际需要比较可重叠区间和峰值。</p></li></ol><section class="learning-lab" data-lab="offload" aria-label="腾空间之前，先算一趟往返">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>腾空间之前，先算一趟往返</h4><p>改变搬运量和有效带宽，与 1.5 秒的假设重算比较。</p></header>
+    <div class="lab-controls"><label for="lab-42-moved"><span>卸载的激活 <output data-value="moved" for="lab-42-moved">8</output> GiB</span><input type="range" id="lab-42-moved" name="moved" min="1" max="12" step="1" value="8"></label><label for="lab-42-bandwidth"><span>有效带宽 <output data-value="bandwidth" for="lab-42-bandwidth">8</output> GiB/s</span><input type="range" id="lab-42-bandwidth" name="bandwidth" min="2" max="32" step="2" value="8"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-42" data-challenge-label>算一算</label><div><input id="answer-42" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>搬走 8 GiB、有效带宽 8 GiB/s，再搬回来，串行搬运多久？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>1 秒</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>2 秒</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>0 秒</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>moved_gib, bandwidth_gib_s = 8, 8
+roundtrip_s = 2 * moved_gib / bandwidth_gib_s
+print(roundtrip_s)  # 2.0</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>只算去程或把链路标称带宽当作有效带宽。搬运可以重叠，但不是默认完全免费。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「activation」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>只算去程或把链路标称带宽当作有效带宽。搬运可以重叠，但不是默认完全免费。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2: 计算往返搬运时间</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3: 补全策略判断逻辑</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 4: 完成 offload 与 checkpointing 的性价比比较</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="d2060e7aa991fdd9f6520f1b3ac24d2699286fc75123b519eaf50f28d181eae1">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/42_Activation_Offload.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>ActivationChunkSpec</code> · <code>ActivationOffloadSummary</code> · <code>summarize_activation_offload</code> · <code>estimate_round_trip_transfer_ms</code> · <code>recommend_offload_policy</code> · <code>compare_offload_vs_checkpointing</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1424,14 +940,14 @@ test_activation_offload()</code></pre></details>
 
   <script>
     const levelId = "42";
-    const checkpointData = {"current-core":{"answer":0,"explain":"往返搬运时间以及 checkpoint 重算成本。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：前向计算产生、反向可能需要的中间状态。。另外两个选项分别解释「offload」和「checkpoint」，注意区分。"},"v4-experiment":{"answer":1,"explain":"去、回各一次：2×8/8=2。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：只算去程或把链路标称带宽当作有效带宽。搬运可以重叠，但不是默认完全免费。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
+    const checkpointTotal = 3;
     const homeworkTotal = 4;
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1440,20 +956,22 @@ test_activation_offload()</code></pre></details>
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-bfb152a794d2";
+    const homeworkKey = statePrefix + levelId + "-homework-d2060e7aa991";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1478,7 +996,7 @@ test_activation_offload()</code></pre></details>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1520,11 +1038,15 @@ test_activation_offload()</code></pre></details>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1555,6 +1077,7 @@ test_activation_offload()</code></pre></details>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

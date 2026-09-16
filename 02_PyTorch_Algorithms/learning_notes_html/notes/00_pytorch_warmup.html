@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -748,340 +750,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 00 | 零基础导学关卡</p>
-        <h1>PyTorch Warmup | PyTorch 热身</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>PyTorch 热身</h1>
+        <p class="course-subtitle">PyTorch Warmup</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/00_PyTorch_Warmup.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">00_PyTorch_Warmup.ipynb</span>
           <span class="pill">基础实现</span><span class="pill">PyTorch</span><span class="pill">入门热身</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">先学会看懂 shape、查表、梯度流，再回 notebook 写 PyTorch 代码</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">Tensor 变形：先学会读 shape，再写 reshape</a></li><li><a href="#mission-2">Embedding 查表：token id 是地址，不是连续数值</a></li><li><a href="#mission-3">Linear + ReLU 反传：梯度像闯关一样倒着走</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="edb18c13168600e4382b2e1fb1c80943dafb99edeeefae175b2dfcc75cb27669">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../00_PyTorch_Warmup.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/00_PyTorch_Warmup.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>00. PyTorch Warmup | PyTorch 热身</h1>
-<p><strong>难度：</strong> Easy | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>基础实现</code>, <code>PyTorch</code>, <code>入门热身</code> | <strong>目标人群：</strong> 基础实现学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>进入 Part 02，你会把大模型中的基础模块写成可运行的 PyTorch 代码。这里先处理三类后续实现都会反复用到的动作：对齐张量维度、把 token id 查成 embedding，以及确认 loss 的梯度能够回到参数。</p>
-<p>三个练习分别对应 <code>reshape</code>、embedding lookup 和最小反向传播。完成后，你可以带着这些实现经验继续学习 RMSNorm、SwiGLU、RoPE 和 Attention，而不必在基础张量操作上反复停顿。</p>
-<p><strong>关键词：</strong> <code>reshape</code>, <code>Embedding</code>, <code>backpropagation</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1.1: 使用原生的 PyTorch 方法 (permute + reshape/flatten) 完成变换</li><li>TODO 1.2: 使用 einops.rearrange 优雅地完成完全相同的操作</li><li>TODO 2.1: 实例化一个官方的 nn.Embedding，并用其进行前向传播</li><li>TODO 2.2: 使用纯 PyTorch 张量索引 (Advanced Indexing)，不使用 nn.Embedding，</li><li>TODO 3.1: 实现前向传播</li><li>TODO 3.2: 反传过 ReLU</li><li>TODO 3.3: 反传过 Linear</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先确认张量形状可以重排、token id 可以查到 embedding，并能用 Autograd 检查梯度是否回到参数。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.ipynb">P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作</a></li>
-<li><a href="../../../00_Prerequisites/07_PyTorch_Autograd_and_Backward.ipynb">P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播</a></li>
-<li><a href="../../../00_Prerequisites/09_PyTorch_nn_Module_Basics.ipynb">P0: 09. PyTorch nn.Module Basics | PyTorch nn.Module 基础</a></li>
-</ul>
-<hr>
-<h3>Part 1: 张量维度变换与 <code>einops</code></h3>
-<p>无论是注意力里的多头合并，还是各种特征整理，都会反复用到张量形状重排同一类操作。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/00_tensor_shape_flow.svg" alt="张量形状从基础操作连接到 Attention"></p>
-<blockquote>
-<p><strong>为什么我们需要 <code>einops</code>？</strong>
-在大模型开发中，张量形状不匹配（<code>RuntimeError: size mismatch</code>）是最高频的调试痛点之一。熟练掌握原生的 <code>view</code>, <code>reshape</code>, <code>transpose</code>, <code>permute</code> 是算法工程师的基础功底。</p>
-<p>然而，在实际的工业级代码中（尤其是 Transformer 的多头注意力机制等高维张量操作），原生方法往往缺乏可读性且极易出错。
-举个典型的例子：将形状为 <code>[batch, heads, seq_len, head_dim]</code> 的多头张量合并为 <code>[batch, seq_len, hidden_dim]</code>：</p>
-<ul>
-<li><strong>原生实现</strong>：<code>x.permute(0, 2, 1, 3).reshape(batch, seq_len, -1)</code> —— 开发者必须在脑海中硬记数字索引 <code>(0,2,1,3)</code> 的物理含义，代码维护成本极高。</li>
-<li><strong><code>einops</code> 实现</strong>：<code>rearrange(x, 'b h s d -&gt; b s (h d)')</code> —— 维度变换的语义直接写在字符串中，代码即文档（Self-documenting）。</li>
-</ul>
-<p>这正是为什么现代深度学习框架和开源模型广泛拥抱 <strong><code>einops</code></strong> 库，它能让复杂的张量操作变得语义清晰、安全可防错。</p>
-</blockquote>
-<h3>Part 2: 嵌入层 (Embedding Layer) 的本质</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/00_embedding_flow.svg" alt="Embedding 从 token id 连接到上下文表示"></p>
-<p>大模型的第一步，是把离散的文本转化为连续的数学表示：
-原始文本经字节对编码(Byte Pair Encoding，BPE)分词后得到<code>token id</code>（即词典里的编号），再通过嵌入层（<code>Embedding</code>）查表，将该编号映射为固定长度的连续向量（其维度称为<code>hidden dim</code>或者<code>hidden size</code>）；随后注入旋转位置编码（主流方案如<code>RoPE</code>及其变体）以保留顺序信息。若一句话包含多个token，这些向量会按顺序拼接成完整的输入序列（<code>sequence</code>），供模型后续处理，从而让模型真正开始“阅读”和理解文本。</p>
-<blockquote>
-<p><strong>那 Embedding 层本质上是什么？就是一张巨大的查找表（Lookup Table）。</strong> 给定一个 ID 列表，它直接把对应的行向量抽出来拼在一起。
-它在数学上等价于：把离散的 ID 转换成 One-hot 向量，然后去乘以一个全连接层（Linear）。</p>
-</blockquote>
-<h3>Part 3: 前向传播与反向传播 (Forward &amp; Backward)</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/00_forward_backward_flow.svg" alt="前向传播与反向传播的训练闭环"></p>
-<blockquote>
-<p><strong>为什么要理解前向和反向传播？</strong>
-大模型的训练机制完全建立在<strong>反向传播算法 (Backpropagation)</strong> 与 <strong>链式法则 (Chain Rule)</strong> 之上。</p>
-<p><strong>前向传播 (Forward Pass)：</strong> 数据从输入层流向输出层，经过一系列的线性变换和非线性激活函数。在这个过程中，我们需要保存中间结果（如激活值、mask 等），供反向传播使用。</p>
-<p><strong>反向传播 (Backward Pass)：</strong> 梯度从输出层反向流向输入层，利用链式法则逐层计算每个参数的梯度。这是深度学习训练的核心机制。</p>
-<p>在日常使用中，我们只需要写前向传播，然后调用 <code>loss.backward()</code>，PyTorch 的 Autograd 会自动帮我们算梯度。但为了真正理解底层原理，我们需要手动实现一个包含 Linear 和 ReLU 的自定义算子的完整前向和反向逻辑。</p>
-<p><strong>本节目标：</strong> 实现一个 <code>LinearReLU</code> 算子，公式为 <code>y = relu(x @ W^T + b)</code>，并手动推导其梯度。这将帮助你深入理解：</p>
-<ul>
-<li>前向传播如何计算输出并保存中间结果</li>
-<li>反向传播如何利用链式法则计算梯度</li>
-<li>为什么需要在前向传播时保存某些张量（如 mask）</li>
-</ul>
-<p><strong>闭环提示：</strong> 先算 <code>Linear -&gt; ReLU</code>，再保存 <code>mask</code>；反向时先过 <code>mask</code>，再把梯度回传到输入和参数。</p>
-</blockquote>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 5</summary><pre><code>def tensor_warmup(x: torch.Tensor):
-    &quot;&quot;&quot;
-    假设 x 是一批图像的特征 (例如在多模态大模型中)，形状为 [batch_size, channels, height, width]
-    我们需要将其展平为序列 (Sequence)，以输入给 Transformer。
-    目标形状: [batch_size, height * width, channels]
-    &quot;&quot;&quot;
+<section class="lessons">
 
-    # 这一段先把图像特征重排成 Transformer 更容易消费的序列格式。
-    # 重点不是记住某个 API，而是理解“先换维度顺序，再合并空间维”的处理思路。
-    # ==========================================
-    # TODO 1.1: 使用原生的 PyTorch 方法 (permute + reshape/flatten) 完成变换
-    # 提示: 先调整维度顺序，再合并空间维度
-    # ==========================================
-    # x_native = ???
-
-    # 这里再用 `einops` 做同一件事，方便对照“显式维度操作”和“语义化写法”。
-    # 两种写法应该得到完全一致的结果，便于确认你理解的是形状变换本身。
-    # ==========================================
-    # TODO 1.2: 使用 einops.rearrange 优雅地完成完全相同的操作
-    # 提示: 使用括号表示要合并的维度
-    # ==========================================
-    # x_einops = ???
-    return x_native, x_einops
-</code></pre></details><details><summary>题目与测试代码 · Cell 7</summary><pre><code>def embedding_warmup(input_ids: torch.Tensor, vocab_size: int, hidden_dim: int):
-    &quot;&quot;&quot;
-    演示 Embedding 查表的过程，并用纯 Tensor 索引模拟它。
-
-    Args:
-        input_ids: 形状 [batch_size, seq_len]，包含整数类型的 Token IDs
-    &quot;&quot;&quot;
-    # 这一段先把“词表查表”这个抽象过程落成官方实现。
-    # 先看 nn.Embedding 如何工作，再手写索引复现同样的输出。
-    # ==========================================
-    # TODO 2.1: 实例化一个官方的 nn.Embedding，并用其进行前向传播
-    # ==========================================
-    # emb_layer = ???
-    # emb_layer.weight.data.normal_(0, 0.1)  # 随便初始化一下
-    # out_official = ???
-
-    # 这里不再调用 nn.Embedding，而是直接用权重矩阵做索引。
-    # 这样可以把“Embedding 本质上就是查表”这件事看得更直观。
-    # ==========================================
-    # TODO 2.2: 使用纯 PyTorch 张量索引 (Advanced Indexing)，不使用 nn.Embedding，
-    # 达到和上面官方 API 完全一模一样的输出。
-    # 提示: Embedding 的本质是查表，思考如何用索引从权重矩阵中提取向量
-    # ==========================================
-    # out_manual = ???
-    return out_official, out_manual</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code>class LinearReLUFunction(torch.autograd.Function):
-    &quot;&quot;&quot;
-    实现一个包含 Linear + ReLU 的算子，并推导其反向传播的梯度。
-    公式: y = relu(x @ W^T + b)
-    &quot;&quot;&quot;
-
-    @staticmethod
-    def forward(ctx, x, weight, bias):
-        # 这里先把线性变换和激活拆开，便于明确哪些中间量要留给反向传播。
-        # mask 的保存是关键：它决定了 ReLU 之后哪些位置还能继续传梯度。
-        # ==========================================
-        # TODO 3.1: 实现前向传播
-        # 1. 使用 F.linear 计算线性变换
-        # 2. 使用 F.relu 计算激活
-        # 3. 计算并保存 mask，用于反向传播时判断哪些位置需要传递梯度
-        # 4. 保存必要的张量供反向传播使用
-        # ==========================================
-        # z = ???
-        # y = ???
-        # mask = ???
-        # ctx.save_for_backward(???)
-        return y
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        &quot;&quot;&quot;
-        接收从上一层传回来的梯度 (grad_output)，形状同 y。
-        返回对当前层三个输入 (x, weight, bias) 的梯度。
-        &quot;&quot;&quot;
-        x, weight, mask = ctx.saved_tensors
-
-        # 先把上游梯度过 ReLU 的门，再进入线性层的矩阵求导。
-        # 这一小段是整个自定义算子最核心的反向链路。
-        # ==========================================
-        # TODO 3.2: 反传过 ReLU
-        # 提示: ReLU 的导数在正值处为 1，负值处为 0
-        # ==========================================
-        # grad_z = ???
-
-        # 接着把梯度回传到输入和参数，分别得到 x / weight / bias 的梯度。
-        # 这里的形状对齐和转置关系，是矩阵求导最常见的检查点。
-        # ==========================================
-        # TODO 3.3: 反传过 Linear
-        # 提示: 利用矩阵求导的链式法则，分别计算对 x, weight, bias 的梯度
-        # 注意矩阵维度的匹配和转置操作
-        # ==========================================
-        # grad_x = ???
-        # grad_weight = ???
-        # grad_bias = ???
-
-        return grad_x, grad_weight, grad_bias
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
-def test_warmup():
-    try:
-        print(&quot;=&quot; * 60)
-        print(&quot;开始测试 PyTorch Warmup 练习&quot;)
-        print(&quot;=&quot; * 60)
-
-        # ==========================================
-        # Test 1: 张量维度变换
-        # ==========================================
-        print(&quot;\n【Test 1】张量维度变换测试&quot;)
-        x_img = torch.randn(2, 3, 224, 224)
-        n, e = tensor_warmup(x_img)
-
-        # 测试形状
-        assert n.shape == (2, 224*224, 3), f&quot;原生方法输出形状错误: 期望 (2, 50176, 3), 实际 {n.shape}&quot;
-        assert e.shape == (2, 224*224, 3), f&quot;einops 输出形状错误: 期望 (2, 50176, 3), 实际 {e.shape}&quot;
-
-        # 测试两种方法结果一致
-        assert torch.allclose(n, e), &quot;原生方法与 einops 结果不一致！&quot;
-
-        # 测试数值正确性：验证第一个样本的第一个 patch
-        expected_first_patch = x_img[0, :, 0, 0]  # [channels]
-        actual_first_patch = n[0, 0, :]  # [channels]
-        assert torch.allclose(expected_first_patch, actual_first_patch), &quot;维度变换后数值不正确！&quot;
-
-        print(&quot;  ✅ 形状测试通过&quot;)
-        print(&quot;  ✅ 原生方法与 einops 一致性测试通过&quot;)
-        print(&quot;  ✅ 数值正确性测试通过&quot;)
-
-        # ==========================================
-        # Test 2: Embedding 层模拟
-        # ==========================================
-        print(&quot;\n【Test 2】Embedding 层查表测试&quot;)
-        ids = torch.randint(0, 1000, (4, 16))
-        off, man = embedding_warmup(ids, vocab_size=1000, hidden_dim=64)
-
-        # 测试形状
-        assert off.shape == (4, 16, 64), f&quot;官方 Embedding 输出形状错误: 期望 (4, 16, 64), 实际 {off.shape}&quot;
-        assert man.shape == (4, 16, 64), f&quot;手动索引输出形状错误: 期望 (4, 16, 64), 实际 {man.shape}&quot;
-
-        # 测试两种方法结果一致
-        assert torch.allclose(off, man), &quot;手动 Embedding 查表与官方实现不一致！&quot;
-
-        print(&quot;  ✅ 形状测试通过&quot;)
-        print(&quot;  ✅ 官方实现与手动索引一致性测试通过&quot;)
-
-        # ==========================================
-        # Test 3.1: 前向传播测试
-        # ==========================================
-        print(&quot;\n【Test 3.1】前向传播测试&quot;)
-        x = torch.randn(2, 4, requires_grad=True)
-        w = torch.randn(3, 4, requires_grad=True)
-        b = torch.randn(3, requires_grad=True)
-
-        # 使用自定义算子
-        y_custom = LinearReLUFunction.apply(x, w, b)
-
-        # 使用官方算子作为标准答案
-        y_std = F.relu(F.linear(x, w, b))
-
-        # 测试形状
-        assert y_custom.shape == (2, 3), f&quot;前向传播输出形状错误: 期望 (2, 3), 实际 {y_custom.shape}&quot;
-
-        # 测试数值一致性
-        assert torch.allclose(y_custom, y_std, rtol=1e-5, atol=1e-6), &quot;前向传播结果与官方实现不一致！&quot;
-
-        # 测试 ReLU 是否正确：负值应该被置零
-        z_before_relu = F.linear(x, w, b)
-        negative_mask = z_before_relu &lt; 0
-        assert torch.all(y_custom[negative_mask] == 0), &quot;ReLU 未正确将负值置零！&quot;
-
-        print(&quot;  ✅ 形状测试通过&quot;)
-        print(&quot;  ✅ 与官方实现一致性测试通过&quot;)
-        print(&quot;  ✅ ReLU 负值置零测试通过&quot;)
-
-        # ==========================================
-        # Test 3.2 &amp; 3.3: 反向传播测试
-        # ==========================================
-        print(&quot;\n【Test 3.2 &amp; 3.3】反向传播测试&quot;)
-
-        # 重新创建张量（因为上面已经计算过梯度）
-        x = torch.randn(2, 4, requires_grad=True)
-        w = torch.randn(3, 4, requires_grad=True)
-        b = torch.randn(3, requires_grad=True)
-
-        # 使用官方算子计算梯度
-        y_std = F.relu(F.linear(x, w, b))
-        y_std.sum().backward()
-        std_gx, std_gw, std_gb = x.grad.clone(), w.grad.clone(), b.grad.clone()
-
-        # 清零梯度
-        x.grad.zero_()
-        w.grad.zero_()
-        b.grad.zero_()
-
-        # 使用自定义算子计算梯度
-        y_custom = LinearReLUFunction.apply(x, w, b)
-        y_custom.sum().backward()
-
-        # 测试梯度一致性
-        assert torch.allclose(x.grad, std_gx, rtol=1e-5, atol=1e-6), &quot;对 x 的梯度计算不正确！&quot;
-        assert torch.allclose(w.grad, std_gw, rtol=1e-5, atol=1e-6), &quot;对 weight 的梯度计算不正确！&quot;
-        assert torch.allclose(b.grad, std_gb, rtol=1e-5, atol=1e-6), &quot;对 bias 的梯度计算不正确！&quot;
-
-        # 测试梯度形状
-        assert x.grad.shape == x.shape, f&quot;x 的梯度形状错误: 期望 {x.shape}, 实际 {x.grad.shape}&quot;
-        assert w.grad.shape == w.shape, f&quot;weight 的梯度形状错误: 期望 {w.shape}, 实际 {w.grad.shape}&quot;
-        assert b.grad.shape == b.shape, f&quot;bias 的梯度形状错误: 期望 {b.shape}, 实际 {b.grad.shape}&quot;
-
-        print(&quot;  ✅ 对 x 的梯度测试通过&quot;)
-        print(&quot;  ✅ 对 weight 的梯度测试通过&quot;)
-        print(&quot;  ✅ 对 bias 的梯度测试通过&quot;)
-        print(&quot;  ✅ 梯度形状测试通过&quot;)
-
-        # ==========================================
-        # 全部通过
-        # ==========================================
-        print(&quot;\n&quot; + &quot;=&quot; * 60)
-        print(&quot; PyTorch 核心操作测试通过。&quot;)
-        print(&quot;   所有测试用例均已通过，可以正式开启大模型的浩瀚旅程了！&quot;)
-        print(&quot;=&quot; * 60)
-
-    except NotImplementedError:
-        print(&quot;\n❌ 测试失败: 请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError) as e:
-        if isinstance(e, AttributeError):
-            print(&quot;\n❌ 测试失败: 代码未完成，无法找到必要的属性&quot;)
-        elif isinstance(e, NameError):
-            print(&quot;\n❌ 测试失败: 代码可能未完成，导致了变量未定义&quot;)
-        else:
-            print(&quot;\n❌ 测试失败: 代码可能未完成，导致类型错误&quot;)
-            print(f&quot;   错误信息: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;\n❌ 测试失败: {e}&quot;)
-        raise
-    except Exception as e:
-        print(f&quot;\n❌ 发生未知异常: {type(e).__name__}: {e}&quot;)
-        raise
-
-test_warmup()</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="tensor">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="tensor">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Tensor 变形：先学会读 shape，再写 reshape</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">把 [B,C,H,W] 变成 [B,H×W,C] 时，最危险的不是 API 名字，而是元素顺序。reshape 只会重新分组，不会自动把 C 挪到最后。</p>
             <p class="predict-q">先判断：为什么通常要先 permute，再 reshape？</p>
             <div class="predict-options">
@@ -1097,14 +789,11 @@ test_warmup()</code></pre></details>
                 <input type="radio" name="predict-tensor" value="2">
                 <span>因为 permute 会自动复制数据</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="tensor">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="tensor">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="tensor">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Tensor 的 shape 不是一串数字，而是每个轴的语义。</li><li>图像特征常见布局是 [B, C, H, W]：B 是样本数，C 是通道，H/W 是空间网格。</li><li>Transformer 更喜欢序列布局：[B, S, C]，其中 S 可以是 H * W。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>Tensor 的 shape 不是一串数字，而是每个轴的语义。</li><li>图像特征常见布局是 [B, C, H, W]：B 是样本数，C 是通道，H/W 是空间网格。</li><li>Transformer 更喜欢序列布局：[B, S, C]，其中 S 可以是 H * W。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1219,24 +908,36 @@ assert tokens.shape == (B, H * W, C)</code></pre><p class="syntax-tip">shape 合
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="tensor-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>回到 notebook，实现原生 PyTorch 写法：先 permute，再 reshape。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-1">
+                <span>再用 einops 写出同一个变换，让字符串表达出 b c h w -&gt; b (h w) c。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-2">
+                <span>跑测试时重点看 shape 和 torch.allclose，两者同时通过才算真的理解。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="tensor-3">
+                <span>用 B=1、C=2、H=2、W=2 的连续整数张量手算第一个 token，确认不是只碰巧通过 shape 测试。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="embedding">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="embedding">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Embedding 查表：token id 是地址，不是连续数值</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">token id 看起来是整数，但 9 并不比 2 更‘大’或更‘重要’。它只是词表中的行号。</p>
             <p class="predict-q">先判断：如果把 token id 直接当连续数值送进 Linear，最根本的问题是什么？</p>
             <div class="predict-options">
@@ -1252,14 +953,11 @@ assert tokens.shape == (B, H * W, C)</code></pre><p class="syntax-tip">shape 合
                 <input type="radio" name="predict-embedding" value="2">
                 <span>Embedding 会自动删除重复 token</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="embedding">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="embedding">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="embedding">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>文本会先被 tokenizer 变成 token id，例如 [4, 1, 3]。</li><li>神经网络不能直接理解 id 的大小关系；id 只是查表地址。</li><li>Embedding 权重表的 shape 是 [vocab_size, hidden_dim]，第 i 行就是 token i 的向量。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>文本会先被 tokenizer 变成 token id，例如 [4, 1, 3]。</li><li>神经网络不能直接理解 id 的大小关系；id 只是查表地址。</li><li>Embedding 权重表的 shape 是 [vocab_size, hidden_dim]，第 i 行就是 token i 的向量。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1348,24 +1046,36 @@ assert torch.allclose(official, manual)</code></pre><p class="syntax-tip">这组
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="embedding-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>回到 notebook，先实例化 nn.Embedding 并得到官方输出。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-1">
+                <span>再用 emb_layer.weight[input_ids] 手动查表。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-2">
+                <span>用 torch.allclose 验证官方查表和手动查表完全一致。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="embedding-3">
+                <span>额外检查 input_ids 的最小值、最大值和 dtype，解释三者为什么共同决定查表是否合法。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="backward">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="backward">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Linear + ReLU 反传：梯度像闯关一样倒着走</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">Linear+ReLU 的 backward 必须逆着 forward 走。forward 最后经过 ReLU，所以传回来的梯度第一站不是 Linear，而是 ReLU mask。</p>
             <p class="predict-q">先判断：grad_output 回来后，应该先计算什么？</p>
             <div class="predict-options">
@@ -1381,14 +1091,11 @@ assert torch.allclose(official, manual)</code></pre><p class="syntax-tip">这组
                 <input type="radio" name="predict-backward" value="2">
                 <span>直接把 grad_output 原样返回给所有输入</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="backward">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="backward">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="backward">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>forward 不是只算输出，还要保存 backward 会用到的中间信息。</li><li>ReLU 的导数很简单：z &gt; 0 时梯度通过，z &lt;= 0 时梯度变 0。</li><li>Linear 的三个梯度要和三个输入形状对齐：x、weight、bias。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>forward 不是只算输出，还要保存 backward 会用到的中间信息。</li><li>ReLU 的导数很简单：z &gt; 0 时梯度通过，z &lt;= 0 时梯度变 0。</li><li>Linear 的三个梯度要和三个输入形状对齐：x、weight、bias。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1480,16 +1187,36 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="backward-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>回到 notebook，在 forward 里计算 z、y，并保存 x、weight、mask。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-1">
+                <span>在 backward 里先写 grad_z = grad_output * mask。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-2">
+                <span>再补 Linear 的三个梯度：grad_x、grad_weight、grad_bias，并和官方 autograd 对齐。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="backward-3">
+                <span>把 forward 顺序和 backward 顺序画成两条相反箭头，并逐项标出 ctx 需要保存的张量。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="edb18c13168600e4382b2e1fb1c80943dafb99edeeefae175b2dfcc75cb27669">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/00_PyTorch_Warmup.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>tensor_warmup</code> · <code>embedding_warmup</code> · <code>LinearReLUFunction</code> · <code>forward</code> · <code>backward</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1509,10 +1236,10 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
     const predictData = {"tensor":{"answer":0,"revealNote":"对。先确定轴语义，再合并连续的空间轴；只看元素总数相等，可能得到 shape 对、语义错的结果。"},"embedding":{"answer":0,"revealNote":"对。Embedding 把离散地址变成可学习向量，让相似性由训练决定，而不是由 id 数字大小决定。"},"backward":{"answer":0,"revealNote":"对。链式法则就是按前向的逆序逐门通过；ReLU 先决定哪些位置的梯度还能继续流动。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 12;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "00";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1525,16 +1252,18 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1559,7 +1288,7 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1601,11 +1330,15 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1636,6 +1369,7 @@ assert torch.allclose(custom_grad_w, reference_grad_w, atol=1e-5)</code></pre><p
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

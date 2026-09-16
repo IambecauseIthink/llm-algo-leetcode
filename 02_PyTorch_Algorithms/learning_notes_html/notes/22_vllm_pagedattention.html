@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,396 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 22 | 零基础导学关卡</p>
-        <h1>vLLM PagedAttention | vLLM 分页注意力</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>vLLM 分页注意力</h1>
+        <p class="course-subtitle">vLLM PagedAttention</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">22_vLLM_PagedAttention.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">KV Cache</span><span class="pill">PagedAttention</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">logical block → block table → physical KV block</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">Prefill：先向上取整，再做一次完整容量检查</a></li><li><a href="#mission-2">Decode：先看已经加一的新长度，只在新块第一个位置补块</a></li><li><a href="#mission-3">按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="d174395731e67d23ca4cef8f316acf4e62c64dd6c8b3371081977e20c4b554ff">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../22_vLLM_PagedAttention.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>22. vLLM PagedAttention | vLLM 分页注意力</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>KV Cache</code>, <code>PagedAttention</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>在线推理服务里，请求不会整齐地一起开始、一起结束：有的 prompt 很短，有的上下文很长，有的很快生成完，有的还在继续 decode。如果仍然按最大长度给每个请求预留整块 KV Cache，显存会被大量浪费，GPU 也会因为静态 batch 里的空洞而等待。</p>
-<p>PagedAttention 的思路是把 KV Cache 像分页内存一样管理：物理显存切成固定大小的 block，每个请求只维护一张逻辑到物理的 block table。prefill 时按需申请，decode 跨块时再补新 block，真正计算时再按表拼回逻辑连续的缓存。本节会用一个简化管理器模拟这条链路，看清 vLLM 为什么能支撑高吞吐在线 serving。</p>
-<p><strong>关键词：</strong> <code>PagedAttention</code>, <code>KV cache</code>, <code>block table</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 0：计算 KV Cache 理论容量</li><li>TODO 0：计算单 token 的 K/V 字节数、单 block 字节数和总容量。</li><li>TODO 1: 计算需要的 block 数量</li><li>TODO 2: 从 free_blocks 中弹出对应数量的 block 索引，</li><li>TODO 3: 判断是否刚好需要跨入新的一块 Block？</li><li>TODO 4：计算请求的 Block 占用报告（答案区保留任务标记，下面填入参考实现）</li><li>TODO 4：使用 allocated_tokens = ???；unused_tail_tokens = ???；utilization = ???。</li><li>TODO 5：先记录并校验 released_block_ids，再归还 free_blocks。</li><li>TODO 6：恢复逻辑连续 Cache（答案区保留任务标记，下面填入参考实现）</li><li>TODO 6：只读取 req.block_table 中的物理块，并截断到 req.seq_len。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先理解单步解码如何读取 KV Cache，再把连续缓存和分页 block 的管理方式放到同一条请求链路中比较。</p>
-<ul>
-<li><a href="21_decoding_strategies.html">21. Decoding Strategies | 解码策略</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb">P1: 11. KV Cache and Memory Growth | KV Cache 与显存增长</a></li>
-<li><a href="20_flashattention_sim.html">20. FlashAttention Sim | FlashAttention 模拟</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心思想与痛点</h3>
-<blockquote>
-<p><strong>痛点 1：静态预留造成的空洞</strong>
-在线请求不会同时开始或同时结束。若按最大长度为每个请求预留连续空间，已完成请求留下的空位和未使用的尾部都会降低显存利用率。请求如何动态组成 batch 属于 Serving 调度，本节先聚焦 Cache 的物理布局。</p>
-</blockquote>
-<blockquote>
-<p><strong>痛点 2：KV Cache 的显存碎片化</strong>
-KV Cache 的最终长度通常无法预先确定。如果提前按 <code>max_len</code> 分配整块显存，可能产生明显的尾部和内部浪费，具体比例取决于请求长度分布和分配策略。
-<strong>解法：PagedAttention (vLLM)</strong>
-借鉴操作系统的虚拟内存管理。把显存切分成固定大小的 <strong>Block</strong>（比如 1 个 Block 存 16 个 Token）。在生成时，按需分配物理 Block，并通过 <code>Block Table</code> 记录逻辑 Token 序列到物理块的映射。</p>
-</blockquote>
-<blockquote>
-<p><strong>一句话闭环：</strong> PagedAttention 的核心不是把 KV Cache 变“小”，而是把它变成“可按块寻址、可按需增长”的结构：prefill 申请所需 Block，decode 只在跨越边界时补 Block，计算阶段再依据块表访问离散缓存。
-<strong>本节的观察重点：</strong> 验证 Block 分配、释放、复用和逻辑到物理的映射；前缀如何共享交给 24 / 34，请求如何动态调度交给 Serving 相关小节。</p>
-</blockquote>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/22_paged_attention_overview.svg" alt="PagedAttention 的 KV Cache 管理总览"></p>
-<h3>Step 2: Block 分配与状态变化</h3>
-<p><code>BlockTable</code> 记录“逻辑块编号 → 物理块 ID”的映射。理解这张表如何随请求推进而变化，比先阅读管理器代码更重要：prefill 建立初始映射，decode 只在跨过边界时扩容，完成后释放物理块。</p>
-<table>
-<thead>
-<tr>
-<th>阶段</th>
-<th>输入</th>
-<th>状态变化</th>
-<th>需要检查的边界</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Prefill</td>
-<td>prompt 长度</td>
-<td>申请多个物理 Block</td>
-<td>空闲 Block 是否足够</td>
-</tr>
-<tr>
-<td>Decode</td>
-<td>新增 token</td>
-<td>跨边界时追加 Block</td>
-<td>扩容失败时状态是否回滚</td>
-</tr>
-<tr>
-<td>Release</td>
-<td>已完成请求</td>
-<td>归还 Block 并清空块表</td>
-<td>是否重复释放</td>
-</tr>
-<tr>
-<td>Reuse</td>
-<td>新请求</td>
-<td>使用已释放的物理 Block</td>
-<td>物理 Block 是否允许不连续</td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: PagedAttention 模拟机制</h3>
-<p>为了让你在不写几千行 C++ 的情况下弄懂 PagedAttention，我们将用纯 Python 模拟它的核心数据结构：</p>
-<ol>
-<li><strong>Physical Block Pool (物理块池)</strong>：一个预先分配好的大张量，形状为 <code>[num_blocks, block_size, hidden_dim]</code>。</li>
-<li><strong>Block Table (块表)</strong>：每个 Request 都有一个专属的块表，它是一个整数列表（<code>List[int]</code>），记录了这个 Request 的第 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></eq> 个逻辑块存在物理池的哪个索引里。</li>
-<li><strong>KV Cache Manager</strong>：负责在 Token 生成时，“按需”分配新的物理块索引。</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th>数据结构</th>
-<th>作用</th>
-<th>应保持的不变量</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>physical_pool</code></td>
-<td>保存物理 KV Block</td>
-<td>一个物理索引对应一个池内 Block</td>
-</tr>
-<tr>
-<td><code>block_table</code></td>
-<td>逻辑 Block 到物理 Block 的映射</td>
-<td>不应出现无效或重复的物理索引</td>
-</tr>
-<tr>
-<td><code>free_blocks</code></td>
-<td>管理尚未分配的物理 Block</td>
-<td>已分配 Block 不应同时出现在其中</td>
-</tr>
-<tr>
-<td><code>seq_len</code></td>
-<td>判断尾块和 decode 扩容边界</td>
-<td>与当前逻辑 token 数一致</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/22_paged_attention_blocks.svg" alt="PagedAttention 块表图"></p>
-<h3>Step 4: 实现 Block 管理器</h3>
-<p><strong>要求</strong>：请补全下方 <code>KVCacheManager</code>，实现一个极简版的 vLLM 内存管理器；<code>acquire_prefix</code> / <code>release_prefix</code> 的多请求 Prefix Cache 共享作为可选扩展。</p>
-<h3>提示</h3>
-<ul>
-<li><code>block_table</code> 是逻辑块到物理块的映射，不要把它和真实张量位置混淆。</li>
-<li><code>allocate_for_prefill</code> 先按需分配整段 prompt。</li>
-<li><code>allocate_for_decode</code> 只有在跨块边界时才追加新 block。</li>
-<li><code>get_physical_cache</code> 的作用是把离散物理块恢复成逻辑连续序列。</li>
-</ul>
-<h3>测试</h3>
-<p>运行下面的测试单元，确认 prefill / decode / cache 拼装三段链路都正确。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code># TODO 0：计算 KV Cache 理论容量
-def estimate_kv_cache_bytes(num_blocks: int, block_size: int, num_layers: int, num_kv_heads: int, head_dim: int, dtype_bytes: int = 2) -&gt; Dict[str, int]:
-    &quot;&quot;&quot;估算 KV Cache 理论容量；不代表 vLLM allocator 的实际峰值。&quot;&quot;&quot;
-    # TODO 0：计算单 token 的 K/V 字节数、单 block 字节数和总容量。
-    # kv_bytes_per_token = ???；kv_bytes_per_block = ???；total_cache_bytes = ???。
-    # layout_shape = ???；其中 layout 是 [num_layers, 2(K/V), num_kv_heads, block_size, head_dim]。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
+<section class="lessons">
 
-
-class Request:
-    &quot;&quot;&quot;记录请求长度以及逻辑块到物理块的映射。&quot;&quot;&quot;
-
-    def __init__(self, request_id: int, prompt_len: int):
-        if request_id &lt; 0 or prompt_len &lt;= 0:
-            raise ValueError('request_id 必须非负，prompt_len 必须为正数')
-        self.request_id = request_id
-        self.seq_len = prompt_len
-        # 记录此请求占据的物理 Block 索引
-        self.block_table: List[int] = []
-
-class KVCacheManager:
-    &quot;&quot;&quot;用空闲块列表模拟 KV Cache 的分配、扩容、释放和恢复。&quot;&quot;&quot;
-    def __init__(self, num_blocks: int, block_size: int, head_dim: int):
-        self.num_blocks = num_blocks
-        self.block_size = block_size
-        self.head_dim = head_dim
-
-        # 模拟预分配一块大显存池 (vLLM 会在 GPU 上分配几 GB)
-        # 形状: [num_blocks, block_size, head_dim]
-        self.physical_kv_cache = torch.zeros(num_blocks, block_size, head_dim)
-
-        # 跟踪哪些物理块被占用了
-        self.free_blocks: List[int] = list(range(num_blocks))
-        # 可选扩展：prefix_key -&gt; {'block_ids': [...], 'refcount': n}
-        self.prefix_cache: Dict[Tuple[int, ...], dict] = {}
-
-    def acquire_prefix(self, prefix_tokens: List[int]) -&gt; List[int]:
-        &quot;&quot;&quot;可选扩展：为相同 token 前缀共享物理 Block。&quot;&quot;&quot;
-        # 扩展 A（Prefix Cache）：规范化 prefix_key，命中时增加引用计数；
-        # 未命中时按需申请 Block，并记录 block_ids 与 refcount。
-        raise NotImplementedError(&quot;请先完成 Prefix Cache 扩展！&quot;)
-
-    def release_prefix(self, prefix_tokens: List[int]):
-        # 扩展 B（Prefix Cache）：引用计数归零后归还物理 Block。
-        raise NotImplementedError(&quot;请先完成 Prefix Cache 扩展！&quot;)
-
-    def allocate_for_prefill(self, req: Request):
-        &quot;&quot;&quot;
-        请求刚进来时 (Prefill阶段)，为它的 Prompt 长度分配所需的全部 Block
-        &quot;&quot;&quot;
-        # ==========================================
-        # TODO 1: 计算需要的 block 数量
-        # 提示: 向上取整 (seq_len / block_size)；needed_blocks = ???
-        # 已有 block_table 的请求不能重复 Prefill；prompt_len 必须为正数。
-        # ==========================================
-        # needed_blocks = ???
-
-        # ==========================================
-        # TODO 2: 从 free_blocks 中弹出对应数量的 block 索引，
-        # 并追加到请求的 block_table 中
-        # 如果 free_blocks 不够了，抛出 RuntimeError(&quot;OOM&quot;)
-        # ==========================================
-        # allocated_blocks = ???；block_id = ???；req.block_table = ???
-        # 先确认空闲块足够，再修改 free_blocks 和 block_table，避免 OOM 后半分配。
-        pass
-
-    def allocate_for_decode(self, req: Request):
-        &quot;&quot;&quot;
-        自回归生成时 (Decode阶段)，检查序列长度。
-        如果当前最后一个 Block 满了，则按需分配 1 个新 Block。
-        &quot;&quot;&quot;
-        req.seq_len += 1  # 长度加 1
-
-        # ==========================================
-        # TODO 3: 判断是否刚好需要跨入新的一块 Block？
-        # 条件：加 1 后的 seq_len 除以 block_size 余数是多少？
-        # ==========================================
-        # new_seq_len = ???；is_new_block_needed = ???
-        # 先检查资源，再提交 seq_len 和 block_table；OOM 时请求状态必须保持不变。
-
-        # 如果需要，尝试分配 1 个新的物理 Block 放入块表
-        # if is_new_block_needed:
-        #    if not self.free_blocks: ...
-        #    new_block_id = ???；req.block_table.append(new_block_id)
-        pass
-
-    # TODO 4：计算请求的 Block 占用报告（答案区保留任务标记，下面填入参考实现）
-    def allocation_report(self, req: Request) -&gt; Dict[str, float]:
-        &quot;&quot;&quot;报告逻辑 token、已分配 token、尾块浪费和利用率。&quot;&quot;&quot;
-        # TODO 4：使用 allocated_tokens = ???；unused_tail_tokens = ???；utilization = ???。
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-    def release_request(self, req: Request):
-        &quot;&quot;&quot;释放请求占用的物理块，并清空其块表。&quot;&quot;&quot;
-        # TODO 5：先记录并校验 released_block_ids，再归还 free_blocks。
-        # released_block_ids = ???；free_block_count = ???。
-        # 重复释放应报错或明确拒绝，不能把同一物理块加入 free_blocks 两次。
-        pass
-
-    # TODO 6：恢复逻辑连续 Cache（答案区保留任务标记，下面填入参考实现）
-    def get_physical_cache(self, req: Request) -&gt; torch.Tensor:
-        &quot;&quot;&quot;根据块表恢复逻辑连续的 KV Cache。&quot;&quot;&quot;
-        # TODO 6：只读取 req.block_table 中的物理块，并截断到 req.seq_len。
-        # ==========================================
-        # blocks = ???；cat_blocks = ???；logical_cache = ???
-        return cat_blocks[:req.seq_len]
-
-</code></pre></details><details><summary>题目与测试代码 · Cell 11</summary><pre><code># 运行此单元格以测试你的实现
-def test_paged_attention_manager():
-    try:
-        # Case 1: 典型 Prefill + Decode + Cache 拼装
-        manager = KVCacheManager(num_blocks=10, block_size=4, head_dim=64)
-        print(&quot;初始化内存池...&quot;)
-
-        for bad_request in ((-1, 2), (1, 0)):
-            try:
-                Request(request_id=bad_request[0], prompt_len=bad_request[1])
-                raise AssertionError('非法请求参数未被拒绝')
-            except ValueError:
-                pass
-        print(&quot;✅ Request 输入校验通过！&quot;)
-
-        req1 = Request(request_id=1, prompt_len=6)
-        manager.allocate_for_prefill(req1)
-        assert len(req1.block_table) == 2, &quot;长度 6 的请求应分配 2 个 Block！&quot;
-        assert len(manager.free_blocks) == 8, &quot;池中应该剩下 8 个空闲块！&quot;
-        print(f&quot;✅ Prefill 测试通过！Req1 分配的块表: {req1.block_table}&quot;)
-
-        manager.allocate_for_decode(req1)
-        assert len(req1.block_table) == 2, &quot;生成第 7 个 token 时不应该分配新块！&quot;
-
-        manager.allocate_for_decode(req1)
-        manager.allocate_for_decode(req1)
-        assert len(req1.block_table) == 3, &quot;生成第 9 个 token 时应当分配了第 3 个新块！&quot;
-        assert len(manager.free_blocks) == 7, &quot;池中应该剩下 7 个空闲块！&quot;
-        print(f&quot;✅ Decode 动态分配测试通过！Req1 最新块表: {req1.block_table}&quot;)
-
-        for block_id, value in zip(req1.block_table, [1.0, 2.0, 3.0]):
-            manager.physical_kv_cache[block_id].fill_(value)
-        cache = manager.get_physical_cache(req1)
-        assert cache.shape == (9, 64), f&quot;拼装出来的连续 Cache 形状不对，应为 (9, 64)，实为 {cache.shape}&quot;
-        assert torch.all(cache[:4] == 1.0), &quot;第 1 个 Block 未正确拼装！&quot;
-        assert torch.all(cache[4:8] == 2.0), &quot;第 2 个 Block 未正确拼装！&quot;
-        assert torch.all(cache[8:] == 3.0), &quot;第 3 个 Block 的截断拼装不正确！&quot;
-        print(&quot;✅ Cache 拼装测试通过！多块物理缓存被正确恢复为逻辑连续序列。&quot;)
-
-        # Case 2: 恰好跨越 block 边界时，Decode 应该分配新块，并正确截断最后一块
-        manager2 = KVCacheManager(num_blocks=4, block_size=4, head_dim=8)
-        req2 = Request(request_id=2, prompt_len=4)
-        manager2.allocate_for_prefill(req2)
-        assert len(req2.block_table) == 1, &quot;长度 4 的请求应只分配 1 个 Block！&quot;
-        manager2.allocate_for_decode(req2)
-        assert len(req2.block_table) == 2, &quot;长度 5 的请求应分配第 2 个 Block！&quot;
-        manager2.physical_kv_cache[req2.block_table[0]].fill_(7.0)
-        manager2.physical_kv_cache[req2.block_table[1]].fill_(8.0)
-        cache2 = manager2.get_physical_cache(req2)
-        assert cache2.shape == (5, 8), f&quot;拼装出来的连续 Cache 形状不对，应为 (5, 8)，实为 {cache2.shape}&quot;
-        assert torch.all(cache2[:4] == 7.0), &quot;边界块的前 4 个 token 不正确！&quot;
-        assert torch.all(cache2[4:] == 8.0), &quot;边界块的最后 1 个 token 不正确！&quot;
-        print(&quot;✅ 边界分配与截断测试通过！&quot;)
-
-        # Case 3: OOM 分支必须抛出 RuntimeError
-        oom_manager = KVCacheManager(num_blocks=1, block_size=4, head_dim=8)
-        oom_req = Request(request_id=3, prompt_len=5)
-        try:
-            oom_manager.allocate_for_prefill(oom_req)
-        except RuntimeError as e:
-            assert &quot;OOM&quot; in str(e), &quot;OOM 异常信息不正确！&quot;
-            print(&quot;✅ OOM 测试通过！&quot;)
-        else:
-            raise AssertionError('显存池不足时应该抛出 RuntimeError(&quot;OOM&quot;)！')
-        # Case 4: Prefill OOM 不应留下半分配状态
-        atomic_manager = KVCacheManager(num_blocks=2, block_size=4, head_dim=8)
-        atomic_req = Request(request_id=4, prompt_len=9)
-        free_before = list(atomic_manager.free_blocks)
-        try:
-            atomic_manager.allocate_for_prefill(atomic_req)
-        except RuntimeError as e:
-            assert 'OOM' in str(e), '应明确报告 OOM'
-            assert atomic_req.block_table == [], 'OOM 后请求不应保留半分配块'
-            assert atomic_manager.free_blocks == free_before, 'OOM 后空闲池不应被部分消耗'
-            print('✅ Prefill 原子 OOM 测试通过！')
-        else:
-            raise AssertionError('资源不足时必须抛出 OOM')
-
-        ledger = estimate_kv_cache_bytes(num_blocks=4, block_size=4, num_layers=2, num_kv_heads=8, head_dim=16, dtype_bytes=2)
-        assert ledger['kv_bytes_per_token'] == 1024, 'K/V 两份缓存账本计算不正确'
-        assert ledger['total_cache_bytes'] == 16384, 'Block 池总容量计算不正确'
-        reusable_manager = KVCacheManager(num_blocks=3, block_size=4, head_dim=8)
-        reusable_req = Request(request_id=5, prompt_len=5)
-        reusable_manager.allocate_for_prefill(reusable_req)
-        allocated_before_release = list(reusable_req.block_table)
-        report = reusable_manager.allocation_report(reusable_req)
-        assert report['allocated_tokens'] == 8, '已分配 token 账本不正确'
-        assert report['unused_tail_tokens'] == 3, '尾块浪费计算不正确'
-        assert round(report['utilization'], 3) == 0.625, 'Block 利用率计算不正确'
-        reusable_manager.release_request(reusable_req)
-        assert reusable_req.block_table == [], '释放后请求块表应为空'
-        assert reusable_manager.free_blocks == [0, 1, 2], '释放后的 Block 应可复用'
-        try:
-            reusable_manager.release_request(reusable_req)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError('重复释放请求应明确报错')
-        rollback_manager = KVCacheManager(num_blocks=1, block_size=4, head_dim=8)
-        rollback_req = Request(request_id=6, prompt_len=4)
-        rollback_manager.allocate_for_prefill(rollback_req)
-        old_seq_len = rollback_req.seq_len
-        try:
-            rollback_manager.allocate_for_decode(rollback_req)
-        except RuntimeError:
-            assert rollback_req.seq_len == old_seq_len, 'Decode OOM 后 seq_len 不应改变'
-            print('✅ Decode OOM 回滚测试通过！')
-        else:
-            raise AssertionError('Decode 跨块时应触发 OOM')
-        print('✅ KV Cache 账本与释放复用测试通过！')
-
-        print(&quot;\n✅ All Tests Passed! PagedAttention 内存管理逻辑验证通过。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except Exception as e:
-        # 只把 TODO 未完成单独提示；断言、类型和状态错误保留原始异常，便于定位。
-        print(f&quot;❌ 测试失败: {type(e).__name__}: {e}&quot;)
-        raise
-
-
-test_paged_attention_manager()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="paged-prefill">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="paged-prefill">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Prefill：先向上取整，再做一次完整容量检查</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">prompt_len=5、block_size=4，空闲池只有 1 个块。</p>
             <p class="predict-q">allocate_for_prefill 应怎样处理？</p>
             <div class="predict-options">
@@ -1416,14 +1052,11 @@ test_paged_attention_manager()
                 <input type="radio" name="predict-paged-prefill" value="2">
                 <span>先拿走 1 块再返回成功</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-prefill">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="paged-prefill">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="paged-prefill">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>physical_kv_cache 已在当前练习的 __init__ 中给出，shape 是 [num_blocks, block_size, head_dim]；不要重复实现参考解析里的初始化 TODO。</li><li>req.seq_len 是 prompt token 数，req.block_table 是 List[int]，按逻辑顺序记录物理 block_id。</li><li>free_blocks 是可用物理块编号列表；pop(0) 会返回队首编号并从列表移除。</li><li>最后一块即使只使用一个 token，也必须占用完整物理块，因此需要整数向上取整。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1494,24 +1127,32 @@ for _ in range(boxes_needed):
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-prefill-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成当前练习 TODO 1–2：整数向上取整、完整容量检查、循环 pop(0) 并 append。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-prefill-1">
+                <span>运行 Prefill 与 OOM 用例：长度 6 应分 2 块；只有 1 块却要容纳 5 个 token 时必须抛含 OOM 的 RuntimeError。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-prefill-2">
+                <span>若块数少一，检查是否用了向下取整；若 OOM 后 free_blocks 已减少，检查是否把容量检查写进了分配循环。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-decode">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="paged-decode">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>Decode：先看已经加一的新长度，只在新块第一个位置补块</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">block_size=4，请求当前长度 8；allocate_for_decode 开头先把长度加到 9。</p>
             <p class="predict-q">这一步是否需要新 Block？</p>
             <div class="predict-options">
@@ -1527,14 +1168,11 @@ for _ in range(boxes_needed):
                 <input type="radio" name="predict-paged-decode" value="2">
                 <span>需要一次分配 4 个 Block</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-decode">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="paged-decode">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="paged-decode">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>函数开头已经执行 req.seq_len += 1；TODO 看到的是新 token 加入后的长度。</li><li>block_size=4 时，长度 1–4 使用第一块，5–8 使用第二块，9–12 使用第三块。</li><li>当前 Notebook 的判断契约是 (req.seq_len % self.block_size) == 1，表示刚进入新块的第一个槽位。</li><li>Decode 每次只新增一个 token，因此跨界时最多追加一个物理块；空闲列表为空要抛 RuntimeError(&quot;OOM&quot;)。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1596,24 +1234,32 @@ if needs_row:
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-decode-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 is_new_block_needed 和跨界分配分支；不要重复 req.seq_len += 1，也不要每次 decode 都分块。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-decode-1">
+                <span>按可见测试从长度 6 手算到 9：第一次后仍 2 块，第三次后变 3 块，空闲池从 8 变 7。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-decode-2">
+                <span>若长度 8 时提前扩容，检查是否判断余数 0；若长度 9 不扩容，检查是否在加一前计算了条件。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="paged-cache-rebuild">
+        <article class="lesson-card inquiry" id="mission-3" data-lesson="paged-cache-rebuild">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>按块表恢复逻辑序列：先索引每块，再沿 token 维拼接并截尾</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">block_size=4、head_dim=8，块表有 2 个 ID，请求 seq_len=5。</p>
             <p class="predict-q">cat 前、cat 后、截断后的 shape 依次是什么？</p>
             <div class="predict-options">
@@ -1629,14 +1275,11 @@ if needs_row:
                 <input type="radio" name="predict-paged-cache-rebuild" value="2">
                 <span>每块 [8]；拼接 [16]；返回 [5]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="paged-cache-rebuild">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="paged-cache-rebuild">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>physical_kv_cache 的 shape 是 [num_blocks, block_size, head_dim]；用一个 block_id 索引后得到 [block_size, head_dim]。</li><li>req.block_table 按逻辑顺序保存物理 ID，因此列表推导式也必须按这个顺序取块。</li><li>token 位于每块的第 0 维，所以多个块沿 dim=0 拼接，结果是 [allocated_blocks*block_size, head_dim]。</li><li>最后一个块可能没有填满，返回前要切到 req.seq_len，得到精确 [seq_len, head_dim]。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1692,16 +1335,32 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="paged-cache-rebuild-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成列表推导式、torch.cat(dim=0) 和最终切片；确认没有修改 req.block_table 或 free_blocks。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-cache-rebuild-1">
+                <span>运行两组拼装测试：长度 9 应返回 [9,64] 且三段值为 1/2/3；长度 5 应返回 [5,8] 且第二块只取 1 行。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="paged-cache-rebuild-2">
+                <span>若返回三维张量，检查是否漏了 cat；若尾部 shape 太长，检查是否漏了 [:req.seq_len]；若内容顺序错，检查是否排序了 block_id。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="ec2688df31aa9ddff18f5ac13bc09cf3b4e4b071f9d668e479951724d94ed965">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/22_vLLM_PagedAttention.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>estimate_kv_cache_bytes</code> · <code>Request</code> · <code>KVCacheManager</code> · <code>acquire_prefix</code> · <code>release_prefix</code> · <code>allocate_for_prefill</code> · <code>allocate_for_decode</code> · <code>allocation_report</code> · <code>release_request</code> · <code>get_physical_cache</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1721,10 +1380,10 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
     const predictData = {"paged-prefill":{"answer":0,"revealNote":"向上取整得到 2，而库存只有 1。测试要求异常文本包含 OOM。"},"paged-decode":{"answer":0,"revealNote":"判断使用的是加一后的长度 9，它刚进入第三个逻辑块的第一个位置。"},"paged-cache-rebuild":{"answer":0,"revealNote":"单块索引删除物理块维，沿 token 维拼成 8 行，再按真实长度保留前 5 行。"}};
     const predictTotal = 3;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 9;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "22";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1733,20 +1392,22 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-d174395731e6";
+    const homeworkKey = statePrefix + levelId + "-homework-ec2688df31aa";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1771,7 +1432,7 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1813,11 +1474,15 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1848,6 +1513,7 @@ print(used_rows.shape)   # [5,2]</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

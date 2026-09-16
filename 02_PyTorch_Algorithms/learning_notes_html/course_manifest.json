@@ -1,7 +1,8 @@
 {
   "upstream": {
-    "commit": "4fa62623ae7f2f207871b43c3f254a765765bf2e",
-    "date": "2026-09-14"
+    "commit": "518cc451c51a1e86d6e17f304147135d2a8cb379",
+    "date": "2026-09-16",
+    "repository": "https://github.com/datawhalechina/llm-algo-leetcode"
   },
   "levels": [
     {
@@ -105,7 +106,7 @@
       "oldId": "12",
       "title": "Gradient Accumulation | 梯度累积",
       "file": "12_Gradient_Accumulation.ipynb",
-      "sourceHash": "12349af8a0f2b75ef63eae1879df8d3e9d26374b16618668cbe288cc4433695f",
+      "sourceHash": "1abe3d24f6bbaf1b15531bf8c62b203b6aca21ebf568812f5c11c525e46879e7",
       "page": "12_gradient_accumulation.html"
     },
     {
@@ -153,16 +154,16 @@
       "oldId": "18",
       "title": "Activation and Loss Backward | 激活与损失反向",
       "file": "18_Activation_and_Loss_Backward.ipynb",
-      "sourceHash": "de7ec59a49aae113499617b6fd77e6e5f47a24a878546717037d36ef669a3ea6",
+      "sourceHash": "c87808fe8274ed20a041f4fb8dd6df0ae286d0eac8fbfb846f675ec4a7f36877",
       "page": "18_activation_and_loss_backward.html"
     },
     {
       "id": "19",
       "oldId": "19",
       "title": "Activation Checkpointing | 激活检查点",
-      "file": "19_Activation_Checkpointing_and_Activation_Offload.ipynb",
-      "sourceHash": "124b2c6a891f527f2744b476c13973940f62a7e1b5d7acca9470869f2f43c4ef",
-      "page": "19_activation_checkpointing_and_activation_offload.html"
+      "file": "19_Activation_Checkpointing.ipynb",
+      "sourceHash": "35c00c681fe2163e53e8a6e430c2fb9346c7375d93382d14577f736454d05dc7",
+      "page": "19_activation_checkpointing.html"
     },
     {
       "id": "20",
@@ -177,7 +178,7 @@
       "oldId": "21",
       "title": "Decoding Strategies | 解码策略",
       "file": "21_Decoding_Strategies.ipynb",
-      "sourceHash": "e086ed13c194bb33b52e42a651210c52e91c88fe84e3669c64baa931885d275b",
+      "sourceHash": "ff0a8e8cdaacd78d63ab6e2fa2547673c4b1820623ece67de22f634cfa14b142",
       "page": "21_decoding_strategies.html"
     },
     {
@@ -185,7 +186,7 @@
       "oldId": "22",
       "title": "vLLM PagedAttention | vLLM 分页注意力",
       "file": "22_vLLM_PagedAttention.ipynb",
-      "sourceHash": "d174395731e67d23ca4cef8f316acf4e62c64dd6c8b3371081977e20c4b554ff",
+      "sourceHash": "ec2688df31aa9ddff18f5ac13bc09cf3b4e4b071f9d668e479951724d94ed965",
       "page": "22_vllm_pagedattention.html"
     },
     {
@@ -193,7 +194,7 @@
       "oldId": "23",
       "title": "Speculative Decoding | 投机解码",
       "file": "23_Speculative_Decoding.ipynb",
-      "sourceHash": "cd5d34dea4cddcf163aa0952d236127d580a9d21b94eee637a6d8def99c82cb4",
+      "sourceHash": "eff4b51ab888a36d16fff6fc41b67c0f68cd92917a61b5ba3e9b08c195a208a0",
       "page": "23_speculative_decoding.html"
     },
     {
@@ -201,23 +202,23 @@
       "oldId": "24",
       "title": "SGLang RadixAttention | SGLang 基数注意力",
       "file": "24_SGLang_RadixAttention.ipynb",
-      "sourceHash": "288696ab5b87ac31942a71b932483cb7dd84e4acd6b7f72b97437b0e0bd5f3d2",
+      "sourceHash": "6a5a79e96f987c57cc4c5cbaaa13f70171f803cef706c993d6338970eae4d9c7",
       "page": "24_sglang_radixattention.html"
     },
     {
       "id": "25",
       "oldId": "25",
-      "title": "Quantization W8A16 | W8A16 量化",
+      "title": "W8A16 Quantization | W8A16 量化",
       "file": "25_Quantization_W8A16.ipynb",
-      "sourceHash": "862aea35537d593019f2bb877c854eb25fa8df939a1610487f493a6860e2e275",
+      "sourceHash": "ad7e0d5f5fb70ebfd2993a1b16be046c6163b9b2c19749cb21d038093be65905",
       "page": "25_quantization_w8a16.html"
     },
     {
       "id": "26",
       "oldId": "26",
-      "title": "QLoRA and 4bit Quantization | QLoRA 与 4-bit 量化",
+      "title": "QLoRA and 4-bit Quantization | QLoRA 与 4-bit 量化",
       "file": "26_QLoRA_and_4bit_Quantization.ipynb",
-      "sourceHash": "5469fa7556bfe2c7a903c881589573c61362c0beaf71abe9e1e16133ea969038",
+      "sourceHash": "7c375a43c97928852c00b97d766467eea5eb1b5d6f0caed24bf813c9b790b50a",
       "page": "26_qlora_and_4bit_quantization.html"
     },
     {
@@ -248,7 +249,7 @@
       "id": "30",
       "title": "Long Context Fine-Tuning | 长上下文微调",
       "file": "30_Long_Context_Fine_Tuning.ipynb",
-      "sourceHash": "5a689790bf0b9bafd90ce2dcce15b11a5fe22b911ffa8791cbe20ff6361de9aa",
+      "sourceHash": "3cd2829440442e8e1d92ae25cb9c75b39b59b223e375a12f831bfcca84cfc440",
       "page": "30_long_context_fine_tuning.html"
     },
     {
@@ -277,7 +278,7 @@
       "oldId": "36",
       "title": "Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充",
       "file": "34_Prefix_Caching_and_Chunked_Prefill.ipynb",
-      "sourceHash": "c3c6cf73d92bfac73d99cf79018019ee4c006ec6546521fcfe74600d2d746502",
+      "sourceHash": "4ded30e09800a1aad79088180b327abd804088d5fe9979fa14fdfe3fb164cb6f",
       "page": "34_prefix_caching_and_chunked_prefill.html"
     },
     {
@@ -285,7 +286,7 @@
       "oldId": "37",
       "title": "Multi-Token Decoding | 多 Token 解码",
       "file": "35_Multi_Token_Decoding.ipynb",
-      "sourceHash": "6ff61bf0d3df8376b0447eeaa17d72f730064e74d8821ace0939ab2fde350e0b",
+      "sourceHash": "65f945bd1d9d8eb2606fd39ed8195973fd6983c65fc8b7c5f078d295152bcb14",
       "page": "35_multi_token_decoding.html"
     },
     {
@@ -293,7 +294,7 @@
       "oldId": "38",
       "title": "Decode Scheduling | 解码调度",
       "file": "36_Decode_Scheduling.ipynb",
-      "sourceHash": "04e51c620471201bad77abf82d0e2b5e4bc871d370b6f52859b146d3e7a724bb",
+      "sourceHash": "02bb09650ed9c5dea125113c8f09959812de57991916f7e2f7c9eb9672e2fc01",
       "page": "36_decode_scheduling.html"
     },
     {
@@ -301,21 +302,21 @@
       "oldId": "41",
       "title": "KV Cache Scheduling | KV Cache 调度",
       "file": "37_KV_Cache_Scheduling.ipynb",
-      "sourceHash": "3c11f6cf87dbbc4af2e9f2ef9be85af05ddf7c161e03e7ffb93aacdf09a98d77",
+      "sourceHash": "60f86f75c73f8559d5e581df390230e93498c184f08379d98e014d7bed3c65c6",
       "page": "37_kv_cache_scheduling.html"
     },
     {
       "id": "38",
-      "title": "Prefill-Decode Disaggregation | PD 分离",
+      "title": "Prefill / Decode Disaggregation | Prefill / Decode 分离",
       "file": "38_Prefill_Decode_Disaggregation.ipynb",
-      "sourceHash": "cd219df85273a3fba52172fc9268764b9839a7c376fe771e0accc8f2919303e2",
+      "sourceHash": "e7e7f15cd5a3efd1419279d08eed9a1e9260df20486f0c6371278a0c3480550b",
       "page": "38_prefill_decode_disaggregation.html"
     },
     {
       "id": "39",
       "title": "Inference Fallback and Tiers | 推理分层与回退策略",
       "file": "39_Inference_Fallback_and_Tiers.ipynb",
-      "sourceHash": "5e78094b01080e84f6fee7c61e83b77dcc3c3431b10ac1261fed5a95576486ac",
+      "sourceHash": "ba7343845196a8598e2247c03263fcd0bff587f757c6fcd36443b76b467d8397",
       "page": "39_inference_fallback_and_tiers.html"
     },
     {
@@ -323,7 +324,7 @@
       "oldId": "39",
       "title": "GPTQ and AWQ Weight Quantization | GPTQ 与 AWQ 权重量化",
       "file": "40_GPTQ_and_AWQ_Weight_Quantization.ipynb",
-      "sourceHash": "b09a8a968eac2dd5aa95826e28ddd729b665110475bbeaa8192916617b9ca370",
+      "sourceHash": "8732e9e84e1bb257d5af1196090ad3a0678ac935992b3ce521f1ac80f4a233c8",
       "page": "40_gptq_and_awq_weight_quantization.html"
     },
     {
@@ -331,21 +332,21 @@
       "oldId": "40",
       "title": "FP8 and KV Cache Quantization | FP8 与 KV Cache 量化",
       "file": "41_FP8_and_KV_Cache_Quantization.ipynb",
-      "sourceHash": "d46edde6d60e974ee5d0e013a0f6d4cd01c8e00e7f88f3b76ecd3e78b5f9b7df",
+      "sourceHash": "4fb20fa0f8319cf69623f64e308ef181bf790eacf6b3b8c5bd3422f13113c8fa",
       "page": "41_fp8_and_kv_cache_quantization.html"
     },
     {
       "id": "42",
       "title": "Activation Offload | 激活卸载",
       "file": "42_Activation_Offload.ipynb",
-      "sourceHash": "bfb152a794d2be2e028db6f564795d355088c3f220b2ffd808b317a1649b4984",
+      "sourceHash": "d2060e7aa991fdd9f6520f1b3ac24d2699286fc75123b519eaf50f28d181eae1",
       "page": "42_activation_offload.html"
     },
     {
       "id": "43",
       "title": "Unified Memory Management | 统一内存管理",
       "file": "43_Unified_Memory_Management.ipynb",
-      "sourceHash": "ba1b8e311f78cddf45a01c79dd1b8027ad730c67075be041d7349f7b906805b7",
+      "sourceHash": "a73e53499523067ec177a08a3b7c44a0d4aa740afb74f12b57cb123b20f788c6",
       "page": "43_unified_memory_management.html"
     },
     {
@@ -359,7 +360,7 @@
       "id": "45",
       "title": "Memory Cut Planning | 显存裁剪规划",
       "file": "45_Memory_Cut_Planning.ipynb",
-      "sourceHash": "0a338a7eabad1bfe890fe0017b49c39edd61a09daf3fc36066d0c79aa9a69edf",
+      "sourceHash": "7d90c00774de79f51950d12d5c3fe6773ac70aeea40463f6eba30d699cc2e4fa",
       "page": "45_memory_cut_planning.html"
     },
     {
@@ -417,42 +418,42 @@
       "oldId": "30",
       "title": "LoRA Fine-Tuning Project | LoRA 微调项目",
       "file": "60_LoRA_Fine_Tuning_Project.ipynb",
-      "sourceHash": "3288a3f355e502abb783385783c3256b1aea0c1f30691932368b87d916f36c2d",
+      "sourceHash": "4ae6cc3c732a7b509cdfcaec94192139ef80987750cbebb1aa6756c303a6e56d",
       "page": "60_lora_fine_tuning_project.html"
     },
     {
       "id": "61",
       "title": "Model Architecture Exploration | 架构验证",
       "file": "61_Model_Architecture_Exploration.ipynb",
-      "sourceHash": "803e5b8d4c4e4b4da2e4e8844dcbe8840b3ecad563ae589a63c19052aebbdec1",
+      "sourceHash": "a400503c595e508ae96c5e6851244be0e7d8e9c4a85ea440a7f878c3d311fd5e",
       "page": "61_model_architecture_exploration.html"
     },
     {
       "id": "62",
       "title": "Instruction Fine-Tuning Project | 指令微调项目",
       "file": "62_Instruction_Fine_Tuning_Project.ipynb",
-      "sourceHash": "550a597a127ad56955f70a6bdd2c037387af14bbfa51e4ecbea45821e02bfede",
+      "sourceHash": "18db6fc8d8b8957d248c3b8dec938879c20190046f1a387ef116329418bfb4dd",
       "page": "62_instruction_fine_tuning_project.html"
     },
     {
       "id": "63",
       "title": "LoRA Variants Benchmark | LoRA 变体对比项目",
       "file": "63_LoRA_Variants_Benchmark.ipynb",
-      "sourceHash": "69b19598518107b005ab2832b5e5c6dfb1f28d8ffb724fe80a0f69573420238e",
+      "sourceHash": "ff3e22f0c7c6b1283bb2da06f03aedf3cf13b9234a0da6eeedb13453dfc783b1",
       "page": "63_lora_variants_benchmark.html"
     },
     {
       "id": "64",
       "title": "SFT Data Quality Project | SFT 数据质量项目",
       "file": "64_SFT_Data_Quality_Project.ipynb",
-      "sourceHash": "60398b4691e6b048a59f59d09221970e2ab5fd4ec672cac6e0514ef8fe3d78fb",
+      "sourceHash": "5f7aa2bf65afde689f66d8e7b4ad54b10be1229e01e32551c255e9f0dfb46ce8",
       "page": "64_sft_data_quality_project.html"
     },
     {
       "id": "65",
       "title": "QLoRA Selection Project | QLoRA 选型项目",
       "file": "65_QLoRA_Selection_Project.ipynb",
-      "sourceHash": "6f3c4ae6c218b5bfc28a87693bfb74d9c33c9c2921a02b6866d97af8cba30094",
+      "sourceHash": "7f08b38ec4e667891e92ca5e2cad20cb4c4a4ed55f3aad9158aa10cf9afbefba",
       "page": "65_qlora_selection_project.html"
     },
     {
@@ -460,7 +461,7 @@
       "oldId": "31",
       "title": "Inference Performance Comparison | 推理性能对比实验",
       "file": "66_Inference_Performance_Comparison.ipynb",
-      "sourceHash": "d9748ea72c9cc67d58d07f9ef59ebe80ce31c704bab9e765fba7a45ccb5459e3",
+      "sourceHash": "10ae6ead5a0c5888df8d28ed7efbe3d8b268c5f4e44d09523365aa8830a4676c",
       "page": "66_inference_performance_comparison.html"
     },
     {
@@ -468,35 +469,35 @@
       "oldId": "35",
       "title": "Quantized Inference and Deployment | 量化推理与部署",
       "file": "67_Quantized_Inference_and_Deployment.ipynb",
-      "sourceHash": "681c6188310482d23bb80a5f77c03348e0fd83c6ee532c33409854678a8ba6c8",
+      "sourceHash": "5eca09986fc7097514f86beba0d935accf014b035f0f156293dc59fce6aaf5ca",
       "page": "67_quantized_inference_and_deployment.html"
     },
     {
       "id": "68",
       "title": "Speculative Decoding Benchmark | 推测解码基准",
       "file": "68_Speculative_Decoding_Benchmark.ipynb",
-      "sourceHash": "a047c2e8ed0d810c465bd815b858d057492b971161f76d2dee3a992fa445b3c7",
+      "sourceHash": "463ee40a1a05f3f70cbea3fb7a7e1837eae0d4cbd6de91863731462406cad35c",
       "page": "68_speculative_decoding_benchmark.html"
     },
     {
       "id": "69",
       "title": "Prefix Caching Benchmark | 前缀缓存基准",
       "file": "69_Prefix_Caching_Benchmark.ipynb",
-      "sourceHash": "97db291baf46d4cdb90545640931c624279f96396091243d916aedd69cd360dd",
+      "sourceHash": "6767a686f2f5a7195fb2f3a242af9ac0f7484041df48988810fa3705c198dc9d",
       "page": "69_prefix_caching_benchmark.html"
     },
     {
       "id": "70",
       "title": "Serving Scheduler Benchmark | 推理服务调度基准",
       "file": "70_Serving_Scheduler_Benchmark.ipynb",
-      "sourceHash": "340a6a166eb70b8f97d23478fb340ac9de26a064f2d807e9252d99fb82b2cdd9",
+      "sourceHash": "c6132ff443e21b01cbe58a42d0a412e1e4b2019d90c61c81d82233afb2ea1576",
       "page": "70_serving_scheduler_benchmark.html"
     },
     {
       "id": "71",
       "title": "MLA / KV Cache Architecture Benchmark | MLA 与 KV Cache 结构基准",
       "file": "71_MLA_KV_Cache_Architecture_Benchmark.ipynb",
-      "sourceHash": "57a01d00f1344efe525df76b33fc63a80a1d4b132fdce44091971a2975fd50a2",
+      "sourceHash": "6a93eb5f3d9c1baab7af8ab40b1cd5a972ba05e68316368ff75b2210c41adf1a",
       "page": "71_mla_kv_cache_architecture_benchmark.html"
     },
     {
@@ -504,7 +505,7 @@
       "oldId": "32",
       "title": "Training Performance Analysis | 训练性能分析",
       "file": "73_Training_Performance_Analysis.ipynb",
-      "sourceHash": "c16a39cc6d6908ad909800bd9d722f6d411df2f68cb1625a43f0b8de98832034",
+      "sourceHash": "2300fc792955af8ee477239ee90c1519511055c057df4229aa76aa713a93d46f",
       "page": "73_training_performance_analysis.html"
     },
     {
@@ -512,21 +513,21 @@
       "oldId": "33",
       "title": "Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口",
       "file": "74_Profiling_Driven_End_to_End_Optimization.ipynb",
-      "sourceHash": "121236230a9e17005fb727a3e995b9dcb29397a5c2bb049677574d8454d996be",
+      "sourceHash": "8e9dbf37b0c00d14627ecdbd3e6a84ac921e4a25b55df1caf2a16545734c5a6d",
       "page": "74_profiling_driven_end_to_end_optimization.html"
     },
     {
       "id": "75",
       "title": "Memory Budget Compression Project | 显存预算压缩项目",
       "file": "75_Memory_Budget_Compression_Project.ipynb",
-      "sourceHash": "5ff16b392db2c10b1813f5486094294fb2147a3314c60cd4512b4726532dbd51",
+      "sourceHash": "c5003800d836e17f767deee353f101b5d775a36dbe7d57fc0177e2b0403cffc8",
       "page": "75_memory_budget_compression_project.html"
     },
     {
       "id": "76",
       "title": "Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目",
       "file": "76_Activation_Checkpoint_Offload_Benchmark.ipynb",
-      "sourceHash": "7a499d08e9362b1530d78a37c58c8851701491e49ca335893031b84414003d21",
+      "sourceHash": "89d80882b735868945fa61f3b7b994266e86e9eaca567babe0a0428725fa0762",
       "page": "76_activation_checkpoint_offload_benchmark.html"
     },
     {
@@ -534,21 +535,21 @@
       "oldId": "34",
       "title": "Distributed Parallel Benchmark | 分布式并行基准",
       "file": "79_Distributed_Parallel_Benchmark.ipynb",
-      "sourceHash": "0849d10941b3689e181c78970f973e1abf9522a209e06c355e53d93044367fc6",
+      "sourceHash": "d9f26bc2adc6d8f66bab064126c257d6b9b917f2f1404a012cd0b23057ef8b5b",
       "page": "79_distributed_parallel_benchmark.html"
     },
     {
       "id": "80",
       "title": "MoE Expert Parallel Benchmark | MoE 专家并行基准",
       "file": "80_MoE_Expert_Parallel_Benchmark.ipynb",
-      "sourceHash": "607b5ce2dd042b9c3da360449b93a39e79274c98d321245b511a52e49da851ed",
+      "sourceHash": "e8e172b770d7371d000ede73fbee216c2de24acc50f016316955b692b2bf0209",
       "page": "80_moe_expert_parallel_benchmark.html"
     },
     {
       "id": "81",
       "title": "Distributed Inference Logic Validation | 分布式推理逻辑验证",
       "file": "81_Distributed_Inference_Project.ipynb",
-      "sourceHash": "8dda39de2ef8b9610cda828dffb2292e48f5ace94abaf2505b530adf79c9d846",
+      "sourceHash": "0f9e5df85d9c17304efdb8a37e6e02351ee47deb4268eafc8f02216dca89baab",
       "page": "81_distributed_inference_project.html"
     },
     {
@@ -612,7 +613,7 @@
     {
       "id": "72",
       "file": "72_Reserved_72.ipynb",
-      "title": "Reserved 72 | 推理优化预留"
+      "title": "多模型部署对比项目 | Multi-Model Deployment Comparison"
     },
     {
       "id": "77",
@@ -769,7 +770,7 @@
       "oldId": "19",
       "id": "19",
       "oldFile": "19_Activation_Checkpointing_and_Activation_Offload.ipynb",
-      "file": "19_Activation_Checkpointing_and_Activation_Offload.ipynb"
+      "file": "19_Activation_Checkpointing.ipynb"
     },
     {
       "oldId": "20",

@@ -1,11 +1,17 @@
 // Read the official notebooks on each build; course identity follows the topic,
 // not its numeric slot. Reserved notebooks are listed separately, never graded.
 const fs = require('node:fs');
+const {execFileSync} = require('node:child_process');
+const upstream = require('./upstream_source.json');
+const repoRoot = pathRoot();
+function pathRoot() { return require('node:path').resolve(__dirname, '../..'); }
+function officialGit(...args) { return execFileSync('git', args, {cwd:repoRoot, encoding:'utf8', maxBuffer:32*1024*1024}); }
+function officialNotebook(file) { return officialGit('show', upstream.commit + ':02_PyTorch_Algorithms/' + file); }
 const path = require('node:path');
 const crypto = require('node:crypto');
 const legacy = require('./curriculum_v2');
 const notebookDir = path.join(__dirname, '..');
-const topic = file => file.replace(/^\d+_/, '').replace(/\.ipynb$/, '');
+const topic = file => file.replace(/^\d+_/, '').replace(/\.ipynb$/, '').replace('Activation_Checkpointing_and_Activation_Offload', 'Activation_Checkpointing');
 const source = cell => Array.isArray(cell.source) ? cell.source.join('') : cell.source || '';
 function questionCells(notebook) {
   const stop = notebook.cells.findIndex(c => /STOP\s*HERE|^##\s*参考代码与解析/m.test(source(c)));
@@ -16,9 +22,9 @@ const reserved = [];
 function build(early) {
   const previous = [...early, ...legacy];
   const oldByTopic = new Map(previous.map(l => [topic(l.file), l]));
-  const filenames = fs.readdirSync(notebookDir).filter(f => /^\d{2}_.*\.ipynb$/.test(f)).sort();
+  const filenames = officialGit('ls-tree', '--name-only', upstream.commit + ':02_PyTorch_Algorithms').trim().split('\n').filter(f => /^\d{2}_.*\.ipynb$/.test(f)).sort();
   const current = filenames.flatMap(file => {
-    const data = fs.readFileSync(path.join(notebookDir, file), 'utf8');
+    const data = officialNotebook(file);
     const notebook = JSON.parse(data);
     const id = file.slice(0, 2);
     const cells = questionCells(notebook);
@@ -48,4 +54,4 @@ function build(early) {
   });
   return {levels: current, reserved, moves};
 }
-module.exports = {build, source};
+module.exports = {build, source, officialNotebook, upstream};

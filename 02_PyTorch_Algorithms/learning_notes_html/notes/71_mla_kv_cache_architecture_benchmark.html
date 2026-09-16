@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,362 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 71 | 零基础导学关卡</p>
-        <h1>MLA / KV Cache Architecture Benchmark | MLA 与 KV Cache 结构基准</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>MLA 与 KV Cache 结构基准</h1>
+        <p class="course-subtitle">MLA / KV Cache Architecture Benchmark</p>
+        <p class="lead">MHA 每个头有自己的 K/V，GQA 让一组 query 头共享 K/V，MLA 改变缓存表示，保存压缩潜变量与必要位置分量。三者要用同一账本比较。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">71_MLA_KV_Cache_Architecture_Benchmark.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">MLA</span><span class="pill">KV Cache</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">每个读书小组都记一份笔记，能不能共享，甚至换一种记法？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="57a01d00f1344efe525df76b33fc63a80a1d4b132fdce44091971a2975fd50a2">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../71_MLA_KV_Cache_Architecture_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>71. MLA / KV Cache Architecture Benchmark | MLA 与 KV Cache 结构基准</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first；GPU/backend 可选 | <strong>标签：</strong> <code>推理优化</code>, <code>MLA</code>, <code>KV Cache</code></p>
-<h2>本节导读</h2>
-<p>本节作为 Task 3 的架构扩展，研究 DeepSeek 风格的 Multi-head Latent Attention（MLA）如何改变 KV Cache 的表示方式。先用 CPU 根据模型配置计算 MHA、GQA 与 MLA 的缓存账本，再把同一 workload 交给支持 MLA 的 backend 做可选验证。</p>
-<p>MLA 不是 Prefix Cache，也不是 PagedAttention 或普通量化：它改变模型内部保存的 KV 表示。真实模型候选为 <code>deepseek-ai/DeepSeek-V2-Lite</code>；如果 backend 或显存无法加载它，CPU 账本仍可完成，但不能把模拟结果写成真实速度或显存结论。</p>
-<p><strong>主责与复用边界：</strong> 71 负责 MLA 结构和 KV Cache 表示；显存优化复用缓存容量账本，74 负责 profiler trace，69 负责前缀复用，70 负责请求调度。本项目不把结构账本直接写成 backend 性能结论。</p>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 0：校验所有维度为正数，使用上述变量计算 K 和 V 两份缓存。</li><li>TODO 1：读取 model、num_layers、num_attention_heads、num_kv_heads、</li><li>TODO 5：先提取并检查配置，再分别计算 MHA、GQA 和本节简化 MLA；</li><li>TODO 4：兼容 num_hidden_layers / n_layer、num_attention_heads /</li><li>TODO 2：计算 bytes_delta、compression_ratio、saving_ratio；</li><li>TODO 3：校验维度，按本节的简化模型计算 latent 和 positional 两部分 bytes；</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先理解 Attention 张量形状和 KV Cache 增长，再观察 MLA 如何改变缓存账本。</p>
-<ul>
-<li><a href="04_attention_mha_gqa.html">04. Attention / MHA / GQA</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/04_Attention_Memory_Optimization.ipynb">Part 01: 04. Attention Memory Optimization</a></li>
-<li><a href="../../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb">11. KV Cache and Memory Growth</a></li>
-<li><a href="69_prefix_caching_benchmark.html">69. Prefix Caching Benchmark</a></li>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling-Driven End-to-End Optimization</a></li>
-</ul>
-<h2>相关阅读</h2>
-<ul>
-<li><a href="70_serving_scheduler_benchmark.html">70. Serving Scheduler Benchmark</a></li>
-<li><a href="81_distributed_inference_project.html">81. Distributed Inference Logic Validation</a></li>
-</ul>
-<h3>Step 1：确定结构比较口径</h3>
-<p>固定 batch、序列长度、层数、dtype 和 token 数，只改变 KV Cache 表示。MHA 缓存每个 head 的 K/V，GQA 共享部分 KV head，MLA 缓存低维 latent 表示及必要的位置相关分量。</p>
-<table>
-<thead>
-<tr>
-<th>账本字段</th>
-<th>常见 config 字段</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>num_layers</code></td>
-<td><code>num_hidden_layers</code> / <code>n_layer</code></td>
-<td>缓存沿层数累加</td>
-</tr>
-<tr>
-<td><code>num_attention_heads</code></td>
-<td><code>num_attention_heads</code> / <code>n_head</code></td>
-<td>MHA/GQA 头数基准</td>
-</tr>
-<tr>
-<td><code>num_kv_heads</code></td>
-<td><code>num_key_value_heads</code> / <code>n_head_kv</code></td>
-<td>普通 K/V 缓存头数</td>
-</tr>
-<tr>
-<td><code>latent_dim</code></td>
-<td><code>kv_lora_rank</code> 等字段</td>
-<td>本节简化 MLA latent 维度</td>
-</tr>
-<tr>
-<td><code>rope_dim</code></td>
-<td><code>qk_rope_head_dim</code> 等字段</td>
-<td>本节简化位置分量</td>
-</tr>
-<tr>
-<td><code>dtype_bytes</code></td>
-<td>通常不在模型 config 中</td>
-<td>由实验 dtype 显式提供</td>
-</tr>
-</tbody>
-</table>
-<p>真实 DeepSeek 配置中的字段名称、位置编码拆分和 cache layout 可能随模型版本变化；本节只把可对应的字段带入简化账本，未映射的字段必须保留为缺失，不能用默认值补齐。</p>
-<h3>Step 2：建立 CPU KV Cache 账本</h3>
-<p>CPU 只计算元素数量和理论字节数，验证公式、比例和边界；它不能验证 DeepSeek 的实际 kernel、显存 allocator 或 decode 延迟。</p>
-<h3>Step 3：比较结构代价</h3>
-<p>同时查看 KV Cache bytes、压缩比例和额外 latent / positional 分量。本节使用简化账本帮助理解变量关系，不把 <code>latent_dim + rope_dim</code> 当作 DeepSeek MLA 的完整实现，也不能用固定节省比例代替模型配置。</p>
-<h3>Step 4：连接真实 backend</h3>
-<p>可选使用 <code>deepseek-ai/DeepSeek-V2-Lite</code> 和固定推理 workload；只有 backend 成功加载并提供显存、延迟或 trace 证据，才能形成 GPU 结论。</p>
-<h3>实验条件与证据边界</h3>
-<table>
-<thead>
-<tr>
-<th>实验</th>
-<th>CPU 可验证</th>
-<th>GPU/backend 才能验证</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>结构账本</td>
-<td>元素数、理论 bytes、比例</td>
-<td>实际 KV Cache、kernel、allocator</td>
-</tr>
-<tr>
-<td>MLA smoke</td>
-<td>配置读取和报告格式</td>
-<td>backend 支持、TTFT、TPOT、显存</td>
-</tr>
-<tr>
-<td>profiling</td>
-<td>不能生成 CUDA trace</td>
-<td>kernel、访存、同步、端到端时间线</td>
-</tr>
-</tbody>
-</table>
-<p>推荐固定 128、512、1024 token prompt，<code>max_tokens=64</code>、<code>temperature=0</code>、<code>top_p=1</code>；本节不需要训练数据集。</p>
-<h2>练习代码</h2>
-<p>请先完成 CPU KV Cache 账本，再运行测试。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code># 6 个核心 TODO：配置提取、普通 KV 账本、MLA 账本、表示比较和对比表
-# 目标：把 MHA/GQA/简化 MLA 的容量假设整理成可检查的理论账本；不实现 DeepSeek MLA kernel。
-# 代码声明顺序不等于学习顺序：先完成配置提取和字段校验，再组装对比表。
+<section class="lessons">
 
-def kv_cache_bytes_attention(batch_size: int, seq_len: int, num_layers: int, num_kv_heads: int, head_dim: int, dtype_bytes: int = 2) -&gt; int:
-    &quot;&quot;&quot;计算普通 MHA/GQA KV Cache 理论字节数；不代表实际 allocator 峰值。
-
-    K 和 V 各占一份缓存；所有维度和 dtype_bytes 都参与计算。
-    &quot;&quot;&quot;
-    # TODO 0：校验所有维度为正数，使用上述变量计算 K 和 V 两份缓存。
-    # kv_elements = ???；kv_bytes = ???。
-    #       返回整数 bytes；不要混入模型权重、临时张量或 CUDA reserved memory。
-    # 返回整数 bytes；不要混入模型权重、临时张量或 CUDA reserved memory。
-    raise NotImplementedError('请先完成 TODO 代码！')
-
-def summarize_mla_config(config: Dict[str, int]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;整理 MHA/GQA/MLA 账本所需字段，并保留缺失字段。
-
-    latent_dim、rope_dim 和 dtype_bytes 必须来自显式配置，不为缺失值猜默认值。
-    &quot;&quot;&quot;
-    # TODO 1：读取 model、num_layers、num_attention_heads、num_kv_heads、
-    # normalized = ???；missing_fields = ???。
-    # latent_dim、rope_dim、head_dim、dtype_bytes；标记缺失字段。
-    raise NotImplementedError('请先完成 TODO 代码！')
-
-def build_cache_comparison_table(config: Dict[str, object]) -&gt; list[Dict[str, object]]:
-    &quot;&quot;&quot;生成 toy MHA/GQA/MLA 理论 bytes 表，不代表真实 backend。
-
-    表格至少保留 representation、bytes、evidence；evidence 应标记理论估算。
-    &quot;&quot;&quot;
-    # TODO 5：先提取并检查配置，再分别计算 MHA、GQA 和本节简化 MLA；
-    # mha_bytes = ???；gqa_bytes = ???；mla_bytes = ???；comparison_rows = ???。
-    # 返回 representation、bytes、evidence 三列，缺字段时明确报错。
-    #       compression_ratio 只能表示理论容量变化，不能表示质量或吞吐收益。
-    raise NotImplementedError('请先完成 TODO 代码！')
-
-def extract_attention_dimensions(config: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;从模型配置提取账本字段；不假设缺失字段的默认值。
-
-    返回 normalized 字段和 missing_fields；字段别名只用于兼容命名。
-    &quot;&quot;&quot;
-    # TODO 4：兼容 num_hidden_layers / n_layer、num_attention_heads /
-    # normalized = ???；missing_fields = ???；head_dim = ???。
-    # n_head 等常见别名；hidden_size 可与 attention heads 推出 head_dim，
-    # 但 dtype_bytes 必须由实验显式提供。返回 normalized 字段和 missing_fields。
-    raise NotImplementedError('请先完成 TODO 代码！')
-
-def compare_kv_representations(baseline_bytes: int, candidate_bytes: int) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;比较两种 KV 表示的理论容量；不推断质量或真实吞吐。
-
-    compression_ratio 仅在 candidate_bytes &gt; 0 时有定义；saving_ratio 是容量比例变化。
-    &quot;&quot;&quot;
-    # TODO 2：计算 bytes_delta、compression_ratio、saving_ratio；
-    # bytes_delta = ???；compression_ratio = ???；saving_ratio = ???。
-    # baseline_bytes &gt; 0，candidate_bytes &gt;= 0。
-    raise NotImplementedError('请先完成 TODO 代码！')
-
-def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: int, rope_dim: int, dtype_bytes: int = 2) -&gt; int:
-    &quot;&quot;&quot;估算本节简化 MLA latent 与位置相关缓存的理论字节数。
-
-    latent_dim 和 rope_dim 是账本模型变量，不等于任何特定 DeepSeek 版本的 cache layout。
-    &quot;&quot;&quot;
-    # TODO 3：校验维度，按本节的简化模型计算 latent 和 positional 两部分 bytes；
-    # latent_bytes = ???；positional_bytes = ???；total_bytes = ???。
-    # 注意：这不是 DeepSeek MLA 的完整 kernel 或 cache layout，也不能推出真实吞吐。
-    raise NotImplementedError('请先完成 TODO 代码！')
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>每个读书小组都记一份笔记，能不能共享，甚至换一种记法？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节作为 Task 3 的架构扩展，研究 DeepSeek 风格的 Multi-head Latent Attention（MLA）如何改变 KV Cache 的表示方式。先用 CPU 根据模型配置计算 MHA、GQA 与 MLA 的缓存账本，再把同一 workload 交给支持 MLA 的 backend 做可选验证。</p>
-            <div class="notebook-content"><h3>Step 1：确定结构比较口径</h3>
-<p>固定 batch、序列长度、层数、dtype 和 token 数，只改变 KV Cache 表示。MHA 缓存每个 head 的 K/V，GQA 共享部分 KV head，MLA 缓存低维 latent 表示及必要的位置相关分量。</p>
-<table>
-<thead>
-<tr>
-<th>账本字段</th>
-<th>常见 config 字段</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>num_layers</code></td>
-<td><code>num_hidden_layers</code> / <code>n_layer</code></td>
-<td>缓存沿层数累加</td>
-</tr>
-<tr>
-<td><code>num_attention_heads</code></td>
-<td><code>num_attention_heads</code> / <code>n_head</code></td>
-<td>MHA/GQA 头数基准</td>
-</tr>
-<tr>
-<td><code>num_kv_heads</code></td>
-<td><code>num_key_value_heads</code> / <code>n_head_kv</code></td>
-<td>普通 K/V 缓存头数</td>
-</tr>
-<tr>
-<td><code>latent_dim</code></td>
-<td><code>kv_lora_rank</code> 等字段</td>
-<td>本节简化 MLA latent 维度</td>
-</tr>
-<tr>
-<td><code>rope_dim</code></td>
-<td><code>qk_rope_head_dim</code> 等字段</td>
-<td>本节简化位置分量</td>
-</tr>
-<tr>
-<td><code>dtype_bytes</code></td>
-<td>通常不在模型 config 中</td>
-<td>由实验 dtype 显式提供</td>
-</tr>
-</tbody>
-</table>
-<p>真实 DeepSeek 配置中的字段名称、位置编码拆分和 cache layout 可能随模型版本变化；本节只把可对应的字段带入简化账本，未映射的字段必须保留为缺失，不能用默认值补齐。</p>
-<h3>Step 2：建立 CPU KV Cache 账本</h3>
-<p>CPU 只计算元素数量和理论字节数，验证公式、比例和边界；它不能验证 DeepSeek 的实际 kernel、显存 allocator 或 decode 延迟。</p>
-<h3>Step 3：比较结构代价</h3>
-<p>同时查看 KV Cache bytes、压缩比例和额外 latent / positional 分量。本节使用简化账本帮助理解变量关系，不把 <code>latent_dim + rope_dim</code> 当作 DeepSeek MLA 的完整实现，也不能用固定节省比例代替模型配置。</p>
-<h3>Step 4：连接真实 backend</h3>
-<p>可选使用 <code>deepseek-ai/DeepSeek-V2-Lite</code> 和固定推理 workload；只有 backend 成功加载并提供显存、延迟或 trace 证据，才能形成 GPU 结论。</p>
-<h3>实验条件与证据边界</h3>
-<table>
-<thead>
-<tr>
-<th>实验</th>
-<th>CPU 可验证</th>
-<th>GPU/backend 才能验证</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>结构账本</td>
-<td>元素数、理论 bytes、比例</td>
-<td>实际 KV Cache、kernel、allocator</td>
-</tr>
-<tr>
-<td>MLA smoke</td>
-<td>配置读取和报告格式</td>
-<td>backend 支持、TTFT、TPOT、显存</td>
-</tr>
-<tr>
-<td>profiling</td>
-<td>不能生成 CUDA trace</td>
-<td>kernel、访存、同步、端到端时间线</td>
-</tr>
-</tbody>
-</table>
-<p>推荐固定 128、512、1024 token prompt，<code>max_tokens=64</code>、<code>temperature=0</code>、<code>top_p=1</code>；本节不需要训练数据集。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>MHA 每个头有自己的 K/V，GQA 让一组 query 头共享 K/V，MLA 改变缓存表示，保存压缩潜变量与必要位置分量。三者要用同一账本比较。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>head</dt><dd>并行观察表示的一个注意力子空间。</dd></div><div><dt>latent</dt><dd>较低维的中间表示，需要模型结构配合。</dd></div><div><dt>bytes</dt><dd>元素数乘每元素字节数，是理论数据区大小。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>简化 MLA 缓存账本算出更省空间，可以推出什么？</p>
+            <p>本课中的「head」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>缓存节省比例等于加速比例</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>元素数乘每元素字节数，是理论数据区大小。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>所有模型都能无损切换到 MLA</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>较低维的中间表示，需要模型结构配合。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>在该表示假设下更省缓存，实际性能仍需验证</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>并行观察表示的一个注意力子空间。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 0：校验所有维度为正数，使用上述变量计算 K 和 V 两份缓存。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>从一层算起</h4><p>batch=1，长度=8，KV heads=4，head dim=4，FP16：K/V 合计 2×1×8×4×4×2=512 字节。</p></li><li><h4>试试共享</h4><p>KV heads 从 4 改为 2，其他不变，GQA 账本变成 256 字节。query heads 不直接替代 KV heads。</p></li><li><h4>换表示</h4><p>课堂 MLA 设 latent=8、位置分量=4：1×8×(8+4)×2=192 字节。真实布局依赖模型实现，不能仅改字段就转换结构。</p></li></ol><section class="learning-lab" data-lab="kv" aria-label="让 KV 缓存的账本动起来">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>让 KV 缓存的账本动起来</h4><p>固定一层，改变 token 数和 KV heads，对照三种表示。</p></header>
+    <div class="lab-controls"><label for="lab-71-tokens"><span>序列长度 <output data-value="tokens" for="lab-71-tokens">8</output> token</span><input type="range" id="lab-71-tokens" name="tokens" min="4" max="32" step="1" value="8"></label><label for="lab-71-heads"><span>GQA 的 KV heads <output data-value="heads" for="lab-71-heads">2</output> </span><input type="range" id="lab-71-heads" name="heads" min="1" max="4" step="1" value="2"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-71" data-challenge-label>算一算</label><div><input id="answer-71" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>上述 512 字节账本中，KV heads 减半后是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>256 字节</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>128 字节</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>512 字节</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>batch, tokens, kv_heads, dim, bytes_per = 1, 8, 4, 4, 2
+kv_bytes = 2*batch*tokens*kv_heads*dim*bytes_per
+print(kv_bytes)  # 512 per layer</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>用 query heads 代替 KV heads，忘记 K 和 V 两份，或把 192 字节的简化账本当真实显存实测。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「head」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>用 query heads 代替 KV heads，忘记 K 和 V 两份，或把 192 字节的简化账本当真实显存实测。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 1：读取 model、num_layers、num_attention_heads、num_kv_heads、</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 5：先提取并检查配置，再分别计算 MHA、GQA 和本节简化 MLA；</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 4：兼容 num_hidden_layers / n_layer、num_attention_heads /</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-4">
-                <span>TODO 2：计算 bytes_delta、compression_ratio、saving_ratio；</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-5">
-                <span>TODO 3：校验维度，按本节的简化模型计算 latent 和 positional 两部分 bytes；</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="6a93eb5f3d9c1baab7af8ab40b1cd5a972ba05e68316368ff75b2210c41adf1a">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/71_MLA_KV_Cache_Architecture_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>kv_cache_bytes_attention</code> · <code>summarize_mla_config</code> · <code>build_cache_comparison_table</code> · <code>extract_attention_dimensions</code> · <code>compare_kv_representations</code> · <code>mla_cache_bytes</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1107,14 +940,14 @@ def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: 
 
   <script>
     const levelId = "71";
-    const checkpointData = {"current-core":{"answer":2,"explain":"在该表示假设下更省缓存，实际性能仍需验证。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：并行观察表示的一个注意力子空间。。另外两个选项分别解释「latent」和「bytes」，注意区分。"},"v4-experiment":{"answer":0,"explain":"其他维度固定时，普通 KV 数据区对 KV heads 线性变化。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：用 query heads 代替 KV heads，忘记 K 和 V 两份，或把 192 字节的简化账本当真实显存实测。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 6;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1123,20 +956,22 @@ def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: 
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-57a01d00f134";
+    const homeworkKey = statePrefix + levelId + "-homework-6a93eb5f3d9c";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1161,7 +996,7 @@ def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: 
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1203,11 +1038,15 @@ def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: 
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1238,6 +1077,7 @@ def mla_cache_bytes(batch_size: int, seq_len: int, num_layers: int, latent_dim: 
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

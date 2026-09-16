@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,217 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 86 | 零基础导学关卡</p>
-        <h1>DPO Online Benchmark | DPO 在线基准</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>DPO 在线基准</h1>
+        <p class="course-subtitle">DPO Online Benchmark</p>
+        <p class="lead">在线 DPO benchmark 观察持续反馈与更新的完整循环。它像长期运营一间店：一次好评高峰不代表可以忽略质量下限和更新成本。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/86_DPO_Online_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">86_DPO_Online_Benchmark.ipynb</span>
           <span class="pill">后训练对齐</span><span class="pill">在线对齐</span><span class="pill">基准对比</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">线上胜率涨了，可更新越来越慢，这条改进能持续吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="9f66c9513ea14e5eb89cbc093f3035e6deedbb9184857c5b3fdf918a228e6d48">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../86_DPO_Online_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/86_DPO_Online_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>86. DPO Online Benchmark | DPO 在线基准</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>后训练对齐</code>, <code>在线对齐</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节要求你在固定反馈流、更新窗口和安全阈值后，评估在线 DPO 是否具备上线条件。比较 baseline 与 online candidate 的胜率变化、更新时延、训练稳定性和安全指标，并检查收益是否能在允许的更新成本内持续复现。最终输出上线、继续灰度或暂停更新的建议。</p>
-<p><strong>关键词：</strong> <code>online update</code>, <code>win rate</code>, <code>stability</code>, <code>safety gate</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>按下方题目代码中的函数说明和测试完成实现。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把 DPO / GRPO 损失、偏好数据评测、在线 DPO 背景和离线对齐项目理顺，再进入这个 benchmark；本节默认你已经知道后训练对齐的基本对象，重点转向在线方案是否值得上线。</p>
-<ul>
-<li><a href="15_dpo_loss_tutorial.html">15. DPO Loss Tutorial | DPO 损失教程</a></li>
-<li><a href="16_grpo_loss_tutorial.html">16. GRPO Loss Tutorial | GRPO 损失教程</a></li>
-<li><a href="50_preference_data_and_evaluation.html">50. Preference Data and Evaluation | 偏好数据与评测</a></li>
-<li><a href="51_online_dpo.html">51. Online DPO | 在线 DPO</a></li>
-<li><a href="84_dpo_preference_project.html">84. DPO Preference Project | DPO 偏好优化项目</a></li>
-<li><a href="85_grpo_groupwise_alignment_project.html">85. GRPO Groupwise Alignment Project | GRPO 组内对齐项目</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 做完在线 DPO benchmark 后，回到对齐专题和项目决策页，把离线和在线项目统一放进交付决策闭环。</p>
-<ul>
-<li><a href="../../../topic_discussion/post_training_alignment/intro.md">后训练与对齐专题入口</a></li>
-<li><a href="../../../topic_discussion/post_training_alignment/06_project_decision_and_delivery.md">06 Project Decision and Delivery | 项目决策与交付</a></li>
-</ul>
-<h3>Step 1: 定义在线 benchmark 目标</h3>
-<ul>
-<li>固定初始模型、偏好流、更新频率、batch size 和评估窗口。</li>
-<li>明确 candidate 的在线更新规则、采样策略和安全阈值。</li>
-<li>统一记录偏好胜率、更新步时、波动性和成本。</li>
-</ul>
-<h3>Step 2: 先确认 baseline 和安全口径稳定</h3>
-<ul>
-<li>baseline 先要有稳定的 win rate 和安全分数。</li>
-<li>如果 baseline 本身波动很大，在线收益很容易被噪声放大。</li>
-<li>上线前必须显式记录最低稳定性 / 安全阈值。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<ul>
-<li>在线 DPO 项目必须同时看胜率增量、更新时延、稳定性和安全阈值，不能只挑单项 win rate 收益下结论。</li>
-<li>胜率增量回答“值不值得更好”。</li>
-<li>更新时延回答“代价能不能接受”。</li>
-<li>稳定性和安全阈值回答“能不能上线”。</li>
-</ul>
-<h3>Step 4: 输出 benchmark 结论</h3>
-<ul>
-<li>在线 DPO 最终不是输出“胜率有没有涨”，而是输出这套在线更新方案在当前反馈流下是否值得继续保留、微调或上线。</li>
-<li>最终建议统一为 <code>accept / tune / reject</code>。</li>
-<li>若进入 <code>tune</code>，下一轮优先回更新频率、反馈流质量和安全阈值，而不是只盯住 win rate。</li>
-</ul>
-<h4>图解：50-51-84-85 如何收束到 86 在线基准</h4>
-<pre><code class="language-text">50 Preference -&gt; 51 Online DPO -&gt; 84/85 offline projects -&gt; 86 Online benchmark
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">模块</th>
-<th style="text-align:left">必须记录</th>
-<th style="text-align:left">用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">win rate、stability、安全阈值</td>
-<td style="text-align:left">保证上线前比较合法</td>
-</tr>
-<tr>
-<td style="text-align:left">candidate</td>
-<td style="text-align:left">更新频率、update cost、增益</td>
-<td style="text-align:left">解释在线收益来源</td>
-</tr>
-<tr>
-<td style="text-align:left">对比</td>
-<td style="text-align:left">胜率增量、稳定性变化、更新时间</td>
-<td style="text-align:left">判断是否值得 adopt</td>
-</tr>
-<tr>
-<td style="text-align:left">决策</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出 benchmark 结论</td>
-</tr>
-</tbody>
-</table>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code># 3 个核心 TODO：run 汇总、baseline 对比、项目判断
-# 目标：把在线偏好更新整理成 benchmark 报告
+<section class="lessons">
 
-def summarize_online_dpo_runs(runs: List[Dict[str, float]]) -&gt; Dict[str, object]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def compare_online_dpo_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, float], min_win_rate_gain: float, min_safety_score: float) -&gt; Dict[str, object]:
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>线上胜率涨了，可更新越来越慢，这条改进能持续吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节要求你在固定反馈流、更新窗口和安全阈值后，评估在线 DPO 是否具备上线条件。比较 baseline 与 online candidate 的胜率变化、更新时延、训练稳定性和安全指标，并检查收益是否能在允许的更新成本内持续复现。最终输出上线、继续灰度或暂停更新的建议。</p>
-            <div class="notebook-content"><h3>Step 1: 定义在线 benchmark 目标</h3>
-<ul>
-<li>固定初始模型、偏好流、更新频率、batch size 和评估窗口。</li>
-<li>明确 candidate 的在线更新规则、采样策略和安全阈值。</li>
-<li>统一记录偏好胜率、更新步时、波动性和成本。</li>
-</ul>
-<h3>Step 2: 先确认 baseline 和安全口径稳定</h3>
-<ul>
-<li>baseline 先要有稳定的 win rate 和安全分数。</li>
-<li>如果 baseline 本身波动很大，在线收益很容易被噪声放大。</li>
-<li>上线前必须显式记录最低稳定性 / 安全阈值。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<ul>
-<li>在线 DPO 项目必须同时看胜率增量、更新时延、稳定性和安全阈值，不能只挑单项 win rate 收益下结论。</li>
-<li>胜率增量回答“值不值得更好”。</li>
-<li>更新时延回答“代价能不能接受”。</li>
-<li>稳定性和安全阈值回答“能不能上线”。</li>
-</ul>
-<h3>Step 4: 输出 benchmark 结论</h3>
-<ul>
-<li>在线 DPO 最终不是输出“胜率有没有涨”，而是输出这套在线更新方案在当前反馈流下是否值得继续保留、微调或上线。</li>
-<li>最终建议统一为 <code>accept / tune / reject</code>。</li>
-<li>若进入 <code>tune</code>，下一轮优先回更新频率、反馈流质量和安全阈值，而不是只盯住 win rate。</li>
-</ul>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>在线 DPO benchmark 观察持续反馈与更新的完整循环。它像长期运营一间店：一次好评高峰不代表可以忽略质量下限和更新成本。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>window</dt><dd>同一次统计使用的反馈与评测区间。</dd></div><div><dt>update latency</dt><dd>从反馈准备到新策略可用的时间，需固定口径。</dd></div><div><dt>release gate</dt><dd>决定可上线、继续观察还是暂停的规则。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>在线 DPO benchmark 的上线判断还应约束什么？</p>
+            <p>本课中的「window」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>仅要求运行没有异常</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>从反馈准备到新策略可用的时间，需固定口径。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>仅要求 win rate 比零大</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>决定可上线、继续观察还是暂停的规则。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>更新时延、稳定性和安全指标</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>同一次统计使用的反馈与评测区间。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>按题目函数说明完成实现，并运行 Notebook 测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>固定比较</h4><p>baseline 和 candidate 使用相同反馈流、初始模型与评测窗口。</p></li><li><h4>列硬门槛</h4><p>候选胜率 0.65，比 0.60 好，但安全分 0.92 低于 0.95，仍不能通过。</p></li><li><h4>检查持续性</h4><p>满足安全后，再看更新时延、稳定性和重复窗口是否保持收益；回退路径也应清楚。</p></li></ol><section class="learning-lab" data-lab="gate" aria-label="当一次有原则的方案评审员">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>当一次有原则的方案评审员</h4><p>改变显存和质量门槛。先过滤，再在合格者中比较速度。</p></header>
+    <div class="lab-controls"><label for="lab-86-budget"><span>显存上限 <output data-value="budget" for="lab-86-budget">10</output> GiB</span><input type="range" id="lab-86-budget" name="budget" min="6" max="16" step="1" value="10"></label><label for="lab-86-quality"><span>质量下限 <output data-value="quality" for="lab-86-quality">90</output> %</span><input type="range" id="lab-86-quality" name="quality" min="80" max="98" step="1" value="90"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-86" data-challenge-label>算一算</label><div><input id="answer-86" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>胜率提高，但安全 0.92&lt;0.95，更新 120ms&gt;100ms，能通过吗？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>不能，两项门槛都未满足</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>能，胜率提高即可</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>只把结果保存就算上线</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>candidate = {&quot;win&quot;:.65, &quot;safety&quot;:.92, &quot;update_ms&quot;:120}
+pass_gate = candidate[&quot;safety&quot;] &gt;= .95 and candidate[&quot;update_ms&quot;] &lt;= 100
+print(pass_gate)  # False</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把一次模拟门槛通过当成真实线上验收；逻辑测试只证明决策函数在给定输入下的行为。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「window」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>把一次模拟门槛通过当成真实线上验收；逻辑测试只证明决策函数在给定输入下的行为。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="9f66c9513ea14e5eb89cbc093f3035e6deedbb9184857c5b3fdf918a228e6d48">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/86_DPO_Online_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_online_dpo_runs</code> · <code>compare_online_dpo_to_baseline</code> · <code>recommend_online_dpo_run</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -962,14 +940,14 @@ def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, fl
 
   <script>
     const levelId = "86";
-    const checkpointData = {"current-core":{"answer":2,"explain":"更新时延、稳定性和安全指标。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：同一次统计使用的反馈与评测区间。。另外两个选项分别解释「update latency」和「release gate」，注意区分。"},"v4-experiment":{"answer":0,"explain":"更高胜率不等于满足发布条件。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：把一次模拟门槛通过当成真实线上验收；逻辑测试只证明决策函数在给定输入下的行为。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 1;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -982,16 +960,18 @@ def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, fl
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1016,7 +996,7 @@ def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, fl
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1058,11 +1038,15 @@ def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, fl
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1093,6 +1077,7 @@ def recommend_online_dpo_run(baseline: Dict[str, float], candidate: Dict[str, fl
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

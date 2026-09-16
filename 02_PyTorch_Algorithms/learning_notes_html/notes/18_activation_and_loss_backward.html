@@ -996,6 +996,8 @@
       .adv-shapes td { padding: 7px; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -1011,216 +1013,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 18 | 零基础导学关卡</p>
-        <h1>Activation and Loss Backward | 激活与损失反向</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>激活与损失反向</h1>
+        <p class="course-subtitle">Activation and Loss Backward</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/18_Activation_and_Loss_Backward.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">18_Activation_and_Loss_Backward.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">激活值</span><span class="pill">反向传播</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">dReLU/dx = 1[x&gt;0]; dCE/dlogits = p-one_hot(y)</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">ReLU 反向是一扇逐元素的门</a></li><li><a href="#mission-2">从分类误差得到 logits 梯度：probs-one_hot</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="de7ec59a49aae113499617b6fd77e6e5f47a24a878546717037d36ef669a3ea6">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../18_Activation_and_Loss_Backward.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/18_Activation_and_Loss_Backward.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>18. Activation and Loss Backward | 激活与损失反向</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>显存优化</code>, <code>激活值</code>, <code>反向传播</code> | <strong>目标人群：</strong> 显存优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>训练中的梯度信号既要由目标产生，也要沿模型结构传递。本节帮助你建立观察反向训练信号的共同框架，理解局部环节如何影响整体更新，并为后续的显存与训练性能分析准备统一的语言。</p>
-<p>学习时先观察训练信号从目标到模型内部的路径，再比较不同局部环节对信号方向、范围和缩放的影响，最后用小规模结果检查自己的判断。Attention backward 的专门推导放在相邻的 17 节。</p>
-<p><strong>关键词：</strong> <code>activation</code>, <code>loss</code>, <code>gradients</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 构造 ReLU 的反向门控掩码</li><li>TODO 2: 构造 log_probs、probs 和 one_hot</li><li>TODO 3: 计算逐样本 loss、按 reduction 聚合，并得到 logits gradient</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先理解 Autograd、训练循环和显存账本，再看激活与损失的反向路径会更容易把公式和工程现象对应起来。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/07_PyTorch_Autograd_and_Backward.ipynb">P0: 07. PyTorch Autograd and Backward | PyTorch 自动求导与反向传播</a></li>
-<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
-</ul>
-<hr>
-<h3>Step 1: 激活与损失如何形成反向训练信号</h3>
-<p>训练反向可以先看成两段相互衔接的局部过程：目标比较产生训练信号，模型内部的计算关系继续传递这个信号。前者决定信号从哪里开始，后者决定信号怎样回到更早的表示。</p>
-<p>一条训练样本经过模型得到输出，目标比较会产生返回模型内部的梯度；这个梯度继续沿计算关系传播，并在局部变换处受到前向状态的影响。理解这条路径时，要把“信号的来源”和“信号的传播”分开观察。</p>
-<p>阅读主图时，可以先沿前向路径看模型如何得到训练目标，再沿反向路径看信号如何返回。后面的两个机制步骤分别观察局部传播和目标比较，最后在 Step 4 中把它们落实为可验证的实现。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/18_activation_loss_backward.svg" alt="反向传播：激活门控与损失梯度如何接起来"></p>
-<h3>Step 2: 激活函数如何门控梯度</h3>
-<p>激活函数的反向传播通常根据前向输入决定上游梯度如何通过。以 ReLU 为例，输入位于正区间时保留梯度，输入位于负区间时将梯度置为零，边界点的处理需要采用一致的约定。</p>
-<p>这个表格描述的是梯度门控：它改变已有梯度如何通过，但任务误差仍由损失函数产生。先按输入所在区域判断门控结果，再进入下一步的交叉熵梯度。</p>
-<table>
-<thead>
-<tr>
-<th>前向输入 <code>x</code></th>
-<th>ReLU 的局部导数</th>
-<th>传回的输入梯度</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>x &gt; 0</code></td>
-<td><code>1</code></td>
-<td>保留上游梯度</td>
-</tr>
-<tr>
-<td><code>x &lt; 0</code></td>
-<td><code>0</code></td>
-<td>梯度变为 <code>0</code></td>
-</tr>
-<tr>
-<td><code>x == 0</code></td>
-<td>本节约定为 <code>0</code></td>
-<td>梯度变为 <code>0</code></td>
-</tr>
-</tbody>
-</table>
-<h3>Step 3: 交叉熵如何把误差送回 logits</h3>
-<p>损失函数负责把任务目标转成训练信号。以分类任务中的交叉熵为例，输出分数先与目标类别比较，再得到返回输出端的梯度。先区分训练信号如何产生，再观察平均、求和以及忽略位置如何改变梯度的参与范围和缩放。</p>
-<table>
-<thead>
-<tr>
-<th>环节</th>
-<th>计算或配置</th>
-<th>对反向的影响</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>前向</td>
-<td><code>logits → softmax → 目标标签 → loss</code></td>
-<td>得到每个样本的分类误差</td>
-</tr>
-<tr>
-<td>反向</td>
-<td><code>softmax(logits) - one_hot(target)</code></td>
-<td>梯度直接回到 logits</td>
-</tr>
-<tr>
-<td>平均或求和</td>
-<td>对样本级误差进行聚合</td>
-<td>平均会按参与样本数缩放梯度，求和保留各项梯度的累积量</td>
-</tr>
-<tr>
-<td>忽略位置或 padding</td>
-<td>指定位置不参与目标比较</td>
-<td>对应位置不贡献 loss，也不向前传递梯度</td>
-</tr>
-</tbody>
-</table>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/18_loss_gradient_path.svg" alt="交叉熵 backward：loss 如何把信号送回 logits"></p>
-<h3>Step 4: 实现并验证两个局部 backward</h3>
-<p>现在进入代码实现：补全一个 ReLU backward 和一个 CrossEntropy backward，并分别与 PyTorch 自动求导结果对照。代码任务聚焦两个局部 backward；实现口径和测试重点集中在下面的表格中。</p>
-<table>
-<thead>
-<tr>
-<th>实现对象</th>
-<th>输入</th>
-<th>输出</th>
-<th>实现口径与验证重点</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ReLU backward</td>
-<td><code>x</code>、上游梯度</td>
-<td>输入梯度</td>
-<td>逐元素门控；<code>x == 0</code> 按本节约定置零；检查形状和梯度数值</td>
-</tr>
-<tr>
-<td>CrossEntropy backward</td>
-<td>logits、target、reduction</td>
-<td>loss、logits 梯度</td>
-<td>支持 <code>mean/sum</code>；使用 <code>log_softmax</code>；检查 label 对齐、较大 logits 和有限值</td>
-</tr>
-</tbody>
-</table>
-<h3>测试</h3>
-<p>运行下面的测试单元，确认手写 ReLU / CrossEntropy backward 和 PyTorch 自动求导一致。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code>def relu_backward(grad_out, x):
-    &quot;&quot;&quot;手写 ReLU 的反向传播。
+<section class="lessons">
 
-    Args:
-        grad_out: 上游梯度，与 x 形状相同。
-        x: ReLU 前的输入张量。x == 0 时本题按梯度 0 处理。
-
-    Returns:
-        传回输入 x 的梯度。
-    &quot;&quot;&quot;
-    if grad_out.shape != x.shape:
-        raise ValueError('grad_out 和 x 必须具有相同形状')
-    if grad_out.device != x.device:
-        raise ValueError('grad_out 和 x 必须位于同一 device')
-    # TODO 1: 构造 ReLU 的反向门控掩码
-    # ==========================================
-    # mask = ???
-    return grad_out * mask
-
-
-def softmax_ce_loss_and_grad(logits, labels, reduction=&quot;mean&quot;):
-    &quot;&quot;&quot;计算 mean / sum reduction 的交叉熵及其 logits 梯度。
-
-    Args:
-        logits: 形状为 [batch, classes] 的未归一化分数。
-        labels: 形状为 [batch] 的整数类别标签。
-        reduction: 只能是 &quot;mean&quot; 或 &quot;sum&quot;，决定如何聚合逐样本 loss。
-
-    Returns:
-        (loss, grad)，分别是标量损失和形状与 logits 相同的梯度。
-
-    Note:
-        本题支持 mean / sum reduction，暂不处理 ignore_index 和 padding mask。
-    &quot;&quot;&quot;
-    if logits.ndim != 2 or labels.ndim != 1 or logits.size(0) != labels.size(0):
-        raise ValueError('logits 应为 [batch, classes]，labels 应为 [batch]')
-    if logits.device != labels.device:
-        raise ValueError('logits 和 labels 必须位于同一 device')
-    if reduction not in (&quot;mean&quot;, &quot;sum&quot;):
-        raise ValueError('reduction 只能是 mean 或 sum')
-    if not logits.is_floating_point():
-        raise TypeError('logits 必须是浮点张量')
-    if labels.dtype not in (torch.int32, torch.int64):
-        raise TypeError('labels 必须是整数类别索引')
-    if labels.numel() and (labels.min() &lt; 0 or labels.max() &gt;= logits.size(1)):
-        raise ValueError('labels 超出类别范围')
-    # ==========================================
-    # TODO 2: 构造 log_probs、probs 和 one_hot
-    # 提示：先用 log_softmax 保证数值稳定，再按 labels 的类别索引构造 one_hot。
-    # ==========================================
-    # log_probs = ???
-    # probs = log_probs.exp()
-    # one_hot = ???
-    # TODO 3: 计算逐样本 loss、按 reduction 聚合，并得到 logits gradient
-    # 提示：先得到 per_sample_loss；mean 时除以 batch size，sum 时保留总和。
-    # per_sample_loss = ???
-    # loss = ???
-    # grad = ???
-    return loss, grad
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="relu-backward-gate">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="relu-backward-gate">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>ReLU 反向是一扇逐元素的门</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">x=[2,-1]，grad_out=[-4,7]。</p>
             <p class="predict-q">relu_backward 应返回什么？</p>
             <div class="predict-options">
@@ -1236,14 +1052,11 @@ def softmax_ce_loss_and_grad(logits, labels, reduction=&quot;mean&quot;):
                 <input type="radio" name="predict-relu-backward-gate" value="2">
                 <span>[4,0]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="relu-backward-gate">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="relu-backward-gate">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="relu-backward-gate">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>grad_out 是后续层传回的上游梯度，x 是 ReLU 前输入；Notebook 中两者 shape 都是 [5]。</li><li>x&gt;0 返回布尔 Tensor；PyTorch 对 x=0 选择局部导数 0，所以不能写 x&gt;=0。</li><li>mask.to(grad_out.dtype) 把布尔门转成与上游梯度相同的浮点类型。</li><li>逐元素相乘保留原 shape 与 device；门只决定放行或阻断，不改变被放行梯度的符号。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>grad_out 是后续层传回的上游梯度，x 是 ReLU 前输入；Notebook 中两者 shape 都是 [5]。</li><li>x&gt;0 返回布尔 Tensor；PyTorch 对 x=0 选择局部导数 0，所以不能写 x&gt;=0。</li><li>mask.to(grad_out.dtype) 把布尔门转成与上游梯度相同的浮点类型。</li><li>逐元素相乘保留原 shape 与 device；门只决定放行或阻断，不改变被放行梯度的符号。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1299,24 +1112,36 @@ print(grad_input)  # [0.0, -0.0, -0.5]</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="relu-backward-gate-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 mask=(x&gt;0).to(grad_out.dtype)，返回值应与 x/grad_out 都是 shape [5]。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="relu-backward-gate-1">
+                <span>运行测试，确认包含 -2、-0.5、0、1、3 的手写梯度与 F.relu 自动求导 allclose。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="relu-backward-gate-2">
+                <span>错误诊断：0 位置不一致时检查 &gt;=；dtype 异常时检查 .to；负上游梯度消失时检查是否误用 grad_out 构造门。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="relu-backward-gate-3">
+                <span>确认实现不原地修改 x 或 grad_out。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="softmax-ce-loss-grad">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="softmax-ce-loss-grad">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>从分类误差得到 logits 梯度：probs-one_hot</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">某样本 probs=[0.7,0.2,0.1]，正确类是 0，batch size=2。</p>
             <p class="predict-q">该样本对应的批量平均 logits 梯度行是什么？</p>
             <div class="predict-options">
@@ -1332,14 +1157,11 @@ print(grad_input)  # [0.0, -0.0, -0.5]</code></pre></div>
                 <input type="radio" name="predict-softmax-ce-loss-grad" value="2">
                 <span>[0.35,0.10,0.05]</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="softmax-ce-loss-grad">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="softmax-ce-loss-grad">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="softmax-ce-loss-grad">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>logits.shape=[B,C] 是浮点类别分数，labels.shape=[B] 是 long 类别下标。</li><li>Softmax 沿 dim=-1 计算，使每个样本的一行概率和为 1。</li><li>zeros_like(probs) 创建同 shape/dtype/device 的 one_hot 容器；scatter_ 需要 labels.unsqueeze(1) 提供 [B,1] 索引。</li><li>Notebook 的 loss 对 batch 取 mean，因此梯度是 (probs-one_hot)/B，而不是只做 probs-one_hot。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>logits.shape=[B,C] 是浮点类别分数，labels.shape=[B] 是 long 类别下标。</li><li>Softmax 沿 dim=-1 计算，使每个样本的一行概率和为 1。</li><li>zeros_like(probs) 创建同 shape/dtype/device 的 one_hot 容器；scatter_ 需要 labels.unsqueeze(1) 提供 [B,1] 索引。</li><li>Notebook 的 loss 对 batch 取 mean，因此梯度是 (probs-one_hot)/B，而不是只做 probs-one_hot。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1401,16 +1223,36 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="softmax-ce-loss-grad-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>完成 probs、one_hot、loss、grad；确认前三个矩阵 shape 为 [B,C]，loss 为 0 维标量。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-1">
+                <span>one_hot 使用 zeros_like 与 scatter_；loss 先按类别求和，再按 batch mean；grad 除以 logits.size(0)。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-2">
+                <span>运行测试，让 manual_grad 与 F.cross_entropy 自动梯度在 atol=1e-6 内一致。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="softmax-ce-loss-grad-3">
+                <span>错误诊断：差固定 B 倍时检查除 batch；类别错位时检查 Softmax dim、scatter dim 和 unsqueeze；loss 为 Inf 时检查 1e-12。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="c87808fe8274ed20a041f4fb8dd6df0ae286d0eac8fbfb846f675ec4a7f36877">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/18_Activation_and_Loss_Backward.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>relu_backward</code> · <code>softmax_ce_loss_and_grad</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1419,7 +1261,7 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
       </div>
       <div>
         <a class="ghost" href="17_autograd_basics.html">上一关：L17</a>
-        <a class="primary" href="19_activation_checkpointing_and_activation_offload.html">下一关：L19</a>
+        <a class="primary" href="19_activation_checkpointing.html">下一关：L19</a>
       </div>
     </section>
   </main>
@@ -1430,10 +1272,10 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
     const predictData = {"relu-backward-gate":{"answer":0,"revealNote":"第一个位置 x>0，负梯度 -4 仍原样通过；第二个位置被门阻断。"},"softmax-ce-loss-grad":{"answer":0,"revealNote":"probs-one_hot=[-0.3,0.2,0.1]，再除以 B=2。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 8;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "18";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1442,20 +1284,22 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-de7ec59a49aa";
+    const homeworkKey = statePrefix + levelId + "-homework-c87808fe8274";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1480,7 +1324,7 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1522,11 +1366,15 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1557,6 +1405,7 @@ grad_scores = (dist - indicator) / scores.size(0)</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,531 +742,192 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 70 | 零基础导学关卡</p>
-        <h1>Serving Scheduler Benchmark | 推理服务调度基准</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>推理服务调度基准</h1>
+        <p class="course-subtitle">Serving Scheduler Benchmark</p>
+        <p class="lead">调度器 benchmark 既看吞吐，也看排队与尾延迟。平均等待可以掩盖少数特别慢的请求，服务目标必须一起检查。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">70_Serving_Scheduler_Benchmark.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">推理服务</span><span class="pill">调度</span><span class="pill">基准对比</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">餐厅接单更多了，但最慢顾客等到生气，算成功吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="340a6a166eb70b8f97d23478fb340ac9de26a064f2d807e9252d99fb82b2cdd9">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../70_Serving_Scheduler_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>70. Serving Scheduler Benchmark | 推理服务调度基准</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>推理服务</code>, <code>调度</code>, <code>基准对比</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。</li><li>TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；</li><li>TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、</li><li>TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>本节导读</h2>
-<p>本节要求你在固定请求流量和队列约束下比较两种 serving 调度策略。统一 workload 后，分别测量 TTFT、TPOT、吞吐、公平性和 worker 利用率，并观察不同请求之间的等待代价。最终输出调度方案的适用场景，而不是只按单一吞吐指标排序。
-<strong>层级定位：</strong> 本项目主落在 L4，研究服务实例内部的 batching、队列和请求调度；副本扩缩容、跨模型路由、灰度发布和 SLA 治理属于 L5，只有在扩展实验中才继续接入。
-<strong>主责与复用边界：</strong> 本项目主责是单实例内的请求调度和排队代价；66 复用其 TTFT、TPOT、吞吐口径，显存优化只观察调度造成的 batch / cache 容量变化，不在本项目内验证集群扩缩容或多模型治理。</p>
-<p><strong>关键词：</strong> <code>serving scheduler</code>, <code>TTFT</code>, <code>TPOT</code>, <code>throughput</code>, <code>fairness</code>, <code>utilization</code></p>
-<hr>
-<h2>前置阅读</h2>
-<p><strong>导语：</strong> 先把 decode 调度、KV cache 调度、PD 分离和前缀缓存 benchmark 理顺，再进入这个项目；本节默认你已经知道基本调度对象，重点转向调度策略是否值得保留。</p>
-<ul>
-<li><a href="36_decode_scheduling.html">36. Decode Scheduling | 解码调度</a></li>
-<li><a href="37_kv_cache_scheduling.html">37. KV Cache Scheduling | KV Cache 调度</a></li>
-<li><a href="38_prefill_decode_disaggregation.html">38. Prefill Decode Disaggregation | PD 分离</a></li>
-<li><a href="69_prefix_caching_benchmark.html">69. Prefix Caching Benchmark | 前缀缓存基准</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成 serving 调度 benchmark 后，可用 79 和 81 检查并行通信、分布式推理对请求延迟和资源组织的影响。</p>
-<ul>
-<li><a href="79_distributed_parallel_benchmark.html">79. Distributed Parallel Benchmark | 分布式并行基准项目</a></li>
-<li><a href="81_distributed_inference_project.html">81. Distributed Inference Logic Validation | 分布式推理逻辑验证</a></li>
-</ul>
-<hr>
-<h3>Step 1: 定义 serving 实例级调度目标</h3>
-<p>这里的调度对象是 serving 实例中的请求，不是模型参数或单个 KV Cache block。调度器主要决定三件事：请求何时进入执行队列、哪些请求组成一个 batch、资源有限时优先服务谁。</p>
-<p>本节关注单模型 serving 实例内部的队列和 batch 组织。FIFO、shortest 和 batch 调度是可解释的教学策略，不等同于 vLLM / SGLang 的完整 continuous batching；36、37、38 分别提供请求推进、KV Cache 和 PD 分离机制，本节把它们放回服务 workload 中比较。</p>
-<p>实验先固定请求到达模式、prompt/decode 长度和资源配置，再区分负载扫描与策略对照；统一记录 TTFT、TPOT、吞吐、公平性、队列等待和 worker 利用率。</p>
-<table>
-<thead>
-<tr>
-<th>本节问题</th>
-<th>观察对象</th>
-<th>不要混淆为</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>请求如何排队</td>
-<td>到达时间、等待时间、batch 选择</td>
-<td>单个 decode token 的生成规则</td>
-</tr>
-<tr>
-<td>服务如何批处理</td>
-<td>batch size、batch speedup、worker busy time</td>
-<td>真实 GPU kernel 加速比例</td>
-</tr>
-<tr>
-<td>策略是否值得保留</td>
-<td>TTFT、TPOT、吞吐、公平性和尾延迟</td>
-<td>只看吞吐的单指标排序</td>
-</tr>
-<tr>
-<td><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_scheduler_scope.svg" alt="Serving 实例级调度：请求进入队列、组成 batch 并形成服务决策"></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h3>Step 2: 固定 baseline 与请求分布</h3>
-<p>serving benchmark 不能脱离 workload 讨论。相同模型、请求流、生成长度、cache policy 和资源配置，才构成可比较的对照。先运行 G0，确认请求都完成，再决定后续是扫描负载还是比较策略。</p>
-<table>
-<thead>
-<tr>
-<th>实验组</th>
-<th>固定条件</th>
-<th>唯一变化</th>
-<th>结论类型</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>G0 serving baseline</td>
-<td>模型、backend、dtype、请求流、cache policy、worker 配置</td>
-<td>无</td>
-<td>共同参照和成功率基线</td>
-</tr>
-<tr>
-<td>G1 负载扫描</td>
-<td>继承 G0 的模型和调度配置</td>
-<td>并发或请求到达率</td>
-<td>负载敏感性，不是策略收益</td>
-</tr>
-<tr>
-<td>G2 策略对照</td>
-<td>继承 G0 的请求流和资源配置</td>
-<td>明确可控的调度策略或 scheduler 参数</td>
-<td>单变量策略收益与代价</td>
-</tr>
-</tbody>
-</table>
-<p>只改变并发或到达率时，报告应写成“负载敏感性”；只有 G2 改变了可控调度规则，才可以讨论调度策略收益。</p>
-<h3>Step 3: 用统一指标比较收益与代价</h3>
-<p>这些指标要一起阅读：延迟类指标解释用户体验，吞吐和利用率解释整体服务能力，公平性和队列等待解释收益是否由少数请求承担。</p>
-<table>
-<thead>
-<tr>
-<th>指标</th>
-<th>单位</th>
-<th>主要回答的问题</th>
-<th>趋势方向</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TTFT</td>
-<td>ms</td>
-<td>用户等待第一个 token 多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>TPOT</td>
-<td>ms/token</td>
-<td>decode 阶段每个 token 间隔多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>queue wait</td>
-<td>ms</td>
-<td>请求在执行前等待了多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>throughput</td>
-<td>token/s 或 request/s</td>
-<td>serving 实例整体处理能力是否提高</td>
-<td>越高越好</td>
-</tr>
-<tr>
-<td>fairness</td>
-<td>0–1</td>
-<td>是否牺牲部分请求换取整体吞吐</td>
-<td>越高越好</td>
-</tr>
-<tr>
-<td>utilization</td>
-<td>0–1</td>
-<td>worker 是否持续工作</td>
-<td>结合延迟和公平性判断</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 实验可以验证队列顺序、batch 选择和指标方向；GPU/backend 实验才能验证真实 continuous batching、KV Cache 约束、GPU 利用率和 P99。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_metrics_decision.svg" alt="Serving benchmark 指标关系：用户体验、服务能力与公平性共同进入决策"></p>
-<h3>Step 4: 根据门槛输出 benchmark 结论</h3>
-<p>只有在调度规则确实可控、workload 对齐、指标重复稳定时，才能比较策略收益。若只是并发扫描，应输出负载敏感性结论。决策时同时检查吞吐、延迟和公平性，不能用单一指标替代整体判断。</p>
-<table>
-<thead>
-<tr>
-<th>决策</th>
-<th>条件</th>
-<th>下一步</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>accept</code></td>
-<td>吞吐达到最低增益，TTFT / TPOT 没有超出可接受范围，公平性达到门槛</td>
-<td>进入真实 serving rollout 或更大 workload</td>
-</tr>
-<tr>
-<td><code>tune</code></td>
-<td>吞吐或利用率有改善，但延迟、公平性或重复稳定性仍有权衡</td>
-<td>调整队列规则、batch 或 worker 配置</td>
-</tr>
-<tr>
-<td><code>reject</code></td>
-<td>没有可信收益，或延迟、公平性明显恶化</td>
-<td>回到 baseline 或重新设计策略</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 题目区只验证决策逻辑；GPU/backend 报告还需要补充 P99、OOM、GPU 利用率和运行环境信息。</p>
-<h4>图解：36-37-38-69 如何收束到 70 推理服务调度基准</h4>
-<pre><code class="language-text">36 decode scheduling -&gt; 37 KV cache scheduling -&gt; 38 PD disaggregation -&gt; 69 prefix serving baseline
-                                          |
-                                          v
-                          70 serving scheduler benchmark + delivery decision
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">模块</th>
-<th style="text-align:left">必须记录</th>
-<th style="text-align:left">用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">workload、TTFT、TPOT、throughput、公平性</td>
-<td style="text-align:left">保证比较合法</td>
-</tr>
-<tr>
-<td style="text-align:left">candidate</td>
-<td style="text-align:left">调度规则、worker 利用率、缓存/队列收益</td>
-<td style="text-align:left">解释 serving 收益来源</td>
-</tr>
-<tr>
-<td style="text-align:left">对比</td>
-<td style="text-align:left">延迟变化、吞吐增益、公平性变化、利用率变化</td>
-<td style="text-align:left">判断是否值得 adopt</td>
-</tr>
-<tr>
-<td style="text-align:left">决策</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出 benchmark 结论</td>
-</tr>
-</tbody>
-</table>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 11</summary><pre><code># 4 个核心 TODO：请求调度模拟、workload 汇总、baseline 对比、项目判断
-# 目标：先用 CPU 验证排队/批处理状态，再把调度收益转成可比较的 benchmark 报告。
-# CPU 题目区验证单 worker 的队列状态转移；真实 serving 的 batch、P99、GPU 利用率和平台扩缩容属于 GPU/backend 扩展。
+<section class="lessons">
 
-def simulate_serving_scheduler(requests: List[Dict[str, float]], policy: str = 'fifo', batch_size: int = 1, batch_speedup: float = 1.0) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;模拟单 worker 的到达、排队、批处理和完成时间；不测真实 GPU serving。
-
-    arrival_ms、service_ms 和 output_tokens 分别表示请求到达时间、理想服务时长和输出 token 数；
-    batch_speedup 是教学模型中的批处理加速因子，不代表线性或硬件实测加速。
-    &quot;&quot;&quot;
-    if policy not in {'fifo', 'shortest'}:
-        raise ValueError('policy 只能是 fifo 或 shortest')
-    if batch_size &lt; 1 or batch_speedup &lt;= 0:
-        raise ValueError('batch_size 必须 &gt;= 1，batch_speedup 必须 &gt; 0')
-    # ==========================================
-    # TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。
-    # 提示：FIFO 按到达顺序（request_id 只作为稳定 tie-break）；shortest 按 service_ms 从小到大。
-    # 变量提示：使用 pending、queue、completed、now、busy、batch；
-    #       每个请求至少读取 request_id、arrival_ms、service_ms、output_tokens。
-    #       返回 request_count、completed_count、makespan_ms、throughput_tps、
-    #       utilization、fairness、avg_queue_wait_ms 和 requests 明细。
-    #       fairness 需基于请求等待/完成表现定义并保持可解释；不能用单一吞吐代替公平性。
-    # ==========================================
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_serving_scheduler_runs(runs: List[Dict[str, float]]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;汇总同一请求流和 batch 配置下的调度运行结果。
-
-    输入至少包含 name、ttft_ms 和 throughput_tps；空列表返回可解释的空摘要。
-    只汇总同一请求流、worker 和 batch 配置的运行；缺失指标不能补成真实的 0。&quot;&quot;&quot;
-    # TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；
-    # run_count = ???；avg_throughput_tps = ???；best_latency_run = ???。
-    #         缺失指标不能静默解释为真实的 0。
-    #         avg_throughput_tps 是报告均值，不等于单请求 latency。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def compare_scheduler_to_baseline(baseline: Dict[str, float], candidate: Dict[str, float]) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;计算 candidate 相对 baseline 的延迟、吞吐、公平性和利用率变化。
-
-    TTFT/TPOT 差值越低越好，吞吐、公平性和利用率增益越高越好；两组结果
-    必须使用同一请求流和资源配置。&quot;&quot;&quot;
-    # TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、
-    # ttft_delta_ms = ???；tpot_delta_ms = ???；throughput_gain_tps = ???；fairness_delta = ???。
-    #         fairness_delta 和 utilization_delta。
-    #         延迟差使用 candidate - baseline；吞吐、公平性、利用率增益也使用 candidate - baseline。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def recommend_serving_scheduler_run(
-    baseline: Dict[str, float], candidate: Dict[str, float], min_throughput_gain: float, min_fairness: float
-) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;按延迟、吞吐和公平性门槛给出教学决策。
-
-    min_throughput_gain、min_fairness 属于当前 workload 的配置；该函数是
-    可解释的筛选模板，不代表生产环境 SLA 或自动调参器。&quot;&quot;&quot;
-    # TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、
-    # throughput_ok = ???；fairness_ok = ???；decision = ???；next_action = ???。
-    #         next_action；允许的 decision 是 accept / tune / reject。
-    #         吞吐达标但公平性未达标时不能直接 accept；没有可接受候选时返回 reject。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>餐厅接单更多了，但最慢顾客等到生气，算成功吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节要求你在固定请求流量和队列约束下比较两种 serving 调度策略。统一 workload 后，分别测量 TTFT、TPOT、吞吐、公平性和 worker 利用率，并观察不同请求之间的等待代价。最终输出调度方案的适用场景，而不是只按单一吞吐指标排序。
-层级定位： 本项目主落在 L4，研究服务实例内部的 batching、队列和请求调度；副本扩缩容、跨模型路由、灰度发布和 SLA 治理属于 L5，只有在扩展实验中才继续接入。
-主责与复用边界： 本项目主责是单实例内的请求调度和排队代价；66 复用其 TTFT、TPOT、吞吐口径，显存优化只观察调度造成的 batch / cache 容量变化，不在本项目内验证集群扩缩容或多模型治理。</p>
-            <div class="notebook-content"><h3>Step 1: 定义 serving 实例级调度目标</h3>
-<p>这里的调度对象是 serving 实例中的请求，不是模型参数或单个 KV Cache block。调度器主要决定三件事：请求何时进入执行队列、哪些请求组成一个 batch、资源有限时优先服务谁。</p>
-<p>本节关注单模型 serving 实例内部的队列和 batch 组织。FIFO、shortest 和 batch 调度是可解释的教学策略，不等同于 vLLM / SGLang 的完整 continuous batching；36、37、38 分别提供请求推进、KV Cache 和 PD 分离机制，本节把它们放回服务 workload 中比较。</p>
-<p>实验先固定请求到达模式、prompt/decode 长度和资源配置，再区分负载扫描与策略对照；统一记录 TTFT、TPOT、吞吐、公平性、队列等待和 worker 利用率。</p>
-<table>
-<thead>
-<tr>
-<th>本节问题</th>
-<th>观察对象</th>
-<th>不要混淆为</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>请求如何排队</td>
-<td>到达时间、等待时间、batch 选择</td>
-<td>单个 decode token 的生成规则</td>
-</tr>
-<tr>
-<td>服务如何批处理</td>
-<td>batch size、batch speedup、worker busy time</td>
-<td>真实 GPU kernel 加速比例</td>
-</tr>
-<tr>
-<td>策略是否值得保留</td>
-<td>TTFT、TPOT、吞吐、公平性和尾延迟</td>
-<td>只看吞吐的单指标排序</td>
-</tr>
-<tr>
-<td><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_scheduler_scope.svg" alt="Serving 实例级调度：请求进入队列、组成 batch 并形成服务决策"></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h3>Step 2: 固定 baseline 与请求分布</h3>
-<p>serving benchmark 不能脱离 workload 讨论。相同模型、请求流、生成长度、cache policy 和资源配置，才构成可比较的对照。先运行 G0，确认请求都完成，再决定后续是扫描负载还是比较策略。</p>
-<table>
-<thead>
-<tr>
-<th>实验组</th>
-<th>固定条件</th>
-<th>唯一变化</th>
-<th>结论类型</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>G0 serving baseline</td>
-<td>模型、backend、dtype、请求流、cache policy、worker 配置</td>
-<td>无</td>
-<td>共同参照和成功率基线</td>
-</tr>
-<tr>
-<td>G1 负载扫描</td>
-<td>继承 G0 的模型和调度配置</td>
-<td>并发或请求到达率</td>
-<td>负载敏感性，不是策略收益</td>
-</tr>
-<tr>
-<td>G2 策略对照</td>
-<td>继承 G0 的请求流和资源配置</td>
-<td>明确可控的调度策略或 scheduler 参数</td>
-<td>单变量策略收益与代价</td>
-</tr>
-</tbody>
-</table>
-<p>只改变并发或到达率时，报告应写成“负载敏感性”；只有 G2 改变了可控调度规则，才可以讨论调度策略收益。</p>
-<h3>Step 3: 用统一指标比较收益与代价</h3>
-<p>这些指标要一起阅读：延迟类指标解释用户体验，吞吐和利用率解释整体服务能力，公平性和队列等待解释收益是否由少数请求承担。</p>
-<table>
-<thead>
-<tr>
-<th>指标</th>
-<th>单位</th>
-<th>主要回答的问题</th>
-<th>趋势方向</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TTFT</td>
-<td>ms</td>
-<td>用户等待第一个 token 多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>TPOT</td>
-<td>ms/token</td>
-<td>decode 阶段每个 token 间隔多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>queue wait</td>
-<td>ms</td>
-<td>请求在执行前等待了多久</td>
-<td>越低越好</td>
-</tr>
-<tr>
-<td>throughput</td>
-<td>token/s 或 request/s</td>
-<td>serving 实例整体处理能力是否提高</td>
-<td>越高越好</td>
-</tr>
-<tr>
-<td>fairness</td>
-<td>0–1</td>
-<td>是否牺牲部分请求换取整体吞吐</td>
-<td>越高越好</td>
-</tr>
-<tr>
-<td>utilization</td>
-<td>0–1</td>
-<td>worker 是否持续工作</td>
-<td>结合延迟和公平性判断</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 实验可以验证队列顺序、batch 选择和指标方向；GPU/backend 实验才能验证真实 continuous batching、KV Cache 约束、GPU 利用率和 P99。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/70_serving_metrics_decision.svg" alt="Serving benchmark 指标关系：用户体验、服务能力与公平性共同进入决策"></p>
-<h3>Step 4: 根据门槛输出 benchmark 结论</h3>
-<p>只有在调度规则确实可控、workload 对齐、指标重复稳定时，才能比较策略收益。若只是并发扫描，应输出负载敏感性结论。决策时同时检查吞吐、延迟和公平性，不能用单一指标替代整体判断。</p>
-<table>
-<thead>
-<tr>
-<th>决策</th>
-<th>条件</th>
-<th>下一步</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>accept</code></td>
-<td>吞吐达到最低增益，TTFT / TPOT 没有超出可接受范围，公平性达到门槛</td>
-<td>进入真实 serving rollout 或更大 workload</td>
-</tr>
-<tr>
-<td><code>tune</code></td>
-<td>吞吐或利用率有改善，但延迟、公平性或重复稳定性仍有权衡</td>
-<td>调整队列规则、batch 或 worker 配置</td>
-</tr>
-<tr>
-<td><code>reject</code></td>
-<td>没有可信收益，或延迟、公平性明显恶化</td>
-<td>回到 baseline 或重新设计策略</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 题目区只验证决策逻辑；GPU/backend 报告还需要补充 P99、OOM、GPU 利用率和运行环境信息。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>调度器 benchmark 既看吞吐，也看排队与尾延迟。平均等待可以掩盖少数特别慢的请求，服务目标必须一起检查。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>arrival</dt><dd>请求到达时刻。</dd></div><div><dt>tail latency</dt><dd>高分位时延，用于观察较慢的一部分请求。</dd></div><div><dt>SLO</dt><dd>明确的服务目标，例如延迟上限。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>调度策略吞吐更高但尾延迟超限，能直接采用吗？</p>
+            <p>本课中的「arrival」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>能，平均值可以替代尾延迟</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>明确的服务目标，例如延迟上限。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>不能，需要同时满足延迟和其他预算门槛</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>请求到达时刻。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>能，只比较吞吐</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>高分位时延，用于观察较慢的一部分请求。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 0: 按到达时间推进队列，按 policy 取 batch，计算等待/完成指标。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>建请求流</h4><p>先固定到达时间、输入输出长度和并发条件，保存每个请求的完成记录。</p></li><li><h4>看平均与最慢</h4><p>等待为 1、1、1、17，平均只有 5，但仍有人等了 17。小样本的“最慢”也不应随意称为 P99。</p></li><li><h4>做约束选择</h4><p>候选吞吐上升但超出规定尾延迟门槛，应调参或拒绝，不能只报好看的指标。</p></li></ol><section class="learning-lab" data-lab="schedule" aria-label="重新排一次队，等待会怎样变？">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>重新排一次队，等待会怎样变？</h4><p>三个任务同时到达，比较 FIFO 与短任务优先。</p></header>
+    <div class="lab-controls"><label for="lab-70-long"><span>长任务时长 <output data-value="long" for="lab-70-long">6</output> 时间单位</span><input type="range" id="lab-70-long" name="long" min="3" max="12" step="1" value="6"></label><label for="lab-70-shortFirst"><span>短任务优先（0 关 / 1 开） <output data-value="shortFirst" for="lab-70-shortFirst">0</output> </span><input type="range" id="lab-70-shortFirst" name="shortFirst" min="0" max="1" step="1" value="0"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-70" data-challenge-label>算一算</label><div><input id="answer-70" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>等待 1、1、1、17，平均值与最大值分别是多少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>5 和 5</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>4 和 17</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>5 和 17</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>waits = [1, 1, 1, 17]
+print(sum(waits)/len(waits), max(waits))  # 5, 17</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把平均延迟通过说成所有请求都通过，或在不同到达流下比较调度算法。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>把平均延迟通过说成所有请求都通过，或在不同到达流下比较调度算法。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「arrival」的定义和计算。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 1：使用 run_count、avg_throughput_tps、best_latency_run；</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 2：返回 ttft_delta_ms、tpot_delta_ms、throughput_gain_tps、</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 3：先得到 comparison，再使用两个门槛输出 decision、reason、</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="c6132ff443e21b01cbe58a42d0a412e1e4b2019d90c61c81d82233afb2ea1576">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/70_Serving_Scheduler_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>simulate_serving_scheduler</code> · <code>summarize_serving_scheduler_runs</code> · <code>compare_scheduler_to_baseline</code> · <code>recommend_serving_scheduler_run</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1276,14 +939,14 @@ def recommend_serving_scheduler_run(
 
   <script>
     const levelId = "70";
-    const checkpointData = {"current-core":{"answer":1,"explain":"不能，需要同时满足延迟和其他预算门槛。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：请求到达时刻。。另外两个选项分别解释「tail latency」和「SLO」，注意区分。"},"v4-experiment":{"answer":2,"explain":"平均会被短请求拉低，不能代表慢请求。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：把平均延迟通过说成所有请求都通过，或在不同到达流下比较调度算法。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
+    const checkpointTotal = 3;
     const homeworkTotal = 4;
-    const statePrefix = "pytorch-v3-level-";
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1292,20 +955,22 @@ def recommend_serving_scheduler_run(
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-340a6a166eb7";
+    const homeworkKey = statePrefix + levelId + "-homework-c6132ff443e2";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1330,7 +995,7 @@ def recommend_serving_scheduler_run(
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1372,11 +1037,15 @@ def recommend_serving_scheduler_run(
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1407,6 +1076,7 @@ def recommend_serving_scheduler_run(
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

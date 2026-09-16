@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,289 +742,195 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 30 | 零基础导学关卡</p>
-        <h1>Long Context Fine-Tuning | 长上下文微调</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>长上下文微调</h1>
+        <p class="course-subtitle">Long Context Fine-Tuning</p>
+        <p class="lead">把上下文窗口想成书包：prompt 是教材，response 是你要写的笔记。先给笔记留位置，再决定能装多少教材。长度预算解决“装得下”；数据和评测解决“装进去有没有用”。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">30_Long_Context_Fine_Tuning.ipynb</span>
           <span class="pill">训练微调</span><span class="pill">Long Context</span><span class="pill">数据组织</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">一本书放不进书包，换大书包就一定是好办法吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="5a689790bf0b9bafd90ce2dcce15b11a5fe22b911ffa8791cbe20ff6361de9aa">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../30_Long_Context_Fine_Tuning.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>30. Long Context Fine-Tuning | 长上下文微调</h1>
-<p><strong>难度：</strong> Medium | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>训练微调</code>, <code>Long Context</code>, <code>数据组织</code> | <strong>目标人群：</strong> 训练机制学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>长上下文微调最容易犯的错，不是“上下文不够长”，而是还没把数据长度、显存预算和评测口径说清楚，就直接把 <code>seq_len</code> 拉大。结果通常是训练更慢、显存更高、收益却不稳定。</p>
-<p>这一节先不碰真实训练框架，而是把项目里最先该做的三件事拆出来：</p>
-<ul>
-<li>统计长度分布，确认问题到底出在少量超长样本，还是整体长度迁移。</li>
-<li>规划长上下文批次，估算哪些样本真的能进目标窗口。</li>
-<li>用统一口径比较 baseline 和 long-context run，判断是否值得继续投入。</li>
-</ul>
-<p><strong>关键词：</strong> <code>context budget</code>, <code>packing</code>, <code>length distribution</code>, <code>sparse attention</code>, <code>linear attention</code></p>
-<p>本节还用 CPU 小张量对照 Dense、Sparse 和 Linear Attention 的连接数、状态形状与长度账本，帮助你把长上下文的数据问题和架构选择放到同一张检查表里。</p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 4: 统计局部窗口 Sparse Attention 的连接数量和非零率。</li><li>TODO 5: 计算 Linear Attention 递推状态的形状和元素数。</li><li>TODO 1: 把样本长度分成 `short / medium / long` 三档。</li><li>TODO 2: 规划长上下文批次。</li><li>TODO 3: 输出 baseline 和 candidate 的对比结论。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能读出训练循环中的 batch、activation 和 KV Cache 成本，再比较样本长度分布与目标窗口是否匹配。</p>
-<ul>
-<li><a href="../../../01_Hardware_Math_and_Systems/11_KV_Cache_and_Memory_Growth.ipynb">11. KV Cache and Memory Growth | KV Cache 与显存增长</a></li>
-<li><a href="12_gradient_accumulation.html">12. Gradient Accumulation | 梯度累积</a></li>
-<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing and Activation Offload | 激活检查点与激活卸载</a></li>
-</ul>
-<hr>
-<h3>Step 1: 先确认长度问题长什么样</h3>
-<ul>
-<li>先统计长度分布，区分短样本、过渡样本和超长样本。</li>
-<li>不要只看最大长度，要看落在不同区间的样本占比。</li>
-<li>如果超长样本只占很少比例，优先考虑重写数据组织和 packing，而不是盲目扩大训练窗口。</li>
-<li>先区分是扩大 dense Attention 的窗口，还是改变 Attention 连接/计算形式；这两类方案的质量和实现风险不同。</li>
-</ul>
-<h3>Step 2: 把上下文预算写成显式规则</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/30_long_context_budget.svg" alt="Long Context Fine-Tuning Budget"></p>
-<ul>
-<li>先给 response 预留固定 token 空间，避免 prompt 把监督区全部吃掉。</li>
-<li>再判断样本是否能在目标窗口内完整放下。</li>
-<li>若放不下，要明确是截断、切块，还是延后到更大窗口实验。</li>
-<li>对 Sparse Attention 记录 mask 的非零率或连接数量；对 Linear Attention 记录状态大小和递推维度。</li>
-</ul>
-<h3>Step 3: 用统一口径比较 baseline 和 candidate run</h3>
-<ul>
-<li>对齐 <code>fit_rate</code>、<code>peak_memory_gb</code>、<code>step_time_s</code> 和 <code>eval_score</code>。</li>
-<li>如果窗口更大，但 fit rate 只提升一点点、显存和步时却显著上升，就不该直接推进。</li>
-<li>真正应该保留的是“长度收益明显，且成本可接受”的方案。</li>
-<li>CPU 结果只能确认预算计算和 toy 机制；真实 kernel、带宽、吞吐和质量仍需单独 benchmark。</li>
-</ul>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>bucket_length_distribution</code>，把样本长度分成 <code>short / medium / long</code> 三档。</li>
-<li>补全 <code>plan_long_context_batches</code>，判断样本在预留 response token 后能否完整装入上下文窗口。</li>
-<li>补全 <code>summarize_long_context_experiment</code>，输出 baseline 和 candidate 的对比结论。</li>
-<li>用小张量写出 dense mask 与 sparse mask 的连接数量，并记录 linear attention 状态 shape；只比较结构，不比较 GPU 速度。</li>
-</ol>
-<h3>提示</h3>
-<ul>
-<li><code>TODO 1</code> 先按 <code>short_threshold / long_threshold</code> 把长度分成 <code>short / medium / long</code> 三档。</li>
-<li><code>TODO 2</code> 先算 <code>available_prompt_tokens</code>，再判断每个样本是能完整装入还是溢出。</li>
-<li><code>TODO 3</code> 先分别比较 <code>fit_rate / memory / step_time / eval</code> 的变化，再决定 <code>keep_candidate</code>。</li>
-</ul>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>def summarize_sparse_connections(seq_len: int, window_size: int) -&gt; Dict[str, float]:
-    &quot;&quot;&quot;TODO 4: 统计局部窗口 Sparse Attention 的连接数量和非零率。&quot;&quot;&quot;
-    # 提示：每个 token 最多连接左右 window_size 范围内的位置；先计算总连接数，再除以 seq_len ** 2。
-    # total_connections = ???
-    # density = ???
-    raise NotImplementedError
+<section class="lessons">
 
-
-def summarize_linear_attention_state(seq_len: int, feature_dim: int, value_dim: int) -&gt; Dict[str, int]:
-    &quot;&quot;&quot;TODO 5: 计算 Linear Attention 递推状态的形状和元素数。&quot;&quot;&quot;
-    # 提示：简化教学模型维护 [feature_dim, value_dim] 状态，不构造 [seq_len, seq_len] 矩阵。
-    # state_shape = ???
-    # state_elements = ???
-    raise NotImplementedError
-
-
-def bucket_length_distribution(lengths: List[int], short_threshold: int, long_threshold: int) -&gt; Dict[str, int]:
-    &quot;&quot;&quot;
-    TODO 1: 把样本长度分成 `short / medium / long` 三档。
-    &quot;&quot;&quot;
-    # 提示：先创建 counts，再逐个长度判断落在哪个区间。
-    # counts = ???
-    # if ???:
-    #     counts['short'] += 1
-    # elif ???:
-    #     counts['medium'] += 1
-    # else:
-    #     counts['long'] += 1
-    raise NotImplementedError
-
-
-def plan_long_context_batches(samples: List[Dict[str, int]], target_context_len: int, reserved_response_tokens: int) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 2: 规划长上下文批次。
-    &quot;&quot;&quot;
-    # 提示：先算 available_prompt_tokens，再把样本分到 fit_names 和 overflow_names。
-    # available_prompt_tokens = ???
-    # fit_names = ???
-    # overflow_names = ???
-    # fit_rate = ???
-    raise NotImplementedError
-
-
-def summarize_long_context_experiment(baseline_run: Dict[str, float], candidate_run: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;
-    TODO 3: 输出 baseline 和 candidate 的对比结论。
-    &quot;&quot;&quot;
-    # 提示：先算 fit_rate_gain、memory_delta_gb、step_time_delta_s、eval_gain，再判断 keep_candidate。
-    # fit_rate_gain = ???
-    # memory_delta_gb = ???
-    # step_time_delta_s = ???
-    # eval_gain = ???
-    # keep_candidate = ???
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code>def test_long_context_template():
-    try:
-        counts = bucket_length_distribution([64, 128, 300, 900], short_threshold=128, long_threshold=512)
-        assert counts == {'short': 2, 'medium': 1, 'long': 1}
-        sparse = summarize_sparse_connections(seq_len=8, window_size=1)
-        assert sparse['total_connections'] == 22
-        assert 0 &lt; sparse['density'] &lt; 1
-        state = summarize_linear_attention_state(seq_len=128, feature_dim=16, value_dim=8)
-        assert state['state_shape'] == (16, 8)
-        assert state['state_elements'] == 128
-
-        samples = [
-            {'name': 'short_doc', 'prompt_tokens': 300},
-            {'name': 'medium_doc', 'prompt_tokens': 1200},
-            {'name': 'too_long_doc', 'prompt_tokens': 1900},
-        ]
-        batch_plan = plan_long_context_batches(samples, target_context_len=2048, reserved_response_tokens=256)
-        assert batch_plan['available_prompt_tokens'] == 1792
-        assert batch_plan['fit_count'] == 2 and batch_plan['overflow_count'] == 1
-        assert abs(batch_plan['fit_rate'] - 2 / 3) &lt; 1e-8
-
-        baseline = {'fit_rate': 0.45, 'peak_memory_gb': 14.0, 'step_time_s': 0.8, 'eval_score': 0.61}
-        candidate = {'fit_rate': 0.80, 'peak_memory_gb': 18.5, 'step_time_s': 1.1, 'eval_score': 0.64}
-        summary = summarize_long_context_experiment(baseline, candidate)
-        assert abs(summary['fit_rate_gain'] - 0.35) &lt; 1e-8
-        assert summary['memory_delta_gb'] == 4.5
-        assert summary['keep_candidate'] is True
-        print('测试通过：长上下文微调模板可以工作。')
-    except NotImplementedError:
-        raise
-    except (AttributeError, NameError, TypeError, ValueError, AssertionError) as e:
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_long_context_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>一本书放不进书包，换大书包就一定是好办法吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>长上下文微调最容易犯的错，不是“上下文不够长”，而是还没把数据长度、显存预算和评测口径说清楚，就直接把 seq_len 拉大。结果通常是训练更慢、显存更高、收益却不稳定。</p>
-            <div class="notebook-content"><h3>Step 1: 先确认长度问题长什么样</h3>
-<ul>
-<li>先统计长度分布，区分短样本、过渡样本和超长样本。</li>
-<li>不要只看最大长度，要看落在不同区间的样本占比。</li>
-<li>如果超长样本只占很少比例，优先考虑重写数据组织和 packing，而不是盲目扩大训练窗口。</li>
-<li>先区分是扩大 dense Attention 的窗口，还是改变 Attention 连接/计算形式；这两类方案的质量和实现风险不同。</li>
-</ul>
-<h3>Step 2: 把上下文预算写成显式规则</h3>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/30_long_context_budget.svg" alt="Long Context Fine-Tuning Budget"></p>
-<ul>
-<li>先给 response 预留固定 token 空间，避免 prompt 把监督区全部吃掉。</li>
-<li>再判断样本是否能在目标窗口内完整放下。</li>
-<li>若放不下，要明确是截断、切块，还是延后到更大窗口实验。</li>
-<li>对 Sparse Attention 记录 mask 的非零率或连接数量；对 Linear Attention 记录状态大小和递推维度。</li>
-</ul>
-<h3>Step 3: 用统一口径比较 baseline 和 candidate run</h3>
-<ul>
-<li>对齐 <code>fit_rate</code>、<code>peak_memory_gb</code>、<code>step_time_s</code> 和 <code>eval_score</code>。</li>
-<li>如果窗口更大，但 fit rate 只提升一点点、显存和步时却显著上升，就不该直接推进。</li>
-<li>真正应该保留的是“长度收益明显，且成本可接受”的方案。</li>
-<li>CPU 结果只能确认预算计算和 toy 机制；真实 kernel、带宽、吞吐和质量仍需单独 benchmark。</li>
-</ul>
-<h3>Step 4: 动手实战</h3>
-<ol>
-<li>补全 <code>bucket_length_distribution</code>，把样本长度分成 <code>short / medium / long</code> 三档。</li>
-<li>补全 <code>plan_long_context_batches</code>，判断样本在预留 response token 后能否完整装入上下文窗口。</li>
-<li>补全 <code>summarize_long_context_experiment</code>，输出 baseline 和 candidate 的对比结论。</li>
-<li>用小张量写出 dense mask 与 sparse mask 的连接数量，并记录 linear attention 状态 shape；只比较结构，不比较 GPU 速度。</li>
-</ol>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>把上下文窗口想成书包：prompt 是教材，response 是你要写的笔记。先给笔记留位置，再决定能装多少教材。长度预算解决“装得下”；数据和评测解决“装进去有没有用”。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>token</dt><dd>模型处理的文字片段，不等于一个汉字。</dd></div><div><dt>窗口</dt><dd>一次输入与生成可使用的总 token 预算。</dd></div><div><dt>packing</dt><dd>把较短样本组织到批次中，减少空位；仍要处理样本边界。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>长上下文批次先给 response 预留空间，是为了什么？</p>
+            <p>本课中的「token」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>避免 prompt 占满窗口后丢失监督区</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>模型处理的文字片段，不等于一个汉字。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>让字符数自动等于 token 数</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>把较短样本组织到批次中，减少空位；仍要处理样本边界。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>保证扩窗必然提高质量</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>一次输入与生成可使用的总 token 预算。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 4: 统计局部窗口 Sparse Attention 的连接数量和非零率。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>留出回答空间</h4><p>窗口 16 格，给回答留 4 格，prompt 最多占 12 格。一个 13 token 的 prompt 就超了 1 格。</p></li><li><h4>观察分布</h4><p>样本长度是 4、8、12、15：12 格预算能放下前三个，fit rate 是 3/4，而不是看最大样本 15 就断言全部失败。</p></li><li><h4>理解代价</h4><p>普通 dense Attention 的分数元素数按长度平方增长：长度 8→16，64→256。这里比较元素数量，不预测真实耗时。</p></li></ol><section class="learning-lab" data-lab="context" aria-label="给回答留一块空位">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>给回答留一块空位</h4><p>拖动窗口和回答预算，看看哪些样本能装进去。</p></header>
+    <div class="lab-controls"><label for="lab-30-window"><span>上下文窗口 <output data-value="window" for="lab-30-window">16</output> token</span><input type="range" id="lab-30-window" name="window" min="8" max="32" step="1" value="16"></label><label for="lab-30-reserve"><span>回答预留 <output data-value="reserve" for="lab-30-reserve">4</output> token</span><input type="range" id="lab-30-reserve" name="reserve" min="1" max="8" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-30" data-challenge-label>算一算</label><div><input id="answer-30" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>窗口 16，回答预留 4，prompt 长 13。还差多少空间？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>4 token</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>1 token</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>已经能放下</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>window, response = 16, 4
+lengths = [4, 8, 12, 15]
+budget = window - response
+fits = [n &lt;= budget for n in lengths]
+print(sum(fits) / len(fits))  # 0.75</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把字符长度当 token 长度，或把 fit rate 上升当质量提升。扩大窗口后仍要用目标 tokenizer 和同一评测集复核。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先用小例子检查「token」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>把字符长度当 token 长度，或把 fit rate 上升当质量提升。扩大窗口后仍要用目标 tokenizer 和同一评测集复核。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 5: 计算 Linear Attention 递推状态的形状和元素数。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 1: 把样本长度分成 `short / medium / long` 三档。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-3">
-                <span>TODO 2: 规划长上下文批次。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-4">
-                <span>TODO 3: 输出 baseline 和 candidate 的对比结论。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="3cd2829440442e8e1d92ae25cb9c75b39b59b223e375a12f831bfcca84cfc440">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/30_Long_Context_Fine_Tuning.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>summarize_sparse_connections</code> · <code>summarize_linear_attention_state</code> · <code>bucket_length_distribution</code> · <code>plan_long_context_batches</code> · <code>summarize_long_context_experiment</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1034,14 +942,14 @@ test_long_context_template()
 
   <script>
     const levelId = "30";
-    const checkpointData = {"current-core":{"answer":0,"explain":"避免 prompt 占满窗口后丢失监督区。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：模型处理的文字片段，不等于一个汉字。。另外两个选项分别解释「窗口」和「packing」，注意区分。"},"v4-experiment":{"answer":1,"explain":"可用 prompt 预算是 16−4=12，13−12=1。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：把字符长度当 token 长度，或把 fit rate 上升当质量提升。扩大窗口后仍要用目标 tokenizer 和同一评测集复核。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 5;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1050,20 +958,22 @@ test_long_context_template()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-5a689790bf0b";
+    const homeworkKey = statePrefix + levelId + "-homework-3cd282944044";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1088,7 +998,7 @@ test_long_context_template()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1130,11 +1040,15 @@ test_long_context_template()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1165,6 +1079,7 @@ test_long_context_template()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

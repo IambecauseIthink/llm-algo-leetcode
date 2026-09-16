@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,573 +750,182 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 34 | 零基础导学关卡</p>
-        <h1>Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>前缀缓存与分块预填充</h1>
+        <p class="course-subtitle">Prefix Caching and Chunked Prefill</p>
+        <p class="lead">Prefix Cache 像保存已经读过的开场白。但复用必须从开头连续相同；只有中间几个词相同不算前缀。Chunked Prefill 则把还没处理的后半段分批读完。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">34_Prefix_Caching_and_Chunked_Prefill.ipynb</span>
           <span class="pill">推理优化</span><span class="pill">KV Cache</span><span class="pill">Prefix Cache</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">prompt = longest_cached_prefix + suffix_to_prefill</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">三位顾客念同一段开场白，服务员需要每次都重听吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="c3c6cf73d92bfac73d99cf79018019ee4c006ec6546521fcfe74600d2d746502">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../34_Prefix_Caching_and_Chunked_Prefill.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>34. Prefix Caching and Chunked Prefill | 前缀缓存与分块预填充</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>推理优化</code>, <code>KV Cache</code>, <code>Prefix Cache</code> | <strong>目标人群：</strong> 推理优化学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>长 prompt 的推理压力不只来自 token 数量，还来自重复：很多请求会共享相同 system prompt、工具说明或多轮历史。如果每个请求都重新 prefill 一遍，共享前缀会被反复计算，KV cache 也难以形成稳定复用。</p>
-<p>本节先把 Prefix Cache 落成一条可检查的请求路径：登记前缀、匹配最长命中、拆出 suffix，并统计复用账本。Chunked Prefill 作为后续扩展，把未命中的长 suffix 分成多个执行块，观察单次 prefill 的资源压力。</p>
-<p><strong>关键词：</strong> <code>prefix caching</code>, <code>chunked prefill</code>, <code>cache reuse</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 统一 token 表示，便于做前缀匹配</li><li>TODO 2: 按 block_size 把 prompt 切成多个块</li><li>TODO 3: 记录一个可复用的前缀</li><li>TODO 4: 计算 prompt 能命中的最长缓存前缀</li><li>TODO 5: 拆出可复用前缀和待计算后缀</li><li>TODO 6: 生成分块预填充执行计划</li><li>TODO 7: 统计 hit_tokens、uncached_tokens 和 reuse_ratio</li><li>TODO 8: 复用 split_prompt，只对 suffix 调用 _chunk_tokens</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 进入本节前，先能说明 KV Cache 如何保存历史状态，再比较公共前缀如何被登记、命中和复用。</p>
-<ul>
-<li><a href="20_flashattention_sim.html">20. FlashAttention Sim | FlashAttention 模拟</a></li>
-<li><a href="22_vllm_pagedattention.html">22. vLLM PagedAttention | vLLM 分页注意力</a></li>
-<li><a href="24_sglang_radixattention.html">24. SGLang RadixAttention | SGLang 基数注意力</a></li>
-</ul>
-<hr>
-<h3>Step 1: 共享前缀为什么值得缓存</h3>
-<p>长 prompt 的压力不只来自 token 数量，还来自重复：系统提示词、工具说明、RAG 模板和多轮历史可能在不同请求中保持不变。如果每个请求都从头执行 prefill，同一段前缀会被重复计算，并重复写入 KV Cache。</p>
-<p>Prefix Caching 把已经完成 prefill 的公共前缀保留下来。新请求只有从开头连续命中的 token 才能复用；中间位置偶然相同的 token 不构成前缀命中。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/34_prefix_chunk_overview.svg" alt="前缀缓存与分块预填充总览"></p>
-<h3>Step 2: 命中前缀与未命中 suffix</h3>
-<p>对新请求先做最长前缀匹配，再把输入拆成两部分：</p>
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mi>r</mi><mi>o</mi><mi>m</mi><mi>p</mi><mi>t</mi><mo>=</mo><mi>r</mi><mi>e</mi><mi>u</mi><mi>s</mi><mi>a</mi><mi>b</mi><mi>l</mi><mi>e</mi><mi mathvariant="normal">_</mi><mi>p</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>i</mi><mi>x</mi><mo>+</mo><mi>s</mi><mi>u</mi><mi>f</mi><mi>f</mi><mi>i</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">
-prompt = reusable\_prefix + suffix
-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mord mathnormal">ro</span><span class="mord mathnormal">m</span><span class="mord mathnormal">pt</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0044em;vertical-align:-0.31em;"></span><span class="mord mathnormal">re</span><span class="mord mathnormal">u</span><span class="mord mathnormal">s</span><span class="mord mathnormal">ab</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">e</span><span class="mord" style="margin-right:0.02778em;">_</span><span class="mord mathnormal">p</span><span class="mord mathnormal">re</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">s</span><span class="mord mathnormal">u</span><span class="mord mathnormal" style="margin-right:0.10764em;">ff</span><span class="mord mathnormal">i</span><span class="mord mathnormal">x</span></span></span></span></span></eqn></section><p><code>reusable_prefix</code> 使用已有的 prefill 结果，<code>suffix</code> 仍需送入模型计算。命中越长，重复 prefill 的 token 越少；没有命中时，整个 prompt 都属于 suffix。</p>
-<h3>Step 3: 长 suffix 如何进入分块执行</h3>
-<p>长 suffix 如果一次性进入 prefill，可能占用较多显存和计算时间。Chunked Prefill 将未命中的部分拆成固定大小的执行块：</p>
-<p>在确定可复用前缀后，Chunked Prefill 再把未命中的 suffix 拆成：</p>
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>c</mi><mi>h</mi><mi>u</mi><mi>n</mi><mi>k</mi><mi>s</mi><mo>=</mo><mo stretchy="false">[</mo><mi>b</mi><mi>l</mi><mi>o</mi><mi>c</mi><msub><mi>k</mi><mn>1</mn></msub><mo separator="true">,</mo><mi>b</mi><mi>l</mi><mi>o</mi><mi>c</mi><msub><mi>k</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>b</mi><mi>l</mi><mi>o</mi><mi>c</mi><msub><mi>k</mi><mi>n</mi></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">
-chunks = [block_1, block_2, \dots, block_n]
-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">c</span><span class="mord mathnormal">h</span><span class="mord mathnormal">u</span><span class="mord mathnormal" style="margin-right:0.03148em;">nk</span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord mathnormal">b</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">oc</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">b</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">oc</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">b</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">oc</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span></span></eqn></section><p>每个 chunk 最多包含 <code>block_size</code> 个 token，执行计划可以按块推进。本节的 tuple 只表示 token 分块；真实系统还要把它映射到 KV block、page 或其他调度单元。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/34_prefix_hit_plan.svg" alt="前缀命中如何进入执行计划"></p>
-<h3>Step 4: 用一个管理器串起这条链路</h3>
-<p>本节用最小 <code>PrefixCacheManager</code> 表示上述流程。真实系统缓存的是 KV 张量，这里先用 token 序列和 tuple block 验证控制逻辑。请补全：统一 token 表示、切块、登记前缀、最长匹配、suffix 拆分、分块计划、命中账本和 suffix 计划。</p>
-<p>完成后检查命中长度、suffix、<code>reuse_ratio</code> 和 suffix chunks 是否符合预期。这里的 token 数和比例用于验证机制账本，不代表真实 KV 显存节省或吞吐提升。</p>
-<h3>提示</h3>
-<ul>
-<li><code>match_prefix</code> 只允许从 prompt 开头连续命中。</li>
-<li><code>split_prompt</code> 的目标是把可复用前缀和待 prefill 后缀分开。</li>
-<li><code>chunked_prefill_plan</code> 复用同一套切块逻辑，避免缓存和执行计划口径不一致。</li>
-</ul>
-<h3>测试</h3>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 6</summary><pre><code>class PrefixCacheManager:
-    &quot;&quot;&quot;极简版前缀缓存与分块预填充管理器。&quot;&quot;&quot;
+<section class="lessons">
 
-    def __init__(self, block_size: int = 4):
-        if block_size &lt;= 0:
-            raise ValueError(&quot;block_size must be positive&quot;)
-        self.block_size = block_size
-        self.cached_prefixes: List[Tuple[int, ...]] = []
-        self.chunked_prefixes: List[List[Tuple[int, ...]]] = []
-
-    def _normalize(self, tokens: Sequence[int]) -&gt; List[int]:
-        # ==========================================
-        # TODO 1: 统一 token 表示，便于做前缀匹配
-        # 提示: 将输入转换成普通 list，避免 tuple/list 混用导致比较不稳定
-        # ==========================================
-        # normalized = ???
-        return normalized
-
-    def _chunk_tokens(self, tokens: Sequence[int]) -&gt; List[Tuple[int, ...]]:
-        # ==========================================
-        # TODO 2: 按 block_size 把 prompt 切成多个块
-        # 提示: 先 normalize，再每 block_size 个 token 组成一个 tuple
-        # ==========================================
-        tokens = self._normalize(tokens)
-        # chunks = ???
-        return chunks
-
-    def add_prefix(self, prefix_tokens: Sequence[int]) -&gt; None:
-        # ==========================================
-        # TODO 3: 记录一个可复用的前缀
-        # 提示: cached_prefixes 存完整前缀，chunked_prefixes 存分块结果
-        # ==========================================
-        prefix = tuple(self._normalize(prefix_tokens))
-        if prefix not in self.cached_prefixes:
-            self.cached_prefixes.append(prefix)
-            # prefix_chunks = ???
-            self.chunked_prefixes.append(prefix_chunks)
-
-    def match_prefix(self, prompt_tokens: Sequence[int]) -&gt; int:
-        # ==========================================
-        # TODO 4: 计算 prompt 能命中的最长缓存前缀
-        # 提示: 只允许从 prompt 开头连续命中，返回最长命中长度
-        # ==========================================
-        prompt = self._normalize(prompt_tokens)
-        best_len = 0
-        for cached_prefix in self.cached_prefixes:
-            if len(cached_prefix) &gt; len(prompt):
-                continue
-            # is_match = ???
-            if is_match:
-                best_len = max(best_len, len(cached_prefix))
-        return best_len
-
-    def split_prompt(self, prompt_tokens: Sequence[int]) -&gt; Tuple[List[int], List[int], int]:
-        # ==========================================
-        # TODO 5: 拆出可复用前缀和待计算后缀
-        # 提示: hit_len 之前是可复用前缀，之后是待 prefill 后缀
-        # ==========================================
-        prompt = self._normalize(prompt_tokens)
-        hit_len = self.match_prefix(prompt)
-        # reusable_prefix = ???
-        # suffix = ???
-        return reusable_prefix, suffix, hit_len
-
-    def chunked_prefill_plan(self, prompt_tokens: Sequence[int]) -&gt; List[Tuple[int, ...]]:
-        # ==========================================
-        # TODO 6: 生成分块预填充执行计划
-        # 提示: 直接复用 _chunk_tokens，保持切块逻辑一致
-        # ==========================================
-        # plan = ???
-        return plan
-
-    def cache_stats(self, prompt_tokens: Sequence[int]) -&gt; dict:
-        &quot;&quot;&quot;返回 token 级命中账本；不代表真实 KV 显存收益。&quot;&quot;&quot;
-        prompt = self._normalize(prompt_tokens)
-        # TODO 7: 统计 hit_tokens、uncached_tokens 和 reuse_ratio
-        # hit_tokens = ???
-        # uncached_tokens = ???
-        # reuse_ratio = ???
-        return {'hit_tokens': hit_tokens, 'uncached_tokens': uncached_tokens, 'reuse_ratio': reuse_ratio}
-
-    def chunked_suffix_prefill_plan(self, prompt_tokens: Sequence[int]) -&gt; List[Tuple[int, ...]]:
-        &quot;&quot;&quot;只对未命中的 suffix 生成 chunk 计划。&quot;&quot;&quot;
-        # TODO 8: 复用 split_prompt，只对 suffix 调用 _chunk_tokens
-        # _, suffix, _ = ???
-        # return ???
-        raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 8</summary><pre><code># 运行此单元格以测试你的实现
-def test_prefix_cache_manager():
-    try:
-        manager = PrefixCacheManager(block_size=2)
-        manager.add_prefix([1, 2, 3])
-        manager.add_prefix([1, 2, 9])
-        manager.add_prefix([1, 2, 3])  # 重复登记不应增加缓存条目
-
-        assert manager.cached_prefixes == [(1, 2, 3), (1, 2, 9)]
-        assert len(manager.chunked_prefixes) == 2, &quot;重复 prefix 不应重复建立分块记录&quot;
-        assert manager.chunked_prefixes[0] == [(1, 2), (3,)]
-        assert manager.match_prefix([1, 2, 3, 9]) == 3
-        assert manager.match_prefix([1, 2, 9, 8]) == 3
-        assert manager.match_prefix([1, 2, 0]) == 0
-
-        prefix, suffix, hit_len = manager.split_prompt([1, 2, 3, 9])
-        assert prefix == [1, 2, 3]
-        assert suffix == [9]
-        assert hit_len == 3
-
-        assert manager.chunked_prefill_plan([1, 2, 3, 4, 5]) == [(1, 2), (3, 4), (5,)]
-        stats = manager.cache_stats([1, 2, 3, 9])
-        assert stats == {'hit_tokens': 3, 'uncached_tokens': 1, 'reuse_ratio': 0.75}
-        assert manager.chunked_suffix_prefill_plan([1, 2, 3, 9, 10]) == [(9, 10)]
-        assert manager.chunked_suffix_prefill_plan([1, 2, 3]) == [], &quot;完整命中时不应生成 suffix chunk&quot;
-        manager_small = PrefixCacheManager(block_size=3)
-        assert manager_small.chunked_prefill_plan([1, 2, 3, 4, 5, 6, 7]) == [(1, 2, 3), (4, 5, 6), (7,)], &quot;不同 block_size 下分块边界不正确&quot;
-        print(&quot;✅ PrefixCacheManager 测试通过&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-
-
-test_prefix_cache_manager()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="prefix-normalize-and-chunk">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先把输入变整齐：统一成 list，再按步长切成 tuple 块</h2>
+          <h2>三位顾客念同一段开场白，服务员需要每次都重听吗？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">tokens=[1,2,3,4,5]，block_size=2。</p>
-            <p class="predict-q">_chunk_tokens 应返回什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-normalize-and-chunk" value="0">
-                <span>[(1,2),(3,4),(5,)]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-normalize-and-chunk" value="1">
-                <span>[(1,2),(3,4)]</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-normalize-and-chunk" value="2">
-                <span>[[1,2],[3,4],[5,0]]</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="prefix-normalize-and-chunk">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>Prefix Cache 像保存已经读过的开场白。但复用必须从开头连续相同；只有中间几个词相同不算前缀。Chunked Prefill 则把还没处理的后半段分批读完。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>prefix hit</dt><dd>从第一个 token 起连续命中的长度。</dd></div><div><dt>suffix</dt><dd>未命中的后缀，仍需要 prefill。</dd></div><div><dt>chunk</dt><dd>将剩余工作切成大小有限的小块。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="prefix-normalize-and-chunk">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Sequence[int] 表示可按顺序读取的整数序列，传入值可以是 list 或 tuple。</li><li>list(tokens) 会创建普通列表，让后续切片和比较使用同一种表示。</li><li>range(0, len(tokens), block_size) 从 0 开始，每次跨 block_size 个位置。</li><li>tokens[i:i+block_size] 是左闭右开的切片；尾部不足一个块时也会保留下来，再用 tuple(...) 固定块表示。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>缓存管理先要消除表示差异：同样的 token，不能因为一个是 list、一个是 tuple 就让代码到处加特殊分支。统一输入后，再像把长句按固定字数装盒，最后一盒不满也照样保留。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>接收 Sequence</b>list 或 tuple 都可以</span>
-          <span><b>normalize</b>统一得到 list[int]</span>
-          <span><b>按步长切片</b>0, block_size, 2*block_size...</span>
-          <span><b>块转 tuple</b>得到稳定的缓存块列表</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>block_size=2 的 shape / 状态流</h4>
-            <div class="adv-flow">
-              <span>输入<br>[1,2,3,4,5]</span>
-              <span>切片 0:2<br>[1,2]</span>
-              <span>切片 2:4<br>[3,4]</span>
-              <strong>尾块 4:6<br>(5,)</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>返回类型契约</h4>
-            <div class="adv-contract">
-              <span><code>_normalize</code></span><strong>List[int]</strong>
-              <span><code>_chunk_tokens</code></span><strong>List[Tuple[int, ...]]</strong>
-              <span>空输入</span><strong>range 不进入，返回空列表</strong>
-              <span>尾块</span><strong>允许小于 block_size</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-callout">单元素 tuple 必须写成 <code>(5,)</code>，逗号决定它是 tuple。测试期望最后一块正是 <code>(5,)</code>，不能补零凑满。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用订单编号练习统一表示与分组</h4><pre><code>def group_orders(order_ids, group_size):
-    normalized = list(order_ids)
-    groups = [
-        tuple(normalized[i : i + group_size])
-        for i in range(0, len(normalized), group_size)
-    ]
-    return groups
-
-print(group_orders((7, 8, 9, 10, 11), 2))
-# [(7, 8), (9, 10), (11,)]</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>order_ids</code> 对应 <code>tokens</code>，<code>group_size</code> 对应 <code>self.block_size</code>。</li>
-            <li>TODO 1 只取 <code>list(tokens)</code> 并返回，不负责切块。</li>
-            <li>TODO 2 先调用 <code>self._normalize(tokens)</code>，再把列表推导式赋给 <code>chunks</code>。</li>
-            <li>块的 tuple 表示与 Notebook 的 <code>chunked_prefixes</code>、prefill plan 契约一致。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 _chunk_tokens 要先调用 _normalize？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「prefix hit」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="0">
-                <span>为了改变 token 的数值</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>将剩余工作切成大小有限的小块。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="1">
-                <span>让 list/tuple 等输入沿同一条切片逻辑处理</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>从第一个 token 起连续命中的长度。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-normalize-and-chunk" value="2">
-                <span>因为 tuple 不能保存整数</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>未命中的后缀，仍需要 prefill。</span>
               </label></div>
-              <div class="feedback" data-feedback="prefix-normalize-and-chunk"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="prefix-normalize-and-chunk-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="prefix-register-and-longest-match">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>缓存只登记一次，命中只认开头，并且选择最长前缀</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">缓存有 [1,2] 与 [1,2,3]，prompt 是 [1,2,3,4]。</p>
-            <p class="predict-q">match_prefix 应返回多少？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-register-and-longest-match" value="0">
-                <span>3</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-register-and-longest-match" value="1">
-                <span>2</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-register-and-longest-match" value="2">
-                <span>4</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="prefix-register-and-longest-match">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>先比开头</h4><p>缓存是 A B C D，请求是 A B C X Y，连续命中 3 个，X 处停止。</p></li><li><h4>只处理剩余</h4><p>5 个 token 减去 3 个命中，suffix 为 X Y，共 2 个。</p></li><li><h4>再切块</h4><p>另一请求还剩 7 个 token，chunk size=3 时分成 3、3、1。它们合计仍是 7，分块没有抹掉计算。</p></li></ol><section class="learning-lab" data-lab="prefix" aria-label="只计算还没读过的后半段">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>只计算还没读过的后半段</h4><p>移动前缀命中长度和 chunk 大小，观察剩余工作。</p></header>
+    <div class="lab-controls"><label for="lab-34-hit"><span>前缀命中 <output data-value="hit" for="lab-34-hit">4</output> token</span><input type="range" id="lab-34-hit" name="hit" min="0" max="10" step="1" value="4"></label><label for="lab-34-chunk"><span>每块最多 <output data-value="chunk" for="lab-34-chunk">3</output> token</span><input type="range" id="lab-34-chunk" name="chunk" min="1" max="6" step="1" value="3"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-34" data-challenge-label>算一算</label><div><input id="answer-34" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="prefix-register-and-longest-match">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>tuple(list_value) 把完整前缀变成可稳定比较的 tuple。</li><li>if prefix not in cached_prefixes 用于去重；只有新前缀才同时追加完整表示和分块表示。</li><li>prompt[:n] 只取 prompt 开头 n 个 token，适合判断“是不是以前缀开头”。</li><li>best_len = max(best_len, candidate_len) 会在多个命中候选中保留最长长度。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>Prefix Cache 不是查找任意相同片段。只有从新 prompt 第一个 token 开始连续相同，已有 KV 状态才处在正确上下文上；多个缓存都命中时，复用最长的那个能少算最多后缀。</p>
-              <div class="adv-course">
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>登记时维护两份同步视图</h4>
-            <div class="adv-contract">
-              <span><code>cached_prefixes</code></span><strong>完整 tuple 前缀，用于匹配</strong>
-              <span><code>chunked_prefixes</code></span><strong>同一前缀的块列表，用于管理</strong>
-              <span>去重条件</span><strong>完整前缀尚未出现</strong>
-              <span>顺序约束</span><strong>两个列表相同下标描述同一前缀</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>最长命中状态流</h4>
-            <div class="adv-flow">
-              <span>prompt<br>[1,2,3,9]</span>
-              <span>缓存 [1,2]<br>命中 2</span>
-              <span>缓存 [1,2,3]<br>命中 3</span>
-              <strong>best_len<br>3</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-steps">
-          <div><b>1</b><code>长度过滤</code><span>缓存比 prompt 长时不可能完整命中，直接 continue</span></div>
-          <div><b>2</b><code>开头切片比较</code><span>prompt 前 n 个 token 与完整 cached_prefix 比较</span></div>
-          <div><b>3</b><code>更新 best_len</code><span>只有命中时才保留更长值</span></div>
-        </div>
-
-        <div class="adv-callout">[8,1,2,3] 中间包含缓存 [1,2,3]，但命中长度仍应为 0。前缀缓存必须从位置 0 开始。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用路径路由练习最长开头匹配</h4><pre><code>known_routes = [('api',), ('api', 'v2'), ('docs',)]
-request = ['api', 'v2', 'users']
-best_len = 0
-
-for route in known_routes:
-    if len(route) &gt; len(request):
-        continue
-    is_match = request[: len(route)] == list(route)
-    if is_match:
-        best_len = max(best_len, len(route))
-
-print(best_len)  # 2</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>known_routes/request</code> 对应 <code>self.cached_prefixes/prompt</code>。</li>
-            <li>TODO 3 先调用 <code>self._chunk_tokens(prefix)</code>，保证两份缓存视图同步追加。</li>
-            <li>TODO 4 的 <code>is_match</code> 可直接沿用“开头切片等于候选列表”的写法。</li>
-            <li>循环结束返回长度而非前缀本身，后续 split_prompt 会用这个下标切片。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>prompt=[1,2,0]，缓存=[1,2,3] 时为什么先跳过？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>prompt 10，前缀命中 4，chunk=3，需要几块新 prefill？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="0">
-                <span>因为缓存只能有偶数长度</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>4 块</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="1">
-                <span>因为 token 0 不能匹配</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>0 块</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-register-and-longest-match" value="2">
-                <span>缓存长度大于 prompt，不可能被 prompt 完整包含为前缀</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>2 块</span>
               </label></div>
-              <div class="feedback" data-feedback="prefix-register-and-longest-match"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="prefix-register-and-longest-match-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="prefix-split-and-prefill-plan">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>把命中长度变成工作量：前半复用，后半重算，计划复用同一切块函数</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">prompt=[1,2,3,9]，最长命中 hit_len=3。</p>
-            <p class="predict-q">split_prompt 的三个返回值是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="0">
-                <span>[1,2,3]、[9]、3</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="1">
-                <span>[1,2,3,9]、[]、4</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-prefix-split-and-prefill-plan" value="2">
-                <span>[1,2]、[3,9]、2</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="prefix-split-and-prefill-plan">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>prompt, hit, chunk = 10, 4, 3
+suffix = prompt - hit
+chunks = [min(chunk, suffix-i) for i in range(0, suffix, chunk)]
+print(chunks)  # [3, 3]</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>先对完整 prompt 切块再声称节省了所有 prefill。要先确定可复用部分，再规划未命中的 suffix。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="prefix-split-and-prefill-plan">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>若 hit_len=3，prompt[:3] 取索引 0、1、2，prompt[3:] 从索引 3 一直取到末尾。</li><li>match_prefix 返回 0 时，前缀切片是空列表，suffix 是完整 prompt。</li><li>chunked_prefill_plan 应调用 _chunk_tokens，而不是复制一份新的切块算法。</li><li>split_prompt 返回三元组 (reusable_prefix, suffix, hit_len)，顺序必须与类型标注和测试一致。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>命中长度本身只是数字，真正的系统收益来自它把 prompt 划成了两段：已缓存部分不再 prefill，后缀继续计算。执行计划再把需要处理的 token 按统一 block_size 切开，避免缓存组织和调度组织各说一套规则。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>normalize</b>prompt 统一为 list</span>
-          <span><b>match</b>得到 hit_len=3</span>
-          <span><b>split</b>[1,2,3] + [9]</span>
-          <span><b>plan</b>按 block_size 复用切块逻辑</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel good">
-            <h4>命中时</h4>
-            <div class="adv-flow">
-              <span>prompt<br>[1,2,3,9]</span>
-              <strong>reusable<br>[1,2,3]</strong>
-              <span>suffix<br>[9]</span>
-            </div>
-          </section>
-          <section class="adv-panel neutral">
-            <h4>未命中时</h4>
-            <div class="adv-flow">
-              <span>prompt<br>[1,2,0]</span>
-              <span>reusable<br>[]</span>
-              <strong>suffix<br>[1,2,0]</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-contract">
-          <span>测试 split</span><strong>[1,2,3,9] -&gt; [1,2,3]、[9]、3</strong>
-          <span>测试 plan</span><strong>[1,2,3,4,5] -&gt; [(1,2),(3,4),(5,)]</strong>
-          <span>一致性原则</span><strong>缓存分块与 prefill 计划都走 _chunk_tokens</strong>
-        </div>
-
-        <div class="adv-callout">Notebook 的 chunked_prefill_plan 对传入的 prompt_tokens 整体切块。不要擅自让它先调用 split_prompt 只切 suffix，这会改变当前函数与测试契约。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用已下载章节练习切分复用与待处理部分</h4><pre><code>chapters = ['A', 'B', 'C', 'D', 'E']
-downloaded_count = 3
-
-reusable = chapters[:downloaded_count]
-remaining = chapters[downloaded_count:]
-
-batch_size = 2
-plan = [
-    tuple(chapters[i : i + batch_size])
-    for i in range(0, len(chapters), batch_size)
-]</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>chapters</code> 对应 normalize 后的 <code>prompt</code>。</li>
-            <li><code>downloaded_count</code> 对应 <code>hit_len</code>。</li>
-            <li><code>reusable/remaining</code> 对应 TODO 5 的 <code>reusable_prefix/suffix</code>。</li>
-            <li>TODO 6 不重写列表推导式，直接把 <code>self._chunk_tokens(prompt_tokens)</code> 赋给 <code>plan</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 chunked_prefill_plan 要复用 _chunk_tokens？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="0">
-                <span>保证缓存块和执行计划使用同一 block_size 与尾块规则</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>先对完整 prompt 切块再声称节省了所有 prefill。要先确定可复用部分，再规划未命中的 suffix。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="1">
-                <span>因为类方法之间不能重复变量名</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「prefix hit」的定义和计算。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-prefix-split-and-prefill-plan" value="2">
-                <span>为了让 plan 总是只包含 suffix</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label></div>
-              <div class="feedback" data-feedback="prefix-split-and-prefill-plan"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="prefix-split-and-prefill-plan-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="4ded30e09800a1aad79088180b327abd804088d5fe9979fa14fdfe3fb164cb6f">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/34_Prefix_Caching_and_Chunked_Prefill.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>PrefixCacheManager</code> · <code>add_prefix</code> · <code>match_prefix</code> · <code>split_prompt</code> · <code>chunked_prefill_plan</code> · <code>cache_stats</code> · <code>chunked_suffix_prefill_plan</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1593,14 +941,14 @@ plan = [
 
   <script>
     const levelId = "34";
-    const checkpointData = {"prefix-normalize-and-chunk":{"answer":1,"explain":"统一表示降低后续比较与切片的分支复杂度，不改变 token 内容。"},"prefix-register-and-longest-match":{"answer":2,"explain":"长度过滤既避免无意义比较，也明确要求缓存前缀必须完整命中。"},"prefix-split-and-prefill-plan":{"answer":0,"explain":"单一切块逻辑避免同一个 manager 出现两套不一致的块边界。"}};
-    const predictData = {"prefix-normalize-and-chunk":{"answer":0,"revealNote":"切片不会丢掉尾部，也不会自动补零；每个块按契约转成 tuple。"},"prefix-register-and-longest-match":{"answer":0,"revealNote":"两个候选都从开头命中，best_len 应保留更长的 3。"},"prefix-split-and-prefill-plan":{"answer":0,"revealNote":"切片边界正好是 hit_len：边界之前复用，边界及之后继续 prefill。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：从第一个 token 起连续命中的长度。。另外两个选项分别解释「suffix」和「chunk」，注意区分。"},"v4-experiment":{"answer":2,"explain":"剩余 6 个，分为 3+3。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：先对完整 prompt 切块再声称节省了所有 prefill。要先确定可复用部分，再规划未命中的 suffix。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "36";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1609,20 +957,22 @@ plan = [
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-c3c6cf73d92b";
+    const homeworkKey = statePrefix + levelId + "-homework-4ded30e09800";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1647,7 +997,7 @@ plan = [
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1689,11 +1039,15 @@ plan = [
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1724,6 +1078,7 @@ plan = [
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

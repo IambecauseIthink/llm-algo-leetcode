@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,548 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 75 | 零基础导学关卡</p>
-        <h1>Memory Budget Compression Project | 显存预算压缩项目</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>显存预算压缩项目</h1>
+        <p class="course-subtitle">Memory Budget Compression Project</p>
+        <p class="lead">预算决策像筛选租房方案：面积合适还不够，租金、通勤和基本条件要同时过线。这一关读取已有测量报告做决策，不凭空创造性能数据。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">75_Memory_Budget_Compression_Project.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">预算规划</span><span class="pill">压缩策略</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">省下显存，却让速度降到不能用，这笔交易划算吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="5ff16b392db2c10b1813f5486094294fb2147a3314c60cd4512b4726532dbd51">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../75_Memory_Budget_Compression_Project.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>75. Memory Budget Compression Project | 显存预算压缩项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU-only；读取 GPU 项目报告 | <strong>标签：</strong> <code>显存优化</code>, <code>预算规划</code>, <code>压缩策略</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节读取 73 / 76 的报告，把显存上限、吞吐下限和质量门槛转成可执行的预算决策。这里不加载模型、不训练、不调用 CUDA；CPU 只做候选筛选和阈值敏感性分析，因此不会产生新的性能或显存实测。
-<strong>实验分层：</strong> 73 / 76 负责采集数据，75 负责解释数据。若改变模型、workload 或硬件，应先重新获得上游报告，再运行本节。
-<strong>主责与复用边界：</strong> 本项目主责是预算阈值、候选筛选和敏感性分析；它不重新训练、不采集 GPU 性能，也不替代 76 的策略 benchmark 或 74 的 profiling 归因。</p>
-<p><strong>关键词：</strong> <code>memory</code>, <code>budget</code>, <code>checkpoint</code>, <code>offload</code>, <code>project</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>按下方题目代码中的函数说明和测试完成实现。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先完成 73 的训练性能测量和 76 的 checkpoint / offload 方案 benchmark，再进入这个项目；本节默认你已经知道显存为什么会爆，重点转向在预算约束下哪些压缩方案值得保留。本节输出的是 Task 3 的最终预算决策，不替代 Task 6 的端到端 profiling。</p>
-<ul>
-<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing | 激活检查点</a></li>
-<li><a href="42_activation_offload.html">42. Activation Offload | 激活卸载</a></li>
-<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
-<li><a href="76_activation_checkpoint_offload_benchmark.html">76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成本节后进入 74，用 profiling 对训练侧显存决策做端到端最终验证；如果决策为 <code>tune</code>，再回到 76 调整候选策略，必要时回到 73 复测 baseline。</p>
-<ul>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling Driven End-to-End Optimization | Profiling 驱动的端到端优化</a></li>
-</ul>
-<h3>Step 1: 定义任务与资源约束</h3>
-<p>先把 76 的实验报告转换成一份可检查的预算问题：在同一模型、数据和 workload 下，哪些候选方案同时满足显存、吞吐和质量要求。75 不加载模型，也不重新训练；它只读取报告并执行筛选。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目</th>
-<th style="text-align:left">需要明确的内容</th>
-<th style="text-align:left">本节如何使用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">输入报告</td>
-<td style="text-align:left">76 的 JSON；包含模型、dtype、batch、seq_len、硬件和候选指标</td>
-<td style="text-align:left">检查比较是否来自同一 workload，并读取候选方案</td>
-</tr>
-<tr>
-<td style="text-align:left">预算条件</td>
-<td style="text-align:left"><code>memory_cap_mb</code>、<code>min_samples_per_s</code>、<code>max_val_loss</code></td>
-<td style="text-align:left">定义“可行”：显存不超限、吞吐不低于下限、质量不超过上限</td>
-</tr>
-<tr>
-<td style="text-align:left">候选方案</td>
-<td style="text-align:left"><code>baseline</code>、<code>checkpoint</code>、<code>offload</code>、<code>hybrid</code></td>
-<td style="text-align:left">记录每个方案的可行性和淘汰原因</td>
-</tr>
-<tr>
-<td style="text-align:left">输出结果</td>
-<td style="text-align:left"><code>feasible_names</code>、<code>best_candidate</code>、<code>memory_saving_mb</code>、<code>throughput_ratio</code>、<code>decision</code></td>
-<td style="text-align:left">形成 <code>accept / tune / reject</code>，并给出下一步动作</td>
-</tr>
-</tbody>
-</table>
-<p>预算条件针对目标设备的可用显存，而不是显卡标称容量。模型、数据、dtype、batch、seq_len、训练步数和评测方式共同构成比较口径；其中任何一项改变，都应先重新运行 73 / 76，再让 75 读取新的报告。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">这一步先回答</th>
-<th style="text-align:left">不在这一步回答</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">当前 workload 的预算边界是什么；哪些指标会让候选被淘汰</td>
-<td style="text-align:left">哪个 kernel 更快、真实 OOM 边界在哪里、换一张 GPU 后 step time 是否相同</td>
-</tr>
-</tbody>
-</table>
-<p>因此，Step 1 的产物是“可执行的预算条件 + 明确的输入报告”，不是新的显存实测。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/75_budget_decision_flow.svg" alt="75 显存预算决策流程">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;75 读取 GPU 实测结果，在 CPU 上执行预算筛选。&lt;/strong&gt;&lt;/div&gt;</p>
-<h3>Step 2: 区分实测证据与容量规划</h3>
-<p>75 支持两种模式：<code>measured</code> 读取 76 在目标硬件上的真实 benchmark；<code>projected</code> 只根据账本和硬件预算做规划，不能证明吞吐、kernel 或 OOM 边界。换 GPU、模型、dtype、数据或 seq_len 后，必须重新运行 73 / 76。</p>
-<ul>
-<li><code>measured</code>：候选指标来自同一份 76 报告，适合输出当前 workload 下的 accept / tune / reject。</li>
-<li><code>projected</code>：适合回答“24GB 设备理论上能否容纳更大的配置”，结果必须标为估算，并列出待补的 GPU 验证。</li>
-<li>不把 5070 Ti 的实测吞吐直接迁移到 RTX 4090；不同硬件只能共享预算分析框架，不能共享性能结论。</li>
-</ul>
-<p><strong>硬件规划示例：</strong></p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">目标硬件</th>
-<th style="text-align:left">适合先规划的任务</th>
-<th style="text-align:left">首要调整项</th>
-<th style="text-align:left">需要补的实测</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">12GB Laptop GPU</td>
-<td style="text-align:left">0.5B 级短上下文 LoRA / activation 压力</td>
-<td style="text-align:left">micro-batch、seq_len、checkpoint</td>
-<td style="text-align:left">73 / 76 同硬件 benchmark</td>
-</tr>
-<tr>
-<td style="text-align:left">RTX 4090 24GB</td>
-<td style="text-align:left">更长上下文、较大 micro-batch、7B 级 LoRA/量化</td>
-<td style="text-align:left">可用显存、dtype、batch 和吞吐目标</td>
-<td style="text-align:left">目标模型在 4090 上的 73 / 76</td>
-</tr>
-<tr>
-<td style="text-align:left">40GB Data-center GPU</td>
-<td style="text-align:left">更大模型或更高并发训练</td>
-<td style="text-align:left">优化器状态、并行方式和数据吞吐</td>
-<td style="text-align:left">目标模型与并行配置的 GPU benchmark</td>
-</tr>
-</tbody>
-</table>
-<p>这张表是规划入口，不是兼容性承诺；75 不能仅凭显存容量推导模型一定能训练，也不能推导 RTX 4090 的 step time。</p>
-<h3>Step 3: 先确认 baseline 和预算口径合法</h3>
-<p>显存预算项目必须先确认 baseline 和预算口径稳定，否则后面的压缩收益没有解释力。</p>
-<ul>
-<li>先记录 baseline 的 peak memory、step time、samples/s 和 val loss；它是 73 的测量结果，也是 76 的策略收益参照。</li>
-<li>再确认候选策略只改显存相关变量，不要把优化器、数据和训练步数一起改掉；否则无法判断收益来自 checkpoint、offload 还是 workload 变小。</li>
-<li>对预算本身，也要先确认显存上限、吞吐下限和质量阈值都写清楚。</li>
-<li>如果 baseline 本身就不稳定，或者预算边界不明确，后面的压缩结论都不可信。</li>
-</ul>
-<h3>Step 4: 用统一口径比较收益与代价</h3>
-<p>显存预算项目不能只看峰值显存是否下降，还要把速度、质量和工程代价一起算进去。</p>
-<ul>
-<li>至少统一比较 peak memory、peak reserved、step time、throughput 和 val loss，并计算相对 baseline 的显存节省与吞吐保留率。</li>
-<li>如果某个方案显著压低显存，但吞吐掉得太多或质量越过阈值，它通常只能进入 <code>tune</code> 或 <code>reject</code>；75 不重新解释 Task 2 的机制，只判断代价是否符合预算。</li>
-<li>如果某个方案满足预算、质量可接受，而且速度代价还在交付边界内，就可以进入 <code>accept</code>。</li>
-<li>这一步的目标是把显存收益、性能代价和质量风险收成一张预算判断表。</li>
-</ul>
-<h3>Step 5: 输出显存预算项目结论</h3>
-<p>显存预算项目最终不是输出“哪个方案最省显存”，而是输出当前预算下最值得继续保留的压缩方案。</p>
-<ul>
-<li>项目结论建议统一成 <code>accept / tune / reject</code>。</li>
-<li>输出最小报告时，至少包含预算口径、候选策略、核心指标差异、每个候选的淘汰原因和下一轮动作。</li>
-<li>若进入 <code>tune</code>，下一轮优先回调 batch、checkpoint 颗粒度、offload 范围或通信方式，而不是一次性叠加更多优化手段。</li>
-<li>最后运行预算敏感性：分别改变显存上限、吞吐下限和质量阈值，观察可行集合与最佳候选是否稳定。报告中的 <code>sensitivity_summary</code> 汇总各场景的决策、最佳候选和可行集合；只有在阈值附近仍保持同一结论，才可以称为较稳定的预算决策。</li>
-<li>如果目标硬件与 76 报告中的 GPU 不一致，报告只能作为迁移前参考；最终结论应标为 <code>needs_target_hardware_validation</code>。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/75_sensitivity_flow.svg" alt="75 预算敏感性流程">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;只改变预算阈值，观察可行集合和决策是否稳定。&lt;/strong&gt;&lt;/div&gt;</p>
-<h4>图解：19 / 42 / 73 / 76 如何收束到 75 显存预算压缩项目</h4>
-<p><code>75</code> 不重复解释单个显存技巧，而是把前面几节的机制和证据口径收成一份预算下的压缩决策报告。</p>
-<pre><code class="language-text">19 Checkpoint / offload   activation savings intuition
-      │
-42 Activation offload     memory / transfer trade-off
-      │
-73 Training analysis      peak memory / step time / loss
-      │
-76 Strategy benchmark     checkpoint / offload / hybrid cost
-      ▼
-75 Memory Budget Compression Project
-      ├─ budget ledger
-      ├─ baseline vs compression strategies
-      ├─ quality floor review
-      └─ accept / tune / reject
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">预算账本</td>
-<td style="text-align:left">显存上限、吞吐下限、质量阈值</td>
-<td style="text-align:left">固定压缩边界</td>
-</tr>
-<tr>
-<td style="text-align:left">候选策略</td>
-<td style="text-align:left">baseline / checkpoint / offload 等方案</td>
-<td style="text-align:left">保证比较口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">结果对比</td>
-<td style="text-align:left">peak memory、step time、throughput、val loss</td>
-<td style="text-align:left">统一看收益与代价</td>
-</tr>
-<tr>
-<td style="text-align:left">淘汰原因</td>
-<td style="text-align:left">显存超限 / 吞吐不足 / 质量超限 / OOM</td>
-<td style="text-align:left">解释为什么不能选某方案</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出预算判断</td>
-</tr>
-</tbody>
-</table>
-<p><strong>本节交付物：</strong> 一份可被 74 读取的预算决策记录，至少包含预算边界、候选策略、peak memory、step time、throughput、val loss、可行方案和下一步动作。75 负责训练侧局部预算裁决，最终是否保留还要由 74 的端到端 profiling 证据确认。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 5</summary><pre><code># 3 个核心 TODO：预算检查、候选汇总、项目结论
-# 目标：把 baseline 与压缩策略的显存预算比较收束成一份项目报告
+<section class="lessons">
 
-from typing import Dict, List
-
-def validate_memory_budget(budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    # TODO：检查预算字段，不读取 GPU 状态，也不为缺失字段补默认值。
-    # required_budget_keys = ???；required_quality_keys = ???；
-    # budget_missing = ???；quality_missing = ???；missing_keys = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_memory_strategies(candidates: List[Dict[str, float]], budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    # TODO：按显存、吞吐和质量门槛汇总同一 workload 的候选策略。
-    # memory_ok = ???；throughput_ok = ???；quality_ok = ???；is_feasible = ???；
-    # baseline_peak = ???；best_peak = ???；memory_saving = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def decide_memory_budget_project(summary: Dict[str, object]) -&gt; Dict[str, object]:
-    # TODO：根据可行候选和节省幅度输出 accept / tune / reject。
-    # has_feasible = ???；meaningful_saving = ???；decision = ???；
-    # reason = ???；next_action = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details><details><summary>题目与测试代码 · Cell 6</summary><pre><code># 测试你的实现
-def test_memory_budget_project():
-    try:
-        budget = {'memory_cap_mb': 12000.0, 'min_samples_per_s': 6.0}
-        quality_floor = {'max_val_loss': 1.15}
-        check = validate_memory_budget(budget, quality_floor)
-        assert check['is_valid'] is True, '预算检查应通过'
-        assert check['missing_keys'] == [], '完整预算不应缺字段'
-        missing = validate_memory_budget({'memory_cap_mb': 12000.0}, quality_floor)
-        assert missing['is_valid'] is False, '缺少吞吐门槛时应拒绝预算配置'
-        assert 'min_samples_per_s' in missing['missing_keys'], '应指出缺少的预算字段'
-
-        candidates = [
-            {'name': 'baseline', 'peak_memory_mb': 18000.0, 'samples_per_s': 8.0, 'val_loss': 1.06},
-            {'name': 'checkpoint', 'peak_memory_mb': 11800.0, 'samples_per_s': 6.5, 'val_loss': 1.09},
-            {'name': 'offload', 'peak_memory_mb': 9800.0, 'samples_per_s': 4.5, 'val_loss': 1.08},
-        ]
-        summary = summarize_memory_strategies(candidates, budget, quality_floor)
-        assert summary['feasible_count'] == 1, '只应有一个方案满足预算与质量'
-        assert summary['best_candidate'] == 'checkpoint', 'checkpoint 应成为最优可行方案'
-        evaluations = {item['name']: item for item in summary['evaluations']}
-        assert evaluations['baseline']['reasons'] == ['memory_over_budget'], '应记录 baseline 的显存淘汰原因'
-        assert evaluations['offload']['reasons'] == ['throughput_below_floor'], '应记录 offload 的吞吐淘汰原因'
-
-        decision = decide_memory_budget_project(summary)
-        assert decision['decision'] == 'accept', '可行且最优的方案应被接受'
-
-        hard_summary = summarize_memory_strategies(
-            [
-                {'name': 'checkpoint', 'peak_memory_mb': 13000.0, 'samples_per_s': 6.2, 'val_loss': 1.10},
-                {'name': 'offload', 'peak_memory_mb': 11000.0, 'samples_per_s': 5.0, 'val_loss': 1.20},
-            ],
-            budget,
-            quality_floor,
-        )
-        hard_decision = decide_memory_budget_project(hard_summary)
-        assert hard_decision['decision'] == 'reject', '没有满足预算与质量时应 reject'
-
-        edge_summary = summarize_memory_strategies(
-            [
-                {'name': 'oom_candidate', 'status': 'oom'},
-                {'name': 'incomplete', 'peak_memory_mb': 10000.0},
-            ],
-            budget,
-            quality_floor,
-        )
-        assert edge_summary['oom_count'] == 1, 'OOM 候选应单独计数'
-        assert edge_summary['invalid_count'] == 1, '缺少指标的候选应标记为 invalid'
-        assert decide_memory_budget_project(edge_summary)['decision'] == 'reject', '没有可行策略时应 reject'
-        print('所有测试通过！')
-    except NotImplementedError:
-        print('请先完成 TODO 代码！')
-        raise
-    except AssertionError as e:
-        print(f'测试失败: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except Exception as e:
-        print(f'发生错误: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_memory_budget_project()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>省下显存，却让速度降到不能用，这笔交易划算吗？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节读取 73 / 76 的报告，把显存上限、吞吐下限和质量门槛转成可执行的预算决策。这里不加载模型、不训练、不调用 CUDA；CPU 只做候选筛选和阈值敏感性分析，因此不会产生新的性能或显存实测。
-实验分层： 73 / 76 负责采集数据，75 负责解释数据。若改变模型、workload 或硬件，应先重新获得上游报告，再运行本节。
-主责与复用边界： 本项目主责是预算阈值、候选筛选和敏感性分析；它不重新训练、不采集 GPU 性能，也不替代 76 的策略 benchmark 或 74 的 profiling 归因。</p>
-            <div class="notebook-content"><h3>Step 1: 定义任务与资源约束</h3>
-<p>先把 76 的实验报告转换成一份可检查的预算问题：在同一模型、数据和 workload 下，哪些候选方案同时满足显存、吞吐和质量要求。75 不加载模型，也不重新训练；它只读取报告并执行筛选。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目</th>
-<th style="text-align:left">需要明确的内容</th>
-<th style="text-align:left">本节如何使用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">输入报告</td>
-<td style="text-align:left">76 的 JSON；包含模型、dtype、batch、seq_len、硬件和候选指标</td>
-<td style="text-align:left">检查比较是否来自同一 workload，并读取候选方案</td>
-</tr>
-<tr>
-<td style="text-align:left">预算条件</td>
-<td style="text-align:left"><code>memory_cap_mb</code>、<code>min_samples_per_s</code>、<code>max_val_loss</code></td>
-<td style="text-align:left">定义“可行”：显存不超限、吞吐不低于下限、质量不超过上限</td>
-</tr>
-<tr>
-<td style="text-align:left">候选方案</td>
-<td style="text-align:left"><code>baseline</code>、<code>checkpoint</code>、<code>offload</code>、<code>hybrid</code></td>
-<td style="text-align:left">记录每个方案的可行性和淘汰原因</td>
-</tr>
-<tr>
-<td style="text-align:left">输出结果</td>
-<td style="text-align:left"><code>feasible_names</code>、<code>best_candidate</code>、<code>memory_saving_mb</code>、<code>throughput_ratio</code>、<code>decision</code></td>
-<td style="text-align:left">形成 <code>accept / tune / reject</code>，并给出下一步动作</td>
-</tr>
-</tbody>
-</table>
-<p>预算条件针对目标设备的可用显存，而不是显卡标称容量。模型、数据、dtype、batch、seq_len、训练步数和评测方式共同构成比较口径；其中任何一项改变，都应先重新运行 73 / 76，再让 75 读取新的报告。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">这一步先回答</th>
-<th style="text-align:left">不在这一步回答</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">当前 workload 的预算边界是什么；哪些指标会让候选被淘汰</td>
-<td style="text-align:left">哪个 kernel 更快、真实 OOM 边界在哪里、换一张 GPU 后 step time 是否相同</td>
-</tr>
-</tbody>
-</table>
-<p>因此，Step 1 的产物是“可执行的预算条件 + 明确的输入报告”，不是新的显存实测。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/75_budget_decision_flow.svg" alt="75 显存预算决策流程">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;75 读取 GPU 实测结果，在 CPU 上执行预算筛选。&lt;/strong&gt;&lt;/div&gt;</p>
-<h3>Step 2: 区分实测证据与容量规划</h3>
-<p>75 支持两种模式：<code>measured</code> 读取 76 在目标硬件上的真实 benchmark；<code>projected</code> 只根据账本和硬件预算做规划，不能证明吞吐、kernel 或 OOM 边界。换 GPU、模型、dtype、数据或 seq_len 后，必须重新运行 73 / 76。</p>
-<ul>
-<li><code>measured</code>：候选指标来自同一份 76 报告，适合输出当前 workload 下的 accept / tune / reject。</li>
-<li><code>projected</code>：适合回答“24GB 设备理论上能否容纳更大的配置”，结果必须标为估算，并列出待补的 GPU 验证。</li>
-<li>不把 5070 Ti 的实测吞吐直接迁移到 RTX 4090；不同硬件只能共享预算分析框架，不能共享性能结论。</li>
-</ul>
-<p><strong>硬件规划示例：</strong></p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">目标硬件</th>
-<th style="text-align:left">适合先规划的任务</th>
-<th style="text-align:left">首要调整项</th>
-<th style="text-align:left">需要补的实测</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">12GB Laptop GPU</td>
-<td style="text-align:left">0.5B 级短上下文 LoRA / activation 压力</td>
-<td style="text-align:left">micro-batch、seq_len、checkpoint</td>
-<td style="text-align:left">73 / 76 同硬件 benchmark</td>
-</tr>
-<tr>
-<td style="text-align:left">RTX 4090 24GB</td>
-<td style="text-align:left">更长上下文、较大 micro-batch、7B 级 LoRA/量化</td>
-<td style="text-align:left">可用显存、dtype、batch 和吞吐目标</td>
-<td style="text-align:left">目标模型在 4090 上的 73 / 76</td>
-</tr>
-<tr>
-<td style="text-align:left">40GB Data-center GPU</td>
-<td style="text-align:left">更大模型或更高并发训练</td>
-<td style="text-align:left">优化器状态、并行方式和数据吞吐</td>
-<td style="text-align:left">目标模型与并行配置的 GPU benchmark</td>
-</tr>
-</tbody>
-</table>
-<p>这张表是规划入口，不是兼容性承诺；75 不能仅凭显存容量推导模型一定能训练，也不能推导 RTX 4090 的 step time。</p>
-<h3>Step 3: 先确认 baseline 和预算口径合法</h3>
-<p>显存预算项目必须先确认 baseline 和预算口径稳定，否则后面的压缩收益没有解释力。</p>
-<ul>
-<li>先记录 baseline 的 peak memory、step time、samples/s 和 val loss；它是 73 的测量结果，也是 76 的策略收益参照。</li>
-<li>再确认候选策略只改显存相关变量，不要把优化器、数据和训练步数一起改掉；否则无法判断收益来自 checkpoint、offload 还是 workload 变小。</li>
-<li>对预算本身，也要先确认显存上限、吞吐下限和质量阈值都写清楚。</li>
-<li>如果 baseline 本身就不稳定，或者预算边界不明确，后面的压缩结论都不可信。</li>
-</ul>
-<h3>Step 4: 用统一口径比较收益与代价</h3>
-<p>显存预算项目不能只看峰值显存是否下降，还要把速度、质量和工程代价一起算进去。</p>
-<ul>
-<li>至少统一比较 peak memory、peak reserved、step time、throughput 和 val loss，并计算相对 baseline 的显存节省与吞吐保留率。</li>
-<li>如果某个方案显著压低显存，但吞吐掉得太多或质量越过阈值，它通常只能进入 <code>tune</code> 或 <code>reject</code>；75 不重新解释 Task 2 的机制，只判断代价是否符合预算。</li>
-<li>如果某个方案满足预算、质量可接受，而且速度代价还在交付边界内，就可以进入 <code>accept</code>。</li>
-<li>这一步的目标是把显存收益、性能代价和质量风险收成一张预算判断表。</li>
-</ul>
-<h3>Step 5: 输出显存预算项目结论</h3>
-<p>显存预算项目最终不是输出“哪个方案最省显存”，而是输出当前预算下最值得继续保留的压缩方案。</p>
-<ul>
-<li>项目结论建议统一成 <code>accept / tune / reject</code>。</li>
-<li>输出最小报告时，至少包含预算口径、候选策略、核心指标差异、每个候选的淘汰原因和下一轮动作。</li>
-<li>若进入 <code>tune</code>，下一轮优先回调 batch、checkpoint 颗粒度、offload 范围或通信方式，而不是一次性叠加更多优化手段。</li>
-<li>最后运行预算敏感性：分别改变显存上限、吞吐下限和质量阈值，观察可行集合与最佳候选是否稳定。报告中的 <code>sensitivity_summary</code> 汇总各场景的决策、最佳候选和可行集合；只有在阈值附近仍保持同一结论，才可以称为较稳定的预算决策。</li>
-<li>如果目标硬件与 76 报告中的 GPU 不一致，报告只能作为迁移前参考；最终结论应标为 <code>needs_target_hardware_validation</code>。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/75_sensitivity_flow.svg" alt="75 预算敏感性流程">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;只改变预算阈值，观察可行集合和决策是否稳定。&lt;/strong&gt;&lt;/div&gt;</p>
-<h4>图解：19 / 42 / 73 / 76 如何收束到 75 显存预算压缩项目</h4>
-<p><code>75</code> 不重复解释单个显存技巧，而是把前面几节的机制和证据口径收成一份预算下的压缩决策报告。</p>
-<pre><code class="language-text">19 Checkpoint / offload   activation savings intuition
-      │
-42 Activation offload     memory / transfer trade-off
-      │
-73 Training analysis      peak memory / step time / loss
-      │
-76 Strategy benchmark     checkpoint / offload / hybrid cost
-      ▼
-75 Memory Budget Compression Project
-      ├─ budget ledger
-      ├─ baseline vs compression strategies
-      ├─ quality floor review
-      └─ accept / tune / reject
-</code></pre>
-<p>项目页最小产物：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">产物</th>
-<th style="text-align:left">你至少要记录什么</th>
-<th style="text-align:left">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">预算账本</td>
-<td style="text-align:left">显存上限、吞吐下限、质量阈值</td>
-<td style="text-align:left">固定压缩边界</td>
-</tr>
-<tr>
-<td style="text-align:left">候选策略</td>
-<td style="text-align:left">baseline / checkpoint / offload 等方案</td>
-<td style="text-align:left">保证比较口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">结果对比</td>
-<td style="text-align:left">peak memory、step time、throughput、val loss</td>
-<td style="text-align:left">统一看收益与代价</td>
-</tr>
-<tr>
-<td style="text-align:left">淘汰原因</td>
-<td style="text-align:left">显存超限 / 吞吐不足 / 质量超限 / OOM</td>
-<td style="text-align:left">解释为什么不能选某方案</td>
-</tr>
-<tr>
-<td style="text-align:left">项目结论</td>
-<td style="text-align:left">accept / tune / reject</td>
-<td style="text-align:left">输出预算判断</td>
-</tr>
-</tbody>
-</table>
-<p><strong>本节交付物：</strong> 一份可被 74 读取的预算决策记录，至少包含预算边界、候选策略、peak memory、step time、throughput、val loss、可行方案和下一步动作。75 负责训练侧局部预算裁决，最终是否保留还要由 74 的端到端 profiling 证据确认。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>预算决策像筛选租房方案：面积合适还不够，租金、通勤和基本条件要同时过线。这一关读取已有测量报告做决策，不凭空创造性能数据。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>budget</dt><dd>可使用的资源上限。</dd></div><div><dt>retention</dt><dd>优化后吞吐占 baseline 吞吐的比例。</dd></div><div><dt>feasible set</dt><dd>通过全部硬门槛的候选集合。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>显存压缩项目选择候选的第一道门是什么？</p>
+            <p>本课中的「budget」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>同时检查显存、吞吐和质量约束</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>可使用的资源上限。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>缺失预算时随便补零</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>通过全部硬门槛的候选集合。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>只选择显存节省最大的</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>优化后吞吐占 baseline 吞吐的比例。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>按题目函数说明完成实现，并运行 Notebook 测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>读报告</h4><p>baseline 100 tokens/s，候选 70 tokens/s，吞吐保留率 70%。</p></li><li><h4>先过门槛</h4><p>如果最低保留 80%，即使显存省很多，这个候选仍不可行。</p></li><li><h4>再看收益</h4><p>通过质量与吞吐门槛后，才比较显存节省与剩余空间。缺字段时报告不完整，不能默认为通过。</p></li></ol><section class="learning-lab" data-lab="gate" aria-label="当一次有原则的方案评审员">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>当一次有原则的方案评审员</h4><p>改变显存和质量门槛。先过滤，再在合格者中比较速度。</p></header>
+    <div class="lab-controls"><label for="lab-75-budget"><span>显存上限 <output data-value="budget" for="lab-75-budget">10</output> GiB</span><input type="range" id="lab-75-budget" name="budget" min="6" max="16" step="1" value="10"></label><label for="lab-75-quality"><span>质量下限 <output data-value="quality" for="lab-75-quality">90</output> %</span><input type="range" id="lab-75-quality" name="quality" min="80" max="98" step="1" value="90"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-75" data-challenge-label>算一算</label><div><input id="answer-75" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>baseline 100，候选 70 tokens/s，最低保留率 80%，能通过吗？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>能，70 比 0 大</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>不能，只有 70%</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>能，省了显存</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>baseline_tps, candidate_tps = 100, 70
+retention = candidate_tps/baseline_tps
+print(retention &gt;= .80)  # False</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把缺失吞吐当 0 后继续排名，或者把未知质量当作质量通过。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「budget」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>把缺失吞吐当 0 后继续排名，或者把未知质量当作质量通过。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="c5003800d836e17f767deee353f101b5d775a36dbe7d57fc0177e2b0403cffc8">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/75_Memory_Budget_Compression_Project.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>validate_memory_budget</code> · <code>summarize_memory_strategies</code> · <code>decide_memory_budget_project</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1293,14 +940,14 @@ test_memory_budget_project()
 
   <script>
     const levelId = "75";
-    const checkpointData = {"current-core":{"answer":0,"explain":"同时检查显存、吞吐和质量约束。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":0,"explain":"它指的是：可使用的资源上限。。另外两个选项分别解释「retention」和「feasible set」，注意区分。"},"v4-experiment":{"answer":1,"explain":"优化约束必须同时满足。"},"v4-transfer":{"answer":2,"explain":"需要避免的是：把缺失吞吐当 0 后继续排名，或者把未知质量当作质量通过。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 1;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1309,20 +956,22 @@ test_memory_budget_project()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-5ff16b392db2";
+    const homeworkKey = statePrefix + levelId + "-homework-c5003800d836";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1347,7 +996,7 @@ test_memory_budget_project()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1389,11 +1038,15 @@ test_memory_budget_project()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1424,6 +1077,7 @@ test_memory_budget_project()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

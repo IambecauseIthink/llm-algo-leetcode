@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -740,499 +742,193 @@
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
 
-        <span class="pill" id="status">闯关题：0 / 1</span>
-        <span class="pill" id="xp">XP 0 / 100</span>
+        <span class="pill" id="status">闯关题：0 / 3</span>
+        <span class="pill" id="xp">XP 0 / 300</span>
       </div>
     </div>
 
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 76 | 零基础导学关卡</p>
-        <h1>Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</h1>
-        <p class="lead">先用小例子把必要知识学会，再用 1 道闯关题检查理解，最后回到 notebook 写真正的 PyTorch 作业。</p>
+        <h1>Activation / Checkpoint / Offload 对比项目</h1>
+        <p class="course-subtitle">Activation Checkpoint Offload Benchmark</p>
+        <p class="lead">Checkpoint 用重算换存储，offload 用搬运换存储。不同 workload 的重算量和传输能力不同，不能预先宣布一种方法总赢。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">76_Activation_Checkpoint_Offload_Benchmark.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">Checkpoint/Offload</span><span class="pill">基准对比</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">概念输入</div>
-          <div class="map-step">闯关检查</div>
-          <div class="map-step">Notebook 作业</div>
-        </div>
-        <div class="formula">读懂任务 → 完成实现 → 核对测试与适用范围</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">少记笔记、重新推导、去仓库取，哪种方式更适合这次任务？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="7a499d08e9362b1530d78a37c58c8851701491e49ca335893031b84414003d21">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../76_Activation_Checkpoint_Offload_Benchmark.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU 可完成正确性验证；GPU 用于策略 benchmark | <strong>标签：</strong> <code>显存优化</code>, <code>Checkpoint/Offload</code>, <code>基准对比</code> | <strong>目标人群：</strong> 准备比较训练显存策略的学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
-<strong>主责与复用边界：</strong> 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。</p>
-<blockquote>
-<p>运行提示：先查看<a href="../../../docs/guide.md#%E9%A1%B9%E7%9B%AE%E7%8E%AF%E5%A2%83%E9%A2%84%E6%A3%80%E4%B8%8E%E5%AE%89%E8%A3%85">使用指南中的项目环境预检与安装说明</a>，再打开真实 GPU 开关。CPU 路径只检查正确性；真实 GPU 路径必须先通过预检。</p>
-</blockquote>
-<p><strong>关键词：</strong> <code>activation</code>, <code>checkpoint</code>, <code>offload</code>, <code>memory</code>, <code>benchmark</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1：定义 required_budget_keys、required_quality_keys。</li><li>TODO 2：遍历 candidates，分别计算每个候选的可行性。</li><li>TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先完成 checkpoint、offload 等训练侧显存机制学习，并阅读 73 了解统一测量口径，再进入这个项目；本节默认你已经知道这些技巧各自怎么省显存，重点转向在同一训练任务下测量哪种方案更值。</p>
-<ul>
-<li><a href="19_activation_checkpointing_and_activation_offload.html">19. Activation Checkpointing | 激活检查点</a></li>
-<li><a href="42_activation_offload.html">42. Activation Offload | 激活卸载</a></li>
-<li><a href="43_unified_memory_management.html">43. Unified Memory Management | 统一内存管理</a></li>
-<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成 checkpoint / offload 对照并保存报告后，先把结果交给 75 完成训练侧预算决策，再由 74 使用 profiling 对显存优化方案做端到端最终验证。</p>
-<ul>
-<li><a href="75_memory_budget_compression_project.html">75. Memory Budget Compression Project | 显存预算压缩项目</a></li>
-<li><a href="74_profiling_driven_end_to_end_optimization.html">74. Profiling Driven End-to-End Optimization | Profiling 驱动的端到端优化</a></li>
-</ul>
-<hr>
-<h3>Step 1：显存策略与机制假设</h3>
-<p>训练前向过程中会产生中间激活值，反向传播需要再次读取其中一部分。四种策略的区别，就是决定这些激活值留在哪里、是否重新计算，以及是否在 CPU 和 GPU 之间搬运。Step 1 先明确实验目标和对照条件，再用图片理解策略差异。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目内容</th>
-<th style="text-align:left">CPU：机制验证</th>
-<th style="text-align:left">GPU：真实对照</th>
-<th style="text-align:left">实验约定</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">实验目的</td>
-<td style="text-align:left">用小型张量检查四种策略的 loss、gradient 和 backward 语义</td>
-<td style="text-align:left">在同一训练 workload 下比较策略的显存收益与性能代价</td>
-<td style="text-align:left">关注激活显存是否下降，以及速度和质量是否可接受</td>
-</tr>
-<tr>
-<td style="text-align:left">实验输入</td>
-<td style="text-align:left">使用固定张量和统一 loss，观察 saved tensors 或梯度结果</td>
-<td style="text-align:left">使用同一模型、随机输入、batch、seq_len、optimizer 和 seed</td>
-<td style="text-align:left">策略之间只改变 activation 的保存方式</td>
-</tr>
-<tr>
-<td style="text-align:left">实验对象</td>
-<td style="text-align:left">不加载真实模型；检查 baseline、checkpoint、offload、hybrid 的机制函数</td>
-<td style="text-align:left">默认使用 73 的模型和 workload，执行相同的训练 step</td>
-<td style="text-align:left">不把 CPU 正确性结果当作真实显存收益</td>
-</tr>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">激活值留在 GPU 的参照语义</td>
-<td style="text-align:left">记录 step time、吞吐、peak allocated、peak reserved、loss 和 OOM</td>
-<td style="text-align:left">作为其他策略的显存和速度基线</td>
-</tr>
-<tr>
-<td style="text-align:left">checkpoint</td>
-<td style="text-align:left">检查选定边界保存、其余部分重算的梯度语义</td>
-<td style="text-align:left">测量重算后的显存峰值和训练速度</td>
-<td style="text-align:left">用额外计算换取激活驻留空间</td>
-</tr>
-<tr>
-<td style="text-align:left">offload</td>
-<td style="text-align:left">检查部分 backward 所需张量保存到 CPU 后仍能完成反向</td>
-<td style="text-align:left">测量 CPU-GPU 搬运、同步、显存和速度代价</td>
-<td style="text-align:left">用带宽、同步和 CPU 内存换取 GPU 空间</td>
-</tr>
-<tr>
-<td style="text-align:left">hybrid</td>
-<td style="text-align:left">检查重算与部分搬运同时存在时的结果正确性</td>
-<td style="text-align:left">测量两类代价叠加后的显存和吞吐</td>
-<td style="text-align:left">只有在单一策略不足时再作为折中方案比较</td>
-</tr>
-<tr>
-<td style="text-align:left">实验输出</td>
-<td style="text-align:left">输出机制检查、loss 和 gradient 结果</td>
-<td style="text-align:left">输出每种策略的状态、显存、速度、loss、OOM 和 JSON 报告</td>
-<td style="text-align:left">后续由 75 根据预算条件进行筛选</td>
-</tr>
-</tbody>
-</table>
-<p>表中的 CPU 路径回答“策略实现是否保持训练语义”，GPU 路径回答“在当前 workload 下是否值得使用”；表内策略描述是待验证的机制预期，不是实测结论。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/76_strategy_lifecycle.svg" alt="76 训练激活值的保存方式与代价">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;后续实验比较 GPU 显存、训练速度、可运行性和 loss。&lt;/strong&gt;&lt;/div&gt;</p>
-<h3>Step 2：比较口径与实验协议</h3>
-<p>固定比较条件，只改变显存策略；不同 workload 或 dtype 必须另存报告。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目</th>
-<th style="text-align:left">固定内容</th>
-<th style="text-align:left">目的</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">模型与输入</td>
-<td style="text-align:left">同一模型、随机输入、标签和初始化 seed</td>
-<td style="text-align:left">保证策略间训练任务一致</td>
-</tr>
-<tr>
-<td style="text-align:left">训练配置</td>
-<td style="text-align:left">optimizer、学习率、训练步数</td>
-<td style="text-align:left">排除训练过程差异</td>
-</tr>
-<tr>
-<td style="text-align:left">workload</td>
-<td style="text-align:left">batch、seq_len、warmup、iters、seed</td>
-<td style="text-align:left">保证压力和统计口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">候选策略</td>
-<td style="text-align:left">baseline、checkpoint、offload、hybrid</td>
-<td style="text-align:left">形成可比较集合</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 正确性检查和 GPU benchmark 是两条独立路径：前者检查 loss、gradient 和 step 语义，后者采集真实显存、吞吐和 OOM。它们共享策略定义与比较口径，但 GPU 运行不要求先执行 CPU 题目区。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。</p>
-<h3>Step 3：指标与项目判定</h3>
-<p>显存最低的方案不一定最值得采用；必须同时检查容量、速度和训练状态。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">指标</th>
-<th style="text-align:left">含义</th>
-<th style="text-align:left">用于判断</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">peak allocated</td>
-<td style="text-align:left">张量实际达到的显存峰值</td>
-<td style="text-align:left">观察显存收益</td>
-</tr>
-<tr>
-<td style="text-align:left">peak reserved</td>
-<td style="text-align:left">allocator 保留的显存峰值</td>
-<td style="text-align:left">观察缓存和碎片影响</td>
-</tr>
-<tr>
-<td style="text-align:left">step time / samples/s</td>
-<td style="text-align:left">重算、搬运和同步的时间代价</td>
-<td style="text-align:left">观察吞吐损失</td>
-</tr>
-<tr>
-<td style="text-align:left">val loss / OOM</td>
-<td style="text-align:left">训练质量和可运行性</td>
-<td style="text-align:left">过滤不可接受方案</td>
-</tr>
-</tbody>
-</table>
-<p>报告中可用 <code>memory_saving = baseline_peak - candidate_peak</code> 和 <code>throughput_ratio = candidate_throughput / baseline_throughput</code> 表达取舍。<code>accept</code> 还要求候选未 OOM、显存和吞吐满足预算、质量不越过阈值，并达到有效显存收益；否则根据问题进入 <code>tune</code> 或 <code>reject</code>。最终预算裁决交给 75。</p>
-<h3>Step 4：动手实战（CPU-first）</h3>
-<p><strong>要求：</strong> 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 <code>accept / tune / reject</code>。CPU 题目区验证决策逻辑；Step 5 独立使用相同口径采集 GPU 报告。</p>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 8</summary><pre><code># 3 个核心 TODO：预算检查、候选汇总、项目结论
-# 目标：把 baseline / checkpoint / offload / hybrid 的方案比较收束成一份项目报告。
-# CPU 题目区只验证预算与决策逻辑；真实策略、saved tensors、重算和搬运代价属于 GPU 实验。
+<section class="lessons">
 
-def validate_strategy_budget(budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;检查显存上限、吞吐下限和质量上限是否完整且合法。
-
-    返回 is_valid、missing_keys 和 invalid_keys；不负责判断某个策略是否最优。
-    &quot;&quot;&quot;
-    # TODO 1：定义 required_budget_keys、required_quality_keys。
-    # 提示：至少检查 memory_cap_mb、min_samples_per_s、max_val_loss。
-    #       变量示例：budget_missing = ???、quality_missing = ???、invalid_keys = ???。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def summarize_memory_strategy_candidates(candidates: List[Dict[str, float]], budget: Dict[str, float], quality_floor: Dict[str, float]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;按预算和质量门槛筛选四类显存策略候选。
-
-    返回候选数量、可行数量、可行名称、最佳候选和显存节省；OOM 或缺失指标
-    不能被当作普通的零值。
-    &quot;&quot;&quot;
-    # TODO 2：遍历 candidates，分别计算每个候选的可行性。
-    # 提示：变量示例：memory_ok = ???、throughput_ok = ???、quality_ok = ???、
-    #       is_feasible = ???；baseline_peak = ???；memory_saving = ???。
-    #       checkpoint 节省 activation 驻留，offload 还要承担 CPU-GPU 搬运代价。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-
-def decide_memory_strategy_project(summary: Dict[str, object]) -&gt; Dict[str, object]:
-    &quot;&quot;&quot;根据可行候选和显存收益输出 accept、tune 或 reject。
-
-    accept 仅表示当前 workload 和预算下值得继续保留，不表示普遍有效。
-    &quot;&quot;&quot;
-    # TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。
-    # 提示：变量示例：has_feasible = ???、meaningful_saving = ???、
-    #       decision = ???、reason = ???、next_action = ???。
-    #       没有可行候选时 reject；可行但节省不显著时 tune。
-    raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;)
-</code></pre></details><details><summary>题目与测试代码 · Cell 9</summary><pre><code># 测试你的实现
-def test_memory_strategy_project():
-    try:
-        budget = {'memory_cap_mb': 12000.0, 'min_samples_per_s': 6.0}
-        quality_floor = {'max_val_loss': 1.15}
-        check = validate_strategy_budget(budget, quality_floor)
-        assert check['is_valid'] is True, '预算检查应通过'
-        assert check['missing_keys'] == [], '完整预算不应缺字段'
-        missing = validate_strategy_budget({'memory_cap_mb': 12000.0}, quality_floor)
-        assert missing['is_valid'] is False, '缺少吞吐门槛时应拒绝预算配置'
-        assert 'min_samples_per_s' in missing['missing_keys'], '应指出缺少的预算字段'
-
-        candidates = [
-            {'name': 'baseline', 'peak_memory_mb': 18000.0, 'samples_per_s': 8.0, 'val_loss': 1.06},
-            {'name': 'checkpoint', 'peak_memory_mb': 11800.0, 'samples_per_s': 6.6, 'val_loss': 1.08},
-            {'name': 'offload', 'peak_memory_mb': 10500.0, 'samples_per_s': 5.2, 'val_loss': 1.09},
-            {'name': 'hybrid', 'peak_memory_mb': 9800.0, 'samples_per_s': 6.1, 'val_loss': 1.11},
-        ]
-        summary = summarize_memory_strategy_candidates(candidates, budget, quality_floor)
-        assert summary['feasible_count'] == 2, '应有两个方案满足预算与质量'
-        assert summary['best_candidate'] == 'hybrid', 'hybrid 应成为最省显存的可行方案'
-
-        decision = decide_memory_strategy_project(summary)
-        assert decision['decision'] == 'accept', '可行且最优的方案应被接受'
-
-        hard_summary = summarize_memory_strategy_candidates(
-            [
-                {'name': 'checkpoint', 'peak_memory_mb': 13000.0, 'samples_per_s': 6.4, 'val_loss': 1.10},
-                {'name': 'offload', 'peak_memory_mb': 11000.0, 'samples_per_s': 4.8, 'val_loss': 1.12},
-            ],
-            budget,
-            quality_floor,
-        )
-        hard_decision = decide_memory_strategy_project(hard_summary)
-        assert hard_decision['decision'] == 'reject', '没有满足预算与质量时应 reject'
-
-        edge_summary = summarize_memory_strategy_candidates(
-            [
-                {'name': 'oom_candidate', 'status': 'oom'},
-                {'name': 'incomplete', 'peak_memory_mb': 10000.0},
-            ],
-            budget,
-            quality_floor,
-        )
-        assert edge_summary['oom_count'] == 1, 'OOM 候选应单独计数'
-        assert edge_summary['invalid_count'] == 1, '缺少指标的候选应标记为 invalid'
-        assert decide_memory_strategy_project(edge_summary)['decision'] == 'reject', '没有可行策略时应 reject'
-        print('所有测试通过！')
-    except NotImplementedError:
-        print('请先完成 TODO 代码！')
-        raise
-    except AssertionError as e:
-        print(f'测试失败: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-    except Exception as e:
-        print(f'发生错误: {e}')
-        raise NotImplementedError('请先完成 TODO 代码！') from e
-
-
-test_memory_strategy_project()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card" data-lesson="current-core">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">新版课程导学</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>从原理走到本课实现</h2>
+          <h2>少记笔记、重新推导、去仓库取，哪种方式更适合这次任务？</h2>
 
-          <div class="lesson-section">
-            <h3>先补的知识</h3>
-            <ul><li>先阅读本页新版 Notebook 任务，核对输入、输出和测试口径。</li></ul>
-          </div>
+
 
           <div class="lesson-section intuition">
             <h3>图解原理</h3>
-            <p>本节承接 73 的 baseline，比较 checkpoint、offload 和组合方案在同一训练 workload 下的实际代价。主线报告固定模型、输入和训练口径；高压力 workload、不同 seq_len 或 dtype 属于扩展，必须单独记录。结果交给 75 做预算决策，本节不直接裁决。
-主责与复用边界： 本项目主责是训练侧 activation 策略的同口径比较；73 提供 baseline，75 负责预算决策，74 负责 trace 解释。推理 KV Cache、量化格式和分布式切分不在本项目内重复实现。</p>
-            <div class="notebook-content"><h3>Step 1：显存策略与机制假设</h3>
-<p>训练前向过程中会产生中间激活值，反向传播需要再次读取其中一部分。四种策略的区别，就是决定这些激活值留在哪里、是否重新计算，以及是否在 CPU 和 GPU 之间搬运。Step 1 先明确实验目标和对照条件，再用图片理解策略差异。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目内容</th>
-<th style="text-align:left">CPU：机制验证</th>
-<th style="text-align:left">GPU：真实对照</th>
-<th style="text-align:left">实验约定</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">实验目的</td>
-<td style="text-align:left">用小型张量检查四种策略的 loss、gradient 和 backward 语义</td>
-<td style="text-align:left">在同一训练 workload 下比较策略的显存收益与性能代价</td>
-<td style="text-align:left">关注激活显存是否下降，以及速度和质量是否可接受</td>
-</tr>
-<tr>
-<td style="text-align:left">实验输入</td>
-<td style="text-align:left">使用固定张量和统一 loss，观察 saved tensors 或梯度结果</td>
-<td style="text-align:left">使用同一模型、随机输入、batch、seq_len、optimizer 和 seed</td>
-<td style="text-align:left">策略之间只改变 activation 的保存方式</td>
-</tr>
-<tr>
-<td style="text-align:left">实验对象</td>
-<td style="text-align:left">不加载真实模型；检查 baseline、checkpoint、offload、hybrid 的机制函数</td>
-<td style="text-align:left">默认使用 73 的模型和 workload，执行相同的训练 step</td>
-<td style="text-align:left">不把 CPU 正确性结果当作真实显存收益</td>
-</tr>
-<tr>
-<td style="text-align:left">baseline</td>
-<td style="text-align:left">激活值留在 GPU 的参照语义</td>
-<td style="text-align:left">记录 step time、吞吐、peak allocated、peak reserved、loss 和 OOM</td>
-<td style="text-align:left">作为其他策略的显存和速度基线</td>
-</tr>
-<tr>
-<td style="text-align:left">checkpoint</td>
-<td style="text-align:left">检查选定边界保存、其余部分重算的梯度语义</td>
-<td style="text-align:left">测量重算后的显存峰值和训练速度</td>
-<td style="text-align:left">用额外计算换取激活驻留空间</td>
-</tr>
-<tr>
-<td style="text-align:left">offload</td>
-<td style="text-align:left">检查部分 backward 所需张量保存到 CPU 后仍能完成反向</td>
-<td style="text-align:left">测量 CPU-GPU 搬运、同步、显存和速度代价</td>
-<td style="text-align:left">用带宽、同步和 CPU 内存换取 GPU 空间</td>
-</tr>
-<tr>
-<td style="text-align:left">hybrid</td>
-<td style="text-align:left">检查重算与部分搬运同时存在时的结果正确性</td>
-<td style="text-align:left">测量两类代价叠加后的显存和吞吐</td>
-<td style="text-align:left">只有在单一策略不足时再作为折中方案比较</td>
-</tr>
-<tr>
-<td style="text-align:left">实验输出</td>
-<td style="text-align:left">输出机制检查、loss 和 gradient 结果</td>
-<td style="text-align:left">输出每种策略的状态、显存、速度、loss、OOM 和 JSON 报告</td>
-<td style="text-align:left">后续由 75 根据预算条件进行筛选</td>
-</tr>
-</tbody>
-</table>
-<p>表中的 CPU 路径回答“策略实现是否保持训练语义”，GPU 路径回答“在当前 workload 下是否值得使用”；表内策略描述是待验证的机制预期，不是实测结论。</p>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/76_strategy_lifecycle.svg" alt="76 训练激活值的保存方式与代价">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;后续实验比较 GPU 显存、训练速度、可运行性和 loss。&lt;/strong&gt;&lt;/div&gt;</p>
-<h3>Step 2：比较口径与实验协议</h3>
-<p>固定比较条件，只改变显存策略；不同 workload 或 dtype 必须另存报告。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">项目</th>
-<th style="text-align:left">固定内容</th>
-<th style="text-align:left">目的</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">模型与输入</td>
-<td style="text-align:left">同一模型、随机输入、标签和初始化 seed</td>
-<td style="text-align:left">保证策略间训练任务一致</td>
-</tr>
-<tr>
-<td style="text-align:left">训练配置</td>
-<td style="text-align:left">optimizer、学习率、训练步数</td>
-<td style="text-align:left">排除训练过程差异</td>
-</tr>
-<tr>
-<td style="text-align:left">workload</td>
-<td style="text-align:left">batch、seq_len、warmup、iters、seed</td>
-<td style="text-align:left">保证压力和统计口径一致</td>
-</tr>
-<tr>
-<td style="text-align:left">候选策略</td>
-<td style="text-align:left">baseline、checkpoint、offload、hybrid</td>
-<td style="text-align:left">形成可比较集合</td>
-</tr>
-</tbody>
-</table>
-<p>CPU 正确性检查和 GPU benchmark 是两条独立路径：前者检查 loss、gradient 和 step 语义，后者采集真实显存、吞吐和 OOM。它们共享策略定义与比较口径，但 GPU 运行不要求先执行 CPU 题目区。固定随机输入只保证策略间可比，不代表真实数据集上的训练质量。Gradient Accumulation 不放入本节核心四策略；如果要比较，必须固定 effective batch 并另存扩展报告。</p>
-<h3>Step 3：指标与项目判定</h3>
-<p>显存最低的方案不一定最值得采用；必须同时检查容量、速度和训练状态。</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">指标</th>
-<th style="text-align:left">含义</th>
-<th style="text-align:left">用于判断</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">peak allocated</td>
-<td style="text-align:left">张量实际达到的显存峰值</td>
-<td style="text-align:left">观察显存收益</td>
-</tr>
-<tr>
-<td style="text-align:left">peak reserved</td>
-<td style="text-align:left">allocator 保留的显存峰值</td>
-<td style="text-align:left">观察缓存和碎片影响</td>
-</tr>
-<tr>
-<td style="text-align:left">step time / samples/s</td>
-<td style="text-align:left">重算、搬运和同步的时间代价</td>
-<td style="text-align:left">观察吞吐损失</td>
-</tr>
-<tr>
-<td style="text-align:left">val loss / OOM</td>
-<td style="text-align:left">训练质量和可运行性</td>
-<td style="text-align:left">过滤不可接受方案</td>
-</tr>
-</tbody>
-</table>
-<p>报告中可用 <code>memory_saving = baseline_peak - candidate_peak</code> 和 <code>throughput_ratio = candidate_throughput / baseline_throughput</code> 表达取舍。<code>accept</code> 还要求候选未 OOM、显存和吞吐满足预算、质量不越过阈值，并达到有效显存收益；否则根据问题进入 <code>tune</code> 或 <code>reject</code>。最终预算裁决交给 75。</p>
-<h3>Step 4：动手实战（CPU-first）</h3>
-<p><strong>要求：</strong> 请补全下方三个函数：检查预算与质量阈值、汇总 baseline / checkpoint / offload / hybrid 候选，并输出 <code>accept / tune / reject</code>。CPU 题目区验证决策逻辑；Step 5 独立使用相同口径采集 GPU 报告。</p>
-</div>
-            <p>展开上方题目代码，逐个查看函数签名、输入字段和 TODO。先在纸上算出一个小例子，再在 Notebook 中运行测试。</p>
+            <p>Checkpoint 用重算换存储，offload 用搬运换存储。不同 workload 的重算量和传输能力不同，不能预先宣布一种方法总赢。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>checkpoint</dt><dd>保存少量检查点，反向时重建需要的激活。</dd></div><div><dt>offload</dt><dd>暂存到主机，反向前取回。</dd></div><div><dt>combination</dt><dd>在不同区域搭配策略，收益与开销不一定简单相加。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
           <div class="lesson-section checkpoint">
             <h3>闯关题</h3>
-            <p>比较 checkpoint 与 offload 时应固定什么？</p>
+            <p>本课中的「checkpoint」指什么？</p>
             <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="0">
-                <span>只固定方案名字</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>在不同区域搭配策略，收益与开销不一定简单相加。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="1">
-                <span>同一 workload 及预算、质量和吞吐保留门槛</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>保存少量检查点，反向时重建需要的激活。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-current-core" value="2">
-                <span>每个候选使用不同质量下限</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>暂存到主机，反向前取回。</span>
               </label></div>
-            <div class="feedback" data-feedback="current-core"></div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-0">
-                <span>TODO 1：定义 required_budget_keys、required_quality_keys。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 2</span>
+            <span class="todo-pill">02 / 操作与推演</span>
+          </div>
+          <h2>把一个小例子算到最后</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>同一基线</h4><p>固定模型、batch、长度、dtype 和质量口径，分别测试三种候选。</p></li><li><h4>课堂比较</h4><p>若重算代价 1.5 秒，8 GiB 往返、带宽 8 GiB/s 的搬运代价 2 秒，时间上重算较少。</p></li><li><h4>检查实际峰值</h4><p>策略可能引入临时缓冲，节省必须按真实峰值看。能重叠多少也需要时间线证据。</p></li></ol><section class="learning-lab" data-lab="offload" aria-label="腾空间之前，先算一趟往返">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>腾空间之前，先算一趟往返</h4><p>改变搬运量和有效带宽，与 1.5 秒的假设重算比较。</p></header>
+    <div class="lab-controls"><label for="lab-76-moved"><span>卸载的激活 <output data-value="moved" for="lab-76-moved">8</output> GiB</span><input type="range" id="lab-76-moved" name="moved" min="1" max="12" step="1" value="8"></label><label for="lab-76-bandwidth"><span>有效带宽 <output data-value="bandwidth" for="lab-76-bandwidth">8</output> GiB/s</span><input type="range" id="lab-76-bandwidth" name="bandwidth" min="2" max="32" step="2" value="8"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-76" data-challenge-label>算一算</label><div><input id="answer-76" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>重算 1.5 秒，串行搬运 2 秒，只比较这部分时间谁更少？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>两者永远一样</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>搬运</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>重算</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
+              </label>
+          </div>
+        </article>
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
+          <div class="lesson-top">
+            <span class="level-pill">Mission 3</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
+          </div>
+          <h2>从会看，走到会写与会判断</h2>
+
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>recompute_s = 1.5
+offload_s = 2*8/8
+print(min(recompute_s, offload_s))  # 1.5, serial toy model</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>不同策略使用不同长度或 batch，然后把更低显存都归于策略；或者把 CPU 模拟当 GPU 实测。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
+          </div>
+
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>不同策略使用不同长度或 batch，然后把更低显存都归于策略；或者把 CPU 模拟当 GPU 实测。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>先用小例子检查「checkpoint」的定义和计算。</span>
+              </label>
+              <label class="checkpoint-option">
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
+              </label></div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
+          </div>
+
+          <div class="lesson-section homework">
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
+
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
               </label>
               <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-1">
-                <span>TODO 2：遍历 candidates，分别计算每个候选的可行性。</span>
-              </label>
-              <label class="homework-item">
-                <input type="checkbox" data-homework="current-core-2">
-                <span>TODO 3：读取 feasible_count、best_candidate、memory_saving 和吞吐保留率。</span>
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
 
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="89d80882b735868945fa61f3b7b994266e86e9eaca567babe0a0428725fa0762">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/76_Activation_Checkpoint_Offload_Benchmark.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>validate_strategy_budget</code> · <code>summarize_memory_strategy_candidates</code> · <code>decide_memory_strategy_project</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
+
     <section class="complete">
       <div>
-        <strong id="complete-title">完成 1 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
+        <strong id="complete-title">完成 3 道闯关题后，本关即算完成；作业 checklist 用来辅助你回 notebook 练习。</strong>
         <div class="pill">进度只保存在当前浏览器 localStorage，分享 HTML 不会带走你的记录。</div>
       </div>
       <div>
@@ -1244,14 +940,14 @@ test_memory_strategy_project()
 
   <script>
     const levelId = "76";
-    const checkpointData = {"current-core":{"answer":1,"explain":"同一 workload 及预算、质量和吞吐保留门槛。这也是本节从结果汇总走向决策时要守住的边界。"}};
+    const checkpointData = {"v4-story":{"answer":1,"explain":"它指的是：保存少量检查点，反向时重建需要的激活。。另外两个选项分别解释「offload」和「combination」，注意区分。"},"v4-experiment":{"answer":2,"explain":"仅在这个固定条件下成立，带宽和重叠变化可能反转结论。"},"v4-transfer":{"answer":0,"explain":"需要避免的是：不同策略使用不同长度或 batch，然后把更低显存都归于策略；或者把 CPU 模拟当 GPU 实测。"}};
     const predictData = {};
     const predictTotal = 0;
-    const checkpointTotal = 1;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const checkpointTotal = 3;
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = null;
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1260,20 +956,22 @@ test_memory_strategy_project()
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-7a499d08e936";
+    const homeworkKey = statePrefix + levelId + "-homework-89d80882b735";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1298,7 +996,7 @@ test_memory_strategy_project()
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1340,11 +1038,15 @@ test_memory_strategy_project()
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1375,6 +1077,7 @@ test_memory_strategy_project()
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

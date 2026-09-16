@@ -733,6 +733,8 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -748,201 +750,30 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 01 | 零基础导学关卡</p>
-        <h1>RMSNorm Tutorial | RMSNorm 教程</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>RMSNorm 教程</h1>
+        <p class="course-subtitle">RMSNorm Tutorial</p>
+        <p class="lead">先通过图解和小例子理解原理，再做预测与练习；不懂的地方可以反复尝试，最后把理解写进官方 Notebook。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/01_RMSNorm_Tutorial.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">01_RMSNorm_Tutorial.ipynb</span>
           <span class="pill">基础实现</span><span class="pill">归一化</span><span class="pill">RMSNorm</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">RMSNorm(x) = x / sqrt(mean(x^2) + eps) * gamma</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">RMS：用向量自己的大小做刻度尺</a></li><li><a href="#mission-2">先用 FP32 计算，再回到输入 dtype</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="74c82355108d003adf9659735b0aa696e917e9fce8eb881b483df3213ff69bb1">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../01_RMSNorm_Tutorial.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/01_RMSNorm_Tutorial.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>01. RMSNorm Tutorial | RMSNorm 教程</h1>
-<p><strong>难度：</strong> Easy | <strong>环境：</strong> CPU-first | <strong>标签：</strong> <code>基础实现</code>, <code>归一化</code>, <code>RMSNorm</code> | <strong>目标人群：</strong> 基础实现学习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>Transformer 层数一深，中间激活的尺度就会不断变化。如果不做归一化，后面的矩阵乘法和激活函数很容易面对不稳定的输入；但标准 LayerNorm 又要同时计算均值和方差，在大模型里会带来额外开销。</p>
-<p>RMSNorm 选择更直接的做法：不再减均值，只用均方根控制特征尺度。本节会实现一个最小 RMSNorm，重点看清归一化维度、<code>eps</code> 的数值稳定作用，以及为什么许多 LLaMA 系模型会采用这种更轻的归一化层。完成后，你可以把它接到后面的 MLP、Attention 和完整 Transformer 组件里。</p>
-<p><strong>关键词：</strong> <code>RMSNorm</code>, <code>LayerNorm</code>, <code>normalization</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 定义可学习参数 weight，并初始化为全 1</li><li>TODO 2: 实现 RMSNorm 核心计算逻辑</li><li>TODO 3: 先归一化，再缩放并转回输入精度</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先确认输入张量的归一化维度和训练接口，再比较 LayerNorm 与 RMSNorm 如何处理特征尺度。</p>
-<ul>
-<li><a href="../../../00_Prerequisites/05_PyTorch_Tensor_Fundamentals.ipynb">P0: 05. PyTorch Tensor Fundamentals | PyTorch 张量基础操作</a></li>
-<li><a href="../../../00_Prerequisites/13_Simple_Neural_Network_Training.ipynb">P0: 13. Simple Neural Network Training | 简单神经网络训练循环</a></li>
-<li><a href="../../../00_Prerequisites/15_Normalization_Techniques.ipynb">P0: 15. Normalization Techniques | 归一化技术</a></li>
-</ul>
-<hr>
-<h3>Step 1: 核心思想与痛点</h3>
-<p>RMSNorm 的核心洞察很朴素：既然大模型的中间层均值通常已接近0，何不干脆省掉&quot;减去均值&quot;这一步，只用均方根做归一化？</p>
-<blockquote>
-<p><strong>为什么抛弃了 LayerNorm？</strong>
-标准的 LayerNorm 需要计算均值（Mean）和方差（Variance）。
-<strong>RMSNorm 的本质：</strong>
-假设输入的均值已经接近 0（在大型网络中通常成立），那么我们<strong>直接去掉减去均值的操作</strong>，只用均方根（RMS）去归一化特征。这减少了同步开销，显著提升了前向和反向传播的计算速度。</p>
-</blockquote>
-<h3>Step 2: 核心公式与张量维度</h3>
-<p>明确了 RMSNorm 的设计取舍后，我们把它的数学公式摆出来。输入输出维度先理清楚，后面代码实现只是在把这组公式翻译成张量操作。</p>
-<p>给定输入向量 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>d</mi></msup></mrow><annotation encoding="application/x-tex">x \in \mathbb{R}^d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></eq>，RMSNorm 的输出 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span></eq> 为：</p>
-<ol>
-<li>
-<p><strong>计算均方根 (RMS)：</strong>
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>RMS</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><msqrt><mrow><mfrac><mn>1</mn><mi>d</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>d</mi></munderover><msubsup><mi>x</mi><mi>i</mi><mn>2</mn></msubsup><mo>+</mo><mi>ϵ</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex"> \text{RMS}(x) = \sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon} </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">RMS</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.3415em;vertical-align:-1.2777em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.0639em;"><span class="svg-align" style="top:-5.3015em;"><span class="pstrut" style="height:5.3015em;"></span><span class="mord" style="padding-left:1.056em;"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">d</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8361em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7959em;"><span style="top:-2.4231em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.0448em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2769em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">ϵ</span></span></span><span style="top:-4.0239em;"><span class="pstrut" style="height:5.3015em;"></span><span class="hide-tail" style="min-width:0.742em;height:3.3815em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="3.3815em" viewBox="0 0 400000 3381" preserveAspectRatio="xMinYMin slice"><path d="M702 80H40000040
-H742v3247l-4 4-4 4c-.667.7 -2 1.5-4 2.5s-4.167 1.833-6.5 2.5-5.5 1-9.5 1
-h-12l-28-84c-16.667-52-96.667 -294.333-240-727l-212 -643 -85 170
-c-4-3.333-8.333-7.667-13 -13l-13-13l77-155 77-156c66 199.333 139 419.667
-219 661 l218 661zM702 80H400000v40H742z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span></span></span></span></span></eqn></section>
-其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi></mrow><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">ϵ</span></span></span></span></eq> 是为了防止除以 0 的极小值（如 <code>1e-6</code>）。</p>
-</li>
-<li>
-<p><strong>归一化并缩放 (Scale)：</strong>
-<section><eqn><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>y</mi><mo>=</mo><mfrac><mi>x</mi><mrow><mtext>RMS</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac><mo>⊙</mo><mi>γ</mi></mrow><annotation encoding="application/x-tex"> y = \frac{x}{\text{RMS}(x)} \odot \gamma </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0436em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">RMS</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⊙</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05556em;">γ</span></span></span></span></span></eqn></section>
-其中 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>d</mi></msup></mrow><annotation encoding="application/x-tex">\gamma \in \mathbb{R}^d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05556em;">γ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathbb">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></eq> 是可学习的权重参数（Weight）。<strong>RMSNorm 没有偏置项 (Bias)</strong>。</p>
-</li>
-</ol>
-<h4>图解：RMSNorm 在 Block 里归一化什么</h4>
-<p>RMSNorm 作用在每个 token 的 hidden dimension 上，输入输出形状不变。</p>
-<pre><code class="language-text">x [B, T, D]
-│
-├─ token 0: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
-├─ token 1: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
-└─ token T: [d0 d1 d2 ... dD] ──► RMS over D ──► scale by weight
+<section class="lessons">
 
-output [B, T, D]
-</code></pre>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/01_rmsnorm_diagram.svg" alt="RMSNorm 在 Block 里的位置"></p>
-<p>放回 LLaMA block 里看，RMSNorm 是 attention / MLP 前的稳定器：</p>
-<pre><code class="language-text">x ─► RMSNorm ─► Attention ─► residual add
-h ─► RMSNorm ─► MLP       ─► residual add
-</code></pre>
-<p>它不改变 token 数，也不混合 token 之间的信息；它只让每个 token 自己的 hidden 向量尺度更稳定。</p>
-<h3>Step 3: 代码实现与混合精度 (AMP) 陷阱</h3>
-<p>数学公式翻译成代码并不难，真正需要小心的是混合精度训练时的数值稳定性——FP16 下平方运算极易溢出，这里给出标准处理方案。</p>
-<p>在 PyTorch 中，我们需要通过 <code>torch.mean</code> 计算均方，加上一个极小的 <code>eps</code> 防止除以零，最后乘以可学习的参数 <code>weight</code>。</p>
-<p>在代码实现时，有一个非常关键的工程细节需要处理：<strong>数值溢出 (Numerical Overflow)</strong>。</p>
-<blockquote>
-<p><strong>工程经验：为什么要强制转换精度？</strong>
-现代大模型训练与推理几乎都会使用混合精度 (AMP) 或半精度格式 (<code>FP16</code>) 以节省显存。但我们需要注意，<code>FP16</code> 的最大安全数值仅为 <code>65504</code>。</p>
-<p>在计算 RMSNorm 时，第一步是求输入张量的平方 (<eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></eq>)。如果输入特征中某个值大于 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>256</mn></mrow><annotation encoding="application/x-tex">256</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">256</span></span></span></span></eq>（由于 <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>256</mn><mn>2</mn></msup><mo>=</mo><mn>65536</mn><mo>&gt;</mo><mn>65504</mn></mrow><annotation encoding="application/x-tex">256^2 = 65536 &gt; 65504</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">25</span><span class="mord"><span class="mord">6</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6835em;vertical-align:-0.0391em;"></span><span class="mord">65536</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">65504</span></span></span></span></eq>），该位置计算后就会溢出变为 <code>inf</code>（无穷大），进而导致损失函数出现 <code>NaN</code>，引发训练崩溃。</p>
-<p><strong>标准处理方案 (Upcasting)：</strong>
-无论模型输入是什么精度格式，在执行平方和均值操作前，通常需要显式地将其转换为 <code>float32</code> 计算。待归一化计算完毕后，再将结果转换回原有精度。这是深度学习框架中处理该算子的标准做法。</p>
-</blockquote>
-<h3>Step 4: 动手实战</h3>
-<p>这里开始把前面的公式和精度约束落到最小可运行代码里，重点看每一步为什么存在。</p>
-<p><strong>要求</strong>：请补全下方 <code>RMSNorm</code> 的 <code>forward</code> 方法。
-<strong>注意：</strong></p>
-<ol>
-<li>先在 <code>float32</code> 下完成归一化，再乘以可学习的 <code>weight</code>，最后转回输入精度。</li>
-<li>确保在浮点数精度较高的情况下计算 RMS，以防止半精度（FP16/BF16）溢出。即：强制转换 <code>x</code> 为 <code>float32</code> 计算 <code>pow(2).mean()</code>。</li>
-</ol>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>class RMSNorm(nn.Module):
-    def __init__(self, hidden_size: int, eps: float = 1e-6):
-        super().__init__()
-        self.eps = eps
-        # ==========================================
-        # TODO 1: 定义可学习参数 weight，并初始化为全 1
-        # 形状: [hidden_size]
-        # 提示: 使用 nn.Parameter 包装张量使其可学习
-        # ==========================================
-        # self.weight = ???
-
-    def _norm(self, x: torch.Tensor) -&gt; torch.Tensor:
-        # ==========================================
-        # TODO 2: 实现 RMSNorm 核心计算逻辑
-        # 提示:
-        # 1. 为防止 FP16 溢出，需要在高精度下计算
-        # 2. 计算输入的均方值（平方后求均值），注意保持维度以便广播
-        # 3. 使用均方根的倒数进行归一化，torch.rsqrt 比 1/sqrt 更快
-        # 4. 返回归一化后的结果（保持高精度，便于后续操作）
-        # ==========================================
-        # variance = ???
-        x_fp32 = x if x.dtype == torch.float32 else x.float()
-        return x_fp32 * torch.rsqrt(variance + self.eps)
-
-    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
-        # ==========================================
-        # TODO 3: 先归一化，再缩放并转回输入精度
-        # 提示: 调用 _norm 进行归一化后，乘以可学习的 weight，最后转回输入精度
-        # ==========================================
-        # weight = ???
-        return (weight * self._norm(x)).to(x.dtype)
-</code></pre></details><details><summary>题目与测试代码 · Cell 10</summary><pre><code># 运行此单元格以测试你的实现
-def test_rmsnorm():
-    try:
-        # 构造输入
-        hidden_size = 512
-        x = torch.randn(2, 16, hidden_size, dtype=torch.float16)  # FP16 输入模拟大模型
-
-        # 测试你的实现
-        my_norm = RMSNorm(hidden_size)
-        # 将模型参数也转换为 FP16，对齐真实的工业半精度运行环境，防止发生隐式的 Type Promotion
-        my_norm.to(x.dtype)
-        my_out = my_norm(x)
-
-        assert my_out.dtype == torch.float16, &quot;输出类型必须与输入一致 (FP16)&quot;
-        assert my_out.shape == x.shape, &quot;输出形状改变了！&quot;
-
-        # LLaMA 原版实现作为标准答案 (HuggingFace 提取)
-        def hf_rmsnorm(hidden_states, weight, eps):
-            input_dtype = hidden_states.dtype
-            hidden_states = hidden_states.to(torch.float32)
-            variance = hidden_states.pow(2).mean(-1, keepdim=True)
-            hidden_states = hidden_states * torch.rsqrt(variance + eps)
-            return weight.to(torch.float32) * hidden_states.to(input_dtype)
-
-        hf_out = hf_rmsnorm(x, my_norm.weight, my_norm.eps)
-
-        # 检查容差
-        assert torch.allclose(my_out.float(), hf_out.float(), rtol=1e-3, atol=1e-4), &quot;计算结果与 HuggingFace 不一致！&quot;
-
-        print(&quot;\n✅ All Tests Passed! RMSNorm 实现通过测试。&quot;)
-
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 部分的代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError) as e:
-        if isinstance(e, AttributeError):
-            print(&quot;代码未完成，无法找到 Parameter&quot;)
-        elif isinstance(e, NameError):
-            print(&quot;代码可能未完成，导致了变量未定义&quot;)
-        else:
-            print(&quot;代码可能未完成，导致了类型错误&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 部分的代码！&quot;) from e
-    except Exception as e:
-        print(f&quot;\n❌ 测试失败: {e}&quot;)
-
-test_rmsnorm()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="rmsnorm-scale">
+        <article class="lesson-card inquiry" id="mission-1" data-lesson="rmsnorm-scale">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>RMS：用向量自己的大小做刻度尺</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">RMSNorm 的名字已经给出线索：它使用 root mean square，而不是 LayerNorm 的 mean + variance。少做的那一步是什么？</p>
             <p class="predict-q">先判断：RMSNorm 与 LayerNorm 最关键的区别是什么？</p>
             <div class="predict-options">
@@ -958,14 +789,11 @@ test_rmsnorm()
                 <input type="radio" name="predict-rmsnorm-scale" value="2">
                 <span>RMSNorm 只能处理二维输入</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="rmsnorm-scale">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="rmsnorm-scale">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="rmsnorm-scale">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>hidden_size 是最后一维特征数。</li><li>mean(dim=-1, keepdim=True) 会保留可广播维度。</li><li>eps 用来避免除以 0。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>hidden_size 是最后一维特征数。</li><li>mean(dim=-1, keepdim=True) 会保留可广播维度。</li><li>eps 用来避免除以 0。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1025,24 +853,36 @@ output = normalized * weight                            # weight: [H]</code></pr
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="rmsnorm-scale-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>定义 shape 为 [hidden_size] 的可学习 weight。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-1">
+                <span>用平方、均值、rsqrt 写出归一化。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-2">
+                <span>检查输出 shape 与输入一致。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-scale-3">
+                <span>用全零输入和放大 1000 倍的输入各测一次，观察 eps 与归一化尺度分别解决什么问题。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="rmsnorm-precision">
+        <article class="lesson-card inquiry" id="mission-2" data-lesson="rmsnorm-precision">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">概念练习</span>
           </div>
           <h2>先用 FP32 计算，再回到输入 dtype</h2>
 
           <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
+            <h3>🎯 先猜一猜</h3>
             <p class="predict-hook">半精度输入本身可能没溢出，但平方会迅速放大数值。归一化统计量正好包含 x²。</p>
             <p class="predict-q">先判断：为什么应在平方之前转成 FP32，而不是平方之后再转？</p>
             <div class="predict-options">
@@ -1058,14 +898,11 @@ output = normalized * weight                            # weight: [H]</code></pr
                 <input type="radio" name="predict-rmsnorm-precision" value="2">
                 <span>因为 weight 只能和 FP32 相乘</span>
               </label></div>
-            <div class="predict-feedback" data-predict-feedback="rmsnorm-precision">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+            <div class="predict-feedback" data-predict-feedback="rmsnorm-precision">先猜一个答案，再对照下面的讲解。可以随时修改选择，猜错会得到解释。</div>
           </div>
 
           <div class="gated" data-gated="rmsnorm-precision">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>float16 的可表示范围有限。</li><li>平方会放大数值。</li><li>.to(x.dtype) 可以恢复原始精度。</li></ul>
-            </div>
+            <div class="lesson-section"><h3>先补的知识</h3><ul><li>float16 的可表示范围有限。</li><li>平方会放大数值。</li><li>.to(x.dtype) 可以恢复原始精度。</li></ul></div>
 
             <div class="lesson-section intuition">
               <h3>图解原理</h3>
@@ -1124,16 +961,36 @@ assert output.dtype == input_dtype</code></pre></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
                 <input type="checkbox" data-homework="rmsnorm-precision-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <span>在 pow(2).mean 前使用 float32。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-1">
+                <span>最终输出转回输入 dtype。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-2">
+                <span>和参考实现比较 dtype、shape、数值误差。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="rmsnorm-precision-3">
+                <span>比较 x.float().pow(2) 与 x.pow(2).float() 在大数 FP16 输入上的差异，并解释为什么后者来不及补救。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="74c82355108d003adf9659735b0aa696e917e9fce8eb881b483df3213ff69bb1">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/01_RMSNorm_Tutorial.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>RMSNorm</code> · <code>forward</code> · <code>hf_rmsnorm</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1153,10 +1010,10 @@ assert output.dtype == input_dtype</code></pre></div>
     const predictData = {"rmsnorm-scale":{"answer":0,"revealNote":"对。它保留方向，只把最后一维 hidden vector 的整体尺度拉回稳定范围，再乘可学习 weight。"},"rmsnorm-precision":{"answer":0,"revealNote":"对。升精度必须发生在危险运算之前；先溢出再转换，只是把 FP16 的 inf 搬进 FP32。"}};
     const predictTotal = 2;
     const checkpointTotal = 2;
-    const homeworkTotal = 2;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 8;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "01";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1169,16 +1026,18 @@ assert output.dtype == input_dtype</code></pre></div>
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1203,7 +1062,7 @@ assert output.dtype == input_dtype</code></pre></div>
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1245,11 +1104,15 @@ assert output.dtype == input_dtype</code></pre></div>
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1280,6 +1143,7 @@ assert output.dtype == input_dtype</code></pre></div>
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";

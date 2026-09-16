@@ -733,276 +733,15 @@
       .map-steps { grid-template-columns: 1fr; }
     }
   </style>
-  <style>
-
-    .hero,
-    .hero > *,
-    .hero .meta,
-    .hero .map-steps {
-      min-width: 0;
-    }
-    .hero .formula,
-    .hero .pill {
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry,
-    .lesson-card.inquiry .lesson-top,
-    .lesson-card.inquiry .gated,
-    .lesson-card.inquiry .lesson-section {
-      min-width: 0;
-    }
-    .lesson-card.inquiry .todo-pill,
-    .lesson-card.inquiry h2,
-    .lesson-card.inquiry code {
-      overflow-wrap: anywhere;
-    }
-    .lesson-card.inquiry .predict-option > span,
-    .lesson-card.inquiry .checkpoint-option > span,
-    .lesson-card.inquiry .homework-item > span {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .adv-course,
-    .adv-practice {
-      display: grid;
-      gap: 14px;
-      margin-top: 14px;
-      min-width: 0;
-    }
-    .adv-course > *,
-    .adv-practice > *,
-    .adv-roadmap,
-    .adv-contract,
-    .adv-callout {
-      min-width: 0;
-      max-width: 100%;
-    }
-    .adv-course h4,
-    .adv-practice h4 {
-      margin: 0;
-      font-size: 17px;
-      color: #182033;
-    }
-    .adv-course p,
-    .adv-practice p { margin: 0; }
-    .adv-roadmap {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      border: 1px solid #cdd9ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f7faff;
-    }
-    .adv-roadmap > span {
-      min-height: 78px;
-      padding: 12px;
-      display: grid;
-      align-content: center;
-      gap: 4px;
-      border-right: 1px solid #cdd9ef;
-      color: #42516b;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .adv-roadmap > span:last-child { border-right: 0; }
-    .adv-roadmap b {
-      color: #1d4ed8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-grid {
-      display: grid;
-      gap: 12px;
-      align-items: stretch;
-    }
-    .adv-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .adv-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .adv-panel,
-    .adv-example,
-    .adv-map {
-      padding: 14px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #fff;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-      min-width: 0;
-    }
-    .adv-panel.neutral { border-top: 4px solid #657184; }
-    .adv-panel.good,
-    .adv-example { border-top: 4px solid #16835f; background: #f5fbf8; }
-    .adv-panel.warn { border-top: 4px solid #d97706; background: #fff9ef; }
-    .adv-panel.blue { border-top: 4px solid #2563eb; background: #f7faff; }
-    .adv-flow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 8px;
-    }
-    .adv-flow > span,
-    .adv-flow > strong {
-      min-height: 62px;
-      padding: 9px;
-      border: 1px solid #dce3eb;
-      border-radius: 6px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    .adv-flow > strong {
-      border-color: #99d6bf;
-      background: #e9f7f0;
-      color: #125b45;
-    }
-    .adv-contract {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.34fr) minmax(0, 1fr);
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .adv-contract > span,
-    .adv-contract > strong {
-      min-height: 48px;
-      padding: 10px 12px;
-      display: grid;
-      align-items: center;
-      border-bottom: 1px solid #dce3eb;
-      line-height: 1.45;
-    }
-    .adv-contract > span {
-      border-right: 1px solid #dce3eb;
-      background: #f7f9fc;
-      color: #526077;
-      font-weight: 800;
-    }
-    .adv-contract > strong {
-      overflow-wrap: anywhere;
-    }
-    .adv-contract > span:nth-last-child(-n+2),
-    .adv-contract > strong:nth-last-child(-n+2) { border-bottom: 0; }
-    .adv-contract code,
-    .adv-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .adv-shapes {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid #dce3eb;
-    }
-    .adv-shapes th,
-    .adv-shapes td {
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-    .adv-shapes th {
-      background: #eaf1ff;
-      color: #1d4ed8;
-    }
-    .adv-shapes code { white-space: normal; }
-    .adv-steps {
-      display: grid;
-      gap: 8px;
-    }
-    .adv-steps > div {
-      display: grid;
-      grid-template-columns: 36px minmax(180px, 0.72fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-    }
-    .adv-steps > div > b {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #2563eb;
-      color: #fff;
-    }
-    .adv-steps code {
-      color: #172033;
-      font-weight: 800;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-    .adv-steps span { color: #5f6d82; }
-    .adv-callout {
-      padding: 12px 14px;
-      border-left: 4px solid #d97706;
-      border-radius: 6px;
-      background: #fff6e7;
-      color: #74400d;
-      line-height: 1.6;
-      font-weight: 750;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-    .adv-map { background: #f7f9fc; }
-    .adv-map ul,
-    .adv-map ol { margin: 0; padding-left: 20px; }
-    .adv-map li { margin: 6px 0; line-height: 1.5; }
-    .adv-practice {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: stretch;
-    }
-    .adv-practice .syntax-card { margin-top: 0; }
-    .adv-checks {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-    }
-    .adv-checks > span {
-      min-height: 70px;
-      padding: 10px;
-      border: 1px solid #dce3eb;
-      border-radius: 7px;
-      background: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-    @media (max-width: 760px) {
-      .adv-grid.two,
-      .adv-grid.three,
-      .adv-practice { grid-template-columns: 1fr; }
-      .adv-roadmap { grid-template-columns: 1fr; }
-      .adv-roadmap > span {
-        border-right: 0;
-        border-bottom: 1px solid #cdd9ef;
-      }
-      .adv-roadmap > span:last-child { border-bottom: 0; }
-      .adv-contract { grid-template-columns: 1fr; }
-      .adv-contract > span { border-right: 0; }
-      .adv-contract > span:nth-last-child(-n+2) { border-bottom: 1px solid #dce3eb; }
-      .adv-steps > div { grid-template-columns: 36px minmax(0, 1fr); }
-      .adv-steps > div > span { grid-column: 2; }
-      .adv-shapes { font-size: 13px; }
-      .adv-shapes th,
-      .adv-shapes td { padding: 7px; }
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/learning_ui.css">
+  <script defer src="../assets/learning_lab.js"></script>
 </head>
 <body>
   <main class="shell">
     <div class="top">
       <a class="ghost" href="../index.html">返回关卡地图</a>
       <div class="hud">
-        <span class="pill" id="predict-count">预判 0 / 3</span>
+
         <span class="pill" id="status">闯关题：0 / 3</span>
         <span class="pill" id="xp">XP 0 / 300</span>
       </div>
@@ -1011,729 +750,181 @@
     <section class="hero">
       <div class="card hero-main">
         <p class="eyebrow">Level 74 | 零基础导学关卡</p>
-        <h1>Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</h1>
-        <p class="lead">每个 Mission 先<strong>猜一猜</strong>（押个假设解锁讲解）→ 看<strong>图解原理</strong> → 做<strong>巩固题</strong> → 回 notebook 写代码。带着问题学，比直接读记得牢。</p>
+        <h1>profiling 驱动的显存优化端到端收口</h1>
+        <p class="course-subtitle">Profiling-Driven Memory Optimization</p>
+        <p class="lead">Profiling 先找到时间花在哪里，再决定改哪里。Amdahl 定律提醒我们：没改动的部分会限制总收益。</p>
+        <a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb" target="_blank" rel="noopener noreferrer">本课官方 Notebook ↗</a>
         <div class="meta">
           <span class="pill">74_Profiling_Driven_End_to_End_Optimization.ipynb</span>
           <span class="pill">显存优化</span><span class="pill">性能剖析</span><span class="pill">端到端优化</span>
         </div>
         <div class="xp-wrap" aria-label="本关经验条"><div class="xp-bar" id="xp-bar"></div></div>
       </div>
-      <div class="card hero-map">
-        <div class="map-steps">
-          <div class="map-step">先猜一猜</div>
-          <div class="map-step">图解原理</div>
-          <div class="map-step">巩固 + 作业</div>
-        </div>
-        <div class="formula">baseline -&gt; profile -&gt; one change -&gt; remeasure -&gt; report</div>
-      </div>
+      <nav class="course-overview" aria-label="本课目录"><h2>一步一步学</h2><ol><li><a href="#mission-1">把只占 10% 的步骤加速十倍，整件事会快十倍吗？</a></li><li><a href="#mission-2">把一个小例子算到最后</a></li><li><a href="#mission-3">从会看，走到会写与会判断</a></li><li><a href="#official-practice">去官方题目实践</a></li></ol></nav>
     </section>
 
-<section class="card notebook-guide section" data-source-hash="121236230a9e17005fb727a3e995b9dcb29397a5c2bb049677574d8454d996be">
-    <h2>新版 Notebook 任务</h2>
-    <p><a class="ghost" href="../../74_Profiling_Driven_End_to_End_Optimization.ipynb">打开本课 Notebook</a> <a class="ghost" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/4fa62623ae7f2f207871b43c3f254a765765bf2e/02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb">官方版本</a></p>
-    <div class="notebook-content"><h1>74. Profiling-Driven Memory Optimization | profiling 驱动的显存优化端到端收口</h1>
-<p><strong>难度：</strong> Hard | <strong>环境：</strong> CPU 可完成报告收口；GPU 用于可选 trace | <strong>标签：</strong> <code>显存优化</code>, <code>性能剖析</code>, <code>端到端优化</code> | <strong>目标人群：</strong> 项目决策练习者</p>
-<hr>
-<h2>本节导读</h2>
-<p>本节把 73 / 76 / 75 的结果与 profiler 证据接起来：先确认已有结论，再用 trace 解释时间和显存代价。主线只分析一个代表性 baseline 与 candidate；其他 workload 用于扩展，不替代主线证据。推理方向可选用 71 的 MLA workload 做同样的 trace 分析，但 74 不重新讲 MLA 机制。
-<strong>层级定位：</strong> 本项目是跨层 profiling 项目，覆盖 L1-L4 的执行证据；若采集资源调度、版本发布或服务可用性指标，才延伸到 L5。它负责定位和验证，不替代具体的算子优化、推理服务或平台治理项目。</p>
-<p><strong>输入与输出：</strong> 输入是 73 的 baseline、76 的策略 benchmark 和 75 的预算决策；输出是带 trace 证据的收口报告。CPU 路径只合并报告和检查证据，GPU 路径才采集代表性 baseline / candidate 的 CPU/CUDA trace；没有 trace 时只能报告证据缺口。
-<strong>实验分层：</strong> CPU 验证报告链路，GPU 验证阶段耗时、kernel / 内存活动和同步证据；二者都不能代替另一方。
-<strong>主责与复用边界：</strong> 本项目主责是用 trace 检查显存优化解释是否成立；性能分析专题复用采集和归因方法，算子优化复用 kernel 证据，推理项目只作为扩展 workload，不在本项目重新选择量化、调度或并行策略。</p>
-<blockquote>
-<p>运行提示：先查看<a href="../../../docs/guide.md#%E9%A1%B9%E7%9B%AE%E7%8E%AF%E5%A2%83%E9%A2%84%E6%A3%80%E4%B8%8E%E5%AE%89%E8%A3%85">使用指南中的项目环境预检与安装说明</a>，再打开真实 profiling 开关。CPU 路径只合并报告；CUDA trace 必须先通过 GPU 预检。</p>
-</blockquote>
-<p><strong>关键词：</strong> <code>profiling</code>, <code>optimization</code>, <code>end-to-end</code></p>
-<hr>
-</div>
-    <h3>当前题目检查清单</h3>
-    <ul><li>TODO 1: 先做 warmup，再测量平均耗时</li><li>TODO 2: 汇总 baseline / tuned 的核心指标差异</li><li>TODO 3: 生成一段最小优化报告</li><li>TODO 4: 给出轻量优化决策</li></ul>
-    <details><summary>展开官方原理、图解与任务要求</summary><div class="notebook-content"><h2>前置阅读</h2>
-<p><strong>导语：</strong> 先完成 73、76、75 的训练侧测量、策略比较和预算决策，再用 profiling 把显存优化方案带入端到端 workload，判断改动是否值得最终保留。</p>
-<ul>
-<li><a href="../../../01_Hardware_Math_and_Systems/13_Profiling_and_Bottleneck_Analysis.ipynb">P1: 13. Profiling and Bottleneck Analysis | 性能分析与瓶颈定位</a></li>
-<li><a href="73_training_performance_analysis.html">73. Training Performance Analysis | 训练性能分析</a></li>
-<li><a href="76_activation_checkpoint_offload_benchmark.html">76. Activation Checkpoint Offload Benchmark | Activation / Checkpoint / Offload 对比项目</a></li>
-<li><a href="75_memory_budget_compression_project.html">75. Memory Budget Compression Project | 显存预算压缩项目</a></li>
-<li><a href="66_inference_performance_comparison.html">66. Inference Performance Comparison | 推理性能对比实验</a>（推理扩展）</li>
-<li><a href="71_mla_kv_cache_architecture_benchmark.html">71. MLA / KV Cache Architecture Benchmark | MLA / KV Cache 结构基准</a>（推理 profiling 扩展）</li>
-</ul>
-<h2>相关阅读</h2>
-<p><strong>导语：</strong> 完成优化闭环后，可以继续把瓶颈定位推进到更底层的实现手段，或回到并行/系统项目页验证是否值得迁移。</p>
-<ul>
-<li><a href="79_distributed_parallel_benchmark.html">79. Distributed Parallel Benchmark | 分布式并行基准项目</a></li>
-<li><a href="67_quantized_inference_and_deployment.html">67. Quantized Inference and Deployment | 量化推理与部署</a></li>
-</ul>
-<hr>
-<h3>Step 1: 定义端到端优化目标</h3>
-<p>先回答一个问题：这次优化到底要解决什么瓶颈，成功标准是什么？</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">环节</th>
-<th style="text-align:left">本节内容</th>
-<th style="text-align:left">形成的证据</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">输入</td>
-<td style="text-align:left">73 的训练 baseline、76 的候选比较、75 的预算决策，以及 baseline / candidate 的 profiler trace</td>
-<td style="text-align:left">说明当前结论来自哪组模型、workload 和硬件</td>
-</tr>
-<tr>
-<td style="text-align:left">操作</td>
-<td style="text-align:left">在相同 workload 下对照时间线，定位 forward、backward、重算、搬运或同步活动；一次只改一个变量</td>
-<td style="text-align:left">把“显存下降”或“变慢”连接到可观察的执行活动</td>
-</tr>
-<tr>
-<td style="text-align:left">输出</td>
-<td style="text-align:left">baseline / candidate 指标表、trace 路径、瓶颈类别、证据、下一步改动和决策</td>
-<td style="text-align:left">形成可复核的 <code>accept / tune / reject</code> 或证据缺口</td>
-</tr>
-<tr>
-<td style="text-align:left">边界</td>
-<td style="text-align:left">CPU 只检查报告合并和字段逻辑；只有 GPU trace 才能支持 CUDA 时间线、kernel 活动和搬运判断</td>
-<td style="text-align:left">CPU 结果不能替代 profiling 证据，局部指标也不能直接升级为端到端结论</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>主线固定模型、输入数据、batch size、seq len、硬件环境和运行后端，保证 trace 可比较；扩展 workload 必须另列为独立证据。</li>
-<li>明确优化目标，例如降低 step time、提升 throughput、降低 peak memory 或减少通信等待，并先回到 Task 1 的账本判断问题属于容量、带宽、计算还是同步。</li>
-<li>同时写清约束条件：训练任务要保留 loss / accuracy 约束，推理任务要保留精度、输出一致性或服务 SLA 约束。</li>
-<li>Baseline 需要能稳定复现，不能只跑一次；建议至少 warm-up 若干轮，再测多轮平均值。</li>
-<li>这一步的目标是让后面的优化有判断标准，而不是只得到一组孤立数字。</li>
-</ul>
-<p><img src="../../../docs/public/02_PyTorch_Algorithms/74_end_to_end_profile_loop.svg" alt="74 profiling 端到端闭环">
-&lt;div align=&quot;center&quot;&gt;&lt;strong&gt;指标变化先由 trace 提出假设，再用同一 workload 复测。&lt;/strong&gt;&lt;/div&gt;</p>
-<h3>Step 2: 先确认 baseline 和 profiling 口径合法</h3>
-<p>profiling 优化必须先确认 baseline 可复现，再把“慢”拆成可解释的瓶颈类型，不能直接对着单次热点截图开刀。</p>
-<ul>
-<li>推荐先记录总耗时、吞吐、峰值显存，再用 profiler 看热点算子和同步点；73 / 76 的表格告诉你“发生了什么”，trace 用来解释“为什么”。</li>
-<li>训练场景优先拆成：数据加载、forward、backward、optimizer step、显存峰值和多卡通信，并特别观察 19 的 checkpoint 重算、42 的 CPU-GPU 搬运是否出现在时间线上。</li>
-<li>推理场景优先拆成：prefill、decode、KV cache、采样逻辑、数据搬运和 kernel 开销；如果使用 71 的 DeepSeek-V2-Lite / MLA workload，还要单独观察 latent KV 读写、位置相关分量和对应 kernel。</li>
-<li>不要只找“最慢的一行代码”，而要判断瓶颈属于哪一类资源：计算、显存容量、内存带宽、通信还是调度；一个算子占比高不等于它就是可优化的根因。</li>
-<li>这一步的产物应该是一句话瓶颈结论，例如：<code>当前瓶颈主要来自 decode 阶段 KV cache 读取</code>。</li>
-</ul>
-<h3>Step 3: 用统一口径比较收益与代价</h3>
-<p>profiling 项目必须同时看 step time、throughput、peak memory 和任务约束，不能只挑单项热点收益下结论。</p>
-<ul>
-<li>一次只改一个方向，例如调整 batch size、开启混合精度、替换 kernel、减少同步点或改变 cache 策略；改动必须能回应 trace 中的具体证据。</li>
-<li>改完后重新测同样的指标，比较 baseline / tuned 的差异。</li>
-<li>如果改动影响训练 loss、推理输出、显存峰值或系统稳定性，要把代价写清楚。</li>
-<li>如果某个改动只是在一项指标上变好，却让另一项变差，要把取舍写清楚。</li>
-<li>这一轮修改的目标是建立因果关系，而不是一次性把所有优化开关都打开。</li>
-</ul>
-<h4>Roofline：把 profiler 指标解释成瓶颈假设</h4>
-<p>Roofline 用算术强度把计算能力和内存带宽放到同一张图上：<code>arithmetic_intensity = FLOPs / memory_bytes</code>，可达到的性能上限近似为 <code>min(peak_FLOPs, bandwidth × arithmetic_intensity)</code>。算术强度较低时，带宽上限更可能先到达；算术强度较高时，计算上限更可能成为约束。它用于提出和检查瓶颈假设，不会替代端到端时间线。</p>
-<table>
-<thead>
-<tr>
-<th>输入</th>
-<th>CPU 可验证的结果</th>
-<th>只有 GPU profiler 才能确认的内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>FLOPs、访存字节数、峰值算力、显存带宽</td>
-<td>算术强度、计算/带宽上限和理论 bound</td>
-<td>kernel 的实际 FLOPs/s、实际带宽和硬件受限原因</td>
-</tr>
-<tr>
-<td>缺少 FLOPs 或字节计数</td>
-<td>输出 <code>insufficient_evidence</code>，不做 bound 判断</td>
-<td>需要 Nsight Compute 或可靠的硬件计数器导出</td>
-</tr>
-</tbody>
-</table>
-<p>因此，CPU 实验只检查公式和分类逻辑；GPU trace 如果没有 FLOP/DRAM counter，也只能记录 <code>roofline_status=not_collected</code>，不能把某个 kernel 直接写成 compute-bound 或 memory-bound。</p>
-<h3>Step 4: 输出端到端优化结论</h3>
-<p>端到端优化最终不是输出“某个热点是不是降了”，而是输出这次改动在当前任务约束下是否值得继续保留、微调或回退。</p>
-<ul>
-<li>输出 baseline / tuned 对比表，至少包含 step time、throughput、peak memory 和备注。</li>
-<li>附上 profiling 截图或关键统计，说明瓶颈来自哪一类资源。</li>
-<li>写清楚本次改动、收益、代价和是否满足约束。</li>
-<li>如果优化没有达到目标，记录失败原因和下一轮优先级。</li>
-<li>将端到端结果与 75 的预算决策对照；如果 profiling 推翻了局部结论，要记录是 workload、同步、数据搬运还是系统开销造成的。</li>
-<li>最终产物应回答：原始瓶颈是什么，做了什么改动，收益有多大，这个改动是否值得保留。</li>
-</ul>
-<h3>Step 5: 最小代码模板</h3>
-<p>上面的 Step 1-4 是完整 profiling 驱动优化流程。下面的代码实现其中最小、可复用的四块：测平均耗时、汇总 baseline / tuned 指标差异、生成优化报告，以及把结果收成 <code>accept / tune / reject</code> 的轻量决策。真实项目中的 profiling 截图、瓶颈证据和优化策略，需要基于这四步继续补充。</p>
-<h3>Step 6: 按统一协议保存项目结果</h3>
-<p>74 与 73、76、75 共用实验外层字段：模型、设备、dtype、workload、baseline / tuned、step time、throughput、peak memory、质量约束和 <code>accept / tune / reject</code>。74 额外保存 profiling 证据，因此不能只复制显存策略表。</p>
-<p>建议额外记录：<code>profile.tool</code>、<code>profile.top_operators</code>、<code>profile.compute_ratio</code>、<code>profile.memory_ratio</code>、<code>profile.communication_ratio</code>，以及 <code>bottleneck.category</code>、<code>bottleneck.evidence</code>、<code>bottleneck.optimization</code>。<code>trace.status=collected</code> 只表示文件已生成，不等于瓶颈已经确认；只有把时间线观察、指标变化和一次针对性复验连起来，才能升级为端到端优化结论。如果当前环境没有真实 profiler，允许这些字段为空，但不能把未测量内容写成结论。</p>
-<p>项目结果协议由 <code>tools/profiling_result_schema.py</code> 提供。它不会覆盖原始实验数据；真实 GPU 或 Colab 环境完成 profiling 后，可将结果保存为 <code>benchmarks/results/74_profiling_optimization.json</code>。</p>
-<h3>提示</h3>
-<ul>
-<li>先固定 baseline，再做 profiling，再改一个变量。</li>
-<li>不要只看 step time，至少同时记录 throughput 和 peak memory。</li>
-<li>如果瓶颈不是单一算子，而是同步 / 调度 / cache，报告里要直接写出来。</li>
-<li>真实 GPU 场景可调用答案区的 <code>collect_torch_profile</code> 保存短 trace；不要把未采集的 top operators 填成推测。</li>
-</ul>
-<h3>参数口径说明</h3>
-<p>profiling 实验必须固定 model、workload、batch、seq_len、warmup、iters、backend 和硬件；<code>warmup</code> 不计入正式测量，<code>iters</code> 决定均值稳定性。优化目标可以是 step time、throughput、peak memory 或通信等待，但一次只改一个方向，并同时保留质量/稳定性约束。</p>
-<h3>测试</h3>
-</div></details>
-    <details><summary>题目与测试代码 · Cell 9</summary><pre><code>import time
-from pathlib import Path
+<section class="lessons">
 
-try:
-    import torch
-except ImportError:
-    torch = None
-
-def synchronize_if_cuda():
-    &quot;&quot;&quot;Synchronize CUDA when available; keep CPU-first execution unchanged.&quot;&quot;&quot;
-    if torch is not None and torch.cuda.is_available():
-        torch.cuda.synchronize()
-
-
-def estimate_roofline(flops, memory_bytes, peak_flops, bandwidth):
-    &quot;&quot;&quot;用给定的理论参数估算 Roofline 上限；不读取 GPU 硬件计数器。&quot;&quot;&quot;
-    values = {
-        'flops': flops, 'memory_bytes': memory_bytes,
-        'peak_flops': peak_flops, 'bandwidth': bandwidth,
-    }
-    if any(value &lt;= 0 for value in values.values()):
-        raise ValueError('flops/memory_bytes/peak_flops/bandwidth 必须为正数')
-    arithmetic_intensity = flops / memory_bytes
-    compute_roof = peak_flops
-    bandwidth_roof = bandwidth * arithmetic_intensity
-    attainable_roof = min(compute_roof, bandwidth_roof)
-    bound = 'compute' if compute_roof &lt;= bandwidth_roof else 'memory'
-    return {
-        'arithmetic_intensity': arithmetic_intensity,
-        'compute_roof': compute_roof,
-        'bandwidth_roof': bandwidth_roof,
-        'attainable_roof': attainable_roof,
-        'bound': bound,
-        'evidence_level': 'theoretical_formula_only',
-    }
-
-def benchmark_fn(fn, warmup=3, iters=10):
-    &quot;&quot;&quot;测量 CPU/GPU 函数的平均耗时；GPU 需由同步函数包住测量区间。&quot;&quot;&quot;
-    if warmup &lt; 0 or iters &lt;= 0:
-        raise ValueError('warmup must be &gt;= 0 and iters must be &gt; 0')
-    # ==========================================
-    # TODO 1: 先做 warmup，再测量平均耗时
-    # 提示: 用 time.perf_counter() 记录起止时间
-    # 返回单位统一为 ms，方便和项目报告对齐
-    # ==========================================
-    for _ in range(warmup):
-        fn()
-
-    # start = ???
-    for _ in range(iters):
-        fn()
-    # total = ???
-    # avg_time_ms = ???
-    return avg_time_ms
-
-def summarize_optimization_result(base_metrics, tuned_metrics):
-    &quot;&quot;&quot;统一计算 baseline - tuned 的时间、显存和吞吐差异。&quot;&quot;&quot;
-    # ==========================================
-    # TODO 2: 汇总 baseline / tuned 的核心指标差异
-    # 提示: 正数表示 tuned 相比 baseline 有改善
-    # step time / memory 越低越好，throughput 越高越好
-    # ==========================================
-    # time_delta = ???
-    # memory_delta = ???
-    # throughput_delta = ???
-
-    summary = {
-        'step_time_delta_ms': round(time_delta, 2),
-        'peak_mem_delta_mb': round(memory_delta, 2),
-        'throughput_delta': round(throughput_delta, 2),
-        'time_improved': time_delta &gt; 0,
-        'memory_improved': memory_delta &gt; 0,
-        'throughput_improved': throughput_delta &gt; 0,
-    }
-    return summary
-
-
-def format_optimization_report(summary, bottleneck, next_action):
-    &quot;&quot;&quot;输出指标变化、瓶颈证据边界和下一步动作。&quot;&quot;&quot;
-    # ==========================================
-    # TODO 3: 生成一段最小优化报告
-    # 提示: 把指标变化、瓶颈结论和下一步动作放在一起
-    # ==========================================
-    header = &quot;| 指标 | 变化 | 判断 |&quot;
-    sep = &quot;| --- | --- | --- |&quot;
-    # rows = ???
-    # conclusion = ???
-    return &quot;\n&quot;.join([header, sep] + rows + [conclusion])
-
-
-def recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0):
-    &quot;&quot;&quot;使用显式阈值输出 accept / tune / reject，不把 CPU 结果写成 GPU 结论。&quot;&quot;&quot;
-    # ==========================================
-    # TODO 4: 给出轻量优化决策
-    # 规则：
-    # - 时间和吞吐都改善：accept
-    # - 时间改善，且显存或吞吐至少有一项为正收益：tune
-    # - 否则：reject
-    # ==========================================
-    # strong_time_gain = ???
-    # strong_memory_gain = ???
-    # strong_throughput_gain = ???
-    # if ???:
-    #     decision = ???
-    #     reason = ???
-    # positive_memory_gain = summary['peak_mem_delta_mb'] &gt; 0
-    # positive_throughput_gain = summary['throughput_delta'] &gt; 0
-    # elif ???:
-    #     decision = ???
-    #     reason = ???
-    # else:
-    #     decision = ???
-    #     reason = ???
-    # return {'decision': decision, 'reason': reason}
-    raise NotImplementedError
-</code></pre></details><details><summary>题目与测试代码 · Cell 11</summary><pre><code>def test_optimization_project_template():
-    try:
-        counter = {'n': 0}
-
-        def fn():
-            counter['n'] += 1
-
-        result = benchmark_fn(fn, warmup=0, iters=2)
-        assert counter['n'] == 2, &quot;benchmark 应该运行 iters 次&quot;
-        assert result &gt;= 0.0, &quot;平均耗时应该非负&quot;
-        roofline = estimate_roofline(flops=2_000.0, memory_bytes=1_000.0, peak_flops=10.0, bandwidth=1.0)
-        assert roofline['arithmetic_intensity'] == 2.0
-        assert roofline['bound'] == 'memory'
-        assert roofline['evidence_level'] == 'theoretical_formula_only'
-        for invalid in ({'warmup': -1, 'iters': 2}, {'warmup': 0, 'iters': 0}):
-            try:
-                benchmark_fn(fn, **invalid)
-            except ValueError:
-                pass
-            else:
-                raise AssertionError('非法 warmup / iters 应明确拒绝')
-
-        baseline = {'step_time_ms': 120.0, 'peak_mem_mb': 8192.0, 'throughput': 80.0}
-        tuned = {'step_time_ms': 96.0, 'peak_mem_mb': 7168.0, 'throughput': 100.0}
-        summary = summarize_optimization_result(baseline, tuned)
-
-        assert summary['step_time_delta_ms'] == 24.0
-        assert summary['peak_mem_delta_mb'] == 1024.0
-        assert summary['throughput_delta'] == 20.0
-        assert summary['time_improved'] is True
-        assert summary['memory_improved'] is True
-        assert summary['throughput_improved'] is True
-
-        report = format_optimization_report(summary, 'backward kernel 占比过高', '保留混合精度并继续检查 optimizer')
-        assert '| 指标 | 变化 | 判断 |' in report
-        assert 'backward kernel 占比过高' in report
-        assert '保留混合精度并继续检查 optimizer' in report
-
-        decision = recommend_optimization_decision(summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
-        assert decision['decision'] == 'accept'
-
-        mixed_summary = {'step_time_delta_ms': 12.0, 'peak_mem_delta_mb': 128.0, 'throughput_delta': 2.0, 'time_improved': True, 'memory_improved': True, 'throughput_improved': True}
-        mixed_decision = recommend_optimization_decision(mixed_summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
-        assert mixed_decision['decision'] == 'tune'
-
-        weak_summary = {'step_time_delta_ms': -3.0, 'peak_mem_delta_mb': 64.0, 'throughput_delta': 1.0, 'time_improved': False, 'memory_improved': True, 'throughput_improved': True}
-        weak_decision = recommend_optimization_decision(weak_summary, min_time_delta_ms=10.0, min_memory_delta_mb=512.0, min_throughput_delta=5.0)
-        assert weak_decision['decision'] == 'reject'
-
-        print(&quot;✅ profiling 驱动的端到端优化项目模板代码通过基础校验。&quot;)
-    except NotImplementedError:
-        print(&quot;请先完成 TODO 代码！&quot;)
-        raise
-    except (AttributeError, NameError, TypeError, ValueError) as e:
-        print(&quot;代码可能未完成，导致变量未定义&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-    except AssertionError as e:
-        print(f&quot;❌ 测试失败: {e}&quot;)
-        raise NotImplementedError(&quot;请先完成 TODO 代码！&quot;) from e
-
-
-test_optimization_project_template()
-</code></pre></details>
-    <p>本区由当前 Notebook 题目区生成。下面的精讲用于概念练习；回到 Notebook 时以本区的函数签名、TODO 和测试为准。参考答案及可选实验请在 Notebook 中查看。</p>
-  </section>
-
-    <section class="lessons">
-
-        <article class="lesson-card inquiry" data-lesson="profiling-benchmark-baseline">
+        <article class="lesson-card" id="mission-1" data-lesson="v4-story">
           <div class="lesson-top">
             <span class="level-pill">Mission 1</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">01 / 建立直觉</span>
           </div>
-          <h2>先固定测量尺：warmup 不计时，正式轮次才求平均</h2>
+          <h2>把只占 10% 的步骤加速十倍，整件事会快十倍吗？</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">warmup=3、iters=10，正式 10 次总共耗时 0.05 秒。</p>
-            <p class="predict-q">benchmark_fn 应返回多少毫秒？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-benchmark-baseline" value="0">
-                <span>5 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-benchmark-baseline" value="1">
-                <span>50 ms</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-benchmark-baseline" value="2">
-                <span>500 ms</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="profiling-benchmark-baseline">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>Profiling 先找到时间花在哪里，再决定改哪里。Amdahl 定律提醒我们：没改动的部分会限制总收益。</p>
+            <div class="concept-glossary"><h4>先认识这三个词</h4><dl><div><dt>profile</dt><dd>按阶段/事件观察时间和资源消耗。</dd></div><div><dt>critical path</dt><dd>依赖链上决定总完成时间的部分。</dd></div><div><dt>Amdahl</dt><dd>局部加速受到未优化部分的限制。</dd></div></dl></div><div class="mental-prompt"><b>试着说给朋友听</b><p>先不看公式：用上面的生活场景，说一说这节课想减少哪种浪费、需要付出什么代价。</p></div>
+
           </div>
 
-          <div class="gated" data-gated="profiling-benchmark-baseline">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>函数也是一个值：参数 fn 保存的是“稍后要调用的函数”，写 fn() 才会真正执行它。</li><li>range(n) 会产生 0 到 n-1 共 n 个整数，所以 for _ in range(iters) 会调用 fn 恰好 iters 次。</li><li>time.perf_counter() 返回高精度时间点；结束时间减开始时间才是经过的秒数。</li><li>warmup 只负责预热，不应落在 start 和 total 之间；正式计时结果要除以 iters，再乘 1000 转成毫秒。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>性能优化先要有一把稳定的尺。预热像运动前热身，它让初始化和缓存抖动先发生；真正比赛开始时才按下秒表。若把 warmup 也计入，或只跑一轮，baseline 和 tuned 的比较就可能是在比较偶然噪声。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>预热</b>调用 warmup 次，不纳入统计</span>
-          <span><b>记开始点</b>start = perf_counter()</span>
-          <span><b>正式执行</b>调用 iters 次</span>
-          <span><b>算平均毫秒</b>(end - start) / iters * 1000</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>变量契约</h4>
-            <div class="adv-contract">
-              <span><code>fn</code></span><strong>一个无参数、可重复调用的函数</strong>
-              <span><code>warmup</code></span><strong>计时前的预热次数</strong>
-              <span><code>iters</code></span><strong>正式测量次数</strong>
-              <span>返回值</span><strong>单次平均耗时，单位 ms，且应非负</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>计时边界</h4>
-            <div class="adv-flow">
-              <span>warmup loop<br>不计时</span>
-              <span>start</span>
-              <span>iters loop<br>正式计时</span>
-              <strong>total / iters<br>再转 ms</strong>
-            </div>
-            <p>Notebook 测试把 warmup 设为 0、iters 设为 2，因此 counter 必须正好增加 2。</p>
-          </section>
-        </div>
-
-        <div class="adv-callout">TODO 1 是 CPU-first 模板。真实 GPU kernel 常常异步执行，工程中还要在计时边界同步 CUDA；不要把这项额外要求擅自加进当前 Notebook。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用文件解析任务练习“预热后计时”</h4><pre><code>import time
-
-def measure(parser, warmup=1, repeats=4):
-    for _ in range(warmup):
-        parser()
-
-    begin = time.perf_counter()
-    for _ in range(repeats):
-        parser()
-    elapsed_seconds = time.perf_counter() - begin
-    return elapsed_seconds / repeats * 1000</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>parser</code> 对应 <code>fn</code>，都要用括号调用。</li>
-            <li><code>begin</code> 对应 TODO 的 <code>start</code>；<code>elapsed_seconds</code> 对应 <code>total</code>。</li>
-            <li><code>repeats</code> 对应 <code>iters</code>；先除次数，再乘 1000，得到 <code>avg_time_ms</code>。</li>
-            <li>把三行迁回 TODO 时保留 Notebook 已有的两个循环，不要再额外调用一次 <code>fn()</code>。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>start 最合理的位置在哪里？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>本课中的「profile」指什么？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="0">
-                <span>正式 iters 循环之后</span>
+                <input type="radio" name="checkpoint-v4-story" value="0">
+                <span>局部加速受到未优化部分的限制。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="1">
-                <span>warmup 循环之前</span>
+                <input type="radio" name="checkpoint-v4-story" value="1">
+                <span>依赖链上决定总完成时间的部分。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-benchmark-baseline" value="2">
-                <span>warmup 循环之后、正式 iters 循环之前</span>
+                <input type="radio" name="checkpoint-v4-story" value="2">
+                <span>按阶段/事件观察时间和资源消耗。</span>
               </label></div>
-              <div class="feedback" data-feedback="profiling-benchmark-baseline"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-story"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="profiling-benchmark-baseline-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-story-0">
+                <span>不看术语表，用一句话解释三个新词之间的区别。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="profiling-metric-direction">
+        <article class="lesson-card" id="mission-2" data-lesson="v4-experiment">
           <div class="lesson-top">
             <span class="level-pill">Mission 2</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">02 / 操作与推演</span>
           </div>
-          <h2>再统一正负号：低指标用 baseline - tuned，高指标反过来</h2>
+          <h2>把一个小例子算到最后</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">baseline throughput=100，tuned throughput=92。</p>
-            <p class="predict-q">按 Notebook 的统一约定，throughput_delta 和 improved 应是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-metric-direction" value="0">
-                <span>-8，False</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-metric-direction" value="1">
-                <span>8，True</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-metric-direction" value="2">
-                <span>-8，True</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="profiling-metric-direction">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>先用默认数值手算，再只改一个参数。让结果来检验你的猜想。</p>
+            <ol class="worked-example"><li><h4>拆 100 秒</h4><p>某步骤占 20 秒，其余 80 秒。</p></li><li><h4>局部快四倍</h4><p>20 秒缩成 5 秒，总计 85 秒，总加速是 100/85≈1.18 倍。</p></li><li><h4>验证归因</h4><p>先用 trace 形成假设，再固定 workload 重测端到端。缓存、warm-up 或测量方式变化也可能造成差异。</p></li></ol><section class="learning-lab" data-lab="amdahl" aria-label="局部加速能带来多少总收益？">
+    <header><span class="lab-eyebrow">动手实验室 / 只在浏览器中演示</span><h4>局部加速能带来多少总收益？</h4><p>改变瓶颈占比和局部加速倍数，其余工作保持不变。</p></header>
+    <div class="lab-controls"><label for="lab-74-fraction"><span>可优化部分占比 <output data-value="fraction" for="lab-74-fraction">20</output> %</span><input type="range" id="lab-74-fraction" name="fraction" min="10" max="90" step="10" value="20"></label><label for="lab-74-speed"><span>局部加速 <output data-value="speed" for="lab-74-speed">4</output> 倍</span><input type="range" id="lab-74-speed" name="speed" min="1" max="10" step="1" value="4"></label></div>
+    <div class="lab-metrics" data-metrics></div><div class="lab-bars" data-bars></div>
+    <div class="lab-tokens" data-tokens aria-label="计算对象"></div>
+    <div class="lab-phase-track" aria-hidden="true"><i data-phase-progress></i></div><div class="lab-phase-labels" data-phase-labels></div>
+    <div class="lab-story" data-frame aria-live="polite"><small data-step></small><h4 data-frame-title></h4><p data-frame-text></p></div>
+    <div class="lab-actions"><button type="button" data-prev>上一步</button><button type="button" data-next>下一步</button><button type="button" data-play>播放推演</button><button type="button" data-reset>重置实验</button></div>
+    <form class="lab-challenge" onsubmit="return false"><label for="answer-74" data-challenge-label>算一算</label><div><input id="answer-74" data-answer type="number" step="any" inputmode="decimal" placeholder="填一个数字"><button type="button" data-check-answer>检查我的计算</button></div><p data-answer-feedback role="status"></p></form>
+    <p class="lab-caption">教学简化模型：所有数值来自上方规则，不是 GPU 性能实测。播放可以暂停，键盘方向键可调整滑块。</p>
+  </section>
+
           </div>
 
-          <div class="gated" data-gated="profiling-metric-direction">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>Python 字典用方括号按键取值，例如 metrics['step_time_ms']。</li><li>step time 和 peak memory 越低越好，所以 baseline 减 tuned 为正时表示改善。</li><li>throughput 越高越好，所以必须用 tuned 减 baseline，正数才仍表示改善。</li><li>round(value, 2) 只负责把结果保留两位小数；判断改善应基于原始差值变量。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>报告最容易埋下的错误不是算错数字，而是同一个正号表达了相反含义。解决办法是先统一约定：summary 里所有性能差值都让“正数 = tuned 更好”。然后根据指标是越低越好还是越高越好，决定减法方向。</p>
-              <div class="adv-course">
-        <div class="adv-grid three">
-          <section class="adv-panel blue">
-            <h4>step time</h4>
-            <div class="adv-contract">
-              <span>偏好</span><strong>越低越好</strong>
-              <span>公式</span><strong>base - tuned</strong>
-              <span>Notebook</span><strong>120 - 96 = 24 ms</strong>
-            </div>
-          </section>
-          <section class="adv-panel neutral">
-            <h4>peak memory</h4>
-            <div class="adv-contract">
-              <span>偏好</span><strong>越低越好</strong>
-              <span>公式</span><strong>base - tuned</strong>
-              <span>Notebook</span><strong>8192 - 7168 = 1024 MB</strong>
-            </div>
-          </section>
-          <section class="adv-panel good">
-            <h4>throughput</h4>
-            <div class="adv-contract">
-              <span>偏好</span><strong>越高越好</strong>
-              <span>公式</span><strong>tuned - base</strong>
-              <span>Notebook</span><strong>100 - 80 = 20</strong>
-            </div>
-          </section>
-        </div>
-
-        <table class="adv-shapes">
-          <thead><tr><th>输出键</th><th>数值来源</th><th>布尔判断</th><th>测试期望</th></tr></thead>
-          <tbody>
-            <tr><td><code>step_time_delta_ms</code></td><td><code>time_delta</code></td><td><code>time_delta &gt; 0</code></td><td>24.0 / true</td></tr>
-            <tr><td><code>peak_mem_delta_mb</code></td><td><code>memory_delta</code></td><td><code>memory_delta &gt; 0</code></td><td>1024.0 / true</td></tr>
-            <tr><td><code>throughput_delta</code></td><td><code>throughput_delta</code></td><td><code>throughput_delta &gt; 0</code></td><td>20.0 / true</td></tr>
-          </tbody>
-        </table>
-
-        <div class="adv-callout">先在纸上给每个指标写“越低/越高”，再写减法。不要从三个测试答案倒推硬编码数字；函数必须适用于任意 baseline 和 tuned 字典。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用配送方案练习统一“正数代表改善”</h4><pre><code>old = {'minutes': 42.0, 'orders_per_hour': 18.0}
-new = {'minutes': 35.0, 'orders_per_hour': 24.0}
-
-time_gain = old['minutes'] - new['minutes']
-capacity_gain = new['orders_per_hour'] - old['orders_per_hour']
-
-result = {
-    'time_gain': round(time_gain, 2),
-    'capacity_gain': round(capacity_gain, 2),
-    'time_improved': time_gain &gt; 0,
-    'capacity_improved': capacity_gain &gt; 0,
-}</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>old/new</code> 对应 <code>base_metrics/tuned_metrics</code>。</li>
-            <li><code>minutes</code> 对应 step time 或 memory，沿用 <code>base - tuned</code>。</li>
-            <li><code>orders_per_hour</code> 对应 throughput，沿用 <code>tuned - base</code>。</li>
-            <li>最后把三个差值写入 Notebook 已给出的 summary 键，不要更名，否则测试按键读取会失败。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么 memory_delta 使用 baseline - tuned？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>原总耗时 100 秒，其中 20 秒快四倍后，总耗时多少？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-metric-direction" value="0">
-                <span>显存越低越好，这样 tuned 更省显存时差值为正</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="0">
+                <span>85 秒</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-metric-direction" value="1">
-                <span>因为 round 只接受正数</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="1">
+                <span>25 秒</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-metric-direction" value="2">
-                <span>因为所有指标都必须固定用 baseline - tuned</span>
+                <input type="radio" name="checkpoint-v4-experiment" value="2">
+                <span>80 秒</span>
               </label></div>
-              <div class="feedback" data-feedback="profiling-metric-direction"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-experiment"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="profiling-metric-direction-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-experiment-0">
+                <span>改一个滑块，先预测结果，再按步骤核对。说明哪一项变了、哪一项没变。</span>
               </label>
           </div>
         </article>
-        <article class="lesson-card inquiry" data-lesson="profiling-report-loop">
+        <article class="lesson-card" id="mission-3" data-lesson="v4-transfer">
           <div class="lesson-top">
             <span class="level-pill">Mission 3</span>
-            <span class="todo-pill">概念练习 · 作业见新版任务区</span>
+            <span class="todo-pill">03 / 纠错与迁移</span>
           </div>
-          <h2>最后让数字变成行动：列表生成表格，结论回扣瓶颈</h2>
+          <h2>从会看，走到会写与会判断</h2>
 
-          <div class="lesson-section predict">
-            <h3>🎯 先猜一猜（下注解锁）</h3>
-            <p class="predict-hook">time_improved=False，但 step_time_delta_ms=-3.5。</p>
-            <p class="predict-q">step time 表格行的判断文字应该是什么？</p>
-            <div class="predict-options">
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-report-loop" value="0">
-                <span>未改善</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-report-loop" value="1">
-                <span>改善</span>
-              </label>
-              <label class="predict-option">
-                <input type="radio" name="predict-profiling-report-loop" value="2">
-                <span>无法生成</span>
-              </label></div>
-            <div class="predict-feedback" data-predict-feedback="profiling-report-loop">先押一个假设，下面的讲解就会解锁。猜错完全没关系——带着疑问读，记得最牢。</div>
+
+
+          <div class="lesson-section intuition">
+            <h3>图解原理</h3>
+            <p>下面是一段独立的小练习。它把计算关系写清楚，帮助你进入官方题目；不是整份作业的答案。</p>
+            <div class="code-walk"><h4>读懂这段最小 Python</h4><pre><code>fraction, local_speedup = .2, 4
+total_speedup = 1 / ((1-fraction)+fraction/local_speedup)
+print(round(total_speedup,2))  # 1.18</code></pre><p>先找输入变量，再找中间量，最后核对注释里的输出。改一个输入，手算后再运行。</p></div><div class="misconception"><h4>最容易踩的坑</h4><p>把 kernel 自身的加速倍数直接写成整个模型的加速倍数。还有未优化部分与额外开销。</p></div><div class="transfer-map"><h4>去官方题目做什么</h4><ol><li>到官方 Notebook 阅读题目函数与测试；先写出输入、输出和一个最小例子。</li><li>把本课手算过程转换成实现，先跑最小测试，再检查空输入、边界值或未达门槛的情况。</li><li>记录一个与预期不同的结果，并用本课术语说明原因。</li></ol></div>
+
           </div>
 
-          <div class="gated" data-gated="profiling-report-loop">
-            <div class="lesson-section">
-              <h3>先补的知识</h3>
-              <ul><li>f-string 用大括号把变量值嵌进字符串，例如 f'耗时：{value}'。</li><li>条件表达式写成 A if condition else B，可在表格中选择“改善”或“未改善”。</li><li>rows 是字符串列表；[header, sep] + rows + [conclusion] 会拼成一个更长的列表。</li><li>'\n'.join(lines) 会在每两行之间插入换行符，适合生成 Markdown 表格。</li></ul>
-            </div>
-
-            <div class="lesson-section intuition">
-              <h3>图解原理</h3>
-              <p>profiling 的闭环不是停在“快了 24 ms”。一份可执行报告必须同时保留证据、瓶颈判断和下一步动作。表格回答发生了什么，结论回答为什么以及下一轮做什么。</p>
-              <div class="adv-course">
-        <div class="adv-roadmap">
-          <span><b>header + sep</b>建立 Markdown 表头</span>
-          <span><b>rows</b>把三项差值逐行格式化</span>
-          <span><b>conclusion</b>串联瓶颈与下一步</span>
-          <span><b>join</b>输出一个多行字符串</span>
-        </div>
-
-        <div class="adv-grid two">
-          <section class="adv-panel blue">
-            <h4>报告必须出现的内容</h4>
-            <div class="adv-checks">
-              <span>step time<br>变化与判断</span>
-              <span>peak memory<br>变化与判断</span>
-              <span>throughput<br>变化与判断</span>
-              <span>bottleneck<br>next_action</span>
-            </div>
-          </section>
-          <section class="adv-panel warn">
-            <h4>闭环不等于全都改善</h4>
-            <p>某项布尔值为 False 时，表格应如实显示“未改善”。优化可以带来取舍，报告不能为了好看隐藏代价。</p>
-            <div class="adv-contract">
-              <span>瓶颈</span><strong>backward kernel 占比过高</strong>
-              <span>下一步</span><strong>保留混合精度并检查 optimizer</strong>
-            </div>
-          </section>
-        </div>
-
-        <div class="adv-callout">测试只检查关键子串，但你的实现仍应完整生成三行指标。不要把 bottleneck 或 next_action 写死为测试样例，它们是函数参数。</div>
-      </div>
-              <div class="adv-practice">
-        <div class="syntax-card"><h4>语法热身：用学习复盘练习生成 Markdown 报告</h4><pre><code>score = 8
-passed = score &gt;= 6
-rows = [
-    f"| 得分 | {score} | {'通过' if passed else '未通过'} |",
-]
-next_step = '复习错题并再测一次'
-conclusion = f"下一步：{next_step}。"
-
-report = "\n".join([
-    '| 项目 | 数值 | 判断 |',
-    '| --- | --- | --- |',
-] + rows + [conclusion])</code></pre></div>
-        <div class="adv-map">
-          <h4>独立例子如何迁移到 Notebook</h4>
-          <ul>
-            <li><code>score/passed</code> 对应 summary 中的一组差值和 improved 布尔值。</li>
-            <li>单行 <code>rows</code> 扩成 step time、peak memory、throughput 三行。</li>
-            <li><code>next_step</code> 对应 <code>next_action</code>；结论中还要加入 <code>bottleneck</code>。</li>
-            <li>保留 Notebook 已给出的 <code>header</code> 与 <code>sep</code>，最终仍用换行符 join。</li>
-          </ul>
-        </div>
-      </div>
-            </div>
-
-            <div class="lesson-section checkpoint">
-              <h3>巩固一下</h3>
-              <p>为什么报告末尾还要写 bottleneck 和 next_action？</p>
-              <div class="checkpoint-options">
+          <div class="lesson-section checkpoint">
+            <h3>闯关题</h3>
+            <p>同学提出下面的做法，哪一项会导致本课讨论的误判？</p>
+            <div class="checkpoint-options">
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-report-loop" value="0">
-                <span>因为 Markdown 表格不能单独显示数字</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="0">
+                <span>改变条件后重新计算，并解释结论的适用范围。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-report-loop" value="1">
-                <span>让指标变化能连接到原因判断和下一轮可执行动作</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="1">
+                <span>把 kernel 自身的加速倍数直接写成整个模型的加速倍数。还有未优化部分与额外开销。</span>
               </label>
               <label class="checkpoint-option">
-                <input type="radio" name="checkpoint-profiling-report-loop" value="2">
-                <span>为了让字符串更长</span>
+                <input type="radio" name="checkpoint-v4-transfer" value="2">
+                <span>先用小例子检查「profile」的定义和计算。</span>
               </label></div>
-              <div class="feedback" data-feedback="profiling-report-loop"></div>
-            </div>
+            <div class="feedback" data-feedback="v4-transfer"></div>
           </div>
 
           <div class="lesson-section homework">
-            <h3>回到 notebook 的作业</h3>
-            <p>这里不直接写答案。你已经拿到足够输入，最后用 notebook 的 TODO 做举一反三。</p>
+            <h3>学完这一段，试着做</h3>
+            <p>用一个小动作确认自己理解了；最后再进入官方题目。</p>
 
               <label class="homework-item">
-                <input type="checkbox" data-homework="profiling-report-loop-0">
-                <span>完成新版 Notebook 任务区中与本模块相关的实现，并运行该 Notebook 的测试。</span>
+                <input type="checkbox" data-homework="v4-transfer-0">
+                <span>打开本课官方 Notebook，完成题目并检查测试结果。</span>
+              </label>
+              <label class="homework-item">
+                <input type="checkbox" data-homework="v4-transfer-1">
+                <span>用一段话解释：课堂玩具例子与真实应用之间，还差哪些条件。</span>
               </label>
           </div>
         </article>
     </section>
+
+    <section class="card notebook-guide section" id="official-practice" data-source-hash="8e9dbf37b0c00d14627ecdbd3e6a84ac921e4a25b55df1caf2a16545734c5a6d">
+    <p class="eyebrow">把理解变成自己的代码</p><h2>准备好，去官方题目试一试</h2>
+    <p>在本页用小例子建立直觉，再去官方 Notebook 完成实现。先运行你自己的测试，遇到困难时再查看官方提示与参考答案。</p>
+    <p><a class="official-notebook" href="https://github.com/datawhalechina/llm-algo-leetcode/blob/518cc451c51a1e86d6e17f304147135d2a8cb379/02_PyTorch_Algorithms/74_Profiling_Driven_End_to_End_Optimization.ipynb" target="_blank" rel="noopener noreferrer">前往本课官方 Notebook ↗</a></p>
+    <details><summary>这节课会遇到的代码对象</summary><p><code>estimate_roofline</code> · <code>benchmark_fn</code> · <code>summarize_optimization_result</code> · <code>format_optimization_report</code> · <code>recommend_optimization_decision</code> · <code>fn</code></p><p>先找题目里的输入、输出与 TODO，再把本课的手算过程对应进去；以官方题目中的函数说明和测试为准。</p></details>
+    <p class="source-note">练习来源：Datawhale 官方仓库 · 518cc45。这里的入口直接打开官方版本，不读取或分享你的本地 Notebook。</p>
+  </section>
 
     <section class="complete">
       <div>
@@ -1749,14 +940,14 @@ report = "\n".join([
 
   <script>
     const levelId = "74";
-    const checkpointData = {"profiling-benchmark-baseline":{"answer":2,"explain":"这样 total 只覆盖需要比较的正式轮次，预热开销不会污染平均耗时。"},"profiling-metric-direction":{"answer":0,"explain":"减法方向由指标偏好决定；throughput 恰好需要相反方向。"},"profiling-report-loop":{"answer":1,"explain":"优化报告的价值在于支持决策，而不只是保存一组测量数字。"}};
-    const predictData = {"profiling-benchmark-baseline":{"answer":0,"revealNote":"0.05 / 10 = 0.005 秒；乘 1000 后是 5 ms。warmup 不进入这段总耗时。"},"profiling-metric-direction":{"answer":0,"revealNote":"高指标用 tuned - baseline：92 - 100 = -8；负数表示吞吐退步。"},"profiling-report-loop":{"answer":0,"revealNote":"显示文字由布尔键决定；负差值也应该原样保留，帮助读者看到退步幅度。"}};
-    const predictTotal = 3;
+    const checkpointData = {"v4-story":{"answer":2,"explain":"它指的是：按阶段/事件观察时间和资源消耗。。另外两个选项分别解释「critical path」和「Amdahl」，注意区分。"},"v4-experiment":{"answer":0,"explain":"其余 80 不变，优化部分变成 5。"},"v4-transfer":{"answer":1,"explain":"需要避免的是：把 kernel 自身的加速倍数直接写成整个模型的加速倍数。还有未优化部分与额外开销。"}};
+    const predictData = {};
+    const predictTotal = 0;
     const checkpointTotal = 3;
-    const homeworkTotal = 3;
-    const statePrefix = "pytorch-v3-level-";
+    const homeworkTotal = 4;
+    const statePrefix = Number(levelId) >= 30 ? "pytorch-v4-level-" : "pytorch-v3-level-";
     const oldId = "33";
-    if (oldId !== null) {
+    if (oldId !== null && Number(levelId) < 30) {
       const oldPrefix = Number(oldId) <= 11 ? "pytorch-level-" : "pytorch-v2-level-";
       for (const kind of ["checkpoints", "predicts"]) {
         const key = statePrefix + levelId + "-" + kind;
@@ -1765,20 +956,22 @@ report = "\n".join([
       }
     }
     const checkpointKey = statePrefix + levelId + "-checkpoints";
-    const homeworkKey = statePrefix + levelId + "-homework-121236230a9e";
+    const homeworkKey = statePrefix + levelId + "-homework-8e9dbf37b0c0";
     const predictKey = statePrefix + levelId + "-predicts";
 
     const courseMoves = {"10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","16":"16","17":"17","18":"18","19":"19","20":"20","21":"21","22":"22","23":"23","24":"24","25":"25","26":"26","27":"27","28":"28","29":"29","30":"60","31":"66","32":"73","33":"74","34":"79","35":"67","36":"34","37":"35","38":"36","39":"40","40":"41","41":"37","42":"46","00":"00","01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"};
-    const completeKey = "pytorch-levels-complete-v3";
+    const completeKey = "pytorch-levels-complete-v4";
     if (localStorage.getItem(completeKey) === null) {
-      const prior = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
+      const v3 = JSON.parse(localStorage.getItem("pytorch-levels-complete-v3") || "null");
+      const previous = JSON.parse(localStorage.getItem("pytorch-levels-complete-v2") || "null")
         || JSON.parse(localStorage.getItem("pytorch-levels-complete") || "[]").filter(id => Number(id) <= 11);
-      localStorage.setItem(completeKey, JSON.stringify(prior.map(id => courseMoves[id]).filter(Boolean)));
+      const migrated = v3 || previous.map(id => courseMoves[id]).filter(Boolean);
+      localStorage.setItem(completeKey, JSON.stringify(migrated.filter(id => Number(id) < 30)));
     }
 
-    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]"));
+    const checkpointsDone = new Set(JSON.parse(localStorage.getItem(checkpointKey) || "[]").filter(id => Object.hasOwn(checkpointData, id)));
     const homeworkDone = new Set(JSON.parse(localStorage.getItem(homeworkKey) || "[]"));
-    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]"));
+    const predictsMade = new Map(JSON.parse(localStorage.getItem(predictKey) || "[]").filter(([id]) => Object.hasOwn(predictData,id)));
 
     function save() {
       localStorage.setItem(checkpointKey, JSON.stringify([...checkpointsDone]));
@@ -1803,7 +996,7 @@ report = "\n".join([
         const hit = picked === predictData[lessonId].answer;
         const badge = hit
           ? '<span class="predict-badge hit">🎯 预判命中</span>'
-          : '<span class="predict-badge miss">🔓 已解锁 · 猜错正是学习的开始</span>';
+          : '<span class="predict-badge miss">再想一步 · 一起看看为什么</span>';
         const rawNote = predictData[lessonId].revealNote;
         const note = hit
           ? rawNote
@@ -1845,11 +1038,15 @@ report = "\n".join([
       document.querySelector("#xp").textContent = "XP " + (done * 100) + " / " + (checkpointTotal * 100);
       document.querySelector("#xp-bar").style.width = (done / checkpointTotal * 100) + "%";
 
+      const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
       if (done === checkpointTotal) {
-        const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
         completed.add(levelId);
         localStorage.setItem(completeKey, JSON.stringify([...completed]));
-        document.querySelector("#complete-title").textContent = "闯关题已完成。现在回 notebook 写作业，做最后的举一反三。";
+        document.querySelector("#complete-title").textContent = "闯关题已完成。现在去官方 Notebook 写作业，做最后的举一反三。";
+      } else {
+        completed.delete(levelId);
+        localStorage.setItem(completeKey, JSON.stringify([...completed]));
+        document.querySelector("#complete-title").textContent = "完成本课闯关题，再去官方 Notebook 练习。";
       }
     }
 
@@ -1880,6 +1077,7 @@ report = "\n".join([
           feedback.className = "feedback ok";
           checkpointsDone.add(lessonId);
         } else {
+          checkpointsDone.delete(lessonId);
           event.target.closest(".checkpoint-option").classList.add("wrong");
           feedback.textContent = "再想一下。先看本节的图解原理，再回来看这道题。";
           feedback.className = "feedback warn";
