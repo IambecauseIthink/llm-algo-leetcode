@@ -2292,15 +2292,13 @@ function levelPage(level, prev, next) {
 
 function indexPage() {
   const cards = levels.map((level) => `
-        <article class="level" data-category="${level.category}" data-id="${level.id}">
+        <article class="level" data-category="${level.category}" data-id="${level.id}" data-search="${esc([level.id,level.title,...level.tags].join(" ").toLowerCase())}">
           <div class="level-head">
             <span class="badge">L${level.id}</span>
             <span class="status" data-status="${level.id}">待挑战</span>
           </div>
           <h2>${esc(level.title.split("|").slice(1).join("|").trim() || level.title)}</h2>
           <small class="course-subtitle">${esc(level.title.split("|")[0].trim())}</small>
-          <p>${esc(level.summary.replace(/\$([^$]+)\$/g, "$1"))}</p>
-          <div class="chips">${level.tags.map((tag) => `<span class="chip">${esc(tag)}</span>`).join("")}</div>
           <a class="start" href="notes/${slug(level)}">进入关卡</a>
         </article>`).join("");
 
@@ -2309,214 +2307,39 @@ function indexPage() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/vendor/katex/katex.min.css">
   <title>PyTorch Algorithms 闯关地图</title>
-  <style>
-    :root {
-      --bg: #f6f7f4;
-      --paper: #ffffff;
-      --ink: #172033;
-      --muted: #657184;
-      --line: #dde3ea;
-      --blue: #2563eb;
-      --green: #16835f;
-      --soft-blue: #e9f0ff;
-      --soft-green: #e8f6ef;
-      --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
-    }
-    .level > p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-    .notebook-guide { padding: 24px; margin: 24px 0; min-width: 0; }
-    .notebook-content { overflow-x: auto; overflow-wrap: anywhere; }
-    .notebook-content img { max-width: 100%; height: auto; }
-    .notebook-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-    .notebook-content th, .notebook-content td { border: 1px solid #dde3ea; padding: 10px; text-align: left; }
-    .notebook-content a, .notebook-guide a { color: #2563eb; text-decoration: underline; }
-    details { margin: 14px 0; } summary { cursor: pointer; font-weight: 650; }
-    pre, .katex-display { max-width: 100%; overflow-x: auto; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background:
-        linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
-        linear-gradient(rgba(22, 131, 95, 0.05) 1px, transparent 1px),
-        var(--bg);
-      background-size: 28px 28px;
-    }
-    a { color: inherit; text-decoration: none; }
-    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 44px; }
-    .hero {
-      min-height: 270px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-      gap: 24px;
-      align-items: center;
-      padding: 24px 0 18px;
-    }
-    h1 { margin: 0 0 12px; font-size: clamp(32px, 5vw, 58px); line-height: 1.02; letter-spacing: 0; }
-    .lead { max-width: 760px; color: var(--muted); font-size: 18px; line-height: 1.65; margin: 0; }
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; max-width: 590px; }
-    .stat { border: 1px solid var(--line); background: rgba(255,255,255,0.84); border-radius: 8px; padding: 12px; }
-    .stat strong { display: block; font-size: 24px; line-height: 1.1; }
-    .stat span { color: var(--muted); font-size: 13px; }
-    .map-art {
-      min-height: 270px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--paper);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      display: grid;
-      gap: 12px;
-      align-content: center;
-    }
-    .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .flow div {
-      min-height: 84px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfd;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 10px;
-      font-weight: 900;
-    }
-    .flow div:nth-child(1) { background: var(--soft-blue); color: var(--blue); }
-    .flow div:nth-child(2) { background: var(--soft-green); color: var(--green); }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 16px 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      padding: 14px 0;
-    }
-    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-    button {
-      border: 1px solid var(--line);
-      background: var(--paper);
-      color: var(--ink);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font: inherit;
-      cursor: pointer;
-    }
-    button:hover, button.active { border-color: var(--blue); color: var(--blue); background: var(--soft-blue); }
-    .progress { color: var(--muted); font-size: 14px; }
-    .levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    .level {
-      min-height: 250px;
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 16px;
-      display: grid;
-      grid-template-rows: auto auto 1fr auto auto;
-      gap: 10px;
-    }
-    .level.complete { border-color: #9bd6bf; }
-    .level-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 42px;
-      height: 30px;
-      padding: 0 9px;
-      border-radius: 999px;
-      background: var(--soft-blue);
-      color: var(--blue);
-      font-weight: 900;
-      font-size: 13px;
-    }
-    .status { color: var(--muted); font-size: 13px; }
-    .level h2 { margin: 0; font-size: 18px; line-height: 1.3; letter-spacing: 0; }
-    .level p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: start; }
-    .chip {
-      border: 1px solid var(--line);
-      background: #fbfcfd;
-      border-radius: 999px;
-      padding: 5px 8px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .start {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid var(--blue);
-      color: var(--blue);
-      background: var(--soft-blue);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-weight: 900;
-    }
-    @media (max-width: 980px) { .hero, .levels { grid-template-columns: 1fr; } }
-    @media (max-width: 620px) {
-      .shell { width: min(100% - 22px, 1180px); }
-      .stats, .flow { grid-template-columns: 1fr; }
-    }
-  </style>
-  <link rel="stylesheet" href="${typeof level !== "undefined" ? "../" : ""}assets/learning_ui.css">
-  ${typeof level !== "undefined" ? '<script defer src="../assets/learning_lab.js"></script>' : ''}
+  <link rel="stylesheet" href="assets/course_map.css">
 </head>
 <body>
   <main class="shell">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">LLM LEARNING ATELIER · 大模型学习工坊</p><h1>把抽象原理，<br>变成你看得见的理解。</h1>
-        <p class="lead">从一个小问题开始，用图解、可操作实验和即时反馈学会大模型算法。先在这里理解，再去 Datawhale 官方 Notebook 亲手实现。</p>
-        <div class="stats" aria-label="学习进度">
-          <div class="stat"><strong id="done-count">0</strong><span>已通关</span></div>
-          <div class="stat"><strong>${levels.length}</strong><span>正式课程</span></div>
-          <div class="stat"><strong>${reserved.length}</strong><span>官方预留入口</span></div>
-        </div>
-      </div>
-      <div class="map-art" aria-label="学习流程">
-        <div class="flow">
-          <div>知识点<br>图解直觉</div>
-          <div>闯关答题<br>即时反馈</div>
-          <div>Notebook 作业<br>刷题检验</div>
-        </div>
-        <p class="lead">建议顺序：先看 HTML 建立直觉，完成少量闯关题，再回到 notebook 写代码作业。</p>
-      </div>
-    </section>
-
-    <section class="route-banner">
-      <h2>新版学习路线</h2><p>00–29 基础机制 → 30–52 方法扩展 → 60–86 项目验证。预留编号不计入通关总数。</p>
-      <p>同步官方 ${upstream.commit.slice(0, 7)} · ${upstream.date}。后半段 45 课已重做为三段教学与交互实验。旧版进度仍保留，新练习从头检查。</p>
-      <p><a href="${officialUrl("topic_discussion/inference_optimization/intro.md")}">推理优化路线</a> · <a href="${officialUrl("topic_discussion/memory_performance_tuning/intro.md")}">显存优化路线</a> · <a href="${officialUrl("02_PyTorch_Algorithms/intro.md")}">Part 02 官方总览</a></p>
-      <label>找到你想学的主题 <input class="course-search" id="course-search" type="search" placeholder="编号、中文、英文或关键词" style="max-width:100%;padding:10px"></label>
-      <details><summary>查看 ${reserved.length} 个预留章节（尚未形成正式课程）</summary><ul>${reserved.map(l => `<li><a href="${officialUrl("02_PyTorch_Algorithms/" + l.file)}">${esc(l.title)}</a></li>`).join("")}</ul></details>
-    </section>
-    <section class="toolbar">
+    <header class="map-header">
+      <h1>PyTorch 闯关</h1>
+      <span class="progress" id="progress-text"><b id="done-count">0</b> / ${levels.length} 已通关</span>
+    </header>
+    <section class="toolbar" aria-label="查找课程">
       <div class="filters" aria-label="关卡过滤器">
-        <button class="active" data-filter="all">全部</button>
-        <button data-filter="foundation">基础</button>
-        <button data-filter="architecture">结构</button>
-        <button data-filter="training">训练</button>
-        <button data-filter="inference">推理</button>
+        <button class="active" data-filter="all" aria-pressed="true">全部</button>
+        <button data-filter="foundation" aria-pressed="false">基础</button>
+        <button data-filter="architecture" aria-pressed="false">结构</button>
+        <button data-filter="training" aria-pressed="false">训练</button>
+        <button data-filter="inference" aria-pressed="false">推理</button>
+        <button data-filter="unfinished" aria-pressed="false">未通关</button>
       </div>
-      <div class="progress" id="progress-text">读取本地通关记录中</div>
+      <input id="course-search" type="search" aria-label="搜索课程" placeholder="搜索编号或关键词">
     </section>
-
     <section class="levels" id="levels" aria-label="Notebook 关卡列表">
 ${cards}
-    </section><p id="no-results" class="no-results" hidden>还没找到匹配的课程。试试“缓存”“LoRA”或课程编号，也可以切回“全部”。</p>
+    </section>
+    <p id="no-results" hidden>没有找到匹配课程</p>
+    <footer><a href="${officialUrl("02_PyTorch_Algorithms/intro.md")}">官方课程 ↗</a>
+      <details><summary>预留章节 · ${reserved.length}</summary><ul>${reserved.map(l => `<li><a href="${officialUrl("02_PyTorch_Algorithms/" + l.file)}">${esc(l.title)}</a></li>`).join("")}</ul></details>
+    </footer>
   </main>
 
   <script>
     ${migrateProgressScript()}
     const completed = new Set(JSON.parse(localStorage.getItem(completeKey) || "[]"));
     const cards = [...document.querySelectorAll(".level")];
-    const doneCount = document.querySelector("#done-count");
     const progressText = document.querySelector("#progress-text");
 
     function refresh() {
@@ -2525,24 +2348,23 @@ ${cards}
         card.classList.toggle("complete", done);
         card.querySelector("[data-status]").textContent = done ? "已通关" : "待挑战";
       });
-      doneCount.textContent = completed.size;
-      progressText.textContent = "本地记录：" + completed.size + " / " + cards.length + " 关已通关";
+      progressText.textContent = completed.size + " / " + cards.length + " 已通关";
     }
 
     let activeFilter = "all";
     function filterCards() {
       const query = document.querySelector("#course-search").value.trim().toLowerCase();
       cards.forEach(card => {
-        card.style.display = (activeFilter === "all" || card.dataset.category === activeFilter)
-          && card.textContent.toLowerCase().includes(query) ? "" : "none";
+        card.style.display = (activeFilter === "all" || card.dataset.category === activeFilter || (activeFilter === "unfinished" && !completed.has(card.dataset.id)))
+          && card.dataset.search.includes(query) ? "" : "none";
       });
       document.querySelector("#no-results").hidden = cards.some(card => card.style.display !== "none");
     }
     document.querySelector("#course-search").addEventListener("input", filterCards);
     document.querySelectorAll("[data-filter]").forEach(button => {
       button.addEventListener("click", () => {
-        document.querySelectorAll("[data-filter]").forEach(item => item.classList.remove("active"));
-        button.classList.add("active"); activeFilter = button.dataset.filter; filterCards();
+        document.querySelectorAll("[data-filter]").forEach(item => {item.classList.remove("active");item.setAttribute("aria-pressed", "false");});
+        button.classList.add("active"); button.setAttribute("aria-pressed", "true"); activeFilter = button.dataset.filter; filterCards();
       });
     });
 
