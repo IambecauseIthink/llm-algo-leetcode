@@ -2291,6 +2291,8 @@ function levelPage(level, prev, next) {
 }
 
 function indexPage() {
+  const descriptions = require('./course_descriptions');
+  for (const level of levels) if (!descriptions[level.id]) throw new Error('Missing course description: ' + level.id);
   const cards = levels.map((level) => `
         <article class="level" data-category="${level.category}" data-id="${level.id}" data-search="${esc([level.id,level.title,...level.tags].join(" ").toLowerCase())}">
           <div class="level-head">
@@ -2298,7 +2300,7 @@ function indexPage() {
             <span class="status" data-status="${level.id}">待挑战</span>
           </div>
           <h2>${esc(level.title.split("|").slice(1).join("|").trim() || level.title)}</h2>
-          <small class="course-subtitle">${esc(level.title.split("|")[0].trim())}</small>
+          <p class="course-description">${esc(descriptions[level.id])}</p>
           <a class="start" href="notes/${slug(level)}">进入关卡</a>
         </article>`).join("");
 
