@@ -2307,13 +2307,13 @@ function indexPage() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PyTorch Algorithms 闯关地图</title>
+  <title>大模型算法闯关</title>
   <link rel="stylesheet" href="assets/course_map.css">
 </head>
 <body>
   <main class="shell">
     <header class="map-header">
-      <h1>PyTorch 闯关</h1>
+      <h1>大模型算法闯关</h1>
       <span class="progress" id="progress-text"><b id="done-count">0</b> / ${levels.length} 已通关</span>
     </header>
     <section class="toolbar" aria-label="查找课程">
